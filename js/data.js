@@ -281,8 +281,8 @@ Fellow of the Higher Education Academy (AFHEA), and a Member of the BCS, IET, an
   /* ── Teaching ─────────────────────────────────────────── */
   teaching: {
     postgraduate: [
-      { label: 'Digital Transformation / CMP701 (MSc)', leader: true  },
-      { label: 'Scalable Advanced Software Solutions (MSc)'            },
+      { label: 'Digital Transformation (MSc)',           leader: true  },
+      { label: 'Scalable Advanced Software Solutions (MSc)', leader: true },
       { label: 'Network Traffic Control and Organization (MSc)'        },
       { label: 'Network Modelling and Simulation (MSc)'                },
       { label: 'Mobile Robotics (Y4 / MSc)'                            },
