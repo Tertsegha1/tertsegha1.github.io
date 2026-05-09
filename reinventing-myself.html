@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Re-Inventing Myself · Dr. Tertsegha J. Anande</title>
+<meta name="description" content="A weekly series teaching AutoML from scratch through the lens of human reinvention. By Dr. Tertsegha J. Anande — ML Researcher, Lecturer, and someone refusing to stop becoming.">
+<meta property="og:title" content="Re-Inventing Myself · AutoML & You">
+<meta property="og:description" content="Weekly AutoML tutorials mapped to real-life reinvention. Episode 01: Re-Introducing Me.">
+<meta property="og:type" content="website">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --deep: #050516;
+  --panel: #0F0F2E;
+  --panel2: #0B0B26;
+  --purple: #9490E8;
+  --purple-soft: #6560CC;
+  --teal: #6DD8B3;
+  --teal-dark: #25B585;
+  --amber: #F5A830;
+  --text: #F2F1FF;
+  --muted: #B0ADA6;
+  --dim: #8A8883;
+  --border: rgba(148,144,232,0.28);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--deep);
+  background-image:
+    radial-gradient(ellipse 80% 40% at 20% 10%, rgba(101,96,204,0.18) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 30% at 80% 5%,  rgba(37,181,133,0.10) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 50% at 50% 90%, rgba(101,96,204,0.08) 0%, transparent 70%);
+  color: var(--text);
+  font-family: Georgia, serif;
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+/* ── NAV ── */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(7,7,26,0.95);
+  backdrop-filter: blur(8px);
+  border-bottom: 0.5px solid var(--border);
+  padding: 14px 32px;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+}
+.nav-brand { font-family: Arial, sans-serif; font-size: 10px; letter-spacing: 4px; color: var(--purple); text-transform: uppercase; }
+.nav-links { display: flex; gap: 24px; }
+.nav-links a { font-family: Arial, sans-serif; font-size: 11px; color: var(--muted); text-decoration: none; letter-spacing: 1px; transition: color .2s; }
+.nav-links a:hover { color: var(--text); }
+.nav-portfolio {
+  font-family: Arial, sans-serif; font-size: 11px; color: var(--purple);
+  border: 0.5px solid rgba(127,119,221,0.4); border-radius: 4px;
+  padding: 5px 12px; text-decoration: none; transition: border-color .2s, color .2s;
+}
+.nav-portfolio:hover { border-color: var(--purple); color: #AFA9EC; }
+
+/* ── HERO ── */
+.hero {
+  position: relative; overflow: hidden;
+  padding: 80px 32px 60px; text-align: center;
+  border-bottom: 0.5px solid var(--border);
+}
+canvas#hero-stars { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+.hero-inner { position: relative; z-index: 2; max-width: 760px; margin: 0 auto; }
+.hero-eyebrow { font-family: Arial, sans-serif; font-size: 10px; letter-spacing: 5px; color: var(--purple); text-transform: uppercase; margin-bottom: 20px; }
+.hero h1 { font-size: clamp(36px, 6vw, 64px); font-weight: 700; color: var(--text); letter-spacing: 2px; line-height: 1.1; margin-bottom: 12px; }
+.hero h1 span { color: var(--teal); }
+.hero-sub { font-family: Arial, sans-serif; font-size: 14px; color: #AFA9EC; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 28px; }
+.hero-desc { font-family: Arial, sans-serif; font-size: 15px; color: #D3D1C7; line-height: 1.7; max-width: 580px; margin: 0 auto 36px; }
+.hero-cta-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.btn-primary {
+  font-family: Arial, sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 1px;
+  background: var(--purple-soft); color: #fff; border: none; border-radius: 6px;
+  padding: 12px 24px; cursor: pointer; text-decoration: none; transition: background .2s;
+}
+.btn-primary:hover { background: var(--purple); }
+.btn-outline {
+  font-family: Arial, sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 1px;
+  background: transparent; color: var(--teal); border: 0.5px solid rgba(93,202,165,0.5);
+  border-radius: 6px; padding: 12px 24px; cursor: pointer; text-decoration: none; transition: border-color .2s;
+}
+.btn-outline:hover { border-color: var(--teal); }
+
+/* ── SECTION WRAPPER ── */
+.section { max-width: 900px; margin: 0 auto; padding: 60px 32px; }
+.section-label { font-family: Arial, sans-serif; font-size: 10px; letter-spacing: 4px; color: var(--purple); text-transform: uppercase; margin-bottom: 10px; }
+.section h2 { font-size: 28px; color: var(--text); margin-bottom: 20px; }
+.divider { border: none; border-top: 0.5px solid var(--border); margin: 0; }
+
+/* ── ABOUT SERIES ── */
+.series-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 28px; }
+@media (max-width: 600px) { .series-grid { grid-template-columns: 1fr; } }
+.series-card {
+  background: var(--panel); border: 0.5px solid var(--border);
+  border-radius: 10px; padding: 20px;
+}
+.series-card h3 { font-family: Arial, sans-serif; font-size: 13px; color: var(--teal); margin-bottom: 8px; }
+.series-card p { font-family: Arial, sans-serif; font-size: 13px; color: #D3D1C7; line-height: 1.6; }
+
+/* ── INTERACTIVE POSTER ── */
+.poster-section {
+  background: #08082A;
+  background-image: radial-gradient(ellipse 90% 50% at 50% 50%, rgba(101,96,204,0.1) 0%, transparent 70%);
+  border-top: 0.5px solid var(--border); border-bottom: 0.5px solid var(--border); padding: 60px 32px;
+}
+.poster-wrap { max-width: 760px; margin: 0 auto; }
+.poster-label { font-family: Arial, sans-serif; font-size: 10px; letter-spacing: 4px; color: var(--muted); text-transform: uppercase; text-align: center; margin-bottom: 24px; }
+
+/* ── POSTER EMBED (v2 content) ── */
+.poster {
+  background: #06061C;
+  background-image: radial-gradient(ellipse 70% 30% at 30% 15%, rgba(101,96,204,0.14) 0%, transparent 60%),
+                    radial-gradient(ellipse 50% 25% at 75% 10%, rgba(37,181,133,0.08) 0%, transparent 55%);
+  border-radius: 16px; padding: 0;
+  overflow: hidden; position: relative; min-height: 920px;
+  font-family: Georgia, serif; border: 0.5px solid var(--border);
+  box-shadow: 0 0 60px rgba(101,96,204,0.12), 0 0 120px rgba(7,7,26,0.6);
+}
+canvas#stars-bg2 { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+.poster-inner { position: relative; z-index: 2; padding: 36px 32px 28px; }
+.top-bar {
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 0.5px solid rgba(127,119,221,0.3); padding-bottom: 14px; margin-bottom: 28px;
+}
+.series-lbl { font-family: Arial, sans-serif; font-size: 10px; letter-spacing: 4px; color: #7F77DD; text-transform: uppercase; }
+.ep-lbl { font-family: Arial, sans-serif; font-size: 10px; letter-spacing: 3px; color: #5DCAA5; text-transform: uppercase; }
+.hero-title { text-align: center; margin-bottom: 6px; }
+.hero-title h1 { font-size: 38px; font-weight: 700; color: #EEEDFE; letter-spacing: 2px; line-height: 1.1; }
+.hero-sub2 { text-align: center; font-family: Arial, sans-serif; font-size: 12px; letter-spacing: 5px; color: #AFA9EC; margin-bottom: 30px; text-transform: uppercase; }
+.framework-label { font-family: Arial, sans-serif; font-size: 10px; letter-spacing: 3px; color: #888780; text-align: center; margin-bottom: 18px; text-transform: uppercase; }
+.automl-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
+.node-card {
+  background: #0F0F2C; border: 0.5px solid rgba(148,144,232,0.3); border-radius: 10px;
+  padding: 14px 12px 12px; cursor: pointer; transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  position: relative; overflow: hidden;
+}
+.node-card:hover, .node-card.active { border-color: rgba(148,144,232,0.8); background: #141440; box-shadow: 0 0 16px rgba(101,96,204,0.2); }
+.node-card.teal { border-color: rgba(37,181,133,0.3); }
+.node-card.teal:hover, .node-card.teal.active { border-color: rgba(109,216,179,0.8); background: #092820; box-shadow: 0 0 16px rgba(37,181,133,0.2); }
+.node-card.amber { border-color: rgba(186,117,23,0.3); }
+.node-card.amber:hover, .node-card.amber.active { border-color: rgba(245,168,48,0.8); background: #1E1608; box-shadow: 0 0 16px rgba(245,168,48,0.15); }
+.node-num { font-family: Arial, sans-serif; font-size: 9px; letter-spacing: 2px; margin-bottom: 6px; color: #534AB7; }
+.node-card.teal .node-num { color: #1D9E75; }
+.node-card.amber .node-num { color: #854F0B; }
+.node-title { font-size: 13px; font-weight: 600; font-family: Arial, sans-serif; margin-bottom: 3px; color: #EEEDFE; }
+.node-tagline { font-family: Arial, sans-serif; font-size: 10px; color: #888780; line-height: 1.4; }
+.pulse-dot { width: 6px; height: 6px; border-radius: 50%; position: absolute; top: 12px; right: 12px; background: #534AB7; animation: pulse-p 2s ease-in-out infinite; }
+.node-card.teal .pulse-dot { background: #1D9E75; }
+.node-card.amber .pulse-dot { background: #EF9F27; }
+@keyframes pulse-p { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.6)} }
+.info-panel {
+  background: #0A0A22; border: 0.5px solid rgba(127,119,221,0.2); border-radius: 10px;
+  padding: 18px 20px; margin-bottom: 14px; min-height: 108px; transition: all 0.3s;
+}
+.info-panel-title { font-family: Arial, sans-serif; font-size: 11px; letter-spacing: 3px; color: #7F77DD; margin-bottom: 8px; text-transform: uppercase; }
+.info-panel-body { font-family: Arial, sans-serif; font-size: 13px; color: #E2DFD8; line-height: 1.65; }
+.info-panel-life { margin-top: 10px; padding-top: 10px; border-top: 0.5px solid rgba(148,144,232,0.2); font-family: Arial, sans-serif; font-size: 12px; color: #6DD8B3; line-height: 1.55; font-style: italic; }
+.bottom-row {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  border-top: 0.5px solid rgba(127,119,221,0.2); padding-top: 16px; margin-top: 4px;
+}
+.author-name { font-size: 14px; color: #EEEDFE; font-weight: 600; margin-bottom: 3px; }
+.author-meta { font-family: Arial, sans-serif; font-size: 10px; color: #5F5E5A; letter-spacing: 1px; margin-bottom: 6px; }
+.portfolio-url {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: Arial, sans-serif; font-size: 11px; color: #7F77DD;
+  background: #12102E; border: 0.5px solid rgba(127,119,221,0.4);
+  border-radius: 4px; padding: 4px 10px; letter-spacing: 0.5px;
+  text-decoration: none; cursor: pointer; transition: border-color .2s, color .2s;
+}
+.portfolio-url:hover { border-color: rgba(127,119,221,0.8); color: #AFA9EC; }
+.hashtag-block { font-family: Arial, sans-serif; font-size: 10px; color: #534AB7; letter-spacing: 1px; text-align: right; }
+
+/* ── ABOUT ME ── */
+.about-grid { display: grid; grid-template-columns: auto 1fr; gap: 32px; align-items: start; }
+@media (max-width: 600px) { .about-grid { grid-template-columns: 1fr; } }
+.about-avatar {
+  width: 120px; height: 120px; border-radius: 50%;
+  border: 2px solid var(--purple); background: var(--panel);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 48px; flex-shrink: 0;
+}
+.about-content p { font-family: Arial, sans-serif; font-size: 14px; color: #D3D1C7; line-height: 1.75; margin-bottom: 14px; }
+.about-content p:last-child { margin-bottom: 0; }
+.about-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+.tag {
+  font-family: Arial, sans-serif; font-size: 10px; letter-spacing: 1px;
+  color: var(--purple); border: 0.5px solid rgba(127,119,221,0.4);
+  border-radius: 20px; padding: 4px 12px; text-transform: uppercase;
+}
+
+/* ── EPISODES ── */
+.episodes-grid { display: grid; gap: 12px; margin-top: 28px; }
+.ep-card {
+  background: var(--panel); border: 0.5px solid var(--border);
+  border-radius: 10px; padding: 20px 24px;
+  display: flex; align-items: center; gap: 20px;
+  transition: border-color .2s;
+}
+.ep-card:hover { border-color: rgba(127,119,221,0.5); }
+.ep-card.current { border-color: rgba(93,202,165,0.5); }
+.ep-num {
+  font-family: Arial, sans-serif; font-size: 11px; letter-spacing: 2px;
+  color: var(--purple-soft); min-width: 36px; flex-shrink: 0;
+}
+.ep-card.current .ep-num { color: var(--teal-dark); }
+.ep-info { flex: 1; }
+.ep-title { font-family: Arial, sans-serif; font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.ep-desc { font-family: Arial, sans-serif; font-size: 12px; color: var(--muted); line-height: 1.5; }
+.ep-badge {
+  font-family: Arial, sans-serif; font-size: 9px; letter-spacing: 2px;
+  text-transform: uppercase; padding: 3px 10px; border-radius: 10px;
+  flex-shrink: 0;
+}
+.ep-badge.live { background: rgba(93,202,165,0.15); color: var(--teal); border: 0.5px solid rgba(93,202,165,0.4); }
+.ep-badge.soon { background: rgba(127,119,221,0.1); color: var(--purple); border: 0.5px solid var(--border); }
+
+/* ── SOCIAL LINKS ── */
+.social-section { text-align: center; padding: 60px 32px; border-top: 0.5px solid var(--border); }
+.social-section p { font-family: Arial, sans-serif; font-size: 14px; color: var(--muted); margin-bottom: 24px; line-height: 1.7; }
+.social-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.social-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: Arial, sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.5px;
+  padding: 10px 20px; border-radius: 6px; text-decoration: none; transition: opacity .2s;
+}
+.social-btn:hover { opacity: 0.85; }
+.social-btn.linkedin { background: #0A66C2; color: #fff; }
+.social-btn.facebook { background: #1877F2; color: #fff; }
+
+/* ── FOOTER ── */
+footer {
+  border-top: 0.5px solid var(--border); padding: 24px 32px;
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+}
+.footer-left { font-family: Arial, sans-serif; font-size: 11px; color: var(--dim); }
+.footer-right { font-family: Arial, sans-serif; font-size: 10px; color: var(--purple); letter-spacing: 2px; text-transform: uppercase; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <span class="nav-brand">Re-Inventing Myself</span>
+  <div class="nav-links">
+    <a href="#series">Series</a>
+    <a href="#poster">Episode 01</a>
+    <a href="#about">About</a>
+    <a href="#episodes">Episodes</a>
+  </div>
+  <a class="nav-portfolio" href="https://tertsegha1.github.io/" target="_blank" rel="noopener">↗ Portfolio</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="series">
+  <canvas id="hero-stars"></canvas>
+  <div class="hero-inner">
+    <div class="hero-eyebrow">A Weekly Series by Dr. Tertsegha J. Anande</div>
+    <h1>Re-Inventing<br><span>Myself</span></h1>
+    <div class="hero-sub">AutoML &amp; You · Where machines meet the human journey</div>
+    <p class="hero-desc">
+      A practical weekly series teaching Automated Machine Learning from scratch —
+      through the lens of human reinvention. Every concept, every algorithm, every
+      pipeline stage mapped to something real. Something you've already lived.
+    </p>
+    <div class="hero-cta-row">
+      <a class="btn-primary" href="#poster">Explore Episode 01</a>
+      <a class="btn-outline" href="#episodes">View All Episodes</a>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ABOUT THE SERIES -->
+<section class="section">
+  <div class="section-label">What This Series Is</div>
+  <h2>AutoML as a framework for life</h2>
+  <p style="font-family:Arial,sans-serif;font-size:14px;color:#D3D1C7;line-height:1.75;max-width:680px;">
+    Automated Machine Learning (AutoML) automates the process of selecting, training, and optimising machine learning models. But look closely at its pipeline, and you'll find something startling: it is a near-perfect map of human reinvention.
+  </p>
+  <div class="series-grid">
+    <div class="series-card">
+      <h3>Practical AutoML Education</h3>
+      <p>Each episode teaches a real AutoML concept — from data ingestion to deployment — with working examples, clear explanations, and no prerequisites assumed.</p>
+    </div>
+    <div class="series-card">
+      <h3>Real-Life Parallels</h3>
+      <p>Every technical concept is anchored in lived experience. Preprocessing isn't just data cleaning — it's the work of honest self-reflection. Training isn't just iteration — it's showing up every day.</p>
+    </div>
+    <div class="series-card">
+      <h3>For Anyone Reinventing Themselves</h3>
+      <p>Whether you're pivoting careers, rebuilding confidence, or simply refusing to stay the same — this series is for you. No machine learning background needed.</p>
+    </div>
+    <div class="series-card">
+      <h3>Weekly. Consistent. Cumulative.</h3>
+      <p>Every episode builds on the last. By the end of the series, you'll have a working understanding of the full AutoML pipeline — and a new vocabulary for your own growth journey.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- INTERACTIVE POSTER -->
+<section class="poster-section" id="poster">
+  <div class="poster-wrap">
+    <div class="poster-label">Episode 01 · Interactive Framework Poster — Click any stage</div>
+
+    <div class="poster">
+      <canvas id="stars-bg2"></canvas>
+      <div class="poster-inner">
+
+        <div class="top-bar">
+          <span class="series-lbl">Re-Inventing Myself</span>
+          <span class="ep-lbl">Episode 01 · Re-Introducing Me</span>
+        </div>
+
+        <div class="hero-title"><h1>AutoML &amp; You</h1></div>
+        <div class="hero-sub2">Where machines meet the human journey</div>
+
+        <div class="framework-label">The AutoML framework — click any stage</div>
+
+        <div class="automl-grid" id="grid">
+          <div class="node-card" data-idx="0" onclick="activate(0)">
+            <div class="pulse-dot"></div>
+            <div class="node-num">01</div>
+            <div class="node-title">Data ingestion</div>
+            <div class="node-tagline">Raw inputs, life experiences</div>
+          </div>
+          <div class="node-card" data-idx="1" onclick="activate(1)">
+            <div class="pulse-dot"></div>
+            <div class="node-num">02</div>
+            <div class="node-title">Preprocessing</div>
+            <div class="node-tagline">Clean noise, find signal</div>
+          </div>
+          <div class="node-card" data-idx="2" onclick="activate(2)">
+            <div class="pulse-dot"></div>
+            <div class="node-num">03</div>
+            <div class="node-title">Feature engineering</div>
+            <div class="node-tagline">Discover your strengths</div>
+          </div>
+          <div class="node-card teal" data-idx="3" onclick="activate(3)">
+            <div class="pulse-dot"></div>
+            <div class="node-num">04</div>
+            <div class="node-title">Model selection</div>
+            <div class="node-tagline">Which version fits best?</div>
+          </div>
+          <div class="node-card teal" data-idx="4" onclick="activate(4)">
+            <div class="pulse-dot"></div>
+            <div class="node-num">05</div>
+            <div class="node-title">Training &amp; tuning</div>
+            <div class="node-tagline">Iterate until you grow</div>
+          </div>
+          <div class="node-card teal" data-idx="5" onclick="activate(5)">
+            <div class="pulse-dot"></div>
+            <div class="node-num">06</div>
+            <div class="node-title">Evaluation</div>
+            <div class="node-tagline">Measure real progress</div>
+          </div>
+          <div class="node-card amber" data-idx="6" onclick="activate(6)" style="grid-column:1/2">
+            <div class="pulse-dot"></div>
+            <div class="node-num">07</div>
+            <div class="node-title">Deployment</div>
+            <div class="node-tagline">Show up as the new you</div>
+          </div>
+          <div class="node-card amber" data-idx="7" onclick="activate(7)" style="grid-column:2/3">
+            <div class="pulse-dot"></div>
+            <div class="node-num">08</div>
+            <div class="node-title">Monitoring</div>
+            <div class="node-tagline">Stay accountable, adapt</div>
+          </div>
+          <div class="node-card amber" data-idx="8" onclick="activate(8)" style="grid-column:3/4">
+            <div class="pulse-dot"></div>
+            <div class="node-num">09</div>
+            <div class="node-title">Re-optimisation</div>
+            <div class="node-tagline">Never stop evolving</div>
+          </div>
+        </div>
+
+        <div class="info-panel">
+          <div class="info-panel-title" id="info-title">Select a stage above</div>
+          <div class="info-panel-body" id="info-body">Each stage of the AutoML pipeline mirrors a stage of human reinvention. Click any node to explore the connection.</div>
+          <div class="info-panel-life" id="info-life"></div>
+        </div>
+
+        <div class="bottom-row">
+          <div>
+            <div class="author-name">Dr. Tertsegha J. Anande</div>
+            <div class="author-meta">PhD · ML Researcher · Lecturer · Birmingham, UK</div>
+            <a class="portfolio-url" href="https://tertsegha1.github.io/" target="_blank" rel="noopener">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#7F77DD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+              </svg>
+              tertsegha1.github.io
+            </a>
+          </div>
+          <div class="hashtag-block">
+            #ReInventingMyself<br>#AutoML · #MachineLearning<br>#PersonalGrowth · 2026
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ABOUT ME -->
+<section class="section" id="about">
+  <div class="section-label">Re-Introducing Me</div>
+  <h2>Who is behind this series?</h2>
+  <div class="about-grid">
+    <div class="about-avatar" aria-hidden="true">🎓</div>
+    <div class="about-content">
+      <p>
+        I'm <strong style="color:var(--text)">Dr. Tertsegha Joseph Anande</strong> — PhD in Computing, ML Researcher, and Lecturer at QAHE/Ulster University in Birmingham. I specialise in Machine Learning, AutoML, Ensemble Learning, and Cyber-Physical Security.
+      </p>
+      <p>
+        On paper, things look fine. But somewhere along the way, I noticed something quietly slipping away. The drive. The hunger. That inner restlessness that once pushed me to pursue more, build more, become more. It didn't vanish overnight — it was more gradual than that. Life happened. Responsibilities stacked up. And before I knew it, adulthood had swallowed up the very passion that once defined me.
+      </p>
+      <p>
+        I was still showing up. Still completing tasks. Still functioning. But I was doing tomorrow what I did today, and today what I did yesterday. The zeal to aspire — to reach for the next exploit — had gone quiet.
+      </p>
+      <p>
+        That silence was louder than anything else. That's when I decided: maybe it's time to apply the principles of how machines learn and adapt — to myself.
+      </p>
+      <p style="color:var(--teal);font-style:italic;">
+        "What if there's still more?"
+      </p>
+      <div class="about-tags">
+        <span class="tag">PhD · Computing</span>
+        <span class="tag">AutoML Research</span>
+        <span class="tag">Ensemble Learning</span>
+        <span class="tag">Cyber-Physical Security</span>
+        <span class="tag">Higher Education</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- EPISODES -->
+<section class="section" id="episodes">
+  <div class="section-label">The Series</div>
+  <h2>All Episodes</h2>
+  <div class="episodes-grid">
+
+    <div class="ep-card current">
+      <div class="ep-num">EP 01</div>
+      <div class="ep-info">
+        <div class="ep-title">Re-Introducing Me</div>
+        <div class="ep-desc">An introduction to the series, the AutoML framework as a whole, and the person behind it. Where machines meet the human journey.</div>
+      </div>
+      <span class="ep-badge live">Live Now</span>
+    </div>
+
+    <div class="ep-card">
+      <div class="ep-num">EP 02</div>
+      <div class="ep-info">
+        <div class="ep-title">Data Ingestion · Your Raw Material</div>
+        <div class="ep-desc">What is data, really? How AutoML collects and structures it — and why every experience you've had is valid input.</div>
+      </div>
+      <span class="ep-badge soon">Coming Soon</span>
+    </div>
+
+    <div class="ep-card">
+      <div class="ep-num">EP 03</div>
+      <div class="ep-info">
+        <div class="ep-title">Preprocessing · The Work of Letting Go</div>
+        <div class="ep-desc">Cleaning messy data is not unlike honest self-reflection. What do you need to strip out before anything useful can happen?</div>
+      </div>
+      <span class="ep-badge soon">Coming Soon</span>
+    </div>
+
+    <div class="ep-card">
+      <div class="ep-num">EP 04</div>
+      <div class="ep-info">
+        <div class="ep-title">Feature Engineering · What Makes You, You</div>
+        <div class="ep-desc">The signals that actually predict good outcomes. Identifying your unique strengths, values, and the patterns worth amplifying.</div>
+      </div>
+      <span class="ep-badge soon">Coming Soon</span>
+    </div>
+
+    <div class="ep-card">
+      <div class="ep-num">EP 05</div>
+      <div class="ep-info">
+        <div class="ep-title">Model Selection · Choose Your Architecture</div>
+        <div class="ep-desc">There is no single correct model. AutoML tests many — and so should you. Which version of yourself are you building?</div>
+      </div>
+      <span class="ep-badge soon">Coming Soon</span>
+    </div>
+
+    <div class="ep-card">
+      <div class="ep-num">EP 06</div>
+      <div class="ep-info">
+        <div class="ep-title">Training &amp; Tuning · Growth Is a Loop</div>
+        <div class="ep-desc">Deliberate practice, feedback, and adjustment. The model learns by showing up repeatedly — and so do you.</div>
+      </div>
+      <span class="ep-badge soon">Coming Soon</span>
+    </div>
+
+    <div class="ep-card">
+      <div class="ep-num">EP 07</div>
+      <div class="ep-info">
+        <div class="ep-title">Evaluation · Real Progress in Unfamiliar Conditions</div>
+        <div class="ep-desc">Measuring whether a model truly generalises — or just memorised patterns. Can you perform when no-one is watching?</div>
+      </div>
+      <span class="ep-badge soon">Coming Soon</span>
+    </div>
+
+    <div class="ep-card">
+      <div class="ep-num">EP 08</div>
+      <div class="ep-info">
+        <div class="ep-title">Deployment · Stepping Out as the New You</div>
+        <div class="ep-desc">Releasing the trained model into real-world conditions. Vulnerability is the price of visibility.</div>
+      </div>
+      <span class="ep-badge soon">Coming Soon</span>
+    </div>
+
+    <div class="ep-card">
+      <div class="ep-num">EP 09</div>
+      <div class="ep-info">
+        <div class="ep-title">Monitoring · Staying Accountable</div>
+        <div class="ep-desc">Real-world drift is silent. So is losing your edge. How to stay curious, stay honest, and stay on track.</div>
+      </div>
+      <span class="ep-badge soon">Coming Soon</span>
+    </div>
+
+    <div class="ep-card">
+      <div class="ep-num">EP 10</div>
+      <div class="ep-info">
+        <div class="ep-title">Re-Optimisation · Never Stop Becoming</div>
+        <div class="ep-desc">Reinvention is not a chapter. It is the whole book. Every version of you is a stepping stone to the next.</div>
+      </div>
+      <span class="ep-badge soon">Coming Soon</span>
+    </div>
+
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- SOCIAL / FOLLOW -->
+<section class="social-section">
+  <div class="section-label" style="margin-bottom:12px">Follow the Journey</div>
+  <h2 style="font-size:24px;margin-bottom:16px">New episode every week</h2>
+  <p>
+    Follow on LinkedIn for the professional series posts.<br>
+    Follow on Facebook for the full community conversation.
+  </p>
+  <div class="social-row">
+    <a class="social-btn linkedin" href="https://www.linkedin.com/in/" target="_blank" rel="noopener">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+      Follow on LinkedIn
+    </a>
+    <a class="social-btn facebook" href="https://www.facebook.com/anande.joseph" target="_blank" rel="noopener">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+      Follow on Facebook
+    </a>
+    <a class="social-btn" style="background:var(--panel);color:var(--purple);border:0.5px solid rgba(127,119,221,0.4);" href="https://tertsegha1.github.io/" target="_blank" rel="noopener">
+      ↗ Full Portfolio
+    </a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-left">© 2026 Dr. Tertsegha J. Anande · Birmingham, UK</div>
+  <div class="footer-right">#ReInventingMyself · #AutoML</div>
+</footer>
+
+<script>
+// ── Poster interaction ──
+const posterData = [
+  { title:"01 · Data ingestion", body:"AutoML begins by collecting raw, messy, unstructured data from every available source — good and bad, relevant and noisy.", life:"In life: this is every experience you've had. Your childhood, your wins, your failures, your routines. All of it is input. Nothing is wasted." },
+  { title:"02 · Preprocessing", body:"Raw data is full of errors, duplicates, and irrelevant noise. AutoML cleans, normalises, and structures it before anything useful can happen.", life:"In life: this is honest self-reflection. Letting go of what doesn't serve you — bitterness, limiting beliefs, the weight of comparison." },
+  { title:"03 · Feature engineering", body:"The system extracts the most meaningful patterns and attributes from the data — the signals that actually predict good outcomes.", life:"In life: this is identifying your unique strengths, values, and passions. What makes you distinctively you? That is your feature set." },
+  { title:"04 · Model selection", body:"AutoML tests dozens of algorithms to find which model structure fits the data best. There is no single 'correct' model — only the right fit.", life:"In life: which version of yourself do you want to build? Career pivot, creative pursuit, leadership, community? Choose your architecture." },
+  { title:"05 · Training & tuning", body:"The chosen model learns by being exposed to data repeatedly, adjusting its internal weights with every iteration until performance improves.", life:"In life: this is deliberate practice. Showing up every day. Getting feedback. Adjusting. Growth is not an event — it is a loop." },
+  { title:"06 · Evaluation", body:"AutoML measures performance on data it has never seen before — testing whether the model truly generalises or just memorised patterns.", life:"In life: real progress shows up in unfamiliar situations. Can you hold your calm under pressure? Can you lead when no-one is watching?" },
+  { title:"07 · Deployment", body:"The trained model is released into the real world. It must now perform under live conditions — unpredictable, imperfect, and uncontrolled.", life:"In life: this is stepping out. Sharing the new you with your network, your family, your work. Vulnerability is the price of visibility." },
+  { title:"08 · Monitoring", body:"Once deployed, the model is watched continuously. Real-world drift — when the world changes around it — can quietly degrade performance.", life:"In life: accountability. Checking in with your goals. Are you still growing, or have new routines quietly replaced old ones? Stay curious." },
+  { title:"09 · Re-optimisation", body:"When performance drifts, the model is retrained on fresh data. AutoML is not a one-time process — it is a continuous cycle of improvement.", life:"In life: reinvention is not a chapter. It is the whole book. Every version of you is a stepping stone to the next. Never stop becoming." }
+];
+
+function activate(i) {
+  document.querySelectorAll('.node-card').forEach((c,j) => c.classList.toggle('active', j===i));
+  const d = posterData[i];
+  document.getElementById('info-title').textContent = d.title;
+  document.getElementById('info-body').textContent = d.body;
+  document.getElementById('info-life').textContent = d.life;
+}
+
+// ── Poster canvas ──
+const posterCanvas = document.getElementById('stars-bg2');
+const pCtx = posterCanvas.getContext('2d');
+function resizePosterCanvas() {
+  const rect = posterCanvas.parentElement.getBoundingClientRect();
+  posterCanvas.width = rect.width;
+  posterCanvas.height = rect.height || 920;
+  drawPosterStars();
+}
+function drawPosterStars() {
+  pCtx.clearRect(0,0,posterCanvas.width,posterCanvas.height);
+  for (let i=0; i<80; i++) {
+    const x=Math.random()*posterCanvas.width, y=Math.random()*posterCanvas.height*0.45;
+    const r=Math.random()*1.2+0.3, op=Math.random()*0.6+0.2;
+    pCtx.beginPath(); pCtx.arc(x,y,r,0,Math.PI*2);
+    pCtx.fillStyle=`rgba(255,255,255,${op})`; pCtx.fill();
+  }
+  [[posterCanvas.width*0.2,posterCanvas.height*0.3,140,'rgba(127,119,221,0.06)'],
+   [posterCanvas.width*0.75,posterCanvas.height*0.2,100,'rgba(29,158,117,0.05)'],
+   [posterCanvas.width*0.5,posterCanvas.height*0.15,80,'rgba(186,117,23,0.04)']].forEach(([x,y,r,c])=>{
+    const g=pCtx.createRadialGradient(x,y,0,x,y,r);
+    g.addColorStop(0,c); g.addColorStop(1,'rgba(0,0,0,0)');
+    pCtx.beginPath(); pCtx.arc(x,y,r,0,Math.PI*2); pCtx.fillStyle=g; pCtx.fill();
+  });
+}
+setTimeout(resizePosterCanvas, 100);
+window.addEventListener('resize', resizePosterCanvas);
+activate(0);
+
+// ── Hero canvas ──
+const heroCanvas = document.getElementById('hero-stars');
+const hCtx = heroCanvas.getContext('2d');
+function resizeHeroCanvas() {
+  const rect = heroCanvas.parentElement.getBoundingClientRect();
+  heroCanvas.width = rect.width;
+  heroCanvas.height = rect.height || 500;
+  drawHeroStars();
+}
+function drawHeroStars() {
+  hCtx.clearRect(0,0,heroCanvas.width,heroCanvas.height);
+  for (let i=0; i<120; i++) {
+    const x=Math.random()*heroCanvas.width, y=Math.random()*heroCanvas.height;
+    const r=Math.random()*1.4+0.2, op=Math.random()*0.5+0.1;
+    hCtx.beginPath(); hCtx.arc(x,y,r,0,Math.PI*2);
+    hCtx.fillStyle=`rgba(255,255,255,${op})`; hCtx.fill();
+  }
+  const grd = hCtx.createRadialGradient(heroCanvas.width/2, heroCanvas.height*0.6, 0, heroCanvas.width/2, heroCanvas.height*0.6, heroCanvas.width*0.5);
+  grd.addColorStop(0,'rgba(83,74,183,0.12)');
+  grd.addColorStop(1,'rgba(0,0,0,0)');
+  hCtx.fillStyle = grd;
+  hCtx.fillRect(0,0,heroCanvas.width,heroCanvas.height);
+}
+setTimeout(resizeHeroCanvas, 100);
+window.addEventListener('resize', resizeHeroCanvas);
+</script>
+
+</body>
+</html>
