@@ -12,8 +12,30 @@
   <meta name="twitter:card"       content="summary_large_image">
   <link rel="icon" href="assets/img/profile.jpg" type="image/jpeg">
   <link rel="stylesheet" href="css/style.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "Dr. Tertsegha Joseph Anande",
+    "honorificPrefix": "Dr.",
+    "jobTitle": "Lecturer in Computing, Deputy Programme Leader",
+    "affiliation": { "@type": "Organization", "name": "QAHE Limited / Ulster University" },
+    "url": "https://tertsegha1.github.io",
+    "email": "tertseghaanande@gmail.com",
+    "sameAs": [
+      "https://github.com/Tertsegha1",
+      "https://www.linkedin.com/in/tertsegha-anande-phd-msc-mbcs-afhea-71939520a/"
+    ],
+    "knowsAbout": ["Machine Learning", "AutoML", "Ensemble Learning", "Cyber-Physical Security", "Higher Education"],
+    "alumniOf": [
+      { "@type": "Organization", "name": "Ulster University" }
+    ],
+    "address": { "@type": "PostalAddress", "addressLocality": "Birmingham", "addressCountry": "GB" }
+  }
+  </script>
 </head>
 <body>
+<div id="scroll-progress"></div>
 
 <!-- ── Navigation ─────────────────────────────────────── -->
 <nav>
@@ -28,7 +50,9 @@
     <li><a href="#teaching">Teaching</a></li>
     <li><a href="#certifications">Certifications</a></li>
     <li><a href="#contact">Contact</a></li>
+    <li><a href="#booking">Book Meeting</a></li>
   </ul>
+  <button id="dark-toggle" class="dark-toggle" aria-label="Switch to dark mode">☾</button>
   <div class="nav-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')">
     <span></span><span></span><span></span>
   </div>
@@ -36,6 +60,7 @@
 
 <!-- ── Hero ───────────────────────────────────────────── -->
 <section id="hero">
+  <canvas id="hero-canvas"></canvas>
   <div class="hero-inner">
     <div class="hero-text">
       <p class="tag" id="hero-credentials"></p>
@@ -124,17 +149,27 @@
     <h2 class="st">Publications</h2>
     <div class="sline"></div>
 
-    <h3 class="st2">Journal Articles</h3>
-    <div class="pub-list" id="pub-journal"></div>
+    <div class="pub-filters" id="pub-filters"></div>
 
-    <h3 class="st2">Conference Papers</h3>
-    <div class="pub-list" id="pub-conf"></div>
+    <div class="pub-section" data-type="journal">
+      <h3 class="st2">Journal Articles</h3>
+      <div class="pub-list" id="pub-journal"></div>
+    </div>
 
-    <h3 class="st2">Book Chapter</h3>
-    <div class="pub-list" id="pub-book"></div>
+    <div class="pub-section" data-type="conference">
+      <h3 class="st2">Conference Papers</h3>
+      <div class="pub-list" id="pub-conf"></div>
+    </div>
 
-    <h3 class="st2">In Preparation</h3>
-    <div class="pub-list" id="pub-prep"></div>
+    <div class="pub-section" data-type="book">
+      <h3 class="st2">Book Chapter</h3>
+      <div class="pub-list" id="pub-book"></div>
+    </div>
+
+    <div class="pub-section" data-type="prep">
+      <h3 class="st2">In Preparation</h3>
+      <div class="pub-list" id="pub-prep"></div>
+    </div>
 
     <p class="pub-more">Full list of 14+ peer-reviewed papers and conference articles available on request.</p>
   </div>
@@ -195,7 +230,59 @@
   </div>
 </section>
 
+<!-- ── Book a Meeting ──────────────────────────────────── -->
+<section id="booking">
+  <div class="container fade-in">
+    <p class="sl">Collaborate &amp; Connect</p>
+    <h2 class="st">Book a Meeting</h2>
+    <div class="sline"></div>
+    <div class="booking-grid">
+      <div class="booking-card">
+        <div class="booking-icon">📅</div>
+        <h3>Research Collaboration</h3>
+        <p>Interested in joint research in ML, AutoML, or Cyber Security? Let's talk.</p>
+      </div>
+      <div class="booking-card">
+        <div class="booking-icon">🎤</div>
+        <h3>Speaking &amp; Keynotes</h3>
+        <p>Available for academic conferences, industry panels, and guest lectures.</p>
+      </div>
+      <div class="booking-card">
+        <div class="booking-icon">💼</div>
+        <h3>Industry Consultancy</h3>
+        <p>ML/AI system design, model deployment, and cyber-physical security advisory.</p>
+      </div>
+    </div>
+
+    <div id="calendly-wrapper" class="calendly-wrapper"></div>
+
+    <form id="booking-form" class="booking-form">
+      <h3 style="margin-bottom:1rem;">Send an Enquiry</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="b-name">Your Name</label>
+          <input id="b-name" name="name" type="text" placeholder="Dr. Jane Smith" required>
+        </div>
+        <div class="form-group">
+          <label for="b-email">Email Address</label>
+          <input id="b-email" name="email" type="email" placeholder="jane@example.com" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="b-subject">Subject</label>
+        <input id="b-subject" name="subject" type="text" placeholder="Research collaboration enquiry" required>
+      </div>
+      <div class="form-group">
+        <label for="b-message">Message</label>
+        <textarea id="b-message" name="message" rows="5" placeholder="Tell me about your project or interest..." required></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary">&#9993; Send Message</button>
+    </form>
+  </div>
+</section>
+
 <!-- ── Footer ─────────────────────────────────────────── -->
+<button id="back-to-top" aria-label="Back to top">&#8679;</button>
 <footer>
   <p>&copy; 2026 Dr. Tertsegha Joseph Anande &bull; PhD, FHEA, MBCS &bull; Birmingham, UK</p>
 </footer>

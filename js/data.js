@@ -10,13 +10,21 @@ const DATA = {
   /* ── Personal ─────────────────────────────────────────── */
   personal: {
     name:       'Dr. Tertsegha Joseph Anande',
-    credentials:'PhD · AFHEA · MBCS',
+    credentials:'PhD · FHEA · MBCS',
     title:      'Deputy Programme Leader · Lecturer in Computing · ML Researcher',
     location:   'Birmingham, UK',
     email:      'tertseghaanande@gmail.com',
     github:     'https://github.com/Tertsegha1',
     linkedin:   'https://www.linkedin.com/in/tertsegha-anande-phd-msc-mbcs-afhea-71939520a/',
     latestPub:  'https://doi.org/10.1007/s42979-024-03544-3',
+    // ── Booking config ──────────────────────────────────────
+    // Set your Calendly URL to enable the inline scheduling widget.
+    // Leave empty ('') to show the inquiry form only.
+    // Example: 'https://calendly.com/tertsegha-anande'
+    calendlyUrl: '',
+    // Sign up free at formspree.io → New Form → copy the form ID here.
+    // Leave empty ('') to use the mailto: fallback instead.
+    formspreeId: '',
     bio: `PhD-trained engineer and computing lecturer with 10+ years of combined experience
 in software engineering, applied machine learning, and higher education. Currently leading
 MSc Computing programmes at QAHE / Ulster University, Birmingham, driving student success
@@ -28,7 +36,7 @@ through innovative AI-powered tools and structured pedagogical frameworks.`,
       { num: '98%', label: 'CMP701 Pass Rate' },
       { num: '3',   label: 'Live Projects'    },
     ],
-    memberships: ['BCS — MBCS', 'IET Member', 'IEEE & ComSoc', 'HEA — AFHEA', 'INSTICC'],
+    memberships: ['BCS — MBCS', 'IET Member', 'IEEE & ComSoc', 'HEA — FHEA', 'INSTICC'],
     education: [
       { degree: 'PhD, Engineering (Communication Systems)', institution: 'University of Warwick, UK' },
       { degree: 'MSc, Communication Systems',               institution: 'Swansea University, UK'   },
@@ -47,8 +55,8 @@ for high-stakes applications.`,
 assurance for MSc Computing programmes, lead three core modules, and have driven CMP701 student
 pass rates to <strong>98%+</strong> through the Digital Transformation Studio initiative and the
 AI-powered Automated Marking &amp; Grading System I designed and built.`,
-      `I am an active open-source contributor with production-grade projects on GitHub, an Associate
-Fellow of the Higher Education Academy (AFHEA), and a Member of the BCS, IET, and IEEE.`,
+      `I am an active open-source contributor with production-grade projects on GitHub, a Fellow
+of the Higher Education Academy (FHEA), and a Member of the BCS, IET, and IEEE.`,
     ],
   },
 
@@ -320,8 +328,9 @@ Fellow of the Higher Education Academy (AFHEA), and a Member of the BCS, IET, an
     },
     {
       icon: '🎓',
-      title: 'Associate Fellow of the Higher Education Academy',
-      desc:  'AFHEA — PR260825 — Advance HE',
+      title: 'Fellow of the Higher Education Academy',
+      desc:  'FHEA — PR336175 — Advance HE, May 2026',
+      highlight: true,
     },
     {
       icon: '🤖',
