@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Episode 02: What is AutoML? · Re-Inventing Myself</title>
+<meta name="description" content="What is Automated Machine Learning — and what does it mean to automate the best version of yourself? Episode 02 of Re-Inventing Myself by Dr. Tertsegha J. Anande.">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --deep:#050516;
+  --panel:#0F0F2E;
+  --panel2:#0B0B26;
+  --purple:#9490E8;
+  --purple-soft:#6560CC;
+  --teal:#6DD8B3;
+  --teal-dark:#25B585;
+  --amber:#F5A830;
+  --text:#F2F1FF;
+  --muted:#B0ADA6;
+  --dim:#8A8883;
+  --border:rgba(148,144,232,0.28);
+}
+html{scroll-behavior:smooth}
+body{
+  background:var(--deep);
+  background-image:
+    radial-gradient(ellipse 80% 40% at 20% 10%,rgba(101,96,204,0.18) 0%,transparent 70%),
+    radial-gradient(ellipse 60% 30% at 80% 5%,rgba(37,181,133,0.10) 0%,transparent 60%),
+    radial-gradient(ellipse 50% 50% at 50% 90%,rgba(101,96,204,0.08) 0%,transparent 70%);
+  color:var(--text);
+  font-family:Arial,sans-serif;
+  min-height:100vh;
+  line-height:1.6;
+}
+
+/* ── NAV ── */
+nav{
+  position:sticky;top:0;z-index:100;
+  background:rgba(5,5,22,0.95);
+  backdrop-filter:blur(8px);
+  border-bottom:0.5px solid var(--border);
+  padding:14px 32px;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;
+}
+.nav-brand{font-size:10px;letter-spacing:4px;color:var(--purple);text-transform:uppercase}
+.nav-links{display:flex;gap:20px}
+.nav-links a{font-size:11px;color:var(--muted);text-decoration:none;letter-spacing:1px;transition:color .2s}
+.nav-links a:hover{color:var(--text)}
+.nav-back{font-size:11px;color:var(--teal);border:0.5px solid rgba(109,216,179,0.4);border-radius:4px;padding:5px 12px;text-decoration:none;transition:border-color .2s}
+.nav-back:hover{border-color:var(--teal)}
+
+/* ── HERO ── */
+.hero{
+  position:relative;overflow:hidden;
+  padding:70px 32px 56px;
+  border-bottom:0.5px solid var(--border);
+}
+canvas#hero-c{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.hero-inner{position:relative;z-index:2;max-width:820px;margin:0 auto;text-align:center}
+.ep-pill{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(109,216,179,0.12);border:0.5px solid rgba(109,216,179,0.4);
+  border-radius:20px;padding:6px 16px;margin-bottom:24px;
+}
+.ep-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.6)}}
+.ep-text{font-size:10px;letter-spacing:3px;color:var(--teal);text-transform:uppercase}
+.hero h1{font-family:Georgia,serif;font-size:clamp(32px,5vw,60px);font-weight:700;color:var(--text);line-height:1.1;margin-bottom:12px}
+.hero h1 em{font-style:normal;color:var(--purple)}
+.hero-sub{font-size:12px;letter-spacing:4px;color:#AFA9EC;text-transform:uppercase;margin-bottom:24px}
+.hero-desc{font-size:16px;color:var(--muted);line-height:1.75;max-width:660px;margin:0 auto 32px}
+.progress-row{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+.prog-step{
+  display:flex;align-items:center;gap:6px;
+  font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.3);text-transform:uppercase;
+}
+.prog-step.done{color:var(--teal)}
+.prog-step.current{color:var(--purple)}
+.prog-num{
+  width:22px;height:22px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:700;border:0.5px solid;
+}
+.prog-step.done .prog-num{background:rgba(109,216,179,0.2);border-color:var(--teal);color:var(--teal)}
+.prog-step.current .prog-num{background:rgba(101,96,204,0.25);border-color:var(--purple);color:var(--purple)}
+.prog-step .prog-num{background:transparent;border-color:rgba(255,255,255,0.15);color:rgba(255,255,255,0.3)}
+.prog-divider{width:20px;height:0.5px;background:rgba(255,255,255,0.1)}
+
+/* ── SECTIONS ── */
+.section{max-width:860px;margin:0 auto;padding:56px 32px}
+.section-label{font-size:10px;letter-spacing:4px;color:var(--purple);text-transform:uppercase;margin-bottom:10px}
+.section h2{font-family:Georgia,serif;font-size:30px;color:var(--text);margin-bottom:20px;line-height:1.2}
+.divider{border:none;border-top:0.5px solid var(--border);margin:0}
+
+/* ── CONTENT CARD ── */
+.content-card{
+  background:var(--panel);border:0.5px solid var(--border);
+  border-radius:12px;padding:28px 32px;margin-bottom:20px;
+}
+.content-card p{font-size:15px;color:#D8D5CE;line-height:1.8;margin-bottom:14px}
+.content-card p:last-child{margin-bottom:0}
+.content-card h3{font-family:Georgia,serif;font-size:20px;color:var(--text);margin-bottom:12px}
+.highlight-box{
+  background:rgba(101,96,204,0.1);border-left:3px solid var(--purple);
+  border-radius:0 8px 8px 0;padding:16px 20px;margin:16px 0;
+  font-size:15px;color:#C8C5BE;line-height:1.7;font-style:italic;
+}
+.highlight-box.teal{background:rgba(37,181,133,0.1);border-color:var(--teal);color:#B8EDD9}
+.highlight-box.amber{background:rgba(245,168,48,0.1);border-color:var(--amber);color:#FFE0A0}
+
+/* ── DEFINITION BOX ── */
+.def-box{
+  background:#06061C;
+  background-image:radial-gradient(ellipse 70% 50% at 50% 50%,rgba(101,96,204,0.15) 0%,transparent 70%);
+  border:0.5px solid var(--border);border-radius:14px;padding:32px;
+  text-align:center;margin:24px 0;
+  box-shadow:0 0 40px rgba(101,96,204,0.12);
+}
+.def-word{font-family:Georgia,serif;font-size:42px;font-weight:700;color:var(--text);margin-bottom:8px}
+.def-word span{color:var(--purple)}
+.def-text{font-size:15px;color:var(--muted);line-height:1.7;max-width:600px;margin:0 auto}
+
+/* ── PIPELINE VISUAL ── */
+.pipeline-visual{display:flex;gap:0;margin:24px 0;overflow-x:auto;padding-bottom:4px}
+.pipe-node{
+  flex:1;min-width:90px;padding:16px 10px;text-align:center;
+  border-top:2px solid;border-bottom:2px solid;border-right:2px solid;
+  position:relative;background:var(--panel);
+  transition:background .2s,transform .2s;cursor:default;
+}
+.pipe-node:first-child{border-left:2px solid;border-radius:10px 0 0 10px}
+.pipe-node:last-child{border-radius:0 10px 10px 0}
+.pipe-node.p{border-color:rgba(148,144,232,0.4)}
+.pipe-node.t{border-color:rgba(109,216,179,0.4)}
+.pipe-node.a{border-color:rgba(245,168,48,0.4)}
+.pipe-node:hover{transform:translateY(-4px)}
+.pipe-node.p:hover{background:rgba(101,96,204,0.15)}
+.pipe-node.t:hover{background:rgba(37,181,133,0.12)}
+.pipe-node.a:hover{background:rgba(245,168,48,0.1)}
+.pipe-n{font-size:8px;letter-spacing:2px;margin-bottom:5px}
+.pipe-node.p .pipe-n{color:#6560CC}
+.pipe-node.t .pipe-n{color:#25B585}
+.pipe-node.a .pipe-n{color:#B87810}
+.pipe-title{font-size:10px;font-weight:700;color:var(--text);line-height:1.3}
+.pipe-arrow{
+  position:absolute;right:-10px;top:50%;transform:translateY(-50%);
+  font-size:12px;color:rgba(255,255,255,0.2);z-index:1;
+}
+.pipe-node:last-child .pipe-arrow{display:none}
+
+/* ── TASK SECTION ── */
+.task-section-header{
+  background:linear-gradient(135deg,#08082A 0%,#0D1040 100%);
+  border-top:0.5px solid var(--border);border-bottom:0.5px solid var(--border);
+  padding:40px 32px;text-align:center;
+}
+.task-section-header .label{font-size:10px;letter-spacing:4px;color:var(--amber);text-transform:uppercase;margin-bottom:10px}
+.task-section-header h2{font-family:Georgia,serif;font-size:32px;color:var(--text);margin-bottom:10px}
+.task-section-header p{font-size:14px;color:var(--muted);max-width:560px;margin:0 auto}
+
+/* ── TASK CARD ── */
+.task-card{
+  background:var(--panel);border:0.5px solid var(--border);
+  border-radius:14px;overflow:hidden;margin-bottom:20px;
+  transition:border-color .2s;
+}
+.task-card.completed{border-color:var(--teal)}
+.task-header{
+  padding:20px 24px;
+  display:flex;align-items:center;gap:16px;
+  border-bottom:0.5px solid var(--border);
+}
+.task-num{
+  width:36px;height:36px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;
+  background:rgba(245,168,48,0.15);border:0.5px solid rgba(245,168,48,0.4);color:var(--amber);
+}
+.task-card.completed .task-num{background:rgba(109,216,179,0.15);border-color:var(--teal);color:var(--teal)}
+.task-meta{flex:1}
+.task-label{font-size:9px;letter-spacing:3px;color:var(--amber);text-transform:uppercase;margin-bottom:3px}
+.task-card.completed .task-label{color:var(--teal)}
+.task-title{font-size:16px;font-weight:700;color:var(--text)}
+.task-badge{
+  font-size:9px;letter-spacing:1px;text-transform:uppercase;
+  padding:3px 10px;border-radius:10px;
+  background:rgba(245,168,48,0.1);border:0.5px solid rgba(245,168,48,0.3);color:var(--amber);
+}
+.task-badge.done{background:rgba(109,216,179,0.15);border-color:var(--teal);color:var(--teal)}
+.task-body{padding:24px}
+.task-body p{font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:16px}
+
+/* ── TASK 1: SELF ASSESSMENT ── */
+.assessment-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+@media(max-width:600px){.assessment-grid{grid-template-columns:1fr}}
+.assess-item{background:#0A0A24;border:0.5px solid var(--border);border-radius:10px;padding:16px}
+.assess-label{font-size:11px;color:var(--purple);margin-bottom:8px;font-weight:700}
+.assess-q{font-size:12px;color:#D8D5CE;margin-bottom:12px;line-height:1.5}
+.slider-row{display:flex;align-items:center;gap:10px}
+.slider-row input[type=range]{
+  flex:1;-webkit-appearance:none;height:4px;
+  background:rgba(148,144,232,0.2);border-radius:2px;outline:none;cursor:pointer;
+}
+.slider-row input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:14px;height:14px;border-radius:50%;
+  background:var(--purple);cursor:pointer;transition:transform .15s;
+}
+.slider-row input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.3)}
+.slider-val{font-size:14px;font-weight:700;color:var(--purple);min-width:20px;text-align:right}
+.assess-submit{
+  margin-top:16px;width:100%;padding:12px;
+  background:var(--purple-soft);color:#fff;border:none;border-radius:8px;
+  font-size:13px;font-weight:700;cursor:pointer;letter-spacing:1px;
+  transition:background .2s;
+}
+.assess-submit:hover{background:var(--purple)}
+.assess-result{
+  display:none;margin-top:16px;padding:16px;
+  background:rgba(101,96,204,0.1);border:0.5px solid var(--border);border-radius:8px;
+  font-size:13px;color:#C8C5BE;line-height:1.6;text-align:center;
+}
+
+/* ── TASK 2: DRAG TO MATCH ── */
+.match-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:600px){.match-grid{grid-template-columns:1fr}}
+.match-col-label{font-size:9px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:10px;text-align:center}
+.match-item{
+  background:#0A0A24;border:0.5px solid var(--border);border-radius:8px;
+  padding:12px 14px;font-size:13px;color:#D8D5CE;
+  cursor:grab;transition:border-color .2s,background .2s;
+  margin-bottom:8px;user-select:none;
+}
+.match-item:hover{border-color:var(--purple);background:rgba(101,96,204,0.1)}
+.match-item.dragging{opacity:.5;cursor:grabbing}
+.drop-zone{
+  background:#080820;border:0.5px dashed rgba(148,144,232,0.3);border-radius:8px;
+  padding:12px 14px;font-size:13px;color:rgba(255,255,255,0.3);
+  min-height:46px;margin-bottom:8px;transition:border-color .2s,background .2s;
+  display:flex;align-items:center;
+}
+.drop-zone.over{border-color:var(--purple);background:rgba(101,96,204,0.1);color:var(--purple)}
+.drop-zone.matched{border-color:var(--teal);background:rgba(37,181,133,0.1);color:var(--teal);border-style:solid}
+.drop-zone.wrong{border-color:#E74C3C;background:rgba(231,76,60,0.1);color:#E74C3C;border-style:solid}
+.match-check-btn{
+  width:100%;padding:11px;background:transparent;
+  border:0.5px solid var(--border);border-radius:8px;
+  font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;
+  transition:border-color .2s,color .2s;letter-spacing:1px;
+}
+.match-check-btn:hover{border-color:var(--purple);color:var(--text)}
+.match-result{display:none;margin-top:12px;padding:14px;text-align:center;border-radius:8px;font-size:14px;font-weight:700}
+.match-result.pass{background:rgba(37,181,133,0.12);border:0.5px solid var(--teal);color:var(--teal)}
+.match-result.partial{background:rgba(245,168,48,0.1);border:0.5px solid var(--amber);color:var(--amber)}
+
+/* ── TASK 3: REFLECTION ── */
+.reflection-area{
+  width:100%;min-height:120px;padding:16px;
+  background:#080820;border:0.5px solid var(--border);border-radius:10px;
+  color:var(--text);font-size:14px;font-family:Arial,sans-serif;line-height:1.7;
+  resize:vertical;outline:none;transition:border-color .2s;margin-bottom:12px;
+}
+.reflection-area:focus{border-color:var(--purple)}
+.reflection-area::placeholder{color:rgba(255,255,255,0.2);font-style:italic}
+.char-count{font-size:11px;color:var(--dim);text-align:right;margin-bottom:12px}
+.reflection-save{
+  padding:11px 24px;background:transparent;
+  border:0.5px solid var(--border);border-radius:8px;
+  font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;
+  transition:all .2s;letter-spacing:1px;
+}
+.reflection-save:hover{border-color:var(--teal);color:var(--teal)}
+.reflection-save.saved{border-color:var(--teal);color:var(--teal);background:rgba(37,181,133,0.1)}
+.saved-note{display:none;font-size:12px;color:var(--teal);margin-top:10px}
+
+/* ── TASK 4: COMMITMENT PICKER ── */
+.commit-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+@media(max-width:600px){.commit-options{grid-template-columns:1fr}}
+.commit-card{
+  background:#0A0A24;border:0.5px solid var(--border);border-radius:10px;
+  padding:16px;cursor:pointer;transition:all .2s;text-align:center;
+}
+.commit-card:hover{border-color:var(--purple);background:rgba(101,96,204,0.1)}
+.commit-card.selected{border-color:var(--teal);background:rgba(37,181,133,0.1)}
+.commit-icon{font-size:28px;margin-bottom:8px}
+.commit-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px}
+.commit-desc{font-size:11px;color:var(--muted);line-height:1.4}
+.commit-confirm{
+  width:100%;padding:13px;margin-top:4px;
+  background:rgba(37,181,133,0.12);border:0.5px solid var(--teal);border-radius:8px;
+  font-size:13px;font-weight:700;color:var(--teal);cursor:pointer;
+  transition:background .2s;letter-spacing:1px;display:none;
+}
+.commit-confirm:hover{background:rgba(37,181,133,0.22)}
+.commit-result{
+  display:none;margin-top:14px;padding:18px;text-align:center;
+  background:rgba(37,181,133,0.1);border:0.5px solid var(--teal);border-radius:10px;
+}
+.commit-result p{font-size:14px;color:#B8EDD9;line-height:1.6}
+.commit-result strong{color:var(--teal)}
+
+/* ── PROGRESS TRACKER ── */
+.progress-tracker{
+  position:fixed;right:24px;top:50%;transform:translateY(-50%);
+  display:flex;flex-direction:column;gap:8px;z-index:50;
+}
+@media(max-width:768px){.progress-tracker{display:none}}
+.pt-dot{
+  width:10px;height:10px;border-radius:50%;
+  border:1.5px solid rgba(148,144,232,0.3);background:transparent;
+  cursor:pointer;transition:all .2s;position:relative;
+}
+.pt-dot:hover{border-color:var(--purple)}
+.pt-dot.active{border-color:var(--purple);background:var(--purple)}
+.pt-dot.done{border-color:var(--teal);background:var(--teal)}
+.pt-dot .pt-tip{
+  position:absolute;right:18px;top:50%;transform:translateY(-50%);
+  background:rgba(15,15,46,0.95);border:0.5px solid var(--border);border-radius:6px;
+  padding:4px 10px;font-size:10px;color:var(--text);white-space:nowrap;
+  opacity:0;pointer-events:none;transition:opacity .2s;
+}
+.pt-dot:hover .pt-tip{opacity:1}
+
+/* ── EPISODE NAV ── */
+.ep-nav{
+  max-width:860px;margin:0 auto;padding:0 32px 60px;
+  display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;
+}
+.ep-nav-btn{
+  flex:1;min-width:200px;background:var(--panel);border:0.5px solid var(--border);
+  border-radius:12px;padding:20px 22px;text-decoration:none;transition:border-color .2s;
+}
+.ep-nav-btn:hover{border-color:var(--purple)}
+.ep-nav-dir{font-size:9px;letter-spacing:3px;color:var(--dim);text-transform:uppercase;margin-bottom:6px}
+.ep-nav-title{font-size:14px;font-weight:700;color:var(--text)}
+.ep-nav-sub{font-size:12px;color:var(--muted);margin-top:3px}
+.ep-nav-btn.next{text-align:right;border-color:rgba(109,216,179,0.25)}
+.ep-nav-btn.next:hover{border-color:var(--teal)}
+
+/* ── FOOTER ── */
+footer{
+  border-top:0.5px solid var(--border);padding:24px 32px;
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;
+}
+.footer-left{font-size:11px;color:var(--dim)}
+.footer-right{font-size:10px;color:var(--purple-soft);letter-spacing:2px;text-transform:uppercase}
+</style>
+</head>
+<body>
+
+<!-- PROGRESS TRACKER -->
+<nav class="progress-tracker" aria-label="Page sections">
+  <div class="pt-dot active" onclick="document.querySelector('#intro').scrollIntoView({behavior:'smooth'})" data-section="intro"><span class="pt-tip">Introduction</span></div>
+  <div class="pt-dot" onclick="document.querySelector('#what').scrollIntoView({behavior:'smooth'})" data-section="what"><span class="pt-tip">What is AutoML?</span></div>
+  <div class="pt-dot" onclick="document.querySelector('#how').scrollIntoView({behavior:'smooth'})" data-section="how"><span class="pt-tip">How it works</span></div>
+  <div class="pt-dot" onclick="document.querySelector('#life').scrollIntoView({behavior:'smooth'})" data-section="life"><span class="pt-tip">Life parallel</span></div>
+  <div class="pt-dot" onclick="document.querySelector('#tasks').scrollIntoView({behavior:'smooth'})" data-section="tasks"><span class="pt-tip">Your tasks</span></div>
+</nav>
+
+<!-- NAV -->
+<nav>
+  <span class="nav-brand">Re-Inventing Myself</span>
+  <div class="nav-links">
+    <a href="#what">Concept</a>
+    <a href="#how">How it works</a>
+    <a href="#life">Life parallel</a>
+    <a href="#tasks">Your tasks</a>
+  </div>
+  <a class="nav-back" href="reinventing-myself.html">← All Episodes</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="intro">
+  <canvas id="hero-c"></canvas>
+  <div class="hero-inner">
+    <div class="ep-pill">
+      <div class="ep-dot"></div>
+      <span class="ep-text">Episode 02 · Now Live</span>
+    </div>
+    <h1>What is <em>AutoML</em> —<br>and what does it mean to<br>automate <em>your best self?</em></h1>
+    <div class="hero-sub">Re-Inventing Myself · AutoML &amp; You</div>
+    <p class="hero-desc">Last week we introduced the framework. This week we go deeper — understanding what Automated Machine Learning actually is, and discovering what it means to build a system that works <em>for</em> you, even when you're not thinking about it.</p>
+    <div class="progress-row">
+      <div class="prog-step done"><div class="prog-num">1</div><span>Re-Introducing Me</span></div>
+      <div class="prog-divider"></div>
+      <div class="prog-step current"><div class="prog-num">2</div><span>What is AutoML?</span></div>
+      <div class="prog-divider"></div>
+      <div class="prog-step"><div class="prog-num">3</div><span>Data Ingestion</span></div>
+      <div class="prog-divider"></div>
+      <div class="prog-step"><div class="prog-num">4</div><span>Preprocessing</span></div>
+      <div class="prog-divider"></div>
+      <div class="prog-step"><div class="prog-num">···</div><span>More coming</span></div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- WHAT IS AUTOML -->
+<section class="section" id="what">
+  <div class="section-label">The Concept</div>
+  <h2>What is Automated Machine Learning?</h2>
+
+  <div class="def-box">
+    <div class="def-word">Auto<span>ML</span></div>
+    <div class="def-text">The process of <strong style="color:var(--text)">automating</strong> the end-to-end pipeline of applying machine learning to real-world problems — from raw data to a deployed, optimised model — with <strong style="color:var(--text)">minimal human intervention.</strong></div>
+  </div>
+
+  <div class="content-card">
+    <p>Before AutoML existed, building a machine learning model required a team of specialists. A data engineer to prepare the data. A feature engineer to extract meaningful signals. A data scientist to select and tune models. A software engineer to deploy them.</p>
+    <p>AutoML changed that. It created a <strong style="color:var(--text)">pipeline</strong> — a sequence of automated steps — that handles the most complex, time-consuming parts of this process. You feed it data. It figures out the rest.</p>
+    <div class="highlight-box">
+      "AutoML doesn't replace expertise. It <em>amplifies</em> it — freeing experts from repetitive decisions so they can focus on what matters most."
+    </div>
+    <p>This is the key insight. AutoML is not about shortcuts. It's about building <strong style="color:var(--text)">intelligent systems</strong> that do the heavy lifting — so you can operate at a higher level.</p>
+  </div>
+
+  <div class="content-card">
+    <h3>The AutoML Pipeline at a glance</h3>
+    <p style="margin-bottom:16px">Hover over each stage to explore what it does:</p>
+    <div class="pipeline-visual" id="pipeline">
+      <div class="pipe-node p" title="Collecting raw data from all sources">
+        <div class="pipe-n">01</div><div class="pipe-title">Data<br>Ingestion</div><div class="pipe-arrow">›</div>
+      </div>
+      <div class="pipe-node p" title="Cleaning, normalising, handling missing values">
+        <div class="pipe-n">02</div><div class="pipe-title">Pre-<br>processing</div><div class="pipe-arrow">›</div>
+      </div>
+      <div class="pipe-node p" title="Extracting the signals that predict good outcomes">
+        <div class="pipe-n">03</div><div class="pipe-title">Feature<br>Eng.</div><div class="pipe-arrow">›</div>
+      </div>
+      <div class="pipe-node t" title="Testing dozens of algorithms to find the best fit">
+        <div class="pipe-n">04</div><div class="pipe-title">Model<br>Selection</div><div class="pipe-arrow">›</div>
+      </div>
+      <div class="pipe-node t" title="Training on data and tuning hyperparameters">
+        <div class="pipe-n">05</div><div class="pipe-title">Training<br>&amp; Tuning</div><div class="pipe-arrow">›</div>
+      </div>
+      <div class="pipe-node t" title="Measuring real-world generalisation">
+        <div class="pipe-n">06</div><div class="pipe-title">Evalu-<br>ation</div><div class="pipe-arrow">›</div>
+      </div>
+      <div class="pipe-node a" title="Releasing the model into live conditions">
+        <div class="pipe-n">07</div><div class="pipe-title">Deploy-<br>ment</div><div class="pipe-arrow">›</div>
+      </div>
+      <div class="pipe-node a" title="Watching for drift and performance changes">
+        <div class="pipe-n">08</div><div class="pipe-title">Monitor-<br>ing</div><div class="pipe-arrow">›</div>
+      </div>
+      <div class="pipe-node a" title="Retraining on fresh data when performance drops">
+        <div class="pipe-n">09</div><div class="pipe-title">Re-opti-<br>misation</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- HOW IT WORKS -->
+<section class="section" id="how">
+  <div class="section-label">Under the hood</div>
+  <h2>How does AutoML actually work?</h2>
+
+  <div class="content-card">
+    <p>At its core, AutoML uses <strong style="color:var(--text)">search algorithms</strong> — often called hyperparameter optimisation — to explore a vast space of possible models and configurations. Think of it as running thousands of experiments simultaneously, each testing a slightly different approach, then intelligently narrowing down to what works best.</p>
+    <p>The most widely used AutoML systems — <strong style="color:var(--text)">Auto-sklearn, H2O AutoML, Google AutoML, TPOT, and AutoKeras</strong> — all follow this principle. They differ in which parts of the pipeline they automate and how they search the space.</p>
+    <div class="highlight-box teal">
+      The real breakthrough of AutoML was not speed. It was <em>democratisation</em>. Problems that previously required a PhD-level expert can now be explored by anyone with domain knowledge and clean data.
+    </div>
+    <p>This is where the human story begins. Because what AutoML did for machine learning, deliberate personal systems can do for your growth.</p>
+  </div>
+
+  <div class="content-card">
+    <h3>Why does this matter beyond machine learning?</h3>
+    <p>The reason AutoML was revolutionary is not the technology itself — it's the <strong style="color:var(--text)">principle behind it</strong>: build a system intelligent enough to optimise itself, so the human at the centre can focus on higher-level decisions.</p>
+    <p>What if you could apply that same principle to your life?</p>
+    <div class="highlight-box amber">
+      Most people are manually running every step of their own development pipeline — making the same decisions every day, starting from scratch every morning. AutoML says: <em>that's inefficient. Build the system. Let the system work.</em>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- LIFE PARALLEL -->
+<section class="section" id="life">
+  <div class="section-label">The Human Parallel</div>
+  <h2>Automating the best version of yourself</h2>
+
+  <div class="content-card">
+    <p>When I noticed the fire dimming — when I realised I was doing tomorrow what I did today — what I was actually experiencing was a <strong style="color:var(--text)">pipeline failure</strong>. The inputs were still coming in. Life experiences, responsibilities, daily routines. But the system that was supposed to process them into growth had stalled.</p>
+    <p>No preprocessing of what mattered. No feature engineering of my strengths. No model selection — no deliberate choice about who I wanted to become. Just raw data, unprocessed, piling up.</p>
+    <div class="highlight-box">
+      AutoML taught me this: the data was never the problem. The <em>pipeline</em> was.
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>What does "automating your best self" actually look like?</h3>
+    <p>It means building <strong style="color:var(--text)">systems</strong> — not just goals. Goals tell you where to go. Systems determine whether you get there.</p>
+    <p>A morning routine that runs without negotiation. A weekly review that catches drift before it becomes a gap. A learning habit that doesn't rely on motivation to activate. These are the automated layers of a high-performing human pipeline.</p>
+    <p>The goal of this series is to help you <strong style="color:var(--text)">design yours</strong> — one AutoML stage at a time, starting from the data you already have.</p>
+    <div class="highlight-box teal">
+      In life: AutoML is not about removing humanity from the process. It's about removing <em>friction</em> from growth — so the best version of you shows up consistently, not just when everything goes right.
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- TASKS -->
+<div class="task-section-header" id="tasks">
+  <div class="label">Interactive Tasks · Episode 02</div>
+  <h2>Your AutoML Exercises</h2>
+  <p>Complete all four tasks to build your personal AutoML baseline. Your responses are saved locally in your browser.</p>
+</div>
+
+<section class="section" style="padding-top:40px">
+
+  <!-- TASK 1: PIPELINE SELF-ASSESSMENT -->
+  <div class="task-card" id="task1-card">
+    <div class="task-header">
+      <div class="task-num" id="t1-num">1</div>
+      <div class="task-meta">
+        <div class="task-label">Task 01 · Self-Assessment</div>
+        <div class="task-title">Rate your personal pipeline</div>
+      </div>
+      <span class="task-badge" id="t1-badge">~3 min</span>
+    </div>
+    <div class="task-body">
+      <p>AutoML evaluates every stage of its pipeline. Now evaluate yours. For each life area below, rate how effectively you're currently running that stage on a scale of 1–10.</p>
+      <div class="assessment-grid">
+        <div class="assess-item">
+          <div class="assess-label">Stage 01 · Data Ingestion</div>
+          <div class="assess-q">How intentionally are you collecting new experiences and learning?</div>
+          <div class="slider-row"><input type="range" min="1" max="10" value="5" id="s1" oninput="document.getElementById('v1').textContent=this.value"><span class="slider-val" id="v1">5</span></div>
+        </div>
+        <div class="assess-item">
+          <div class="assess-label">Stage 02 · Preprocessing</div>
+          <div class="assess-q">How well do you process and reflect on your experiences?</div>
+          <div class="slider-row"><input type="range" min="1" max="10" value="5" id="s2" oninput="document.getElementById('v2').textContent=this.value"><span class="slider-val" id="v2">5</span></div>
+        </div>
+        <div class="assess-item">
+          <div class="assess-label">Stage 03 · Feature Engineering</div>
+          <div class="assess-q">How clearly do you know and use your unique strengths?</div>
+          <div class="slider-row"><input type="range" min="1" max="10" value="5" id="s3r" oninput="document.getElementById('v3').textContent=this.value"><span class="slider-val" id="v3">5</span></div>
+        </div>
+        <div class="assess-item">
+          <div class="assess-label">Stage 04 · Model Selection</div>
+          <div class="assess-q">How clear are you on who you want to become and why?</div>
+          <div class="slider-row"><input type="range" min="1" max="10" value="5" id="s4r" oninput="document.getElementById('v4').textContent=this.value"><span class="slider-val" id="v4">5</span></div>
+        </div>
+        <div class="assess-item">
+          <div class="assess-label">Stage 05 · Training &amp; Tuning</div>
+          <div class="assess-q">How consistently do you practise and improve deliberately?</div>
+          <div class="slider-row"><input type="range" min="1" max="10" value="5" id="s5r" oninput="document.getElementById('v5').textContent=this.value"><span class="slider-val" id="v5">5</span></div>
+        </div>
+        <div class="assess-item">
+          <div class="assess-label">Stage 06–09 · Deploy &amp; Evolve</div>
+          <div class="assess-q">How well do you show up, stay accountable, and keep evolving?</div>
+          <div class="slider-row"><input type="range" min="1" max="10" value="5" id="s6r" oninput="document.getElementById('v6').textContent=this.value"><span class="slider-val" id="v6">5</span></div>
+        </div>
+      </div>
+      <button class="assess-submit" onclick="runAssessment()">Calculate my pipeline score →</button>
+      <div class="assess-result" id="assess-result"></div>
+    </div>
+  </div>
+
+  <!-- TASK 2: MATCH THE CONCEPT -->
+  <div class="task-card" id="task2-card">
+    <div class="task-header">
+      <div class="task-num" id="t2-num">2</div>
+      <div class="task-meta">
+        <div class="task-label">Task 02 · Concept Check</div>
+        <div class="task-title">Match the AutoML stage to its life meaning</div>
+      </div>
+      <span class="task-badge" id="t2-badge">~2 min</span>
+    </div>
+    <div class="task-body">
+      <p>Drag each AutoML stage on the left to its matching real-life parallel on the right. This tests whether the framework is sticking.</p>
+      <div class="match-grid">
+        <div>
+          <div class="match-col-label">AutoML Stage</div>
+          <div class="match-item" draggable="true" data-key="preprocess" id="drag-pre" ondragstart="dragStart(event)">🔧 Preprocessing</div>
+          <div class="match-item" draggable="true" data-key="deploy" id="drag-dep" ondragstart="dragStart(event)">🚀 Deployment</div>
+          <div class="match-item" draggable="true" data-key="monitor" id="drag-mon" ondragstart="dragStart(event)">📡 Monitoring</div>
+          <div class="match-item" draggable="true" data-key="feature" id="drag-fea" ondragstart="dragStart(event)">⚙️ Feature Engineering</div>
+        </div>
+        <div>
+          <div class="match-col-label">Life Parallel</div>
+          <div class="drop-zone" data-answer="feature" ondragover="dragOver(event)" ondrop="drop(event)" ondragleave="dragLeave(event)">Knowing your unique strengths and values</div>
+          <div class="drop-zone" data-answer="preprocess" ondragover="dragOver(event)" ondrop="drop(event)" ondragleave="dragLeave(event)">Letting go of limiting beliefs</div>
+          <div class="drop-zone" data-answer="deploy" ondragover="dragOver(event)" ondrop="drop(event)" ondragleave="dragLeave(event)">Stepping out as the new you</div>
+          <div class="drop-zone" data-answer="monitor" ondragover="dragOver(event)" ondrop="drop(event)" ondragleave="dragLeave(event)">Staying accountable to your goals</div>
+        </div>
+      </div>
+      <button class="match-check-btn" onclick="checkMatch()">Check my answers →</button>
+      <div class="match-result" id="match-result"></div>
+    </div>
+  </div>
+
+  <!-- TASK 3: REFLECTION -->
+  <div class="task-card" id="task3-card">
+    <div class="task-header">
+      <div class="task-num" id="t3-num">3</div>
+      <div class="task-meta">
+        <div class="task-label">Task 03 · Personal Reflection</div>
+        <div class="task-title">Where is your pipeline breaking down?</div>
+      </div>
+      <span class="task-badge" id="t3-badge">~5 min</span>
+    </div>
+    <div class="task-body">
+      <p>Based on your self-assessment score, identify the one stage of your personal pipeline that needs the most attention right now. Write a short reflection — what's happening at that stage, and what would it look like if it were working well?</p>
+      <textarea class="reflection-area" id="reflection-text" placeholder="e.g. My weakest stage is Preprocessing. I collect a lot of experiences but rarely take time to reflect on them or extract lessons. If this were working well, I would spend 10 minutes each evening reviewing what I learned that day..." oninput="updateCharCount()" maxlength="800"></textarea>
+      <div class="char-count"><span id="char-count">0</span> / 800 characters</div>
+      <button class="reflection-save" id="save-btn" onclick="saveReflection()">Save my reflection</button>
+      <div class="saved-note" id="saved-note">✓ Saved to your browser. Come back and update it any time.</div>
+    </div>
+  </div>
+
+  <!-- TASK 4: COMMITMENT -->
+  <div class="task-card" id="task4-card">
+    <div class="task-header">
+      <div class="task-num" id="t4-num">4</div>
+      <div class="task-meta">
+        <div class="task-label">Task 04 · This Week's Commitment</div>
+        <div class="task-title">Choose one thing to automate</div>
+      </div>
+      <span class="task-badge" id="t4-badge">~1 min</span>
+    </div>
+    <div class="task-body">
+      <p>AutoML builds automated systems one step at a time. This week, choose one small thing you will make automatic — one habit, routine, or system that will run without you having to think about it.</p>
+      <div class="commit-options">
+        <div class="commit-card" onclick="selectCommit(this,'morning')" data-val="morning">
+          <div class="commit-icon">🌅</div>
+          <div class="commit-title">Morning Routine</div>
+          <div class="commit-desc">A fixed sequence of actions before the day begins — no negotiation</div>
+        </div>
+        <div class="commit-card" onclick="selectCommit(this,'review')" data-val="review">
+          <div class="commit-icon">📋</div>
+          <div class="commit-title">Weekly Review</div>
+          <div class="commit-desc">30 minutes every Sunday to review your week and set next priorities</div>
+        </div>
+        <div class="commit-card" onclick="selectCommit(this,'learn')" data-val="learn">
+          <div class="commit-icon">📚</div>
+          <div class="commit-title">Daily Learning Block</div>
+          <div class="commit-desc">15–30 minutes of deliberate learning — same time, every day</div>
+        </div>
+        <div class="commit-card" onclick="selectCommit(this,'reflect')" data-val="reflect">
+          <div class="commit-icon">🪞</div>
+          <div class="commit-title">Evening Reflection</div>
+          <div class="commit-desc">10 minutes before sleep: what went well, what to adjust tomorrow</div>
+        </div>
+      </div>
+      <button class="commit-confirm" id="commit-btn" onclick="confirmCommit()">I commit to this system →</button>
+      <div class="commit-result" id="commit-result">
+        <p><strong>Committed.</strong><br>Your pipeline is now running. Come back next week and tell us: did the system hold?<br><br>Share your commitment below using <strong style="color:var(--teal)">#ReInventingMyself</strong> — accountability is the best monitor.</p>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<hr class="divider">
+
+<!-- EPISODE NAV -->
+<div class="ep-nav">
+  <a class="ep-nav-btn" href="reinventing-myself.html">
+    <div class="ep-nav-dir">← Previous</div>
+    <div class="ep-nav-title">Episode 01</div>
+    <div class="ep-nav-sub">Re-Introducing Me</div>
+  </a>
+  <a class="ep-nav-btn next" href="reinventing-myself.html#episodes">
+    <div class="ep-nav-dir">Next →</div>
+    <div class="ep-nav-title">Episode 03</div>
+    <div class="ep-nav-sub">Data Ingestion · Coming next week</div>
+  </a>
+</div>
+
+<footer>
+  <div class="footer-left">© 2026 Dr. Tertsegha J. Anande · drtertseghaanande.com</div>
+  <div class="footer-right">#ReInventingMyself · #AutoML</div>
+</footer>
+
+<script>
+// ── HERO STARS ──
+const hc = document.getElementById('hero-c');
+const hx = hc.getContext('2d');
+function resizeHero(){
+  const r = hc.parentElement.getBoundingClientRect();
+  hc.width = r.width; hc.height = r.height || 480; drawHeroStars();
+}
+function drawHeroStars(){
+  hx.clearRect(0,0,hc.width,hc.height);
+  for(let i=0;i<100;i++){
+    const x=Math.random()*hc.width,y=Math.random()*hc.height,r=Math.random()*1.3+0.2,o=Math.random()*0.5+0.1;
+    hx.beginPath();hx.arc(x,y,r,0,Math.PI*2);hx.fillStyle=`rgba(255,255,255,${o})`;hx.fill();
+  }
+  const g=hx.createRadialGradient(hc.width/2,hc.height*.6,0,hc.width/2,hc.height*.6,hc.width*.5);
+  g.addColorStop(0,'rgba(83,74,183,0.14)');g.addColorStop(1,'rgba(0,0,0,0)');
+  hx.fillStyle=g;hx.fillRect(0,0,hc.width,hc.height);
+}
+setTimeout(resizeHero,100);window.addEventListener('resize',resizeHero);
+
+// ── PROGRESS TRACKER ──
+const sections=['intro','what','how','life','tasks'];
+const dots=document.querySelectorAll('.pt-dot');
+function updateTracker(){
+  let current=0;
+  sections.forEach((id,i)=>{
+    const el=document.getElementById(id);
+    if(el&&el.getBoundingClientRect().top<window.innerHeight*0.5)current=i;
+  });
+  dots.forEach((d,i)=>{
+    d.classList.toggle('active',i===current);
+    d.classList.toggle('done',i<current);
+  });
+}
+window.addEventListener('scroll',updateTracker,{passive:true});
+
+// ── TASK 1: ASSESSMENT ──
+function runAssessment(){
+  const vals=[
+    parseInt(document.getElementById('s1').value),
+    parseInt(document.getElementById('s2').value),
+    parseInt(document.getElementById('s3r').value),
+    parseInt(document.getElementById('s4r').value),
+    parseInt(document.getElementById('s5r').value),
+    parseInt(document.getElementById('s6r').value),
+  ];
+  const avg=(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1);
+  const min=Math.min(...vals);
+  const stageNames=['Data Ingestion','Preprocessing','Feature Engineering','Model Selection','Training & Tuning','Deploy & Evolve'];
+  const weakest=stageNames[vals.indexOf(min)];
+  let msg='';
+  if(avg>=8)msg=`Strong pipeline — your average score is ${avg}/10. Your foundation is solid. Now focus on precision: which stage can move from great to exceptional?`;
+  else if(avg>=6)msg=`Developing pipeline — your average score is ${avg}/10. You have momentum. Your weakest stage is <strong style="color:var(--amber)">${weakest}</strong>. That's where this series will help most.`;
+  else if(avg>=4)msg=`Pipeline under construction — your average score is ${avg}/10. This is exactly why you're here. Your weakest stage is <strong style="color:var(--amber)">${weakest}</strong>. We'll rebuild it together, one episode at a time.`;
+  else msg=`Pipeline reset needed — your average score is ${avg}/10. The fact that you're honest about it is the first and hardest step. Your weakest stage is <strong style="color:var(--amber)">${weakest}</strong>. Start there. That's Episode 3.`;
+
+  const res=document.getElementById('assess-result');
+  res.innerHTML=`<div style="font-size:28px;font-weight:700;color:var(--purple);margin-bottom:8px">${avg}<span style="font-size:14px;color:var(--muted)">/10</span></div>${msg}`;
+  res.style.display='block';
+  localStorage.setItem('rim_ep02_score',avg);
+  localStorage.setItem('rim_ep02_weakest',weakest);
+  markComplete('task1-card','t1-num','t1-badge');
+}
+
+// ── TASK 2: DRAG & DROP ──
+let dragKey=null;
+function dragStart(e){dragKey=e.target.dataset.key;e.target.classList.add('dragging')}
+document.addEventListener('dragend',e=>e.target.classList.remove('dragging'));
+function dragOver(e){e.preventDefault();e.currentTarget.classList.add('over')}
+function dragLeave(e){e.currentTarget.classList.remove('over')}
+function drop(e){
+  e.preventDefault();
+  const zone=e.currentTarget;
+  zone.classList.remove('over');
+  zone.dataset.dropped=dragKey;
+  const labels={'preprocess':'🔧 Preprocessing','deploy':'🚀 Deployment','monitor':'📡 Monitoring','feature':'⚙️ Feature Engineering'};
+  zone.textContent=labels[dragKey]||dragKey;
+  zone.style.color='var(--text)';
+  dragKey=null;
+}
+function checkMatch(){
+  const zones=document.querySelectorAll('.drop-zone');
+  let correct=0;
+  zones.forEach(z=>{
+    z.classList.remove('matched','wrong');
+    if(z.dataset.dropped===z.dataset.answer){z.classList.add('matched');correct++;}
+    else if(z.dataset.dropped){z.classList.add('wrong');}
+  });
+  const res=document.getElementById('match-result');
+  if(correct===4){
+    res.className='match-result pass';
+    res.textContent=`✓ Perfect — all 4 matched! The framework is beginning to stick.`;
+    markComplete('task2-card','t2-num','t2-badge');
+  }else{
+    res.className='match-result partial';
+    res.textContent=`${correct}/4 correct. The wrong ones are highlighted — try swapping them.`;
+  }
+  res.style.display='block';
+}
+
+// ── TASK 3: REFLECTION ──
+function updateCharCount(){
+  const t=document.getElementById('reflection-text');
+  document.getElementById('char-count').textContent=t.value.length;
+}
+function saveReflection(){
+  const text=document.getElementById('reflection-text').value.trim();
+  if(!text)return;
+  localStorage.setItem('rim_ep02_reflection',text);
+  const btn=document.getElementById('save-btn');
+  btn.textContent='✓ Saved'; btn.classList.add('saved');
+  document.getElementById('saved-note').style.display='block';
+  markComplete('task3-card','t3-num','t3-badge');
+}
+// Restore saved reflection
+const saved=localStorage.getItem('rim_ep02_reflection');
+if(saved){
+  document.getElementById('reflection-text').value=saved;
+  updateCharCount();
+}
+
+// ── TASK 4: COMMITMENT ──
+let selectedCommit=null;
+function selectCommit(el,val){
+  document.querySelectorAll('.commit-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');selectedCommit=val;
+  document.getElementById('commit-btn').style.display='block';
+}
+function confirmCommit(){
+  if(!selectedCommit)return;
+  localStorage.setItem('rim_ep02_commit',selectedCommit);
+  document.getElementById('commit-result').style.display='block';
+  document.getElementById('commit-btn').style.display='none';
+  markComplete('task4-card','t4-num','t4-badge');
+}
+
+// ── MARK TASK COMPLETE ──
+function markComplete(cardId,numId,badgeId){
+  const card=document.getElementById(cardId);
+  const num=document.getElementById(numId);
+  const badge=document.getElementById(badgeId);
+  if(card)card.classList.add('completed');
+  if(num)num.textContent='✓';
+  if(badge){badge.textContent='Done';badge.classList.add('done');}
+}
+
+// Restore completed state from localStorage
+window.addEventListener('load',()=>{
+  if(localStorage.getItem('rim_ep02_score'))markComplete('task1-card','t1-num','t1-badge');
+  if(localStorage.getItem('rim_ep02_reflection'))markComplete('task3-card','t3-num','t3-badge');
+  if(localStorage.getItem('rim_ep02_commit'))markComplete('task4-card','t4-num','t4-badge');
+});
+</script>
+</body>
+</html>

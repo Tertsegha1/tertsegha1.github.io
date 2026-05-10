@@ -458,6 +458,25 @@ section { padding: 5rem 2rem; }
   font-size: 0.6rem; text-align: center; color: rgba(148,144,232,0.5); letter-spacing: 1px;
 }
 
+/* ---------- Repo Access Request ---------- */
+.repo-access-card {
+  display: flex; align-items: flex-start; gap: 1rem;
+  margin-top: 1.4rem; padding: 1.1rem 1.3rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius); border-left: 3px solid var(--accent);
+}
+.repo-access-icon { font-size: 1.4rem; flex-shrink: 0; margin-top: 2px; }
+.repo-access-title { font-size: 0.88rem; font-weight: 700; color: var(--white); margin-bottom: 0.4rem; }
+.repo-access-desc { font-size: 0.78rem; color: rgba(255,255,255,0.55); line-height: 1.65; margin-bottom: 0.75rem; }
+.repo-access-btn {
+  display: inline-block; font-size: 0.78rem; font-weight: 700;
+  padding: 7px 16px; border-radius: var(--radius-sm);
+  background: var(--accent); color: var(--navy);
+  text-decoration: none; letter-spacing: 0.3px; transition: opacity .2s;
+}
+.repo-access-btn:hover { opacity: 0.85; }
+
 /* ---------- Footer ---------- */
 footer { background: #0a1a38; color: rgba(255,255,255,0.35); text-align: center; padding: 1.4rem; font-size: 0.76rem; border-top: 1px solid rgba(255,255,255,0.06); }
 
