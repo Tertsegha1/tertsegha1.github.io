@@ -156,7 +156,7 @@ of the Higher Education Academy (FHEA), and a Member of the BCS, IET, and IEEE.`
       title: 'MoSELA AutoML — General-Purpose Tabular AutoML Framework',
       desc:  'Modular, production-grade AutoML framework implementing the MoSELA staged pipeline: Profile → Preprocess → Coarse Search (Optuna) → Refinement → Champion Selection → Bundle → REST Serve (FastAPI). Features structural, semantic, and correlation-based leakage auditing; family-aware preprocessing; cost-aware multi-objective champion selection; MLflow integration; Docker support.',
       tech:  ['Python','scikit-learn','Optuna','XGBoost','LightGBM','FastAPI','Docker','MLflow'],
-      links: [{ label: '🔗 GitHub', url: 'https://github.com/Tertsegha1/mosela-automl' }],
+      links: [{ label: '🔒 Request Access', url: '#contact' }],
     },
     {
       icon:  '🎓',
@@ -194,7 +194,7 @@ of the Higher Education Academy (FHEA), and a Member of the BCS, IET, and IEEE.`
       title: 'THA-AutoML — Trustworthy AutoML for Health Tabular Data',
       desc:  'Research-grade AutoML framework for health-oriented tabular classification with leakage auditing, fold-safe preprocessing, repeated cross-validation benchmarking, Optuna-based hyperparameter optimisation, and cost-aware model selection. Produces reproducible benchmark artefacts, publication-ready reports, and deployment-ready model outputs.',
       tech:  ['Python','scikit-learn','Optuna','XGBoost','LightGBM','pandas'],
-      links: [{ label: '🔗 GitHub', url: 'https://github.com/Tertsegha1/tha-automl' }],
+      links: [{ label: '🔒 Request Access', url: '#contact' }],
     },
     {
       icon:  '📈',
