@@ -34,7 +34,7 @@ through innovative AI-powered tools and structured pedagogical frameworks.`,
       { num: '10+', label: 'Years Experience' },
       { num: '14+', label: 'Publications'     },
       { num: '98%', label: 'CMP701 Pass Rate' },
-      { num: '3',   label: 'Live Projects'    },
+      { num: '5+',  label: 'EdTech Projects'   },
     ],
     memberships: ['BCS — MBCS', 'IET Member', 'IEEE & ComSoc', 'HEA — FHEA', 'INSTICC'],
     education: [
@@ -160,13 +160,32 @@ of the Higher Education Academy (FHEA), and a Member of the BCS, IET, and IEEE.`
     },
     {
       icon:  '🏫',
-      badge: 'Live',
+      badge: 'Private · EdTech',
       title: 'Automated Marking & Grading System',
       desc:  'Browser-based AI-powered automated marking tool for Digital Transformation (MSc). Supports CW1 (Video Presentation), CW2 (Written Report), and DT Studio Guild Quest verification. Integrates Cloudflare Workers AI (Llama 3.3 70B) for rubric-driven grading and Whisper for video transcription. Role-based access, AI-generation detection, in-browser file extraction — zero server cost. Directly contributed to <strong>98%+ pass rate</strong> (2025–26 cohort).',
       tech:  ['HTML/CSS/JS','Cloudflare Workers AI','Llama 3.3 70B','Whisper AI','PDF.js','GitHub Pages'],
       links: [
-        { label: '🔗 GitHub',    url: 'https://github.com/Tertsegha1/cmp701-grading-system' },
-        { label: '🌐 Live Demo', url: 'https://tertsegha1.github.io/cmp701-grading-system'  },
+        { label: '🔒 Request Access', url: '#contact' },
+      ],
+    },
+    {
+      icon:  '🎓',
+      badge: 'Private · EdTech',
+      title: 'CMP701 Digital Transformation Studio',
+      desc:  'Full-lifecycle studio management system for the CMP701 Digital Transformation module — deployed across London, Birmingham, and Manchester campuses. Manages cohort setup, guild formation, weekly quest publishing, artefact submission, peer review, and AI-powered formative feedback. Student portal, lecturer view, and module-leader admin are role-gated. All data syncs live via Firebase Realtime Database; zero server cost. Integrates Claude API for per-submission feedback including an AI-writing estimate to guide students before Turnitin submission.',
+      tech:  ['Vanilla JS','Firebase','HTML/CSS','Claude API','GitHub Pages'],
+      links: [
+        { label: '🔒 Request Access', url: '#contact' },
+      ],
+    },
+    {
+      icon:  '📋',
+      badge: 'Private · EdTech',
+      title: 'CMP701 Marking Tracker',
+      desc:  'Live marking-coordination tool for CMP701 across all campuses. Markers sign in by name; the module leader uses a PIN-protected admin view. KPI dashboard tracks allocation, completion, and non-submissions in real time. Supports per-cohort CSV import, role-based access (module leader / marker), inline status and notes editing, and one-click CSV export for board reporting. Firebase-backed with offline localStorage fallback — changes sync the moment connectivity resumes.',
+      tech:  ['Vanilla JS','Firebase','HTML/CSS','GitHub Pages'],
+      links: [
+        { label: '🔒 Request Access', url: '#contact' },
       ],
     },
     {
