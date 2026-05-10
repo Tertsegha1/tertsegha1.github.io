@@ -16,6 +16,7 @@ const DATA = {
     email:      'tertseghaanande@gmail.com',
     github:     'https://github.com/Tertsegha1',
     linkedin:   'https://www.linkedin.com/in/tertsegha-anande-phd-msc-mbcs-afhea-71939520a/',
+    scholar:    'https://scholar.google.com/citations?user=J5pMcosAAAAJ&hl=en',
     latestPub:  'https://doi.org/10.1007/s42979-024-03544-3',
     // ── Booking config ──────────────────────────────────────
     // Set your Calendly URL to enable the inline scheduling widget.
@@ -226,9 +227,9 @@ of the Higher Education Academy (FHEA), and a Member of the BCS, IET, and IEEE.`
   publications: {
     journal: [
       {
-        year:    '2025 — SN Computer Science',
+        year:    '2024 — SN Computer Science, 6(1), 12',
         title:   'Enhanced Modelling Performance with Boosting Ensemble Meta-Learning and Optuna Optimization',
-        authors: 'Anande, T., Alsaadi, S., & Leeson, M. (2025)',
+        authors: 'Anande, T., Alsaadi, S., & Leeson, M. (2024)',
         venue:   '<a href="https://doi.org/10.1007/s42979-024-03544-3" target="_blank">doi.org/10.1007/s42979-024-03544-3</a>',
       },
       {
@@ -251,6 +252,33 @@ of the Higher Education Academy (FHEA), and a Member of the BCS, IET, and IEEE.`
         year:    '2016 — IJAIS, 10(10)',
         title:   'Design and Development of a Diabetes Management App on Android',
         authors: 'Anande, T.J., Al-Shehri, S., Genger, T.K. (2016)',
+      },
+      {
+        year:    '2017 — IJAREE',
+        title:   'Design and Implementation of an Arduino-based Wireless Home Appliances Control System',
+        authors: 'Odinya, J.O., Anande, T.J., & Kureve, D.T. (2017)',
+        venue:   'International Journal of Advance Research and Innovative Ideas in Education',
+      },
+      {
+        year:    '2017 — Development, 4(7)',
+        title:   'Data Mining Using WEKA Tool for Internally Displaced Persons Dataset in Northeastern Nigeria',
+        authors: 'Lawal, S.N., Anande, T.J., & Genger, T.K. (2017)',
+      },
+      {
+        year:    '2017 — Development, 4(7)',
+        title:   'Design and Construction of a Two-Way Security Authentication Electronic Safe Locks Using Arduino Microcontroller',
+        authors: 'Anande, T.J., Abunku, M., & Morkat, Y.M. (2017)',
+      },
+      {
+        year:    '2017 — Computer Simulation, 12(1)',
+        title:   'Computer Simulation of Chaotic Systems',
+        authors: 'Genger, T.K., Anande, T.J., & Al-Shehri, S. (2017)',
+      },
+      {
+        year:    '2017 — IJAREE',
+        title:   'Implementation of 12V to 330V Boost Converter with Closed Loop Control Using Push Pull Topology',
+        authors: 'Anande, J.T., Odinya, J.O., & Yilwatda, M.M. (2017)',
+        venue:   'International Journal of Advance Research and Innovative Ideas in Education',
       },
     ],
     conference: [
