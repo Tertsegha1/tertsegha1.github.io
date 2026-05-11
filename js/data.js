@@ -196,7 +196,7 @@ of the Higher Education Academy (FHEA), and a Member of the BCS, IET, and IEEE.`
       title: 'THA-AutoML — Trustworthy AutoML for Health Tabular Data',
       desc:  'Research-grade AutoML framework for health-oriented tabular classification with leakage auditing, fold-safe preprocessing, repeated cross-validation benchmarking, Optuna-based hyperparameter optimisation, and cost-aware model selection. Produces reproducible benchmark artefacts, publication-ready reports, and deployment-ready model outputs.',
       tech:  ['Python','scikit-learn','Optuna','XGBoost','LightGBM','pandas'],
-      links: [{ label: '🔒 Request Access', url: '#contact' }],
+      links: [{ label: '🔧 In Development', url: '#contact' }],
     },
     {
       icon:  '📈',
