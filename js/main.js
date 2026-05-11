@@ -97,7 +97,8 @@ function renderProjects () {
       const links = h('div','proj-links');
       proj.links.forEach(lk => {
         const a = h('a','proj-link', lk.label);
-        a.href = lk.url; a.target = '_blank'; a.rel = 'noopener';
+        a.href = lk.url;
+        if (!lk.url.startsWith('#')) { a.target = '_blank'; a.rel = 'noopener'; }
         links.appendChild(a);
       });
       body.appendChild(links);
