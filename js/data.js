@@ -157,7 +157,7 @@ of the Higher Education Academy (FHEA), and a Member of the BCS, IET, and IEEE.`
       title: 'MoSELA AutoML — General-Purpose Tabular AutoML Framework',
       desc:  'Modular, production-grade AutoML framework implementing the MoSELA staged pipeline: Profile → Preprocess → Coarse Search (Optuna) → Refinement → Champion Selection → Bundle → REST Serve (FastAPI). Features structural, semantic, and correlation-based leakage auditing; family-aware preprocessing; cost-aware multi-objective champion selection; MLflow integration; Docker support.',
       tech:  ['Python','scikit-learn','Optuna','XGBoost','LightGBM','FastAPI','Docker','MLflow'],
-      links: [{ label: '🔒 Request Access', url: '#contact' }],
+      links: [{ label: '🔒 Request Access', url: 'https://github.com/Tertsegha1/mosela-automl' }],
     },
     {
       icon:  '🎓',
@@ -166,7 +166,7 @@ of the Higher Education Academy (FHEA), and a Member of the BCS, IET, and IEEE.`
       desc:  'Full-lifecycle studio management system for the Digital Transformation module — deployed across London, Birmingham, and Manchester campuses. Manages cohort setup, guild formation, weekly quest publishing, artefact submission, peer review, and AI-powered formative feedback. Student portal, lecturer view, and module-leader admin are role-gated. All data syncs live via Firebase Realtime Database; zero server cost. Integrates Claude API for per-submission feedback including an AI-writing estimate to guide students before Turnitin submission.',
       tech:  ['Vanilla JS','Firebase','HTML/CSS','Claude API','GitHub Pages'],
       links: [
-        { label: '🔒 Request Access', url: '#contact' },
+        { label: '🔒 Request Access', url: 'https://tertsegha1.github.io/cmp701-studio/' },
       ],
     },
     {
@@ -176,7 +176,7 @@ of the Higher Education Academy (FHEA), and a Member of the BCS, IET, and IEEE.`
       desc:  'Live marking-coordination tool across all campuses. Markers sign in by name; the module leader uses a PIN-protected admin view. KPI dashboard tracks allocation, completion, and non-submissions in real time. Supports per-cohort CSV import, role-based access (module leader / marker), inline status and notes editing, and one-click CSV export for board reporting. Firebase-backed with offline localStorage fallback — changes sync the moment connectivity resumes.',
       tech:  ['Vanilla JS','Firebase','HTML/CSS','GitHub Pages'],
       links: [
-        { label: '🔒 Request Access', url: '#contact' },
+        { label: '🔒 Request Access', url: 'https://tertsegha1.github.io/cmp701-tracker/' },
       ],
     },
     {
@@ -187,7 +187,7 @@ of the Higher Education Academy (FHEA), and a Member of the BCS, IET, and IEEE.`
       tech:  ['HTML/CSS/JS','Cloudflare Workers AI','Llama 3.3 70B','Whisper AI','PDF.js','GitHub Pages'],
       links: [
         { label: '🌐 Live Demo', url: 'https://cmp701-grading-system.tertseghaanande.workers.dev' },
-        { label: '🔒 Request Access', url: '#contact' },
+        { label: '🔒 Request Access', url: 'https://cmp701-grading-system.tertseghaanande.workers.dev' },
       ],
     },
     {
