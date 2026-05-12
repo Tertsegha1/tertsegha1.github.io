@@ -31,70 +31,39 @@ No build step, no dependencies, no framework — plain HTML/CSS/JS served direct
 
 ---
 
-## How to update the site (no code required)
+## How to update the site
 
-The easiest way to update any section is via the **Admin Panel**.
+All updates are made through the **Admin Panel** — no terminal, no code editor, no deployment step required.
 
-### Option 1 — Admin Panel (recommended)
+### Admin Panel
 
 1. Go to [drtertseghaanande.com/admin.html](https://drtertseghaanande.com/admin.html)
 2. Generate a GitHub Personal Access Token at [github.com/settings/tokens](https://github.com/settings/tokens/new?scopes=repo&description=Portfolio+Admin) — tick the **`repo`** scope
 3. Paste the token → click **Load Portfolio Data**
-4. Edit any section using the form editors (Personal, Experience, Projects, Publications, Teaching, Certifications, Leadership)
-5. Click **💾 Save & Deploy** — the site updates in ~60 seconds
+4. Edit any section using the form editors:
+
+| Tab | What you can edit |
+|---|---|
+| 👤 Personal | Name, title, bio, contact links, booking config, hero stats |
+| 💼 Experience | Roles, organisations, dates, bullet points |
+| 🚀 Projects | Project cards, tech stack, links |
+| 📄 Publications | Journal articles, conference papers, preprints |
+| 🎓 Teaching | Modules, level (UG/PG), module leader flag |
+| 🏅 Certifications | Certs and awards, highlight badge |
+| 🏛 Leadership | Leadership and service entries |
+| ⚙️ Advanced | Full raw JSON editor for power edits |
+
+5. Click **💾 Save & Deploy** — changes commit directly to GitHub and the live site updates in ~60 seconds
 
 Your token is stored only in your browser's local storage and sent directly to GitHub — never to a third-party server.
 
-### Option 2 — Edit `data.js` directly
+### Changing the profile photo
 
-All content lives in **`js/data.js`**. Edit the relevant section and push — the site updates automatically.
+Replace `assets/img/profile.jpg` with a new image (keep the same filename) via the [GitHub web interface](https://github.com/Tertsegha1/tertsegha1.github.io/upload/main/assets/img) — drag and drop, commit, done.
 
-#### Add a new publication
+### Updating styles
 
-```js
-{
-  type:    'journal',          // 'journal' | 'conference' | 'preprint' | 'thesis'
-  year:    '2026',
-  authors: 'Anande, T. J., & Co-Author, X.',
-  title:   'Your Paper Title Here',
-  venue:   'Nature Machine Intelligence',
-  doi:     'https://doi.org/10.xxxx/xxxxx',
-}
-```
-
-#### Add a new project
-
-```js
-{
-  title: 'Project Name',
-  tag:   'Research',
-  desc:  'Description of the project.',
-  stack: ['Python', 'PyTorch', 'FastAPI'],
-  links: [
-    { label: '🔗 GitHub',    url: 'https://github.com/Tertsegha1/repo-name' },
-    { label: '🌐 Live Demo', url: 'https://tertsegha1.github.io/repo-name'  },
-  ],
-}
-```
-
-#### Add a leadership / service entry
-
-```js
-// In the leadership array:
-{ role: 'External Examiner', period: '2026', desc: 'Organisation name and context' }
-```
-
-#### Update stats or role tags
-
-Edit `personal.stats` in `js/data.js`.
-
-#### Change the profile photo
-
-Replace `assets/img/profile.jpg` with a new image (keep the same filename), then push.
-
-#### Update styles
-
-Edit `css/style.css`. Design tokens (colours, radius, spacing) are CSS custom properties at the top of the file under `:root { ... }`.
+Edit `css/style.css` via the [GitHub web editor](https://github.com/Tertsegha1/tertsegha1.github.io/edit/main/css/style.css). Design tokens (colours, radius, spacing) are CSS custom properties at the top of the file under `:root { ... }`.
 
 ---
 
@@ -107,18 +76,6 @@ Generates both an **Academic CV** and an **Industry CV** directly from `data.js`
 - Toggle between Academic / Industry / Both views
 - Print to PDF using the **Save as PDF** button (outputs A4)
 - No manual CV maintenance needed — keep `data.js` up to date and the CV follows
-
----
-
-## Deploying changes (command line)
-
-```bash
-git add .
-git commit -m "Update: describe what changed"
-git push
-```
-
-GitHub Pages rebuilds automatically — changes are live within ~60 seconds.
 
 ---
 
