@@ -33,9 +33,7 @@ No build step, no dependencies, no framework — plain HTML/CSS/JS served direct
 
 ## How to update the site
 
-All updates are made through the **Admin Panel** — no terminal, no code editor, no deployment step required.
-
-### Admin Panel
+### Option 1 — Admin Panel (recommended, no code required)
 
 1. Go to [drtertseghaanande.com/admin.html](https://drtertseghaanande.com/admin.html)
 2. Generate a GitHub Personal Access Token at [github.com/settings/tokens](https://github.com/settings/tokens/new?scopes=repo&description=Portfolio+Admin) — tick the **`repo`** scope
@@ -57,13 +55,66 @@ All updates are made through the **Admin Panel** — no terminal, no code editor
 
 Your token is stored only in your browser's local storage and sent directly to GitHub — never to a third-party server.
 
-### Changing the profile photo
+### Option 2 — Edit `data.js` directly (fallback)
 
-Replace `assets/img/profile.jpg` with a new image (keep the same filename) via the [GitHub web interface](https://github.com/Tertsegha1/tertsegha1.github.io/upload/main/assets/img) — drag and drop, commit, done.
+All content lives in **`js/data.js`**. Edit the relevant section and push — the site updates automatically.
 
-### Updating styles
+#### Add a new publication
 
-Edit `css/style.css` via the [GitHub web editor](https://github.com/Tertsegha1/tertsegha1.github.io/edit/main/css/style.css). Design tokens (colours, radius, spacing) are CSS custom properties at the top of the file under `:root { ... }`.
+```js
+{
+  type:    'journal',          // 'journal' | 'conference' | 'preprint' | 'thesis'
+  year:    '2026',
+  authors: 'Anande, T. J., & Co-Author, X.',
+  title:   'Your Paper Title Here',
+  venue:   'Nature Machine Intelligence',
+  doi:     'https://doi.org/10.xxxx/xxxxx',
+}
+```
+
+#### Add a new project
+
+```js
+{
+  title: 'Project Name',
+  tag:   'Research',
+  desc:  'Description of the project.',
+  stack: ['Python', 'PyTorch', 'FastAPI'],
+  links: [
+    { label: '🔗 GitHub',    url: 'https://github.com/Tertsegha1/repo-name' },
+    { label: '🌐 Live Demo', url: 'https://tertsegha1.github.io/repo-name'  },
+  ],
+}
+```
+
+#### Add a leadership / service entry
+
+```js
+// In the leadership array:
+{ role: 'External Examiner', period: '2026', desc: 'Organisation name and context' }
+```
+
+#### Update stats or role tags
+
+Edit `personal.stats` in `js/data.js`.
+
+#### Change the profile photo
+
+Replace `assets/img/profile.jpg` with a new image (keep the same filename), then push.
+
+#### Update styles
+
+Edit `css/style.css`. Design tokens (colours, radius, spacing) are CSS custom properties at the top of the file under `:root { ... }`.
+
+#### Deploy via command line
+
+```bash
+git add .
+git commit -m "Update: describe what changed"
+git push
+```
+
+GitHub Pages rebuilds automatically — changes are live within ~60 seconds.
 
 ---
 
