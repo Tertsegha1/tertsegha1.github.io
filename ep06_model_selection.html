@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Episode 06: Model Selection · Re-Inventing Myself</title>
+<meta name="description" content="Stage 04 of the AutoML pipeline — Model Selection. No single approach is best for every problem. Episode 06 of Re-Inventing Myself by Dr. Tertsegha J. Anande.">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --deep:#050516;--panel:#0F0F2E;--panel2:#0B0B26;
+  --purple:#9490E8;--purple-soft:#6560CC;
+  --teal:#6DD8B3;--teal-dark:#25B585;
+  --amber:#F5A830;--text:#F2F1FF;--muted:#B0ADA6;--dim:#8A8883;
+  --border:rgba(148,144,232,0.28);
+}
+html{scroll-behavior:smooth}
+body{background:var(--deep);background-image:radial-gradient(ellipse 80% 40% at 20% 10%,rgba(101,96,204,0.18) 0%,transparent 70%),radial-gradient(ellipse 60% 30% at 80% 5%,rgba(37,181,133,0.10) 0%,transparent 60%),radial-gradient(ellipse 50% 50% at 50% 90%,rgba(101,96,204,0.08) 0%,transparent 70%);color:var(--text);font-family:Arial,sans-serif;min-height:100vh;line-height:1.6}
+nav{position:sticky;top:0;z-index:100;background:rgba(5,5,22,0.95);backdrop-filter:blur(8px);border-bottom:0.5px solid var(--border);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.nav-brand{font-size:10px;letter-spacing:4px;color:var(--purple);text-transform:uppercase}
+.nav-links{display:flex;gap:20px}
+.nav-links a{font-size:11px;color:var(--muted);text-decoration:none;letter-spacing:1px;transition:color .2s}
+.nav-links a:hover{color:var(--text)}
+.nav-back{font-size:11px;color:var(--teal);border:0.5px solid rgba(109,216,179,0.4);border-radius:4px;padding:5px 12px;text-decoration:none;transition:border-color .2s}
+.nav-back:hover{border-color:var(--teal)}
+.hero{position:relative;overflow:hidden;padding:70px 32px 56px;border-bottom:0.5px solid var(--border)}
+canvas#hero-c{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.hero-inner{position:relative;z-index:2;max-width:820px;margin:0 auto;text-align:center}
+.ep-pill{display:inline-flex;align-items:center;gap:8px;background:rgba(109,216,179,0.12);border:0.5px solid rgba(109,216,179,0.4);border-radius:20px;padding:6px 16px;margin-bottom:24px}
+.ep-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.6)}}
+.ep-text{font-size:10px;letter-spacing:3px;color:var(--teal);text-transform:uppercase}
+.hero h1{font-family:Georgia,serif;font-size:clamp(32px,5vw,60px);font-weight:700;color:var(--text);line-height:1.1;margin-bottom:12px}
+.hero h1 em{font-style:normal;color:var(--purple)}
+.hero-sub{font-size:12px;letter-spacing:4px;color:#AFA9EC;text-transform:uppercase;margin-bottom:24px}
+.hero-desc{font-size:16px;color:var(--muted);line-height:1.75;max-width:660px;margin:0 auto 32px}
+.progress-row{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+.prog-step{display:flex;align-items:center;gap:6px;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.3);text-transform:uppercase}
+.prog-step.done{color:var(--teal)}.prog-step.current{color:var(--purple)}
+.prog-num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;border:0.5px solid}
+.prog-step.done .prog-num{background:rgba(109,216,179,0.2);border-color:var(--teal);color:var(--teal)}
+.prog-step.current .prog-num{background:rgba(101,96,204,0.25);border-color:var(--purple);color:var(--purple)}
+.prog-step .prog-num{background:transparent;border-color:rgba(255,255,255,0.15);color:rgba(255,255,255,0.3)}
+.prog-divider{width:20px;height:0.5px;background:rgba(255,255,255,0.1)}
+.section{max-width:860px;margin:0 auto;padding:56px 32px}
+.section-label{font-size:10px;letter-spacing:4px;color:var(--purple);text-transform:uppercase;margin-bottom:10px}
+.section h2{font-family:Georgia,serif;font-size:30px;color:var(--text);margin-bottom:20px;line-height:1.2}
+.divider{border:none;border-top:0.5px solid var(--border);margin:0}
+.content-card{background:var(--panel);border:0.5px solid var(--border);border-radius:12px;padding:28px 32px;margin-bottom:20px}
+.content-card p{font-size:15px;color:#D8D5CE;line-height:1.8;margin-bottom:14px}
+.content-card p:last-child{margin-bottom:0}
+.content-card h3{font-family:Georgia,serif;font-size:20px;color:var(--text);margin-bottom:12px}
+.highlight-box{background:rgba(101,96,204,0.1);border-left:3px solid var(--purple);border-radius:0 8px 8px 0;padding:16px 20px;margin:16px 0;font-size:15px;color:#C8C5BE;line-height:1.7;font-style:italic}
+.highlight-box.teal{background:rgba(37,181,133,0.1);border-color:var(--teal);color:#B8EDD9}
+.highlight-box.amber{background:rgba(245,168,48,0.1);border-color:var(--amber);color:#FFE0A0}
+.highlight-box.red{background:rgba(231,76,60,0.08);border-color:#E87070;color:#FFBABA}
+
+/* MODEL CARDS GRID */
+.model-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin:24px 0}
+.model-card{background:#06061C;border:0.5px solid var(--border);border-radius:12px;padding:20px 16px;transition:border-color .2s}
+.model-card:hover{border-color:var(--purple)}
+.model-card:nth-child(1){border-top:2px solid rgba(109,216,179,0.5)}
+.model-card:nth-child(2){border-top:2px solid rgba(148,144,232,0.5)}
+.model-card:nth-child(3){border-top:2px solid rgba(245,168,48,0.5)}
+.model-card:nth-child(4){border-top:2px solid rgba(231,76,60,0.4)}
+.model-card:nth-child(5){border-top:2px solid rgba(37,181,133,0.7)}
+.model-icon{font-size:24px;margin-bottom:10px}
+.model-name{font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px}
+.model-ml{font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.4}
+.model-life{font-size:11px;color:#B8EDD9;line-height:1.4;border-top:0.5px solid var(--border);padding-top:8px;margin-top:4px}
+.model-badge{display:inline-block;font-size:8px;letter-spacing:2px;padding:2px 8px;border-radius:8px;text-transform:uppercase;font-weight:700;background:rgba(148,144,232,0.1);color:var(--purple);border:0.5px solid rgba(148,144,232,0.3);margin-bottom:8px;white-space:nowrap}
+
+/* NFL THEOREM BOX */
+.nfl-box{background:#06061C;background-image:radial-gradient(ellipse 70% 50% at 50% 50%,rgba(101,96,204,0.12) 0%,transparent 70%);border:0.5px solid rgba(148,144,232,0.4);border-radius:14px;padding:32px;text-align:center;margin:24px 0}
+.nfl-word{font-family:Georgia,serif;font-size:22px;font-weight:700;color:var(--purple);margin-bottom:8px}
+.nfl-text{font-size:15px;color:var(--muted);line-height:1.7;max-width:620px;margin:0 auto}
+
+/* BV SPECTRUM */
+.bv-spectrum{margin:24px 0}
+.bv-bar{height:12px;border-radius:6px;background:linear-gradient(to right,rgba(231,76,60,0.6),rgba(37,181,133,0.6),rgba(231,76,60,0.6));margin:12px 0;position:relative}
+.bv-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
+.bv-sweet{position:absolute;left:50%;transform:translateX(-50%);top:-8px;font-size:18px}
+.bv-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+@media(max-width:600px){.bv-cols{grid-template-columns:1fr}}
+.bv-col{background:#06061C;border:0.5px solid var(--border);border-radius:10px;padding:16px}
+.bv-col-head{font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-bottom:10px;padding-bottom:8px;border-bottom:0.5px solid var(--border)}
+.bv-col.over .bv-col-head{color:#E87070}
+.bv-col.under .bv-col-head{color:var(--amber)}
+.bv-item{font-size:12px;color:#D8D5CE;line-height:1.5;padding:5px 0;border-bottom:0.5px solid rgba(148,144,232,0.08)}
+.bv-item:last-child{border-bottom:none}
+
+/* DAILY TIMELINE */
+.daily-timeline{display:flex;flex-direction:column;gap:0;margin:24px 0}
+.dt-row{display:flex;gap:16px;position:relative;padding-bottom:20px}
+.dt-row:last-child{padding-bottom:0}
+.dt-row:not(:last-child)::before{content:'';position:absolute;left:19px;top:40px;bottom:0;width:0.5px;background:rgba(148,144,232,0.2)}
+.dt-left{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:6px}
+.dt-dot{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:0.5px solid var(--border);background:#06061C;flex-shrink:0}
+.dt-time{font-size:9px;color:var(--amber);letter-spacing:1px;text-align:center;white-space:nowrap}
+.dt-body{flex:1;background:var(--panel);border:0.5px solid var(--border);border-radius:10px;padding:14px 18px;margin-top:4px}
+.dt-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px}
+.dt-badge-row{display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.dt-badge{font-size:9px;padding:2px 8px;border-radius:8px;letter-spacing:1px;text-transform:uppercase;font-weight:700}
+.dt-badge.default{background:rgba(231,76,60,0.1);border:0.5px solid rgba(231,76,60,0.3);color:#E87070}
+.dt-badge.chosen{background:rgba(37,181,133,0.1);border:0.5px solid rgba(37,181,133,0.3);color:var(--teal)}
+.dt-raw{font-size:12px;color:#E87070;margin-bottom:4px;line-height:1.5}
+.dt-clean{font-size:12px;color:var(--teal);line-height:1.5}
+
+/* TASK SECTION */
+.task-section-header{background:linear-gradient(135deg,#08082A 0%,#0D1040 100%);border-top:0.5px solid var(--border);border-bottom:0.5px solid var(--border);padding:40px 32px;text-align:center}
+.task-section-header .label{font-size:10px;letter-spacing:4px;color:var(--amber);text-transform:uppercase;margin-bottom:10px}
+.task-section-header h2{font-family:Georgia,serif;font-size:32px;color:var(--text);margin-bottom:10px}
+.task-section-header p{font-size:14px;color:var(--muted);max-width:560px;margin:0 auto}
+.task-card{background:var(--panel);border:0.5px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:20px;transition:border-color .2s}
+.task-card.completed{border-color:var(--teal)}
+.task-header{padding:20px 24px;display:flex;align-items:center;gap:16px;border-bottom:0.5px solid var(--border)}
+.task-num{width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;background:rgba(245,168,48,0.15);border:0.5px solid rgba(245,168,48,0.4);color:var(--amber)}
+.task-card.completed .task-num{background:rgba(109,216,179,0.15);border-color:var(--teal);color:var(--teal)}
+.task-meta{flex:1}
+.task-label{font-size:9px;letter-spacing:3px;color:var(--amber);text-transform:uppercase;margin-bottom:3px}
+.task-card.completed .task-label{color:var(--teal)}
+.task-title{font-size:16px;font-weight:700;color:var(--text)}
+.task-badge{font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border-radius:10px;background:rgba(245,168,48,0.1);border:0.5px solid rgba(245,168,48,0.3);color:var(--amber)}
+.task-badge.done{background:rgba(109,216,179,0.15);border-color:var(--teal);color:var(--teal)}
+.task-body{padding:24px}
+.task-body p{font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:16px}
+
+/* TASK 1: ARCHITECTURE AUDIT */
+.arch-option{background:#0A0A24;border:1.5px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:10px;cursor:pointer;transition:all .2s}
+.arch-option:hover{border-color:rgba(148,144,232,0.5)}
+.arch-option.selected{border-color:var(--purple);background:rgba(101,96,204,0.1)}
+.arch-head{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.arch-icon{font-size:20px}
+.arch-name{font-size:13px;font-weight:700;color:var(--text)}
+.arch-desc{font-size:12px;color:var(--muted);line-height:1.5}
+.arch-life{font-size:12px;color:#B8EDD9;margin-top:6px;padding-top:6px;border-top:0.5px solid var(--border)}
+.arch-submit{margin-top:16px;width:100%;padding:12px;background:var(--purple-soft);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:1px;transition:background .2s}
+.arch-submit:hover{background:var(--purple)}
+.arch-result{display:none;margin-top:16px;padding:18px;background:rgba(101,96,204,0.1);border:0.5px solid var(--border);border-radius:8px;font-size:13px;color:#C8C5BE;line-height:1.7}
+
+/* TASK 2: BIAS-VARIANCE */
+.bv-slider-wrap{margin:20px 0}
+.bv-slider-label{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:8px}
+.bv-range{width:100%;-webkit-appearance:none;height:6px;border-radius:3px;outline:none;cursor:pointer;background:linear-gradient(to right,rgba(231,76,60,0.5),rgba(37,181,133,0.5),rgba(231,76,60,0.5))}
+.bv-range::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--purple);cursor:pointer;transition:transform .15s;border:2px solid rgba(255,255,255,0.2)}
+.bv-range::-webkit-slider-thumb:hover{transform:scale(1.2)}
+.bv-position-label{text-align:center;font-size:12px;color:var(--purple);margin-top:8px;font-weight:700}
+.bv-context-fields{display:flex;flex-direction:column;gap:12px;margin:16px 0}
+.bv-field-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--amber);margin-bottom:6px;font-weight:700}
+.bv-input{width:100%;padding:10px 14px;background:#06061C;border:0.5px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:Arial,sans-serif;outline:none;transition:border-color .2s}
+.bv-input:focus{border-color:var(--purple)}
+.bv-input::placeholder{color:rgba(255,255,255,0.2);font-style:italic}
+.bv-save{margin-top:12px;padding:11px 24px;background:transparent;border:0.5px solid var(--border);border-radius:8px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;transition:all .2s;letter-spacing:1px}
+.bv-save:hover{border-color:var(--teal);color:var(--teal)}
+.bv-save.saved{border-color:var(--teal);color:var(--teal);background:rgba(37,181,133,0.1)}
+
+/* TASK 3: OBJECTIVE FUNCTION */
+.obj-fields{display:flex;flex-direction:column;gap:16px;margin-bottom:16px}
+.obj-field{background:#0A0A24;border:0.5px solid var(--border);border-radius:10px;padding:18px}
+.obj-label{font-size:10px;letter-spacing:3px;text-transform:uppercase;font-weight:700;margin-bottom:6px}
+.obj-label.primary{color:var(--teal)}
+.obj-label.constraint{color:var(--amber)}
+.obj-label.avoid{color:#E87070}
+.obj-input{width:100%;padding:10px 14px;background:#06061C;border:0.5px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:Arial,sans-serif;outline:none;transition:border-color .2s}
+.obj-input:focus{border-color:var(--purple)}
+.obj-input::placeholder{color:rgba(255,255,255,0.2);font-style:italic}
+.obj-hint{font-size:11px;color:var(--dim);margin-top:6px;line-height:1.4}
+.obj-save{padding:11px 24px;background:transparent;border:0.5px solid var(--border);border-radius:8px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;transition:all .2s;letter-spacing:1px}
+.obj-save:hover{border-color:var(--teal);color:var(--teal)}
+.obj-save.saved{border-color:var(--teal);color:var(--teal);background:rgba(37,181,133,0.1)}
+
+/* TASK 4 */
+.reflection-area{width:100%;min-height:120px;padding:16px;background:#080820;border:0.5px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:Arial,sans-serif;line-height:1.7;resize:vertical;outline:none;transition:border-color .2s;margin-bottom:12px}
+.reflection-area:focus{border-color:var(--purple)}
+.reflection-area::placeholder{color:rgba(255,255,255,0.2);font-style:italic}
+.char-count{font-size:11px;color:var(--dim);text-align:right;margin-bottom:12px}
+.reflection-save{padding:11px 24px;background:transparent;border:0.5px solid var(--border);border-radius:8px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;transition:all .2s;letter-spacing:1px}
+.reflection-save:hover{border-color:var(--teal);color:var(--teal)}
+.reflection-save.saved{border-color:var(--teal);color:var(--teal);background:rgba(37,181,133,0.1)}
+.saved-note{display:none;font-size:12px;color:var(--teal);margin-top:10px}
+.commit-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+@media(max-width:600px){.commit-options{grid-template-columns:1fr}}
+.commit-card{background:#0A0A24;border:0.5px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;transition:all .2s;text-align:center}
+.commit-card:hover{border-color:var(--purple);background:rgba(101,96,204,0.1)}
+.commit-card.selected{border-color:var(--teal);background:rgba(37,181,133,0.1)}
+.commit-icon{font-size:28px;margin-bottom:8px}
+.commit-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px}
+.commit-desc{font-size:11px;color:var(--muted);line-height:1.4}
+.commit-confirm{width:100%;padding:13px;background:rgba(37,181,133,0.12);border:0.5px solid var(--teal);border-radius:8px;font-size:13px;font-weight:700;color:var(--teal);cursor:pointer;transition:background .2s;letter-spacing:1px;display:none}
+.commit-confirm:hover{background:rgba(37,181,133,0.22)}
+.commit-result{display:none;margin-top:14px;padding:18px;text-align:center;background:rgba(37,181,133,0.1);border:0.5px solid var(--teal);border-radius:10px}
+.commit-result p{font-size:14px;color:#B8EDD9;line-height:1.6}
+
+/* PROGRESS TRACKER */
+.progress-tracker{position:fixed;right:24px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;z-index:50}
+@media(max-width:768px){.progress-tracker{display:none}}
+.pt-dot{width:10px;height:10px;border-radius:50%;border:1.5px solid rgba(148,144,232,0.3);background:transparent;cursor:pointer;transition:all .2s;position:relative}
+.pt-dot:hover{border-color:var(--purple)}
+.pt-dot.active{border-color:var(--purple);background:var(--purple)}
+.pt-dot.done{border-color:var(--teal);background:var(--teal)}
+.pt-dot .pt-tip{position:absolute;right:18px;top:50%;transform:translateY(-50%);background:rgba(15,15,46,0.95);border:0.5px solid var(--border);border-radius:6px;padding:4px 10px;font-size:10px;color:var(--text);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s}
+.pt-dot:hover .pt-tip{opacity:1}
+.ep-nav{max-width:860px;margin:0 auto;padding:0 32px 60px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.ep-nav-btn{flex:1;min-width:200px;background:var(--panel);border:0.5px solid var(--border);border-radius:12px;padding:20px 22px;text-decoration:none;transition:border-color .2s}
+.ep-nav-btn:hover{border-color:var(--purple)}
+.ep-nav-dir{font-size:9px;letter-spacing:3px;color:var(--dim);text-transform:uppercase;margin-bottom:6px}
+.ep-nav-title{font-size:14px;font-weight:700;color:var(--text)}
+.ep-nav-sub{font-size:12px;color:var(--muted);margin-top:3px}
+.ep-nav-btn.next{text-align:right;border-color:rgba(109,216,179,0.25)}
+.ep-nav-btn.next:hover{border-color:var(--teal)}
+footer{border-top:0.5px solid var(--border);padding:24px 32px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.footer-left{font-size:11px;color:var(--dim)}
+.footer-right{font-size:10px;color:var(--purple-soft);letter-spacing:2px;text-transform:uppercase}
+</style>
+</head>
+<body>
+
+<nav class="progress-tracker" aria-label="Page sections">
+  <div class="pt-dot active" onclick="document.querySelector('#intro').scrollIntoView({behavior:'smooth'})" data-section="intro"><span class="pt-tip">Introduction</span></div>
+  <div class="pt-dot" onclick="document.querySelector('#what').scrollIntoView({behavior:'smooth'})" data-section="what"><span class="pt-tip">What is it?</span></div>
+  <div class="pt-dot" onclick="document.querySelector('#life').scrollIntoView({behavior:'smooth'})" data-section="life"><span class="pt-tip">Life parallel</span></div>
+  <div class="pt-dot" onclick="document.querySelector('#daily').scrollIntoView({behavior:'smooth'})" data-section="daily"><span class="pt-tip">Daily practice</span></div>
+  <div class="pt-dot" onclick="document.querySelector('#tasks').scrollIntoView({behavior:'smooth'})" data-section="tasks"><span class="pt-tip">Your tasks</span></div>
+</nav>
+
+<nav>
+  <span class="nav-brand">Re-Inventing Myself</span>
+  <div class="nav-links">
+    <a href="#what">The concept</a>
+    <a href="#life">Life parallel</a>
+    <a href="#daily">Daily practice</a>
+    <a href="#tasks">Your tasks</a>
+  </div>
+  <a class="nav-back" href="reinventing-myself.html">← All Episodes</a>
+</nav>
+
+<section class="hero" id="intro">
+  <canvas id="hero-c"></canvas>
+  <div class="hero-inner">
+    <div class="ep-pill"><div class="ep-dot"></div><span class="ep-text">Episode 06 · Stage 04 of 09</span></div>
+    <h1>Model <em>Selection</em> —<br>choosing the architecture<br>that fits <em>this</em> problem</h1>
+    <div class="hero-sub">Re-Inventing Myself · AutoML &amp; You</div>
+    <p class="hero-desc">There is no universally best model. The algorithm that wins on one problem fails on another. This week: Stage 04 of the AutoML pipeline — the step that forces you to stop asking "what is the best approach?" and start asking "what is the best approach for this specific problem, with this specific data, under these specific constraints?"</p>
+    <div class="progress-row">
+      <div class="prog-step done"><div class="prog-num">1</div><span>Re-Introducing Me</span></div>
+      <div class="prog-divider"></div>
+      <div class="prog-step done"><div class="prog-num">2</div><span>What is AutoML?</span></div>
+      <div class="prog-divider"></div>
+      <div class="prog-step done"><div class="prog-num">3</div><span>Data Ingestion</span></div>
+      <div class="prog-divider"></div>
+      <div class="prog-step done"><div class="prog-num">4</div><span>Preprocessing</span></div>
+      <div class="prog-divider"></div>
+      <div class="prog-step done"><div class="prog-num">5</div><span>Feature Engineering</span></div>
+      <div class="prog-divider"></div>
+      <div class="prog-step current"><div class="prog-num">6</div><span>Model Selection</span></div>
+      <div class="prog-divider"></div>
+      <div class="prog-step"><div class="prog-num">···</div><span>More coming</span></div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section class="section" id="what">
+  <div class="section-label">Stage 04 · The Concept</div>
+  <h2>What is Model Selection?</h2>
+
+  <div style="background:#06061C;background-image:radial-gradient(ellipse 70% 50% at 50% 50%,rgba(101,96,204,0.15) 0%,transparent 70%);border:0.5px solid var(--border);border-radius:14px;padding:32px;text-align:center;margin-bottom:24px;box-shadow:0 0 40px rgba(101,96,204,0.12)">
+    <div style="font-family:Georgia,serif;font-size:38px;font-weight:700;color:var(--text);margin-bottom:8px">Model <span style="color:var(--purple)">Selection</span></div>
+    <div style="font-size:15px;color:var(--muted);line-height:1.7;max-width:600px;margin:0 auto">The process of <strong style="color:var(--text)">evaluating and selecting the algorithm or architecture</strong> best suited to a specific problem, data type, and performance objective. AutoML tests many candidates in parallel and compares them against a defined criterion. The winner is not the most complex — it is the most appropriate.</div>
+  </div>
+
+  <div class="content-card">
+    <p>The pipeline has clean features. Now it needs an algorithm that can learn from them. This sounds like a technical choice — but it is actually a deeply philosophical one, governed by one of the most important theorems in machine learning.</p>
+    <div class="nfl-box">
+      <div class="nfl-word">The No Free Lunch Theorem</div>
+      <div class="nfl-text">No single algorithm performs best across all possible problems. A model that is optimised for everything is optimised for nothing. Performance is always relative to the problem structure, the data distribution, and what you define as success. The search for the universally best model is a search that cannot succeed — and AutoML's strength is that it stops searching for it, and searches for the best model for <em>this</em> problem instead.</div>
+    </div>
+    <p>AutoML approaches model selection through automated search: running linear models, tree-based models, neural networks, and ensemble methods simultaneously, evaluating each against your defined objective, and returning the architecture that performs best on unseen data — not just on the training set.</p>
+    <div class="highlight-box">"A 95% accurate model that memorised the training data is worthless. A 78% accurate model that generalises to new data is production-ready. Model selection is not about finding the highest score — it is about finding the architecture that will hold up when the real world arrives."</div>
+  </div>
+
+  <div class="content-card">
+    <h3>Five architectures AutoML evaluates — and their life equivalents</h3>
+    <p style="margin-bottom:16px">Each model class has different assumptions, strengths, and failure modes. Each has a direct parallel in how different people approach problems — and how you approach them at different points in your life.</p>
+    <div class="model-grid">
+
+      <div class="model-card">
+        <div class="model-icon">📏</div>
+        <div class="model-badge">Linear / Regression</div>
+        <div class="model-name">Linear Model</div>
+        <div class="model-ml">Assumes a direct, proportional relationship between inputs and outputs. Fast, interpretable, and highly reliable when the assumption holds.</div>
+        <div class="model-life">Works when cause and effect are clear and consistent. Best for structured, well-defined challenges where the rules are stable. Struggles in complex, non-linear environments.</div>
+      </div>
+
+      <div class="model-card">
+        <div class="model-icon">🌳</div>
+        <div class="model-badge">Tree-based / RF / XGBoost</div>
+        <div class="model-name">Decision Tree / Ensemble</div>
+        <div class="model-ml">Learns through branching rules — "if this, then that." Handles non-linearity, missing values, and mixed data types naturally. Robust to noise.</div>
+        <div class="model-life">The pragmatic, iterative approach. Adapts to messy, real-world complexity. Works through context-specific rules rather than universal principles. Strong under uncertainty.</div>
+      </div>
+
+      <div class="model-card">
+        <div class="model-icon">🧠</div>
+        <div class="model-badge">Neural Network / Deep Learning</div>
+        <div class="model-name">Neural Network</div>
+        <div class="model-ml">Learns hierarchical representations from large quantities of data. Extremely high capacity — but requires significant data, compute, and careful tuning to avoid overfitting.</div>
+        <div class="model-life">Works at scale with rich input. High-capacity thinking that finds non-obvious patterns — but needs a lot of material to learn from and careful regularisation to stay generalised.</div>
+      </div>
+
+      <div class="model-card">
+        <div class="model-icon">📐</div>
+        <div class="model-badge">Support Vector Machine</div>
+        <div class="model-name">SVM / Kernel Methods</div>
+        <div class="model-ml">Finds the maximum-margin boundary between classes. Excels in high-dimensional spaces with clear separation. Less effective on large, noisy datasets.</div>
+        <div class="model-life">Clear-boundary thinking: drawing sharp distinctions, holding firm positions, thriving in structured high-stakes decisions. Can be brittle when the boundaries are genuinely fuzzy.</div>
+      </div>
+
+      <div class="model-card">
+        <div class="model-icon">🎼</div>
+        <div class="model-badge">Stacking / Blending</div>
+        <div class="model-name">Ensemble</div>
+        <div class="model-ml">Combines predictions from multiple models to produce a result no single model achieves alone. In competitions, ensembles almost always win. The diversity of the components matters as much as their individual strength.</div>
+        <div class="model-life">Combines your analytical, intuitive, and collaborative modes — or draws on a team of people who think differently. The combined signal outperforms any single approach.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>The bias–variance tradeoff</h3>
+    <p>Every model selection decision navigates a fundamental tension: models that are too simple underfit — they miss the real pattern. Models that are too complex overfit — they memorise the training data and fail on anything new.</p>
+    <div class="bv-spectrum">
+      <div class="bv-labels"><span>Underfitting · High Bias</span><span>Optimal</span><span>Overfitting · High Variance</span></div>
+      <div class="bv-bar"><span class="bv-sweet">🎯</span></div>
+      <div class="bv-cols">
+        <div class="bv-col under">
+          <div class="bv-col-head">Underfitting — High Bias</div>
+          <div class="bv-item">Model is too simple for the problem</div>
+          <div class="bv-item">Misses patterns that are clearly present</div>
+          <div class="bv-item">Same output regardless of input variation</div>
+          <div class="bv-item">Consistent — but consistently wrong</div>
+        </div>
+        <div class="bv-col over">
+          <div class="bv-col-head">Overfitting — High Variance</div>
+          <div class="bv-item">Model has memorised the training data</div>
+          <div class="bv-item">Works perfectly on familiar situations</div>
+          <div class="bv-item">Fails immediately on anything new</div>
+          <div class="bv-item">Confident — but dangerously brittle</div>
+        </div>
+      </div>
+    </div>
+    <div class="highlight-box amber">The goal of model selection is not maximum performance on known data. It is maximum generalisation to unknown data. Cross-validation — testing the model on data it has never seen — is the only honest way to measure this.</div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section class="section" id="life">
+  <div class="section-label">The Human Parallel</div>
+  <h2>You have been running the same model on every problem</h2>
+
+  <div class="content-card">
+    <p>Most people develop one strong approach to challenges — one way of thinking, one style of working, one strategy for navigating complexity — and then apply it everywhere. The academic applies research methodology to management decisions. The entrepreneur applies growth-hacking to personal relationships. The analyst applies data-driven logic to choices that require emotional intelligence.</p>
+    <p>The model that won the last competition is not guaranteed to win the next one. The architecture that worked for your PhD research may not be the right one for building a team. The approach that succeeded in a structured institutional environment may underfit or overfit when the environment changes.</p>
+    <div class="highlight-box">The No Free Lunch theorem applies to people just as rigorously as it applies to algorithms. The approach that got you here is not necessarily the one that gets you to the next stage. Model selection — conscious, deliberate, problem-specific — is not just a machine learning concept. It is a life skill.</div>
+    <p>This does not mean abandoning what works. It means developing a repertoire — and the judgment to know which architecture fits which problem. The researcher mode for exploratory questions. The pragmatist mode for operational decisions. The ensemble mode when the problem is genuinely complex and no single approach has full coverage.</p>
+  </div>
+
+  <div class="content-card">
+    <h3>Overfitting and underfitting in your own pipeline</h3>
+    <p>Both failure modes appear in human systems — often in people who are highly capable in other respects.</p>
+    <ul style="list-style:none;display:flex;flex-direction:column;gap:12px;margin:16px 0">
+      <li style="background:#0A0A24;border:0.5px solid rgba(245,168,48,0.2);border-radius:8px;padding:14px 16px;font-size:13px;color:#D8D5CE;line-height:1.6"><strong style="color:var(--amber)">Underfitting in your approach:</strong> Applying a model that is too simple or too generic for the actual complexity of the problem. Trying to solve a nuanced interpersonal conflict with a checklist. Addressing a deeply contextual career decision with a universal productivity framework. The model is running — but it is not capturing the actual structure of the problem.</li>
+      <li style="background:#0A0A24;border:0.5px solid rgba(231,76,60,0.2);border-radius:8px;padding:14px 16px;font-size:13px;color:#D8D5CE;line-height:1.6"><strong style="color:#E87070">Overfitting to past experience:</strong> The approach that worked brilliantly in a previous role, institution, or life chapter — now applied to a fundamentally different context. It works on the familiar cases but fails on new ones. The model has memorised one distribution and cannot generalise. The world changed; the model didn't.</li>
+      <li style="background:#0A0A24;border:0.5px solid rgba(109,216,179,0.2);border-radius:8px;padding:14px 16px;font-size:13px;color:#D8D5CE;line-height:1.6"><strong style="color:var(--teal)">The well-selected model:</strong> Consciously matching approach to problem type. Recognising when a structured, systematic method is needed versus when improvisation and intuition are more appropriate. Knowing when to work alone versus when the problem needs ensemble inputs from people who think differently from you. This is not indecision — it is calibrated architecture selection.</li>
+    </ul>
+    <div class="highlight-box teal">Cross-validation in life: before committing fully to an approach, test it on a small, real problem. Did it generalise? Or did it only work because the conditions were familiar? The answer tells you whether you have selected the right model.</div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section class="section" id="daily">
+  <div class="section-label">In Your Life · Every Day</div>
+  <h2>Practising deliberate architecture selection</h2>
+
+  <div class="content-card">
+    <p>AutoML runs model selection before every training cycle. As the problem changes — new data, new constraints, new objective — the algorithm search runs again. The architecture that was optimal last quarter is re-evaluated, not assumed.</p>
+    <p>The equivalent practice for humans is developing the habit of <strong style="color:var(--text)">problem-first thinking</strong> before solution-first thinking. Before choosing how to approach something, spend one moment asking: what kind of problem is this? What does it actually require? Is my default approach the right fit — or am I reaching for a familiar model because it is familiar?</p>
+    <div class="highlight-box teal">AutoML doesn't assume last week's best model is still this week's best model. Neither should you. Problem-first, approach-second. Every time.</div>
+  </div>
+
+  <div class="content-card">
+    <h3>The architecture selection moment — daily and weekly</h3>
+    <p style="margin-bottom:20px">These are the natural moments to practise model selection: pausing before choosing an approach, and asking whether the architecture fits the problem.</p>
+    <div class="daily-timeline">
+
+      <div class="dt-row">
+        <div class="dt-left"><div class="dt-dot">🌅</div><div class="dt-time">Morning</div></div>
+        <div class="dt-body">
+          <div class="dt-badge-row"><span class="dt-badge default">Default model</span><span class="dt-badge chosen">Selected model</span></div>
+          <div class="dt-title">Before the first task — name the approach the day requires</div>
+          <div class="dt-raw">Default: open the task list and begin in the same way every morning — systematic, analytical, structured — regardless of what the day actually demands</div>
+          <div class="dt-clean">Selected: spend two minutes asking what today's work actually requires. Creative exploration? Systematic execution? Difficult conversation? The approach follows from the answer.</div>
+        </div>
+      </div>
+
+      <div class="dt-row">
+        <div class="dt-left"><div class="dt-dot">⚡</div><div class="dt-time">Decision point</div></div>
+        <div class="dt-body">
+          <div class="dt-badge-row"><span class="dt-badge default">Default model</span><span class="dt-badge chosen">Selected model</span></div>
+          <div class="dt-title">Before a significant decision — ask if this is the right model</div>
+          <div class="dt-raw">Default: apply your usual decision-making process — data-driven analysis, or gut feel, or consensus-seeking — regardless of what kind of decision this actually is</div>
+          <div class="dt-clean">Selected: notice the type of decision first. High-stakes and reversible? Test quickly. Low-stakes and irreversible? Analyse first. Complex and ambiguous? Seek diverse input before deciding. The type determines the method.</div>
+        </div>
+      </div>
+
+      <div class="dt-row">
+        <div class="dt-left"><div class="dt-dot">🤝</div><div class="dt-time">Collaboration</div></div>
+        <div class="dt-body">
+          <div class="dt-badge-row"><span class="dt-badge default">Default model</span><span class="dt-badge chosen">Selected model</span></div>
+          <div class="dt-title">Working with others — when to go ensemble</div>
+          <div class="dt-raw">Default: work independently or defer entirely — choosing the same collaboration mode for every task regardless of whether solo or ensemble thinking is more appropriate</div>
+          <div class="dt-clean">Selected: problems with genuine complexity and multiple valid framings benefit from ensemble input — diverse thinkers generate better coverage than any single model. Identify when you are the bottleneck and when diversity of input improves the output.</div>
+        </div>
+      </div>
+
+      <div class="dt-row">
+        <div class="dt-left"><div class="dt-dot">🌙</div><div class="dt-time">Evening</div></div>
+        <div class="dt-body">
+          <div class="dt-badge-row"><span class="dt-badge default">Default model</span><span class="dt-badge chosen">Selected model</span></div>
+          <div class="dt-title">Review — did today's approach match today's problem?</div>
+          <div class="dt-raw">Default: evaluate the day by output volume — how much was done — without asking whether the approach was appropriate for the work</div>
+          <div class="dt-clean">Selected: ask one question before closing the day: "Was the way I approached today's main challenge the right architecture for that challenge?" If not, what would have fit better?</div>
+        </div>
+      </div>
+
+      <div class="dt-row">
+        <div class="dt-left"><div class="dt-dot">📋</div><div class="dt-time">Weekly</div></div>
+        <div class="dt-body">
+          <div class="dt-badge-row"><span class="dt-badge default">Default model</span><span class="dt-badge chosen">Selected model</span></div>
+          <div class="dt-title">Model performance review — is your current architecture generalising?</div>
+          <div class="dt-raw">Default: continue with the same approach that worked last month, last year, last chapter — until results decline far enough to force a change</div>
+          <div class="dt-clean">Selected: once a week, ask whether your primary approach is still generalising — producing good results across varied contexts — or whether it is beginning to overfit: only working in familiar conditions, failing when something new arrives.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<div class="task-section-header" id="tasks">
+  <div class="label">Interactive Tasks · Episode 06</div>
+  <h2>Your Model Selection Audit</h2>
+  <p>Four tasks to identify your default architecture, locate yourself on the bias–variance spectrum, define your current objective function, and design your model selection practice.</p>
+</div>
+
+<section class="section" style="padding-top:40px">
+
+  <!-- TASK 1: ARCHITECTURE AUDIT -->
+  <div class="task-card" id="task1-card">
+    <div class="task-header">
+      <div class="task-num" id="t1-num">1</div>
+      <div class="task-meta">
+        <div class="task-label">Task 01 · Architecture Audit</div>
+        <div class="task-title">Which model do you default to?</div>
+      </div>
+      <span class="task-badge" id="t1-badge">~3 min</span>
+    </div>
+    <div class="task-body">
+      <p>Select the approach that most closely describes how you naturally tackle difficult or unfamiliar challenges. Be honest — this is about your default, not your ideal.</p>
+
+      <div class="arch-option" id="arch-a" onclick="selectArch('a')">
+        <div class="arch-head"><span class="arch-icon">📏</span><span class="arch-name">Linear — I work through problems systematically and directly</span></div>
+        <div class="arch-desc">I identify the cause, map the steps, follow the logic. I am most comfortable when I can see the relationship between action and outcome clearly.</div>
+        <div class="arch-life">Strength: reliable and interpretable. Risk: underperforms when the problem is genuinely non-linear — when there is no clear cause-effect chain and the situation requires adaptive, branching thinking.</div>
+      </div>
+
+      <div class="arch-option" id="arch-b" onclick="selectArch('b')">
+        <div class="arch-head"><span class="arch-icon">🌳</span><span class="arch-name">Tree-based — I read the context and adapt rule by rule</span></div>
+        <div class="arch-desc">I work by reading the specific situation and applying the rule that fits. I am good at navigating messy, real-world complexity where the same action produces different results in different contexts.</div>
+        <div class="arch-life">Strength: handles complexity and noise well. Risk: can become overly context-specific — a collection of local rules with no coherent overarching principle. May struggle to explain decisions to others.</div>
+      </div>
+
+      <div class="arch-option" id="arch-c" onclick="selectArch('c')">
+        <div class="arch-head"><span class="arch-icon">🧠</span><span class="arch-name">Neural — I sense patterns at depth, often before I can articulate them</span></div>
+        <div class="arch-desc">I process large amounts of experience and extract structure intuitively. I often know before I know why I know. I work best with rich, complex input.</div>
+        <div class="arch-life">Strength: finds non-obvious patterns, excels with complexity. Risk: requires a lot of data (experience) to train well, and can overfit — producing confident-feeling judgements that don't hold up when conditions change.</div>
+      </div>
+
+      <div class="arch-option" id="arch-d" onclick="selectArch('d')">
+        <div class="arch-head"><span class="arch-icon">📐</span><span class="arch-name">SVM — I draw sharp boundaries and hold clear positions</span></div>
+        <div class="arch-desc">I think in terms of clear distinctions — in or out, yes or no, this principle over that one. I am most effective in high-stakes situations where clarity of position matters.</div>
+        <div class="arch-life">Strength: decisive and principled. Risk: can be brittle when the real situation is genuinely ambiguous — when the boundary is not sharp and forcing one does more harm than working with the uncertainty would.</div>
+      </div>
+
+      <div class="arch-option" id="arch-e" onclick="selectArch('e')">
+        <div class="arch-head"><span class="arch-icon">🎼</span><span class="arch-name">Ensemble — I combine inputs and perspectives before converging</span></div>
+        <div class="arch-desc">I resist committing to a single approach too early. I seek diverse inputs — from my own different modes of thinking, or from people who see things differently — and let the consensus emerge.</div>
+        <div class="arch-life">Strength: produces the most robust results on complex, ambiguous problems. Risk: can be slow or indecisive when speed is required and the problem is actually simple enough for a direct model.</div>
+      </div>
+
+      <button class="arch-submit" onclick="runArchAudit()">Analyse my default architecture →</button>
+      <div class="arch-result" id="arch-result"></div>
+    </div>
+  </div>
+
+  <!-- TASK 2: BIAS-VARIANCE SELF-PLACEMENT -->
+  <div class="task-card" id="task2-card">
+    <div class="task-header">
+      <div class="task-num" id="t2-num">2</div>
+      <div class="task-meta">
+        <div class="task-label">Task 02 · Bias–Variance Check</div>
+        <div class="task-title">Are you overfitting or underfitting right now?</div>
+      </div>
+      <span class="task-badge" id="t2-badge">~4 min</span>
+    </div>
+    <div class="task-body">
+      <p>Position yourself honestly on the bias–variance spectrum for your current primary challenge. Then describe what you observe.</p>
+      <div class="bv-slider-wrap">
+        <div class="bv-slider-label"><span>← Underfitting · Too generic</span><span>Overfitting · Too specialised →</span></div>
+        <input type="range" class="bv-range" id="bv-slider" min="1" max="10" value="5" oninput="updateBVLabel()">
+        <div class="bv-position-label" id="bv-label">Balanced — exploring</div>
+      </div>
+      <div class="bv-context-fields">
+        <div>
+          <div class="bv-field-label">What does this position look like in your current situation?</div>
+          <input class="bv-input" id="bv-context" placeholder="e.g. My approach to this role still mirrors what worked in my previous institution — it fits familiar situations but keeps failing in new contexts">
+        </div>
+        <div>
+          <div class="bv-field-label">What would a better-calibrated model look like?</div>
+          <input class="bv-input" id="bv-fix" placeholder="e.g. I need to run cross-validation — test my approach in genuinely new contexts before assuming it still generalises">
+        </div>
+      </div>
+      <button class="bv-save" id="bv-save-btn" onclick="saveBV()">Save my bias–variance check</button>
+      <div class="saved-note" id="bv-saved-note">✓ Saved. Revisit this in 4 weeks — has your position shifted?</div>
+    </div>
+  </div>
+
+  <!-- TASK 3: OBJECTIVE FUNCTION -->
+  <div class="task-card" id="task3-card">
+    <div class="task-header">
+      <div class="task-num" id="t3-num">3</div>
+      <div class="task-meta">
+        <div class="task-label">Task 03 · Objective Function</div>
+        <div class="task-title">What are you actually optimising for right now?</div>
+      </div>
+      <span class="task-badge" id="t3-badge">~4 min</span>
+    </div>
+    <div class="task-body">
+      <p>A model without a defined objective function cannot select itself — it has no criterion to evaluate candidates against. Before you can choose the right approach, you need to be explicit about what you are optimising for, what you are not willing to sacrifice, and what success you are refusing.</p>
+      <div class="obj-fields">
+
+        <div class="obj-field">
+          <div class="obj-label primary">Primary objective — what I am maximising</div>
+          <input class="obj-input" id="obj1" placeholder="e.g. Research output and academic credibility in a new domain">
+          <div class="obj-hint">The single most important outcome your current choices are building toward.</div>
+        </div>
+
+        <div class="obj-field">
+          <div class="obj-label constraint">Hard constraints — what I am not willing to trade away</div>
+          <input class="obj-input" id="obj2" placeholder="e.g. Time with family, intellectual integrity, physical health">
+          <div class="obj-hint">These are your regularisation parameters — they prevent overfitting to a single objective at the cost of everything else.</div>
+        </div>
+
+        <div class="obj-field">
+          <div class="obj-label avoid">What I am actively refusing to optimise for</div>
+          <input class="obj-input" id="obj3" placeholder="e.g. Approval metrics, surface-level productivity, prestige without substance">
+          <div class="obj-hint">Not all objectives are worth pursuing, even when they appear measurable. Name what you are not chasing.</div>
+        </div>
+
+      </div>
+      <button class="obj-save" id="obj-save" onclick="saveObjective()">Save my objective function</button>
+      <div class="saved-note" id="obj-saved-note">✓ Saved. Read this back before your next major decision.</div>
+    </div>
+  </div>
+
+  <!-- TASK 4: MODEL SELECTION PROTOCOL -->
+  <div class="task-card" id="task4-card">
+    <div class="task-header">
+      <div class="task-num" id="t4-num">4</div>
+      <div class="task-meta">
+        <div class="task-label">Task 04 · Protocol Design</div>
+        <div class="task-title">Design your model selection practice</div>
+      </div>
+      <span class="task-badge" id="t4-badge">~3 min</span>
+    </div>
+    <div class="task-body">
+      <p>Write your model selection protocol: the specific question or pause you will build into your process for deciding how to approach significant challenges — so you stop defaulting and start selecting.</p>
+      <textarea class="reflection-area" id="reflection-text" placeholder="e.g. Before committing to a significant project or strategy, I will pause and ask: What kind of problem is this? What does it actually require — structure and analysis, or flexibility and exploration? Am I choosing this approach because it fits, or because it is familiar? I will cross-validate by testing my approach on a small version before going all in." oninput="updateCharCount()" maxlength="800"></textarea>
+      <div class="char-count"><span id="char-count">0</span> / 800 characters</div>
+      <button class="reflection-save" id="save-btn" onclick="saveReflection()">Save my protocol</button>
+      <div class="saved-note" id="saved-note">✓ Saved. You now have a model selection stage in your pipeline.</div>
+
+      <p style="margin-top:24px">Choose the one model selection habit to start this week:</p>
+      <div class="commit-options">
+        <div class="commit-card" onclick="selectCommit(this,'problem-first')" data-val="problem-first">
+          <div class="commit-icon">🔍</div>
+          <div class="commit-title">Problem-first pause</div>
+          <div class="commit-desc">Before every significant task, spend 60 seconds asking what kind of problem it is — before choosing how to approach it</div>
+        </div>
+        <div class="commit-card" onclick="selectCommit(this,'cross-validate')" data-val="cross-validate">
+          <div class="commit-icon">🔬</div>
+          <div class="commit-title">Cross-validate before committing</div>
+          <div class="commit-desc">For the next major decision, test your approach on a small version first — before going all in on the full problem</div>
+        </div>
+        <div class="commit-card" onclick="selectCommit(this,'ensemble')" data-val="ensemble">
+          <div class="commit-icon">🎼</div>
+          <div class="commit-title">Seek an ensemble input</div>
+          <div class="commit-desc">Identify one significant challenge this week where you will deliberately seek a second perspective from someone who thinks differently from you</div>
+        </div>
+        <div class="commit-card" onclick="selectCommit(this,'bv-weekly')" data-val="bv-weekly">
+          <div class="commit-icon">📋</div>
+          <div class="commit-title">Weekly architecture review</div>
+          <div class="commit-desc">Each Friday, ask one question: is my current approach to the main challenge still generalising — or is it beginning to overfit?</div>
+        </div>
+      </div>
+      <button class="commit-confirm" id="commit-btn" onclick="confirmCommit()">I commit to this model selection habit →</button>
+      <div class="commit-result" id="commit-result">
+        <p><strong>Model selection stage active.</strong><br>You are now choosing your architecture consciously — not defaulting. Come back next week: did the approach fit the problem?<br><br>Share using <strong style="color:var(--teal)">#ReInventingMyself</strong></p>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<hr class="divider">
+
+<div class="ep-nav">
+  <a class="ep-nav-btn" href="ep05_feature_engineering.html">
+    <div class="ep-nav-dir">← Previous</div>
+    <div class="ep-nav-title">Episode 05</div>
+    <div class="ep-nav-sub">Feature Engineering</div>
+  </a>
+  <a class="ep-nav-btn next" href="reinventing-myself.html#episodes">
+    <div class="ep-nav-dir">Next →</div>
+    <div class="ep-nav-title">Episode 07</div>
+    <div class="ep-nav-sub">Training &amp; Tuning · Coming next week</div>
+  </a>
+</div>
+
+<footer>
+  <div class="footer-left">© 2026 Dr. Tertsegha J. Anande · drtertseghaanande.com</div>
+  <div class="footer-right">#ReInventingMyself · #AutoML</div>
+</footer>
+
+<script>
+const hc=document.getElementById('hero-c'),hx=hc.getContext('2d');
+function resizeHero(){const r=hc.parentElement.getBoundingClientRect();hc.width=r.width;hc.height=r.height||480;drawHeroStars()}
+function drawHeroStars(){hx.clearRect(0,0,hc.width,hc.height);for(let i=0;i<100;i++){const x=Math.random()*hc.width,y=Math.random()*hc.height,r=Math.random()*1.3+0.2,o=Math.random()*0.5+0.1;hx.beginPath();hx.arc(x,y,r,0,Math.PI*2);hx.fillStyle=`rgba(255,255,255,${o})`;hx.fill()}const g=hx.createRadialGradient(hc.width/2,hc.height*.6,0,hc.width/2,hc.height*.6,hc.width*.5);g.addColorStop(0,'rgba(83,74,183,0.14)');g.addColorStop(1,'rgba(0,0,0,0)');hx.fillStyle=g;hx.fillRect(0,0,hc.width,hc.height)}
+setTimeout(resizeHero,100);window.addEventListener('resize',resizeHero);
+
+const sections=['intro','what','life','daily','tasks'];
+const dots=document.querySelectorAll('.pt-dot');
+function updateTracker(){let c=0;sections.forEach((id,i)=>{const el=document.getElementById(id);if(el&&el.getBoundingClientRect().top<window.innerHeight*0.5)c=i});dots.forEach((d,i)=>{d.classList.toggle('active',i===c);d.classList.toggle('done',i<c)})}
+window.addEventListener('scroll',updateTracker,{passive:true});
+
+// Task 1: Architecture Audit
+let selectedArch=null;
+const archInsights={
+  a:{name:'Linear',msg:'Your default architecture is systematic and direct. It is one of the most reliable models for clear, well-defined problems — but watch for situations where the cause-effect chain breaks down or the problem has genuine non-linearity. Those are the moments to deliberately switch architecture.'},
+  b:{name:'Tree-based / Adaptive',msg:'Your default is contextual and adaptive — you read situations and respond with rules that fit. This is a robust architecture for messy real-world complexity. Your risk is inconsistency: make sure your local rules connect to coherent overarching principles so others can follow your reasoning.'},
+  c:{name:'Neural / Intuitive',msg:'Your default is pattern-sensing and intuitive — you process experience at depth and extract structure before you can fully articulate it. Powerful in complex domains. Your risk is overfitting: very confident intuitions that were trained on one distribution and silently fail when the distribution shifts.'},
+  d:{name:'SVM / Principled',msg:'Your default is clear-boundary and principled — you thrive in high-stakes decisions where position and clarity matter. Your risk is brittleness: when the situation is genuinely ambiguous and forcing a sharp boundary does more harm than working with the uncertainty would.'},
+  e:{name:'Ensemble / Collaborative',msg:'Your default draws on multiple modes and multiple inputs before converging. This tends to produce the most robust results on genuinely complex problems. Your risk is decision latency: when the problem is actually simple, the ensemble overhead is cost without benefit. Learn to recognise when a direct model is sufficient.'}
+};
+function selectArch(key){
+  document.querySelectorAll('.arch-option').forEach(o=>o.classList.remove('selected'));
+  document.getElementById('arch-'+key).classList.add('selected');
+  selectedArch=key;
+}
+function runArchAudit(){
+  if(!selectedArch){alert('Select an architecture first.');return}
+  const ins=archInsights[selectedArch];
+  const res=document.getElementById('arch-result');
+  res.innerHTML=`<div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--purple);margin-bottom:8px">Default architecture: ${ins.name}</div><p style="font-size:13px;color:#C8C5BE;line-height:1.7;margin:0">${ins.msg}</p>`;
+  res.style.display='block';
+  localStorage.setItem('rim_ep06_arch',selectedArch);
+  markComplete('task1-card','t1-num','t1-badge');
+}
+
+// Task 2: Bias-Variance
+const bvLabels=['','Significantly underfitting','Underfitting','Underfitting — some awareness','Slightly underfitting','Balanced — exploring','Slightly overfitting','Overfitting — some context dependence','Overfitting','Significantly overfitting','Strongly overfitting — highly context-specific'];
+function updateBVLabel(){const v=document.getElementById('bv-slider').value;document.getElementById('bv-label').textContent=bvLabels[v]||'Balanced'}
+function saveBV(){
+  const v=document.getElementById('bv-slider').value;
+  const ctx=document.getElementById('bv-context').value.trim();
+  const fix=document.getElementById('bv-fix').value.trim();
+  if(!ctx&&!fix)return;
+  localStorage.setItem('rim_ep06_bv',JSON.stringify({v,ctx,fix}));
+  const btn=document.getElementById('bv-save-btn');btn.textContent='✓ Saved';btn.classList.add('saved');
+  document.getElementById('bv-saved-note').style.display='block';
+  markComplete('task2-card','t2-num','t2-badge');
+}
+
+// Task 3: Objective Function
+function saveObjective(){
+  const v1=document.getElementById('obj1').value.trim();
+  const v2=document.getElementById('obj2').value.trim();
+  const v3=document.getElementById('obj3').value.trim();
+  if(!v1&&!v2&&!v3)return;
+  localStorage.setItem('rim_ep06_objective',JSON.stringify({v1,v2,v3}));
+  const btn=document.getElementById('obj-save');btn.textContent='✓ Saved';btn.classList.add('saved');
+  document.getElementById('obj-saved-note').style.display='block';
+  markComplete('task3-card','t3-num','t3-badge');
+}
+
+// Task 4: Protocol
+function updateCharCount(){document.getElementById('char-count').textContent=document.getElementById('reflection-text').value.length}
+function saveReflection(){
+  const text=document.getElementById('reflection-text').value.trim();if(!text)return;
+  localStorage.setItem('rim_ep06_protocol',text);
+  const btn=document.getElementById('save-btn');btn.textContent='✓ Saved';btn.classList.add('saved');
+  document.getElementById('saved-note').style.display='block';
+}
+let selectedCommit=null;
+function selectCommit(el,val){document.querySelectorAll('.commit-card').forEach(c=>c.classList.remove('selected'));el.classList.add('selected');selectedCommit=val;document.getElementById('commit-btn').style.display='block'}
+function confirmCommit(){if(!selectedCommit)return;localStorage.setItem('rim_ep06_commit',selectedCommit);document.getElementById('commit-result').style.display='block';document.getElementById('commit-btn').style.display='none';markComplete('task4-card','t4-num','t4-badge')}
+
+function markComplete(cardId,numId,badgeId){
+  const card=document.getElementById(cardId),num=document.getElementById(numId),badge=document.getElementById(badgeId);
+  if(card)card.classList.add('completed');if(num)num.textContent='✓';if(badge){badge.textContent='Done';badge.classList.add('done')}
+}
+
+window.addEventListener('load',()=>{
+  updateBVLabel();
+  if(localStorage.getItem('rim_ep06_arch')){selectedArch=localStorage.getItem('rim_ep06_arch');const el=document.getElementById('arch-'+selectedArch);if(el)el.classList.add('selected');markComplete('task1-card','t1-num','t1-badge')}
+  const bv=localStorage.getItem('rim_ep06_bv');
+  if(bv){try{const d=JSON.parse(bv);document.getElementById('bv-slider').value=d.v;updateBVLabel();if(d.ctx)document.getElementById('bv-context').value=d.ctx;if(d.fix)document.getElementById('bv-fix').value=d.fix;markComplete('task2-card','t2-num','t2-badge')}catch(e){}}
+  const obj=localStorage.getItem('rim_ep06_objective');
+  if(obj){try{const d=JSON.parse(obj);if(d.v1)document.getElementById('obj1').value=d.v1;if(d.v2)document.getElementById('obj2').value=d.v2;if(d.v3)document.getElementById('obj3').value=d.v3;markComplete('task3-card','t3-num','t3-badge')}catch(e){}}
+  const p=localStorage.getItem('rim_ep06_protocol');if(p){document.getElementById('reflection-text').value=p;updateCharCount()}
+  if(localStorage.getItem('rim_ep06_commit'))markComplete('task4-card','t4-num','t4-badge');
+});
+</script>
+</body>
+</html>
