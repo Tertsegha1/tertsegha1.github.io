@@ -34,7 +34,7 @@ through innovative AI-powered tools and structured pedagogical frameworks.`,
     stats: [
       { num: '10+', label: 'Years Experience' },
       { num: '14+', label: 'Publications'     },
-      { num: '98%', label: 'CMP701 Pass Rate' },
+      { num: '98%', label: 'Digital Transformation Pass Rate' },
       { num: '5+',  label: 'EdTech Projects'   },
     ],
     memberships: ['BCS — MBCS', 'IET Member', 'IEEE & ComSoc', 'HEA — FHEA', 'INSTICC'],
@@ -53,7 +53,7 @@ and a B.Tech. from the Federal University of Technology, Yola, Nigeria.`,
 frameworks, AutoML pipeline design, GAN-based synthetic data generation, and trustworthy ML
 for high-stakes applications.`,
       `As Deputy Programme Leader at QAHE&nbsp;/&nbsp;Ulster University, I oversee curriculum quality
-assurance for MSc Computing programmes, lead three core modules, and have driven CMP701 student
+assurance for MSc Computing programmes, lead three core modules, and have driven Digital Transformation student
 pass rates to <strong>98%+</strong> through the Digital Transformation Studio initiative and the
 AI-powered Automated Marking &amp; Grading System I designed and built.`,
       `I am an active open-source contributor with production-grade projects on GitHub, a Fellow
@@ -96,9 +96,11 @@ of the Higher Education Academy (FHEA), and a Member of the BCS, IET, and IEEE.`
       title:  'Deputy Programme Leader & Module Leader',
       org:    'QAHE Limited / Ulster University — Birmingham, UK',
       bullets: [
-        'Introduced the <strong>Digital Transformation Studio (DT Studio)</strong> for CMP701 — a 12-week formative scaffold with weekly Guild Quest tasks; drove student pass rate to <strong>98%+</strong> and failure rate to <strong>1.14%</strong> (2025–26 cohort)',
-        'Designed and deployed the <strong>CMP701 Automated Marking &amp; Grading System</strong> — AI-powered browser-based tool (Llama 3.3 70B / Whisper) for rubric-driven grading and Blackboard-ready feedback at zero server cost',
         'Oversees curriculum QA across MSc Computing programmes; leads UX Strategies, Advanced Database Systems, and Object-Oriented Design &amp; Development',
+        'Created a tracker system for monitoring delivery, marking, and moderation across all MSc modules',
+        'Conducted standardisation and moderation trainings for Module Leaders',
+        'Mentored new teaching staff, supporting onboarding and professional development',
+        'Created bio data pages for all MSc teaching staff and a student feedback wall',
         'Collaborates with awarding partners and academic committees to validate alignment with QAA frameworks and industry standards',
       ],
     },
@@ -109,6 +111,11 @@ of the Higher Education Academy (FHEA), and a Member of the BCS, IET, and IEEE.`
       bullets: [
         'Teaches UG and PG modules across programming, databases, software engineering, and web/UX engineering',
         'Module leader for three core MSc / UG modules; designs assessments and provides structured technical feedback at scale',
+        'Introduced the <strong>Digital Transformation Studio (DT Studio)</strong> — a 12-week formative scaffold with weekly Guild Quest tasks; drove student pass rate to <strong>98%+</strong> and failure rate to <strong>1.14%</strong> (2025–26 cohort)',
+        'Designed and deployed the <strong>Automated Marking &amp; Grading System</strong> — AI-powered browser-based tool (Llama 3.3 70B / Whisper) for rubric-driven grading and Blackboard-ready feedback at zero server cost',
+        'Created a tracking system for monitoring and managing marking across cohorts',
+        'Collaborated with counterpart lecturers for cross-moderation, content development and delivery',
+        'Completed standardisation and internal moderation in line with QAA and awarding body requirements',
       ],
     },
     {
