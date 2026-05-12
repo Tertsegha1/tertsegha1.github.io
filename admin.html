@@ -545,24 +545,30 @@ function discardChanges() {
    DEPLOY
 ═══════════════════════════════════════════════════════════════ */
 async function quickDeploy() {
-  collectAll();
   await deploy();
 }
 
 async function deploy() {
-  collectAll();
-  const msg  = document.getElementById('commit-msg')?.value.trim() || 'chore: update portfolio content via admin';
-  const body = serializeDataJs(DATA_EDIT);
-  const b64  = btoa(unescape(encodeURIComponent(body)));
-  setStatus('Pushing to GitHub…', true);
+  if (!GH_TOKEN || !GH_REPO) {
+    toast('Not signed in — please reload and enter your token.', 'err'); return;
+  }
+  setStatus('Preparing…', true);
   try {
+    collectAll();
+    const msg  = document.getElementById('commit-msg')?.value.trim() || 'chore: update portfolio content via admin';
+    const body = serializeDataJs(DATA_EDIT);
+    // UTF-8 safe base64 encoding
+    const b64  = btoa(encodeURIComponent(body).replace(/%([0-9A-F]{2})/g,
+                   (_, p1) => String.fromCharCode('0x' + p1)));
+    setStatus('Pushing to GitHub…', true);
     const res = await ghPut(`/repos/${GH_REPO}/contents/js/data.js`, {
       message: msg,
       content: b64,
       sha: GH_SHA
     });
-    if (!res.ok) throw new Error(await res.text());
-    const json = await res.json();
+    const text = await res.text();
+    if (!res.ok) throw new Error(text);
+    const json = JSON.parse(text);
     GH_SHA    = json.content.sha;
     DATA_LIVE = deepClone(DATA_EDIT);
     dirty     = false;
@@ -571,7 +577,8 @@ async function deploy() {
     toast('🚀 Deployed! Site will update in ~60s.', 'ok');
   } catch(e) {
     setStatus('', false);
-    toast('Deploy failed: ' + e.message, 'err');
+    toast('Deploy failed: ' + e.message, 'err', 7000);
+    console.error('Deploy error:', e);
   }
 }
 
