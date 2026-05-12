@@ -548,28 +548,47 @@ async function quickDeploy() {
   await deploy();
 }
 
+// Reliable UTF-8 → base64 using TextEncoder (handles all Unicode)
+function toBase64(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  bytes.forEach(b => bin += String.fromCharCode(b));
+  return btoa(bin);
+}
+
 async function deploy() {
   if (!GH_TOKEN || !GH_REPO) {
     toast('Not signed in — please reload and enter your token.', 'err'); return;
   }
-  setStatus('Preparing…', true);
+  // Refresh SHA right before committing to avoid stale-SHA conflicts
+  setStatus('Checking current file…', true);
+  try {
+    const shaRes = await ghGet(`/repos/${GH_REPO}/contents/js/data.js`);
+    if (!shaRes.ok) throw new Error(`Could not refresh file info (${shaRes.status})`);
+    GH_SHA = (await shaRes.json()).sha;
+  } catch(e) {
+    setStatus('', false);
+    showError('SHA refresh failed: ' + e.message); return;
+  }
+
+  setStatus('Preparing content…', true);
   try {
     collectAll();
-    const msg  = document.getElementById('commit-msg')?.value.trim() || 'chore: update portfolio content via admin';
-    const body = serializeDataJs(DATA_EDIT);
-    // UTF-8 safe base64 encoding
-    const b64  = btoa(encodeURIComponent(body).replace(/%([0-9A-F]{2})/g,
-                   (_, p1) => String.fromCharCode('0x' + p1)));
+    const msg  = document.getElementById('commit-msg')?.value.trim()
+                 || 'chore: update portfolio content via admin';
+    const b64  = toBase64(serializeDataJs(DATA_EDIT));
     setStatus('Pushing to GitHub…', true);
-    const res = await ghPut(`/repos/${GH_REPO}/contents/js/data.js`, {
-      message: msg,
-      content: b64,
-      sha: GH_SHA
+    const res  = await ghPut(`/repos/${GH_REPO}/contents/js/data.js`, {
+      message: msg, content: b64, sha: GH_SHA
     });
     const text = await res.text();
-    if (!res.ok) throw new Error(text);
-    const json = JSON.parse(text);
-    GH_SHA    = json.content.sha;
+    if (!res.ok) {
+      // Parse GitHub's error JSON for a clean message
+      let ghMsg = text;
+      try { ghMsg = JSON.parse(text).message || text; } catch(_) {}
+      throw new Error(`GitHub ${res.status}: ${ghMsg}`);
+    }
+    GH_SHA    = JSON.parse(text).content.sha;
     DATA_LIVE = deepClone(DATA_EDIT);
     dirty     = false;
     document.getElementById('deploy-bar').style.display = 'none';
@@ -577,9 +596,25 @@ async function deploy() {
     toast('🚀 Deployed! Site will update in ~60s.', 'ok');
   } catch(e) {
     setStatus('', false);
-    toast('Deploy failed: ' + e.message, 'err', 7000);
+    showError(e.message);
     console.error('Deploy error:', e);
   }
+}
+
+function showError(msg) {
+  // Show full error in a visible panel rather than a fleeting toast
+  const panel = document.getElementById('panel-deploy');
+  let box = document.getElementById('deploy-error-box');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'deploy-error-box';
+    box.style.cssText = 'background:#fdecea;border:1px solid #f5c6cb;border-radius:8px;padding:1rem;margin-bottom:1rem;font-size:0.82rem;color:#721c24;word-break:break-word;';
+    panel.querySelector('.card').before(box);
+  }
+  box.innerHTML = '<strong>Deploy failed:</strong><br>' + msg
+    + '<br><small style="opacity:.7">Check your token has the <code>repo</code> scope (classic token) '
+    + 'or Contents: Read &amp; write (fine-grained token).</small>';
+  showPanel('deploy');
 }
 
 /* ═══════════════════════════════════════════════════════════════
