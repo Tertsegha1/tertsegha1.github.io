@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Episode 04: Preprocessing · Re-Inventing Myself</title>
+<meta name="description" content="Stage 02 of the AutoML pipeline — Preprocessing. You don't need more experience. You need to process the ones you already have. Episode 04 of Re-Inventing Myself by Dr. Tertsegha J. Anande.">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --deep:#050516;--panel:#0F0F2E;--panel2:#0B0B26;
+  --purple:#9490E8;--purple-soft:#6560CC;
+  --teal:#6DD8B3;--teal-dark:#25B585;
+  --amber:#F5A830;--text:#F2F1FF;--muted:#B0ADA6;--dim:#8A8883;
+  --border:rgba(148,144,232,0.28);
+}
+html{scroll-behavior:smooth}
+body{background:var(--deep);background-image:radial-gradient(ellipse 80% 40% at 20% 10%,rgba(101,96,204,0.18) 0%,transparent 70%),radial-gradient(ellipse 60% 30% at 80% 5%,rgba(37,181,133,0.10) 0%,transparent 60%),radial-gradient(ellipse 50% 50% at 50% 90%,rgba(101,96,204,0.08) 0%,transparent 70%);color:var(--text);font-family:Arial,sans-serif;min-height:100vh;line-height:1.6}
+nav{position:sticky;top:0;z-index:100;background:rgba(5,5,22,0.95);backdrop-filter:blur(8px);border-bottom:0.5px solid var(--border);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.nav-brand{font-size:10px;letter-spacing:4px;color:var(--purple);text-transform:uppercase}
+.nav-links{display:flex;gap:20px}
+.nav-links a{font-size:11px;color:var(--muted);text-decoration:none;letter-spacing:1px;transition:color .2s}
+.nav-links a:hover{color:var(--text)}
+.nav-back{font-size:11px;color:var(--teal);border:0.5px solid rgba(109,216,179,0.4);border-radius:4px;padding:5px 12px;text-decoration:none;transition:border-color .2s}
+.nav-back:hover{border-color:var(--teal)}
+.hero{position:relative;overflow:hidden;padding:70px 32px 56px;border-bottom:0.5px solid var(--border)}
+canvas#hero-c{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.hero-inner{position:relative;z-index:2;max-width:820px;margin:0 auto;text-align:center}
+.ep-pill{display:inline-flex;align-items:center;gap:8px;background:rgba(109,216,179,0.12);border:0.5px solid rgba(109,216,179,0.4);border-radius:20px;padding:6px 16px;margin-bottom:24px}
+.ep-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.6)}}
+.ep-text{font-size:10px;letter-spacing:3px;color:var(--teal);text-transform:uppercase}
+.hero h1{font-family:Georgia,serif;font-size:clamp(32px,5vw,60px);font-weight:700;color:var(--text);line-height:1.1;margin-bottom:12px}
+.hero h1 em{font-style:normal;color:var(--purple)}
+.hero-sub{font-size:12px;letter-spacing:4px;color:#AFA9EC;text-transform:uppercase;margin-bottom:24px}
+.hero-desc{font-size:16px;color:var(--muted);line-height:1.75;max-width:660px;margin:0 auto 32px}
+.progress-row{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+.prog-step{display:flex;align-items:center;gap:6px;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.3);text-transform:uppercase}
+.prog-step.done{color:var(--teal)}.prog-step.current{color:var(--purple)}
+.prog-num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;border:0.5px solid}
+.prog-step.done .prog-num{background:rgba(109,216,179,0.2);border-color:var(--teal);color:var(--teal)}
+.prog-step.current .prog-num{background:rgba(101,96,204,0.25);border-color:var(--purple);color:var(--purple)}
+.prog-step .prog-num{background:transparent;border-color:rgba(255,255,255,0.15);color:rgba(255,255,255,0.3)}
+.prog-divider{width:20px;height:0.5px;background:rgba(255,255,255,0.1)}
+.section{max-width:860px;margin:0 auto;padding:56px 32px}
+.section-label{font-size:10px;letter-spacing:4px;color:var(--purple);text-transform:uppercase;margin-bottom:10px}
+.section h2{font-family:Georgia,serif;font-size:30px;color:var(--text);margin-bottom:20px;line-height:1.2}
+.divider{border:none;border-top:0.5px solid var(--border);margin:0}
+.content-card{background:var(--panel);border:0.5px solid var(--border);border-radius:12px;padding:28px 32px;margin-bottom:20px}
+.content-card p{font-size:15px;color:#D8D5CE;line-height:1.8;margin-bottom:14px}
+.content-card p:last-child{margin-bottom:0}
+.content-card h3{font-family:Georgia,serif;font-size:20px;color:var(--text);margin-bottom:12px}
+.highlight-box{background:rgba(101,96,204,0.1);border-left:3px solid var(--purple);border-radius:0 8px 8px 0;padding:16px 20px;margin:16px 0;font-size:15px;color:#C8C5BE;line-height:1.7;font-style:italic}
+.highlight-box.teal{background:rgba(37,181,133,0.1);border-color:var(--teal);color:#B8EDD9}
+.highlight-box.amber{background:rgba(245,168,48,0.1);border-color:var(--amber);color:#FFE0A0}
+.highlight-box.red{background:rgba(231,76,60,0.08);border-color:#E87070;color:#FFBABA}
+
+/* OPERATIONS GRID */
+.ops-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin:24px 0}
+.ops-card{background:#06061C;border:0.5px solid var(--border);border-radius:10px;padding:18px 14px;transition:border-color .2s}
+.ops-card:hover{border-color:var(--purple)}
+.ops-icon{font-size:22px;margin-bottom:8px}
+.ops-type{font-size:9px;letter-spacing:3px;text-transform:uppercase;font-weight:700;margin-bottom:6px;color:var(--purple)}
+.ops-ml{font-size:11px;font-weight:700;color:var(--text);margin-bottom:4px}
+.ops-life{font-size:11px;color:var(--muted);line-height:1.4}
+
+/* OPS DETAIL (life mapping table) */
+.ops-table{width:100%;border-collapse:collapse;margin:20px 0}
+.ops-table th{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);padding:10px 14px;border-bottom:0.5px solid var(--border);text-align:left}
+.ops-table td{padding:14px;border-bottom:0.5px solid rgba(148,144,232,0.1);vertical-align:top;font-size:13px}
+.ops-table tr:last-child td{border-bottom:none}
+.op-name{font-weight:700;color:var(--text);margin-bottom:4px}
+.op-ml-desc{color:var(--muted);font-size:12px;margin-bottom:4px}
+.op-life-desc{color:#B8EDD9;font-size:12px;line-height:1.5}
+.op-badge{display:inline-block;font-size:9px;letter-spacing:2px;padding:2px 8px;border-radius:8px;text-transform:uppercase;font-weight:700;background:rgba(148,144,232,0.1);color:var(--purple);border:0.5px solid rgba(148,144,232,0.3);white-space:nowrap}
+
+/* UNPROCESSED BOX */
+.unprocessed-box{background:#06061C;background-image:radial-gradient(ellipse 70% 50% at 50% 50%,rgba(231,76,60,0.1) 0%,transparent 70%);border:0.5px solid rgba(231,76,60,0.3);border-radius:14px;padding:32px;text-align:center;margin:24px 0}
+.unprocessed-word{font-family:Georgia,serif;font-size:26px;font-weight:700;color:#E87070;margin-bottom:8px}
+.unprocessed-text{font-size:15px;color:var(--muted);line-height:1.7;max-width:600px;margin:0 auto}
+
+/* DAILY TIMELINE (reused from EP03) */
+.daily-timeline{display:flex;flex-direction:column;gap:0;margin:24px 0}
+.dt-row{display:flex;gap:16px;position:relative;padding-bottom:20px}
+.dt-row:last-child{padding-bottom:0}
+.dt-row:not(:last-child)::before{content:'';position:absolute;left:19px;top:40px;bottom:0;width:0.5px;background:rgba(148,144,232,0.2)}
+.dt-left{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:6px}
+.dt-dot{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:0.5px solid var(--border);background:#06061C;flex-shrink:0}
+.dt-time{font-size:9px;color:var(--amber);letter-spacing:1px;text-align:center;white-space:nowrap}
+.dt-body{flex:1;background:var(--panel);border:0.5px solid var(--border);border-radius:10px;padding:14px 18px;margin-top:4px}
+.dt-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px}
+.dt-badge-row{display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.dt-badge{font-size:9px;padding:2px 8px;border-radius:8px;letter-spacing:1px;text-transform:uppercase;font-weight:700}
+.dt-badge.raw{background:rgba(231,76,60,0.1);border:0.5px solid rgba(231,76,60,0.3);color:#E87070}
+.dt-badge.clean{background:rgba(37,181,133,0.1);border:0.5px solid rgba(37,181,133,0.3);color:var(--teal)}
+.dt-raw{font-size:12px;color:#E87070;margin-bottom:4px;line-height:1.5}
+.dt-clean{font-size:12px;color:var(--teal);line-height:1.5}
+
+/* TASK SECTION */
+.task-section-header{background:linear-gradient(135deg,#08082A 0%,#0D1040 100%);border-top:0.5px solid var(--border);border-bottom:0.5px solid var(--border);padding:40px 32px;text-align:center}
+.task-section-header .label{font-size:10px;letter-spacing:4px;color:var(--amber);text-transform:uppercase;margin-bottom:10px}
+.task-section-header h2{font-family:Georgia,serif;font-size:32px;color:var(--text);margin-bottom:10px}
+.task-section-header p{font-size:14px;color:var(--muted);max-width:560px;margin:0 auto}
+.task-card{background:var(--panel);border:0.5px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:20px;transition:border-color .2s}
+.task-card.completed{border-color:var(--teal)}
+.task-header{padding:20px 24px;display:flex;align-items:center;gap:16px;border-bottom:0.5px solid var(--border)}
+.task-num{width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;background:rgba(245,168,48,0.15);border:0.5px solid rgba(245,168,48,0.4);color:var(--amber)}
+.task-card.completed .task-num{background:rgba(109,216,179,0.15);border-color:var(--teal);color:var(--teal)}
+.task-meta{flex:1}
+.task-label{font-size:9px;letter-spacing:3px;color:var(--amber);text-transform:uppercase;margin-bottom:3px}
+.task-card.completed .task-label{color:var(--teal)}
+.task-title{font-size:16px;font-weight:700;color:var(--text)}
+.task-badge{font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border-radius:10px;background:rgba(245,168,48,0.1);border:0.5px solid rgba(245,168,48,0.3);color:var(--amber)}
+.task-badge.done{background:rgba(109,216,179,0.15);border-color:var(--teal);color:var(--teal)}
+.task-body{padding:24px}
+.task-body p{font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:16px}
+
+/* TASK 1: NOISE AUDIT */
+.noise-row{background:#0A0A24;border:0.5px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px}
+.nr-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px}
+.nr-desc{font-size:11px;color:var(--muted);margin-bottom:12px;line-height:1.5}
+.nr-slider-row{display:flex;align-items:center;gap:10px}
+.nr-slider-row input[type=range]{flex:1;-webkit-appearance:none;height:4px;border-radius:2px;outline:none;cursor:pointer}
+.nr-slider-row input[type=range]{background:linear-gradient(to right,rgba(37,181,133,0.4),rgba(231,76,60,0.4))}
+.nr-slider-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--purple);cursor:pointer;transition:transform .15s}
+.nr-slider-row input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.3)}
+.nr-val{font-size:13px;font-weight:700;color:var(--purple);min-width:20px;text-align:right}
+.noise-scale{display:flex;justify-content:space-between;font-size:10px;color:var(--dim);margin-top:4px;letter-spacing:1px}
+.noise-submit{margin-top:16px;width:100%;padding:12px;background:var(--purple-soft);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:1px;transition:background .2s}
+.noise-submit:hover{background:var(--purple)}
+.noise-result{display:none;margin-top:16px;padding:16px;background:rgba(101,96,204,0.1);border:0.5px solid var(--border);border-radius:8px;font-size:13px;color:#C8C5BE;line-height:1.7;text-align:center}
+
+/* TASK 2: MISSING VALUES */
+.missing-list{display:flex;flex-direction:column;gap:12px;margin-bottom:16px}
+.missing-item{background:#0A0A24;border:0.5px solid var(--border);border-radius:10px;padding:16px;transition:border-color .2s}
+.missing-item.checked-item{border-color:rgba(37,181,133,0.4)}
+.missing-checkbox-row{display:flex;align-items:flex-start;gap:14px;cursor:pointer}
+.missing-cb{width:18px;height:18px;border-radius:4px;border:0.5px solid var(--border);background:#06061C;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .2s}
+.missing-cb.checked{background:rgba(37,181,133,0.2);border-color:var(--teal);color:var(--teal)}
+.missing-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px}
+.missing-desc{font-size:12px;color:var(--muted);line-height:1.5}
+.impute-row{display:none;margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border)}
+.impute-row.visible{display:block}
+.impute-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--amber);margin-bottom:8px}
+.impute-input{width:100%;padding:10px 14px;background:#06061C;border:0.5px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:Arial,sans-serif;outline:none;transition:border-color .2s}
+.impute-input:focus{border-color:var(--purple)}
+.impute-input::placeholder{color:rgba(255,255,255,0.2);font-style:italic}
+.missing-save-btn{margin-top:14px;padding:11px 24px;background:transparent;border:0.5px solid var(--border);border-radius:8px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;transition:all .2s;letter-spacing:1px}
+.missing-save-btn:hover{border-color:var(--teal);color:var(--teal)}
+.missing-save-btn.saved{border-color:var(--teal);color:var(--teal);background:rgba(37,181,133,0.1)}
+
+/* TASK 3: NORMALISATION */
+.calibrate-form{display:flex;flex-direction:column;gap:16px;margin-bottom:16px}
+.calibrate-field{}
+.calibrate-label{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--purple);margin-bottom:8px;font-weight:700}
+.calibrate-input{width:100%;padding:12px 14px;background:#080820;border:0.5px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;font-family:Arial,sans-serif;line-height:1.6;outline:none;transition:border-color .2s}
+.calibrate-input:focus{border-color:var(--purple)}
+.calibrate-input::placeholder{color:rgba(255,255,255,0.2);font-style:italic}
+.calibrate-save{padding:11px 24px;background:transparent;border:0.5px solid var(--border);border-radius:8px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;transition:all .2s;letter-spacing:1px}
+.calibrate-save:hover{border-color:var(--teal);color:var(--teal)}
+.calibrate-save.saved{border-color:var(--teal);color:var(--teal);background:rgba(37,181,133,0.1)}
+.calibrate-note{display:none;font-size:12px;color:var(--teal);margin-top:10px}
+
+/* TASK 4 */
+.reflection-area{width:100%;min-height:120px;padding:16px;background:#080820;border:0.5px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:Arial,sans-serif;line-height:1.7;resize:vertical;outline:none;transition:border-color .2s;margin-bottom:12px}
+.reflection-area:focus{border-color:var(--purple)}
+.reflection-area::placeholder{color:rgba(255,255,255,0.2);font-style:italic}
+.char-count{font-size:11px;color:var(--dim);text-align:right;margin-bottom:12px}
+.reflection-save{padding:11px 24px;background:transparent;border:0.5px solid var(--border);border-radius:8px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;transition:all .2s;letter-spacing:1px}
+.reflection-save:hover{border-color:var(--teal);color:var(--teal)}
+.reflection-save.saved{border-color:var(--teal);color:var(--teal);background:rgba(37,181,133,0.1)}
+.saved-note{display:none;font-size:12px;color:var(--teal);margin-top:10px}
+.commit-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+@media(max-width:600px){.commit-options{grid-template-columns:1fr}}
+.commit-card{background:#0A0A24;border:0.5px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;transition:all .2s;text-align:center}
+.commit-card:hover{border-color:var(--purple);background:rgba(101,96,204,0.1)}
+.commit-card.selected{border-color:var(--teal);background:rgba(37,181,133,0.1)}
+.commit-icon{font-size:28px;margin-bottom:8px}
+.commit-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px}
+.commit-desc{font-size:11px;color:var(--muted);line-height:1.4}
+.commit-confirm{width:100%;padding:13px;background:rgba(37,181,133,0.12);border:0.5px solid var(--teal);border-radius:8px;font-size:13px;font-weight:700;color:var(--teal);cursor:pointer;transition:background .2s;letter-spacing:1px;display:none}
+.commit-confirm:hover{background:rgba(37,181,133,0.22)}
+.commit-result{display:none;margin-top:14px;padding:18px;text-align:center;background:rgba(37,181,133,0.1);border:0.5px solid var(--teal);border-radius:10px}
+.commit-result p{font-size:14px;color:#B8EDD9;line-height:1.6}
+
+/* PROGRESS TRACKER */
+.progress-tracker{position:fixed;right:24px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;z-index:50}
+@media(max-width:768px){.progress-tracker{display:none}}
+.pt-dot{width:10px;height:10px;border-radius:50%;border:1.5px solid rgba(148,144,232,0.3);background:transparent;cursor:pointer;transition:all .2s;position:relative}
+.pt-dot:hover{border-color:var(--purple)}
+.pt-dot.active{border-color:var(--purple);background:var(--purple)}
+.pt-dot.done{border-color:var(--teal);background:var(--teal)}
+.pt-dot .pt-tip{position:absolute;right:18px;top:50%;transform:translateY(-50%);background:rgba(15,15,46,0.95);border:0.5px solid var(--border);border-radius:6px;padding:4px 10px;font-size:10px;color:var(--text);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s}
+.pt-dot:hover .pt-tip{opacity:1}
+.ep-nav{max-width:860px;margin:0 auto;padding:0 32px 60px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.ep-nav-btn{flex:1;min-width:200px;background:var(--panel);border:0.5px solid var(--border);border-radius:12px;padding:20px 22px;text-decoration:none;transition:border-color .2s}
+.ep-nav-btn:hover{border-color:var(--purple)}
+.ep-nav-dir{font-size:9px;letter-spacing:3px;color:var(--dim);text-transform:uppercase;margin-bottom:6px}
+.ep-nav-title{font-size:14px;font-weight:700;color:var(--text)}
+.ep-nav-sub{font-size:12px;color:var(--muted);margin-top:3px}
+.ep-nav-btn.next{text-align:right;border-color:rgba(109,216,179,0.25)}
+.ep-nav-btn.next:hover{border-color:var(--teal)}
+footer{border-top:0.5px solid var(--border);padding:24px 32px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.footer-left{font-size:11px;color:var(--dim)}
+.footer-right{font-size:10px;color:var(--purple-soft);letter-spacing:2px;text-transform:uppercase}
+</style>
+</head>
+<body>
+
+<nav class="progress-tracker" aria-label="Page sections">
+  <div class="pt-dot active" onclick="document.querySelector('#intro').scrollIntoView({behavior:'smooth'})" data-section="intro"><span class="pt-tip">Introduction</span></div>
+  <div class="pt-dot" onclick="document.querySelector('#what').scrollIntoView({behavior:'smooth'})" data-section="what"><span class="pt-tip">What is it?</span></div>
+  <div class="pt-dot" onclick="document.querySelector('#life').scrollIntoView({behavior:'smooth'})" data-section="life"><span class="pt-tip">Life parallel</span></div>
+  <div class="pt-dot" onclick="document.querySelector('#daily').scrollIntoView({behavior:'smooth'})" data-section="daily"><span class="pt-tip">Daily practice</span></div>
+  <div class="pt-dot" onclick="document.querySelector('#tasks').scrollIntoView({behavior:'smooth'})" data-section="tasks"><span class="pt-tip">Your tasks</span></div>
+</nav>
+
+<nav>
+  <span class="nav-brand">Re-Inventing Myself</span>
+  <div class="nav-links">
+    <a href="#what">The concept</a>
+    <a href="#life">Life parallel</a>
+    <a href="#daily">Daily practice</a>
+    <a href="#tasks">Your tasks</a>
+  </div>
+  <a class="nav-back" href="reinventing-myself.html">← All Episodes</a>
+</nav>
+
+<section class="hero" id="intro">
+  <canvas id="hero-c"></canvas>
+  <div class="hero-inner">
+    <div class="ep-pill"><div class="ep-dot"></div><span class="ep-text">Episode 04 · Stage 02 of 09</span></div>
+    <h1>Pre-<em>processing</em> —<br>turning raw experience<br>into <em>usable signal</em></h1>
+    <div class="hero-sub">Re-Inventing Myself · AutoML &amp; You</div>
+    <p class="hero-desc">You don't need more experiences to grow. You need to process the ones you already have. This week: Stage 02 of the AutoML pipeline — the step most people skip entirely, and the reason the pipeline stalls.</p>
+    <div class="progress-row">
+      <div class="prog-step done"><div class="prog-num">1</div><span>Re-Introducing Me</span></div>
+      <div class="prog-divider"></div>
+      <div class="prog-step done"><div class="prog-num">2</div><span>What is AutoML?</span></div>
+      <div class="prog-divider"></div>
+      <div class="prog-step done"><div class="prog-num">3</div><span>Data Ingestion</span></div>
+      <div class="prog-divider"></div>
+      <div class="prog-step current"><div class="prog-num">4</div><span>Preprocessing</span></div>
+      <div class="prog-divider"></div>
+      <div class="prog-step"><div class="prog-num">···</div><span>More coming</span></div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section class="section" id="what">
+  <div class="section-label">Stage 02 · The Concept</div>
+  <h2>What is Preprocessing?</h2>
+
+  <div style="background:#06061C;background-image:radial-gradient(ellipse 70% 50% at 50% 50%,rgba(101,96,204,0.15) 0%,transparent 70%);border:0.5px solid var(--border);border-radius:14px;padding:32px;text-align:center;margin-bottom:24px;box-shadow:0 0 40px rgba(101,96,204,0.12)">
+    <div style="font-family:Georgia,serif;font-size:38px;font-weight:700;color:var(--text);margin-bottom:8px">Pre-<span style="color:var(--purple)">processing</span></div>
+    <div style="font-size:15px;color:var(--muted);line-height:1.7;max-width:600px;margin:0 auto">The systematic transformation of <strong style="color:var(--text)">raw data into a clean, consistent, model-ready format</strong>. Removes noise. Fills gaps. Scales values. Resolves inconsistencies. Nothing downstream can run correctly until this stage completes.</div>
+  </div>
+
+  <div class="content-card">
+    <p>In Episode 03, data arrived. Raw, messy, unfiltered — straight from its source. Now the pipeline has a problem: machine learning models are exquisitely sensitive to the quality and format of their inputs. Outliers distort learning. Missing values break computations. Inconsistent scales mislead distance-based algorithms. Duplicate records teach the model wrong frequencies.</p>
+    <p>Preprocessing does not add new information. It does something more important: <strong style="color:var(--text)">it reveals the signal that was already there</strong>, hidden beneath noise, inconsistency, and scale distortion.</p>
+    <div class="highlight-box">"Preprocessing is not about adding value. It is about removing everything that was obscuring the value that was already present."</div>
+    <p>This is one of the most time-consuming stages in any real ML project — often 60–80% of total pipeline time. It is also the stage that most beginners skip. The models that fail in production almost always fail here first.</p>
+  </div>
+
+  <div class="content-card">
+    <h3>The 5 core preprocessing operations — and their life equivalents</h3>
+    <p style="margin-bottom:16px">Each operation solves a specific problem in the raw data. Each has a direct parallel in how you process lived experience.</p>
+    <div style="overflow-x:auto">
+    <table class="ops-table">
+      <thead>
+        <tr>
+          <th>Operation</th>
+          <th>In AutoML</th>
+          <th>In your life</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><div class="op-name">🔍 Missing Value Handling</div><div><span class="op-badge">Imputation</span></div></td>
+          <td><div class="op-ml-desc">Filling gaps in the dataset — through mean/median imputation, forward fill, or model-based estimation. Unaddressed gaps propagate errors downstream.</div></td>
+          <td><div class="op-life-desc">The skills, knowledge, or experience you know you're missing but have been avoiding. Ignoring them doesn't make them disappear — the gap silently limits every downstream stage. You either fill it deliberately or work around it by design.</div></td>
+        </tr>
+        <tr>
+          <td><div class="op-name">📊 Normalisation</div><div><span class="op-badge">Scaling</span></div></td>
+          <td><div class="op-ml-desc">Rescaling features to a common range so no single variable dominates by magnitude alone. A salary of £50,000 and an age of 35 are not comparable without scaling.</div></td>
+          <td><div class="op-life-desc">Measuring yourself on the right scale. Comparing your Year 1 to someone else's Year 10 is a data type mismatch. Comparing your academic output to a research professor's when you teach full-time is a magnitude distortion. Normalisation means finding your actual baseline — not someone else's.</div></td>
+        </tr>
+        <tr>
+          <td><div class="op-name">🚫 Noise Removal</div><div><span class="op-badge">Filtering</span></div></td>
+          <td><div class="op-ml-desc">Eliminating random variation and irrelevant signals that add no predictive value but consume model capacity. High-noise data produces models that learn the noise, not the pattern.</div></td>
+          <td><div class="op-life-desc">Cutting low-value commitments, passive scrolling, draining relationships, and any obligation that consumes bandwidth without returning signal. The pipeline can only process what it receives — if noise consumes 70% of your bandwidth, the remaining 30% is all that reaches the next stage.</div></td>
+        </tr>
+        <tr>
+          <td><div class="op-name">🔄 Duplicate Handling</div><div><span class="op-badge">Deduplication</span></div></td>
+          <td><div class="op-ml-desc">Removing repeated records that teach the model incorrect frequencies. Duplicates make certain patterns appear more common than they are, biasing learning.</div></td>
+          <td><div class="op-life-desc">Breaking repeating patterns: having the same arguments, making the same decisions, cycling through the same frustrations. Duplicate experiences don't compound — they reinforce. Until they are identified and resolved, the model keeps learning the wrong lesson from the repetition.</div></td>
+        </tr>
+        <tr>
+          <td><div class="op-name">📋 Encoding</div><div><span class="op-badge">Transformation</span></div></td>
+          <td><div class="op-ml-desc">Converting categorical or non-numeric data into a format the model can process — one-hot encoding, label encoding, ordinal encoding.</div></td>
+          <td><div class="op-life-desc">Translating raw experience into learnable format. An event that happened to you is unencoded data. Journalling about it, discussing it with a mentor, reflecting on what it revealed about your assumptions — that is encoding. Without encoding, experience cannot update the model.</div></td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section class="section" id="life">
+  <div class="section-label">The Human Parallel</div>
+  <h2>Unprocessed experience doesn't disappear — it becomes training data anyway</h2>
+
+  <div class="content-card">
+    <p>Most people have more than enough experience to grow. They have lived through failure, navigated difficulty, witnessed what works and what doesn't. The bottleneck is almost never a shortage of input.</p>
+    <p>The bottleneck is preprocessing.</p>
+    <div class="highlight-box">Raw data is never ready to use. Neither are raw experiences. The difference between someone who grows from adversity and someone who is defined by it is not what happened — it is what they did with what happened.</div>
+    <p>Preprocessing is that step. The journal entry that converts a difficult day into a lesson. The honest conversation that resolves a recurring conflict. The deliberate reflection that identifies the pattern hiding inside a frustrating result.</p>
+    <p>Without preprocessing, experience piles up — unfiltered, unscaled, full of noise and duplicates. The model trains on all of it. Including the parts you wish it wouldn't.</p>
+  </div>
+
+  <div class="content-card">
+    <h3>What happens when preprocessing is skipped</h3>
+    <div class="unprocessed-box">
+      <div class="unprocessed-word">Unprocessed data corrupts the model</div>
+      <div class="unprocessed-text">In AutoML, a model trained on raw, uncleaned data does not simply underperform — it learns the wrong things. It overfits to outliers. It treats noise as signal. It memorises duplicates as truth. The outputs feel plausible, but the underlying model is wrong.</div>
+    </div>
+    <p>In your life, skipped preprocessing looks like this:</p>
+    <ul style="list-style:none;display:flex;flex-direction:column;gap:12px;margin:16px 0">
+      <li style="background:#0A0A24;border:0.5px solid rgba(231,76,60,0.2);border-radius:8px;padding:14px 16px;font-size:13px;color:#D8D5CE;line-height:1.6"><strong style="color:#E87070">Missing values unaddressed:</strong> You know there is a gap — a skill you haven't built, a conversation you haven't had, a pattern you haven't examined. You keep building on top of it. The gap doesn't close; it compounds.</li>
+      <li style="background:#0A0A24;border:0.5px solid rgba(231,76,60,0.2);border-radius:8px;padding:14px 16px;font-size:13px;color:#D8D5CE;line-height:1.6"><strong style="color:#E87070">Normalisation skipped:</strong> You measure your output against people operating in completely different conditions — more time, more resource, further along, different constraints. The scale mismatch produces a distorted self-assessment. The model thinks it is failing when it is actually performing correctly for the given inputs.</li>
+      <li style="background:#0A0A24;border:0.5px solid rgba(231,76,60,0.2);border-radius:8px;padding:14px 16px;font-size:13px;color:#D8D5CE;line-height:1.6"><strong style="color:#E87070">Noise unfiltered:</strong> Low-value obligations, passive consumption, and draining interactions fill the day. By the time you reach the work that matters, the pipeline has already spent most of its processing budget on noise.</li>
+      <li style="background:#0A0A24;border:0.5px solid rgba(231,76,60,0.2);border-radius:8px;padding:14px 16px;font-size:13px;color:#D8D5CE;line-height:1.6"><strong style="color:#E87070">Duplicates unresolved:</strong> The same argument, the same decision, the same mistake — a third time. The pattern has been trained into the model because it was never identified as a duplicate. The pipeline keeps receiving identical input and expecting different output.</li>
+      <li style="background:#0A0A24;border:0.5px solid rgba(231,76,60,0.2);border-radius:8px;padding:14px 16px;font-size:13px;color:#D8D5CE;line-height:1.6"><strong style="color:#E87070">Encoding skipped:</strong> Things happen. They are stored as raw events — no reflection, no extraction of lesson, no update to the model's assumptions. Experience accumulates without becoming knowledge.</li>
+    </ul>
+    <div class="highlight-box amber">The pipeline does not wait for you to preprocess. It keeps running on whatever it receives. Skipping preprocessing is not a pause — it is a choice to train on noise.</div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section class="section" id="daily">
+  <div class="section-label">In Your Life · Every Day</div>
+  <h2>Preprocessing is a daily practice, not a one-time event</h2>
+
+  <div class="content-card">
+    <p>In AutoML, preprocessing runs before every training cycle. It is not a one-time clean-up before the model is built. It is a continuous, structured step that runs on every new batch of data that enters the system.</p>
+    <p>Your life works the same way. A single journalling session does not preprocess a lifetime of unexamined experience. A single honest conversation does not clear years of unresolved conflict. Preprocessing is not an event — it is a <strong style="color:var(--text)">practice</strong>. Small, consistent, applied to each day's data before it flows into the next stage.</p>
+    <div class="highlight-box teal">The goal is not to preprocess everything at once. The goal is to never let raw data accumulate faster than you can process it.</div>
+  </div>
+
+  <div class="content-card">
+    <h3>Your preprocessing windows throughout the day</h3>
+    <p style="margin-bottom:20px">These are the natural moments in each day where preprocessing should run. The difference between running raw and running clean.</p>
+    <div class="daily-timeline">
+
+      <div class="dt-row">
+        <div class="dt-left"><div class="dt-dot">🌅</div><div class="dt-time">Morning</div></div>
+        <div class="dt-body">
+          <div class="dt-badge-row"><span class="dt-badge raw">Raw</span><span class="dt-badge clean">Preprocessed</span></div>
+          <div class="dt-title">5-minute journal — preprocessing the incoming day</div>
+          <div class="dt-raw">Raw: straight from sleep into tasks — yesterday's unresolved noise carried forward, today's priorities undefined</div>
+          <div class="dt-clean">Preprocessed: 3 sentences on what needs resolving from yesterday + today's single most important output. The day starts on clean data.</div>
+        </div>
+      </div>
+
+      <div class="dt-row">
+        <div class="dt-left"><div class="dt-dot">☕</div><div class="dt-time">Mid-morning</div></div>
+        <div class="dt-body">
+          <div class="dt-badge-row"><span class="dt-badge raw">Raw</span><span class="dt-badge clean">Preprocessed</span></div>
+          <div class="dt-title">The noise-clearing decision — what gets your processing power today</div>
+          <div class="dt-raw">Raw: reactive email, notifications, and requests set the agenda — your processing budget allocated to whoever asked last</div>
+          <div class="dt-clean">Preprocessed: batch email to defined windows; non-urgent requests deferred. Deep work runs on clean bandwidth, not leftover capacity.</div>
+        </div>
+      </div>
+
+      <div class="dt-row">
+        <div class="dt-left"><div class="dt-dot">🌙</div><div class="dt-time">Evening</div></div>
+        <div class="dt-body">
+          <div class="dt-badge-row"><span class="dt-badge raw">Raw</span><span class="dt-badge clean">Preprocessed</span></div>
+          <div class="dt-title">3-question review — encoding the day before sleep consolidates it</div>
+          <div class="dt-raw">Raw: the day ends without review — events stored as raw emotion and reaction, not as lesson or signal</div>
+          <div class="dt-clean">Preprocessed: What went well today? What drifted? What is the one thing I will do differently tomorrow? Three minutes of encoding that converts a raw day into usable training data.</div>
+        </div>
+      </div>
+
+      <div class="dt-row">
+        <div class="dt-left"><div class="dt-dot">📋</div><div class="dt-time">Weekly</div></div>
+        <div class="dt-body">
+          <div class="dt-badge-row"><span class="dt-badge raw">Raw</span><span class="dt-badge clean">Preprocessed</span></div>
+          <div class="dt-title">Sunday batch preprocessing — the week's data cleaned and filed</div>
+          <div class="dt-raw">Raw: the week closes without review — wins unacknowledged, patterns undetected, next week entered with last week's noise still loaded</div>
+          <div class="dt-clean">Preprocessed: 20-minute review. What were this week's signal moments? What repeating pattern showed up again? What one commitment can be removed to reduce noise load next week?</div>
+        </div>
+      </div>
+
+      <div class="dt-row">
+        <div class="dt-left"><div class="dt-dot">🗓️</div><div class="dt-time">Monthly</div></div>
+        <div class="dt-body">
+          <div class="dt-badge-row"><span class="dt-badge raw">Raw</span><span class="dt-badge clean">Preprocessed</span></div>
+          <div class="dt-title">Deep clean — delete, archive, or action every open loop</div>
+          <div class="dt-raw">Raw: commitments, half-finished projects, and unresolved decisions accumulate — consuming background processing power without progressing</div>
+          <div class="dt-clean">Preprocessed: Every open item gets one of three labels — Delete (not happening, drop it), Archive (store it, stop thinking about it), or Action (schedule it specifically). Open loops closed.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<div class="task-section-header" id="tasks">
+  <div class="label">Interactive Tasks · Episode 04</div>
+  <h2>Your Preprocessing Audit</h2>
+  <p>Four tasks to identify your noise sources, fill your gaps, recalibrate your scale, and build your preprocessing protocol.</p>
+</div>
+
+<section class="section" style="padding-top:40px">
+
+  <!-- TASK 1: NOISE AUDIT -->
+  <div class="task-card" id="task1-card">
+    <div class="task-header">
+      <div class="task-num" id="t1-num">1</div>
+      <div class="task-meta">
+        <div class="task-label">Task 01 · Noise Audit</div>
+        <div class="task-title">How much noise is your pipeline carrying?</div>
+      </div>
+      <span class="task-badge" id="t1-badge">~3 min</span>
+    </div>
+    <div class="task-body">
+      <p>Rate each noise source in your current pipeline from 1 (low noise) to 10 (high noise). Be precise — the model trained on inflated scores learns nothing.</p>
+
+      <div class="noise-row">
+        <div class="nr-name">📅 Low-value time commitments</div>
+        <div class="nr-desc">Meetings, obligations, and recurring tasks that consume significant time but contribute minimal signal to your goals</div>
+        <div class="nr-slider-row"><input type="range" min="1" max="10" value="5" id="n1" oninput="document.getElementById('nv1').textContent=this.value"><span class="nr-val" id="nv1">5</span></div>
+        <div class="noise-scale"><span>Low noise</span><span>High noise</span></div>
+      </div>
+
+      <div class="noise-row">
+        <div class="nr-name">📱 Digital noise</div>
+        <div class="nr-desc">Notifications, passive scrolling, reactive email checking, and other digital interruptions that fragment attention</div>
+        <div class="nr-slider-row"><input type="range" min="1" max="10" value="5" id="n2" oninput="document.getElementById('nv2').textContent=this.value"><span class="nr-val" id="nv2">5</span></div>
+        <div class="noise-scale"><span>Low noise</span><span>High noise</span></div>
+      </div>
+
+      <div class="noise-row">
+        <div class="nr-name">👥 Draining relationships or social obligations</div>
+        <div class="nr-desc">Interactions that consistently leave you with less energy, clarity, or motivation than they found you with</div>
+        <div class="nr-slider-row"><input type="range" min="1" max="10" value="5" id="n3" oninput="document.getElementById('nv3').textContent=this.value"><span class="nr-val" id="nv3">5</span></div>
+        <div class="noise-scale"><span>Low noise</span><span>High noise</span></div>
+      </div>
+
+      <div class="noise-row">
+        <div class="nr-name">🔁 Negative thought patterns</div>
+        <div class="nr-desc">Rumination, comparison, catastrophising, or self-doubt that runs in the background and consumes processing power</div>
+        <div class="nr-slider-row"><input type="range" min="1" max="10" value="5" id="n4" oninput="document.getElementById('nv4').textContent=this.value"><span class="nr-val" id="nv4">5</span></div>
+        <div class="noise-scale"><span>Low noise</span><span>High noise</span></div>
+      </div>
+
+      <div class="noise-row">
+        <div class="nr-name">📂 Open loops and unresolved decisions</div>
+        <div class="nr-desc">Unfinished tasks, unmade decisions, and deferred conversations that sit in working memory and fragment focus</div>
+        <div class="nr-slider-row"><input type="range" min="1" max="10" value="5" id="n5" oninput="document.getElementById('nv5').textContent=this.value"><span class="nr-val" id="nv5">5</span></div>
+        <div class="noise-scale"><span>Low noise</span><span>High noise</span></div>
+      </div>
+
+      <button class="noise-submit" onclick="runNoiseAudit()">Calculate my noise load →</button>
+      <div class="noise-result" id="noise-result"></div>
+    </div>
+  </div>
+
+  <!-- TASK 2: MISSING VALUES -->
+  <div class="task-card" id="task2-card">
+    <div class="task-header">
+      <div class="task-num" id="t2-num">2</div>
+      <div class="task-meta">
+        <div class="task-label">Task 02 · Missing Values</div>
+        <div class="task-title">What gaps are your pipeline running around?</div>
+      </div>
+      <span class="task-badge" id="t2-badge">~3 min</span>
+    </div>
+    <div class="task-body">
+      <p>Tick each foundational pipeline requirement you currently have in place consistently. For every unchecked item, write your imputation strategy — your specific plan to address the gap.</p>
+      <div class="missing-list">
+
+        <div class="missing-item" id="miss1">
+          <div class="missing-checkbox-row" onclick="toggleMissing(1)">
+            <div class="missing-cb" id="mcb1"></div>
+            <div><div class="missing-name">😴 Consistent sleep — 7 to 8 hours, reliable schedule</div><div class="missing-desc">The single most powerful preprocessing operation available. Sleep is when the brain consolidates the day's data. Skipping it means the next day runs on corrupted cache.</div></div>
+          </div>
+          <div class="impute-row" id="irow1"><div class="impute-label">My imputation strategy:</div><input class="impute-input" id="iinput1" placeholder="e.g. Set a non-negotiable 10:30 PM screen-off time for the next two weeks"></div>
+        </div>
+
+        <div class="missing-item" id="miss2">
+          <div class="missing-checkbox-row" onclick="toggleMissing(2)">
+            <div class="missing-cb" id="mcb2"></div>
+            <div><div class="missing-name">🏃 Regular physical activity — at least 3 times per week</div><div class="missing-desc">Physical state is not separate from cognitive performance — it is one of its inputs. A sedentary pipeline runs at reduced processing capacity regardless of how good the other stages are.</div></div>
+          </div>
+          <div class="impute-row" id="irow2"><div class="impute-label">My imputation strategy:</div><input class="impute-input" id="iinput2" placeholder="e.g. 20-minute walk every morning before opening any screen"></div>
+        </div>
+
+        <div class="missing-item" id="miss3">
+          <div class="missing-checkbox-row" onclick="toggleMissing(3)">
+            <div class="missing-cb" id="mcb3"></div>
+            <div><div class="missing-name">📓 Dedicated time for reflection — daily or weekly</div><div class="missing-desc">Without encoding, experience cannot update the model. A pipeline without reflection time is a pipeline where data enters and exits without ever being processed.</div></div>
+          </div>
+          <div class="impute-row" id="irow3"><div class="impute-label">My imputation strategy:</div><input class="impute-input" id="iinput3" placeholder="e.g. 5-minute journal at 9 PM — three sentences, no more, no skipping"></div>
+        </div>
+
+        <div class="missing-item" id="miss4">
+          <div class="missing-checkbox-row" onclick="toggleMissing(4)">
+            <div class="missing-cb" id="mcb4"></div>
+            <div><div class="missing-name">🛡️ Protected deep work time — at least 90 minutes daily</div><div class="missing-desc">High-value work requires a clean, uninterrupted processing window. If every hour is fragmented by interruptions, the pipeline never reaches the compute depth that produces breakthrough outputs.</div></div>
+          </div>
+          <div class="impute-row" id="irow4"><div class="impute-label">My imputation strategy:</div><input class="impute-input" id="iinput4" placeholder="e.g. 8–10 AM is deep work — notifications off, door closed, no exceptions"></div>
+        </div>
+
+        <div class="missing-item" id="miss5">
+          <div class="missing-checkbox-row" onclick="toggleMissing(5)">
+            <div class="missing-cb" id="mcb5"></div>
+            <div><div class="missing-name">🧭 Clear direction — a goal or north star you can articulate</div><div class="missing-desc">A pipeline without a defined objective cannot evaluate its own output. Without direction, preprocessing has no criterion for what counts as noise versus signal. Everything gets equal weight.</div></div>
+          </div>
+          <div class="impute-row" id="irow5"><div class="impute-label">My imputation strategy:</div><input class="impute-input" id="iinput5" placeholder="e.g. Write one sentence that defines what I am building toward in the next 12 months"></div>
+        </div>
+
+      </div>
+      <button class="missing-save-btn" id="missing-save" onclick="saveMissingPlan()">Save my imputation plan</button>
+      <div class="saved-note" id="missing-saved-note">✓ Plan saved. Come back next week — did you close any gaps?</div>
+    </div>
+  </div>
+
+  <!-- TASK 3: NORMALISATION -->
+  <div class="task-card" id="task3-card">
+    <div class="task-header">
+      <div class="task-num" id="t3-num">3</div>
+      <div class="task-meta">
+        <div class="task-label">Task 03 · Normalisation</div>
+        <div class="task-title">Recalibrate your scale</div>
+      </div>
+      <span class="task-badge" id="t3-badge">~4 min</span>
+    </div>
+    <div class="task-body">
+      <p>The most common preprocessing error in human pipelines is scale mismatch — measuring your output against a baseline that is not comparable to your current conditions. Answer the three questions below honestly. This is your normalisation step.</p>
+      <div class="calibrate-form">
+        <div class="calibrate-field">
+          <div class="calibrate-label">Who or what am I currently measuring myself against?</div>
+          <input class="calibrate-input" id="cal1" placeholder="e.g. A colleague who has been in the field 15 years longer, or a version of myself from 10 years ago with no dependants">
+        </div>
+        <div class="calibrate-field">
+          <div class="calibrate-label">Is that a fair baseline — given my actual constraints, context, and stage?</div>
+          <input class="calibrate-input" id="cal2" placeholder="e.g. No — they have 3x the time, no caring responsibilities, and an established network. I am comparing the wrong scale.">
+        </div>
+        <div class="calibrate-field">
+          <div class="calibrate-label">What is the most honest, fair measure of my progress right now?</div>
+          <input class="calibrate-input" id="cal3" placeholder="e.g. The distance between where I was 12 months ago and where I am today, given what I was actually working with.">
+        </div>
+      </div>
+      <button class="calibrate-save" id="cal-save" onclick="saveCalibration()">Save my calibration</button>
+      <div class="calibrate-note" id="cal-note">✓ Saved. Read this back whenever the comparison noise gets loud.</div>
+    </div>
+  </div>
+
+  <!-- TASK 4: PREPROCESSING PROTOCOL -->
+  <div class="task-card" id="task4-card">
+    <div class="task-header">
+      <div class="task-num" id="t4-num">4</div>
+      <div class="task-meta">
+        <div class="task-label">Task 04 · Protocol Design</div>
+        <div class="task-title">Design your preprocessing protocol</div>
+      </div>
+      <span class="task-badge" id="t4-badge">~3 min</span>
+    </div>
+    <div class="task-body">
+      <p>You now know your noise sources, your missing values, and your calibration. Write your preprocessing protocol — the specific daily and weekly routines that will keep your pipeline clean.</p>
+      <textarea class="reflection-area" id="reflection-text" placeholder="e.g. Daily preprocessing: 5-min morning journal (what carries over from yesterday, what is today's single priority). Evening 3-question review (went well / drifted / one change). Weekly: Sunday 20-min review — what pattern showed up this week? What one commitment gets removed to reduce noise?" oninput="updateCharCount()" maxlength="800"></textarea>
+      <div class="char-count"><span id="char-count">0</span> / 800 characters</div>
+      <button class="reflection-save" id="save-btn" onclick="saveReflection()">Save my protocol</button>
+      <div class="saved-note" id="saved-note">✓ Saved. Your pipeline now has a preprocessing stage.</div>
+
+      <p style="margin-top:24px">Choose the one preprocessing habit to start this week:</p>
+      <div class="commit-options">
+        <div class="commit-card" onclick="selectCommit(this,'journal')" data-val="journal">
+          <div class="commit-icon">📓</div>
+          <div class="commit-title">5-minute morning journal</div>
+          <div class="commit-desc">Before any screen: one thing to resolve from yesterday, one priority for today</div>
+        </div>
+        <div class="commit-card" onclick="selectCommit(this,'review')" data-val="review">
+          <div class="commit-icon">🌙</div>
+          <div class="commit-title">3-question evening review</div>
+          <div class="commit-desc">What went well · What drifted · One thing to change tomorrow — 3 minutes, every night</div>
+        </div>
+        <div class="commit-card" onclick="selectCommit(this,'sunday')" data-val="sunday">
+          <div class="commit-icon">📋</div>
+          <div class="commit-title">Sunday 20-minute batch review</div>
+          <div class="commit-desc">Review the week's patterns, remove one noise source, set next week's single priority</div>
+        </div>
+        <div class="commit-card" onclick="selectCommit(this,'deepclean')" data-val="deepclean">
+          <div class="commit-icon">🗑️</div>
+          <div class="commit-title">Monthly delete / archive / action</div>
+          <div class="commit-desc">Every open loop gets a label. Nothing stays in the unprocessed pile.</div>
+        </div>
+      </div>
+      <button class="commit-confirm" id="commit-btn" onclick="confirmCommit()">I commit to this preprocessing habit →</button>
+      <div class="commit-result" id="commit-result">
+        <p><strong>Preprocessing protocol active.</strong><br>Your pipeline now has a cleaning stage. Come back next week: did the habit run? What raw data did it catch?<br><br>Share using <strong style="color:var(--teal)">#ReInventingMyself</strong></p>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<hr class="divider">
+
+<div class="ep-nav">
+  <a class="ep-nav-btn" href="ep03_data_ingestion.html">
+    <div class="ep-nav-dir">← Previous</div>
+    <div class="ep-nav-title">Episode 03</div>
+    <div class="ep-nav-sub">Data Ingestion</div>
+  </a>
+  <a class="ep-nav-btn next" href="reinventing-myself.html#episodes">
+    <div class="ep-nav-dir">Next →</div>
+    <div class="ep-nav-title">Episode 05</div>
+    <div class="ep-nav-sub">Feature Engineering · Coming next week</div>
+  </a>
+</div>
+
+<footer>
+  <div class="footer-left">© 2026 Dr. Tertsegha J. Anande · drtertseghaanande.com</div>
+  <div class="footer-right">#ReInventingMyself · #AutoML</div>
+</footer>
+
+<script>
+const hc=document.getElementById('hero-c'),hx=hc.getContext('2d');
+function resizeHero(){const r=hc.parentElement.getBoundingClientRect();hc.width=r.width;hc.height=r.height||480;drawHeroStars()}
+function drawHeroStars(){hx.clearRect(0,0,hc.width,hc.height);for(let i=0;i<100;i++){const x=Math.random()*hc.width,y=Math.random()*hc.height,r=Math.random()*1.3+0.2,o=Math.random()*0.5+0.1;hx.beginPath();hx.arc(x,y,r,0,Math.PI*2);hx.fillStyle=`rgba(255,255,255,${o})`;hx.fill()}const g=hx.createRadialGradient(hc.width/2,hc.height*.6,0,hc.width/2,hc.height*.6,hc.width*.5);g.addColorStop(0,'rgba(83,74,183,0.14)');g.addColorStop(1,'rgba(0,0,0,0)');hx.fillStyle=g;hx.fillRect(0,0,hc.width,hc.height)}
+setTimeout(resizeHero,100);window.addEventListener('resize',resizeHero);
+
+const sections=['intro','what','life','daily','tasks'];
+const dots=document.querySelectorAll('.pt-dot');
+function updateTracker(){let c=0;sections.forEach((id,i)=>{const el=document.getElementById(id);if(el&&el.getBoundingClientRect().top<window.innerHeight*0.5)c=i});dots.forEach((d,i)=>{d.classList.toggle('active',i===c);d.classList.toggle('done',i<c)})}
+window.addEventListener('scroll',updateTracker,{passive:true});
+
+// Task 1: Noise Audit
+function runNoiseAudit(){
+  const labels=['Low-value commitments','Digital noise','Draining relationships','Negative thought patterns','Open loops'];
+  const vals=[1,2,3,4,5].map(n=>parseInt(document.getElementById('n'+n).value));
+  const avg=(vals.reduce((a,b)=>a+b,0)/5).toFixed(1);
+  const maxIdx=vals.indexOf(Math.max(...vals));
+  const highest=labels[maxIdx];
+  let msg,col;
+  if(avg>=7){col='#E87070';msg=`High noise load — average ${avg}/10. Your pipeline is spending significant processing budget on noise before any meaningful work begins. Highest source: <strong style="color:var(--amber)">${highest}</strong>. This is the first thing to address.`}
+  else if(avg>=4){col=var_amber='var(--amber)';msg=`Moderate noise load — average ${avg}/10. There is room to improve. Your highest source is <strong style="color:var(--amber)">${highest}</strong>. One targeted reduction here would meaningfully increase the clean bandwidth available to the next stage.`}
+  else{msg=`Low noise environment — average ${avg}/10. Your pipeline is relatively clean. Keep <strong style="color:var(--teal)">${highest}</strong> in view — it is still your highest source even if the absolute level is manageable.`}
+  const res=document.getElementById('noise-result');
+  res.innerHTML=`<div style="font-size:28px;font-weight:700;color:var(--purple);margin-bottom:8px">${avg}<span style="font-size:14px;color:var(--muted)">/10 avg noise</span></div>${msg}`;
+  res.style.display='block';
+  localStorage.setItem('rim_ep04_noise',JSON.stringify({vals,avg}));
+  markComplete('task1-card','t1-num','t1-badge');
+}
+
+// Task 2: Missing Values
+const missingChecked={};
+function toggleMissing(n){
+  missingChecked[n]=!missingChecked[n];
+  const cb=document.getElementById('mcb'+n),item=document.getElementById('miss'+n),row=document.getElementById('irow'+n);
+  if(missingChecked[n]){cb.textContent='✓';cb.classList.add('checked');item.classList.add('checked-item');row.classList.remove('visible')}
+  else{cb.textContent='';cb.classList.remove('checked');item.classList.remove('checked-item');row.classList.add('visible')}
+}
+function saveMissingPlan(){
+  const plan={};[1,2,3,4,5].forEach(n=>{const v=document.getElementById('iinput'+n).value.trim();if(v)plan['miss'+n]=v});
+  localStorage.setItem('rim_ep04_missing',JSON.stringify({checked:missingChecked,plan}));
+  const btn=document.getElementById('missing-save');btn.textContent='✓ Saved';btn.classList.add('saved');
+  document.getElementById('missing-saved-note').style.display='block';
+  markComplete('task2-card','t2-num','t2-badge');
+}
+
+// Task 3: Calibration
+function saveCalibration(){
+  const v1=document.getElementById('cal1').value.trim();
+  const v2=document.getElementById('cal2').value.trim();
+  const v3=document.getElementById('cal3').value.trim();
+  if(!v1&&!v2&&!v3)return;
+  localStorage.setItem('rim_ep04_calibration',JSON.stringify({v1,v2,v3}));
+  const btn=document.getElementById('cal-save');btn.textContent='✓ Saved';btn.classList.add('saved');
+  document.getElementById('cal-note').style.display='block';
+  markComplete('task3-card','t3-num','t3-badge');
+}
+
+// Task 4: Protocol
+function updateCharCount(){document.getElementById('char-count').textContent=document.getElementById('reflection-text').value.length}
+function saveReflection(){
+  const text=document.getElementById('reflection-text').value.trim();if(!text)return;
+  localStorage.setItem('rim_ep04_protocol',text);
+  const btn=document.getElementById('save-btn');btn.textContent='✓ Saved';btn.classList.add('saved');
+  document.getElementById('saved-note').style.display='block';
+}
+let selectedCommit=null;
+function selectCommit(el,val){document.querySelectorAll('.commit-card').forEach(c=>c.classList.remove('selected'));el.classList.add('selected');selectedCommit=val;document.getElementById('commit-btn').style.display='block'}
+function confirmCommit(){if(!selectedCommit)return;localStorage.setItem('rim_ep04_commit',selectedCommit);document.getElementById('commit-result').style.display='block';document.getElementById('commit-btn').style.display='none';markComplete('task4-card','t4-num','t4-badge')}
+
+function markComplete(cardId,numId,badgeId){
+  const card=document.getElementById(cardId),num=document.getElementById(numId),badge=document.getElementById(badgeId);
+  if(card)card.classList.add('completed');if(num)num.textContent='✓';if(badge){badge.textContent='Done';badge.classList.add('done')}
+}
+
+window.addEventListener('load',()=>{
+  if(localStorage.getItem('rim_ep04_noise'))markComplete('task1-card','t1-num','t1-badge');
+  if(localStorage.getItem('rim_ep04_missing'))markComplete('task2-card','t2-num','t2-badge');
+  if(localStorage.getItem('rim_ep04_calibration'))markComplete('task3-card','t3-num','t3-badge');
+  if(localStorage.getItem('rim_ep04_commit'))markComplete('task4-card','t4-num','t4-badge');
+  const p=localStorage.getItem('rim_ep04_protocol');if(p){document.getElementById('reflection-text').value=p;updateCharCount()}
+  const cal=localStorage.getItem('rim_ep04_calibration');
+  if(cal){try{const d=JSON.parse(cal);if(d.v1)document.getElementById('cal1').value=d.v1;if(d.v2)document.getElementById('cal2').value=d.v2;if(d.v3)document.getElementById('cal3').value=d.v3}catch(e){}}
+});
+</script>
+</body>
+</html>
