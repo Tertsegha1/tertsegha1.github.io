@@ -452,13 +452,16 @@ async function signIn(silent = false) {
   GH_REPO  = repo;
   setStatus('Connecting to GitHub…', true);
   try {
+    // Fetch only to verify credentials and get the SHA needed for commits.
+    // Data is read from window.DATA (already loaded via <script src="js/data.js">)
+    // so we never need to parse the raw JS source.
     const res = await ghGet(`/repos/${GH_REPO}/contents/js/data.js`);
     if (!res.ok) throw new Error(`GitHub API ${res.status}: ${await res.text()}`);
     const json = await res.json();
     GH_SHA = json.sha;
-    const raw = atob(json.content.replace(/\n/g,''));
-    DATA_LIVE = parseDataJs(raw);
-    DATA_EDIT = deepClone(DATA_LIVE);
+    if (!window.DATA) throw new Error('DATA object not found — js/data.js may not have loaded.');
+    DATA_LIVE = deepClone(window.DATA);
+    DATA_EDIT = deepClone(window.DATA);
     localStorage.setItem('admin_pat',  pat);
     localStorage.setItem('admin_repo', repo);
     document.getElementById('auth-gate').style.display = 'none';
@@ -505,18 +508,8 @@ function ghPut(path, body) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   PARSE / SERIALISE data.js
+   SERIALISE data.js
 ═══════════════════════════════════════════════════════════════ */
-function parseDataJs(src) {
-  // Strip the "const DATA = " wrapper and trailing semicolon
-  const match = src.match(/const\s+DATA\s*=\s*(\{[\s\S]*\})\s*;?\s*$/);
-  if (!match) throw new Error('Could not parse data.js structure.');
-  return JSON.parse(match[1]
-    .replace(/\/\*[\s\S]*?\*\//g, '')   // block comments
-    .replace(/\/\/[^\n]*/g, '')          // line comments
-    .replace(/,\s*([}\]])/g, '$1')       // trailing commas
-  );
-}
 function serializeDataJs(d) {
   const lines = [
     '/**',
