@@ -33,7 +33,13 @@
   </url>
   <url>
     <loc>https://drtertseghaanande.com/ep02_automl.html</loc>
-    <lastmod>2026-05-10</lastmod>
+    <lastmod>2026-05-12</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://drtertseghaanande.com/ep03_data_ingestion.html</loc>
+    <lastmod>2026-05-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>

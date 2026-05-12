@@ -344,6 +344,33 @@ footer{
 }
 .footer-left{font-size:11px;color:var(--dim)}
 .footer-right{font-size:10px;color:var(--purple-soft);letter-spacing:2px;text-transform:uppercase}
+
+/* ── DAY MAP ── */
+.day-map{width:100%;border-collapse:collapse;margin:20px 0}
+.day-map th{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);padding:10px 14px;border-bottom:0.5px solid var(--border);text-align:left}
+.day-map td{padding:14px;border-bottom:0.5px solid rgba(148,144,232,0.1);vertical-align:top}
+.day-map tr:last-child td{border-bottom:none}
+.day-time{color:var(--amber);font-weight:700;white-space:nowrap;font-size:12px}
+.day-stage{display:inline-block;font-size:9px;letter-spacing:2px;padding:2px 8px;border-radius:10px;margin-bottom:6px;text-transform:uppercase;font-weight:700}
+.day-stage.p{background:rgba(148,144,232,0.1);color:var(--purple);border:0.5px solid rgba(148,144,232,0.3)}
+.day-stage.t{background:rgba(109,216,179,0.1);color:var(--teal);border:0.5px solid rgba(109,216,179,0.3)}
+.day-stage.a{background:rgba(245,168,48,0.1);color:var(--amber);border:0.5px solid rgba(245,168,48,0.3)}
+.day-action{color:var(--text);font-weight:600;font-size:13px;margin-bottom:4px}
+.day-ex{color:var(--muted);font-size:12px;line-height:1.6}
+
+/* ── CONTRAST GRID ── */
+.contrast-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}
+@media(max-width:580px){.contrast-grid{grid-template-columns:1fr}}
+.contrast-col{border-radius:10px;padding:20px}
+.contrast-col.off{background:rgba(231,76,60,0.07);border:0.5px solid rgba(231,76,60,0.22)}
+.contrast-col.on{background:rgba(37,181,133,0.07);border:0.5px solid rgba(37,181,133,0.22)}
+.contrast-head{font-size:10px;letter-spacing:3px;text-transform:uppercase;font-weight:700;margin-bottom:14px}
+.contrast-col.off .contrast-head{color:#E87070}
+.contrast-col.on .contrast-head{color:var(--teal)}
+.contrast-li{font-size:13px;color:#D8D5CE;margin-bottom:10px;padding-left:18px;position:relative;line-height:1.5}
+.contrast-li::before{position:absolute;left:0}
+.contrast-col.off .contrast-li::before{content:'✗';color:#E87070}
+.contrast-col.on .contrast-li::before{content:'✓';color:var(--teal)}
 </style>
 </head>
 <body>
@@ -354,6 +381,7 @@ footer{
   <div class="pt-dot" onclick="document.querySelector('#what').scrollIntoView({behavior:'smooth'})" data-section="what"><span class="pt-tip">What is AutoML?</span></div>
   <div class="pt-dot" onclick="document.querySelector('#how').scrollIntoView({behavior:'smooth'})" data-section="how"><span class="pt-tip">How it works</span></div>
   <div class="pt-dot" onclick="document.querySelector('#life').scrollIntoView({behavior:'smooth'})" data-section="life"><span class="pt-tip">Life parallel</span></div>
+  <div class="pt-dot" onclick="document.querySelector('#daily').scrollIntoView({behavior:'smooth'})" data-section="daily"><span class="pt-tip">Daily life</span></div>
   <div class="pt-dot" onclick="document.querySelector('#tasks').scrollIntoView({behavior:'smooth'})" data-section="tasks"><span class="pt-tip">Your tasks</span></div>
 </nav>
 
@@ -364,6 +392,7 @@ footer{
     <a href="#what">Concept</a>
     <a href="#how">How it works</a>
     <a href="#life">Life parallel</a>
+    <a href="#daily">Daily life</a>
     <a href="#tasks">Your tasks</a>
   </div>
   <a class="nav-back" href="reinventing-myself.html">← All Episodes</a>
@@ -498,6 +527,97 @@ footer{
     <p>The goal of this series is to help you <strong style="color:var(--text)">design yours</strong> — one AutoML stage at a time, starting from the data you already have.</p>
     <div class="highlight-box teal">
       In life: AutoML is not about removing humanity from the process. It's about removing <em>friction</em> from growth — so the best version of you shows up consistently, not just when everything goes right.
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- DAILY ROUTINE PARALLEL -->
+<section class="section" id="daily">
+  <div class="section-label">Applied to Real Life</div>
+  <h2>What does a working pipeline day actually look like?</h2>
+
+  <div class="content-card">
+    <p>Theory without application is just data without labels. Here is the same AutoML framework running across a real day — and what happens when it doesn't.</p>
+    <div class="contrast-grid">
+      <div class="contrast-col off">
+        <div class="contrast-head">⬡ Pipeline off</div>
+        <div class="contrast-li">Phone check before getting out of bed — unfiltered, noisy ingestion before the day has even begun</div>
+        <div class="contrast-li">No preprocessing — reacting to whatever arrives first: email, messages, news</div>
+        <div class="contrast-li">Day fills up with other people's priorities — no feature engineering of your own strengths</div>
+        <div class="contrast-li">Busy but not productive — training on the wrong data</div>
+        <div class="contrast-li">No evening review — drift goes undetected, the same day repeats</div>
+      </div>
+      <div class="contrast-col on">
+        <div class="contrast-head">◈ Pipeline running</div>
+        <div class="contrast-li">First 30 minutes offline — intentional, curated ingestion before the noise begins</div>
+        <div class="contrast-li">3 priorities set the night before — preprocessing done before the day starts</div>
+        <div class="contrast-li">First 2 hours on your highest-value work — feature engineering your day around your strengths</div>
+        <div class="contrast-li">Deliberate practice in your growth area — training the right model, consistently</div>
+        <div class="contrast-li">10-minute evening review — monitoring output, catching drift before it compounds</div>
+      </div>
+    </div>
+    <div class="highlight-box amber">
+      Notice: the difference is not discipline. It is <em>design</em>. The high-pipeline day is built the night before — decisions are automated, not renegotiated every morning.
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>Mapping your hours to AutoML stages</h3>
+    <p style="margin-bottom:16px">This is how the 9-stage pipeline maps to a working day. Not a rigid schedule — an intentional architecture.</p>
+    <div style="overflow-x:auto">
+    <table class="day-map">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>AutoML Stage</th>
+          <th>What it looks like in your life</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="day-time">5:30–6:30 AM</td>
+          <td><span class="day-stage p">Data Ingestion</span></td>
+          <td><div class="day-action">Morning input window</div><div class="day-ex">What do you let in first? Exercise, journalling, and intentional reading set a high-quality training context. Notifications and news set a reactive one.</div></td>
+        </tr>
+        <tr>
+          <td class="day-time">6:30–7:30 AM</td>
+          <td><span class="day-stage p">Preprocessing</span></td>
+          <td><div class="day-action">Filter and prepare</div><div class="day-ex">Set today's 3 priorities. Review yesterday's open loops. Remove mental noise. You are cleaning the data before the pipeline runs — not reacting, preparing.</div></td>
+        </tr>
+        <tr>
+          <td class="day-time">8:00–10:00 AM</td>
+          <td><span class="day-stage p">Feature Engineering</span></td>
+          <td><div class="day-action">Your strongest 2 hours — protected</div><div class="day-ex">Deep work on the task that requires your most distinctive skill. This is where you extract maximum signal from your capabilities. It requires zero interruption.</div></td>
+        </tr>
+        <tr>
+          <td class="day-time">10 AM–1 PM</td>
+          <td><span class="day-stage t">Training &amp; Tuning</span></td>
+          <td><div class="day-action">Deliberate practice and experimentation</div><div class="day-ex">Learn something in your growth area. Try a different approach to a familiar problem. Active training — not maintenance.</div></td>
+        </tr>
+        <tr>
+          <td class="day-time">Midday</td>
+          <td><span class="day-stage t">Evaluation</span></td>
+          <td><div class="day-action">5-minute checkpoint</div><div class="day-ex">How is the day tracking against your 3 priorities? A quick sanity check before the afternoon. Your validation set — not a full review, just a signal check.</div></td>
+        </tr>
+        <tr>
+          <td class="day-time">2:00–5:00 PM</td>
+          <td><span class="day-stage a">Deployment</span></td>
+          <td><div class="day-action">Show up as the person you are building</div><div class="day-ex">Meetings, decisions, collaboration — this is where you deploy the version of yourself you have been training. Consistency here is what makes growth visible.</div></td>
+        </tr>
+        <tr>
+          <td class="day-time">Evening</td>
+          <td><span class="day-stage a">Monitoring</span></td>
+          <td><div class="day-action">Daily review — 10 minutes</div><div class="day-ex">Three questions: What went well? What drifted? What do I prepare for tomorrow? This is your monitoring dashboard — catching small drift before it becomes a gap.</div></td>
+        </tr>
+        <tr>
+          <td class="day-time">Sunday</td>
+          <td><span class="day-stage a">Re-optimisation</span></td>
+          <td><div class="day-action">Weekly pipeline tune</div><div class="day-ex">30 minutes: review the week's output, adjust your approach, plan the next sprint. AutoML re-optimises when performance drops. Run this before it does.</div></td>
+        </tr>
+      </tbody>
+    </table>
     </div>
   </div>
 </section>
@@ -666,10 +786,10 @@ footer{
     <div class="ep-nav-title">Episode 01</div>
     <div class="ep-nav-sub">Re-Introducing Me</div>
   </a>
-  <a class="ep-nav-btn next" href="reinventing-myself.html#episodes">
+  <a class="ep-nav-btn next" href="ep03_data_ingestion.html">
     <div class="ep-nav-dir">Next →</div>
     <div class="ep-nav-title">Episode 03</div>
-    <div class="ep-nav-sub">Data Ingestion · Coming next week</div>
+    <div class="ep-nav-sub">Data Ingestion · Live now →</div>
   </a>
 </div>
 
@@ -699,7 +819,7 @@ function drawHeroStars(){
 setTimeout(resizeHero,100);window.addEventListener('resize',resizeHero);
 
 // ── PROGRESS TRACKER ──
-const sections=['intro','what','how','life','tasks'];
+const sections=['intro','what','how','life','daily','tasks'];
 const dots=document.querySelectorAll('.pt-dot');
 function updateTracker(){
   let current=0;
