@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CV — Dr. Tertsegha Joseph Anande</title>
+  <style>
+    /* ── Screen chrome ──────────────────────────────── */
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: Arial, sans-serif; background:#f0f2f5; }
+
+    .toolbar {
+      position: fixed; top:0; left:0; right:0; z-index:100;
+      background:#0f2044; color:#fff; display:flex;
+      align-items:center; justify-content:space-between;
+      padding:0.6rem 1.5rem; gap:1rem; box-shadow:0 2px 8px rgba(0,0,0,0.3);
+    }
+    .toolbar h1 { font-size:0.95rem; font-weight:600; opacity:0.9; white-space:nowrap; }
+    .toggle-wrap { display:flex; gap:0.5rem; }
+    .toggle-wrap button {
+      padding:0.35rem 1rem; border-radius:20px; font-size:0.82rem; font-weight:600;
+      cursor:pointer; border:1px solid rgba(255,255,255,0.3); background:transparent; color:#fff;
+      transition:all 0.2s;
+    }
+    .toggle-wrap button.active { background:#e8a020; border-color:#e8a020; color:#0f2044; }
+    .toolbar-actions { display:flex; gap:0.75rem; align-items:center; }
+    .toolbar-actions button {
+      padding:0.35rem 1rem; border-radius:6px; font-size:0.82rem; font-weight:600;
+      cursor:pointer; background:#e8a020; border:none; color:#0f2044; transition:all 0.2s;
+    }
+    .toolbar-actions button:hover { background:#f0b840; }
+    .toolbar-actions a {
+      font-size:0.82rem; color:rgba(255,255,255,0.7); text-decoration:none;
+    }
+    .toolbar-actions a:hover { color:#fff; }
+
+    .cv-wrap { max-width:900px; margin:5rem auto 3rem; padding:0 1rem; }
+
+    /* ── CV Page ────────────────────────────────────── */
+    .cv-page {
+      background:#fff; padding:2.5cm 2cm;
+      box-shadow:0 4px 32px rgba(0,0,0,0.15);
+      font-size:10pt; line-height:1.5; color:#1a1a1a;
+    }
+    .cv-page + .cv-page { margin-top:1rem; }
+
+    /* Header */
+    .cv-header { border-bottom:3px solid #0f2044; padding-bottom:0.8rem; margin-bottom:1rem; }
+    .cv-header h1 { font-size:18pt; font-weight:700; color:#0f2044; letter-spacing:0.5px; }
+    .cv-header .cred { font-size:10pt; color:#e8a020; font-weight:600; margin:0.15rem 0; }
+    .cv-header .tagline { font-size:9.5pt; color:#444; }
+    .cv-header .contacts {
+      display:flex; flex-wrap:wrap; gap:0.5rem 1.5rem; margin-top:0.4rem;
+      font-size:8.5pt; color:#555;
+    }
+
+    /* Sections */
+    .cv-section { margin-bottom:1rem; }
+    .cv-section-title {
+      font-size:9pt; font-weight:700; color:#fff; background:#0f2044;
+      padding:3px 8px; margin-bottom:0.5rem; letter-spacing:0.8px;
+      text-transform:uppercase;
+    }
+
+    /* Job/experience entry */
+    .cv-job { margin-bottom:0.7rem; }
+    .cv-job-header {
+      display:flex; justify-content:space-between; align-items:baseline;
+      margin-bottom:0.1rem;
+    }
+    .cv-job-title { font-weight:700; font-size:10pt; color:#0f2044; }
+    .cv-job-date  { font-size:8.5pt; color:#666; white-space:nowrap; }
+    .cv-job-org   { font-size:9pt; color:#2e4a7a; margin-bottom:0.2rem; }
+    .cv-job ul    { padding-left:1.2em; }
+    .cv-job li    { font-size:9pt; margin-bottom:0.15rem; color:#1a1a1a; }
+
+    /* Publications */
+    .cv-pub { margin-bottom:0.5rem; padding-left:1em; border-left:2px solid #e8a020; }
+    .cv-pub-year  { font-size:8pt; color:#e8a020; font-weight:700; }
+    .cv-pub-title { font-size:9pt; font-weight:600; color:#1a1a1a; }
+    .cv-pub-meta  { font-size:8.5pt; color:#555; }
+
+    /* Skills table */
+    .cv-skills-table { width:100%; border-collapse:collapse; font-size:9pt; }
+    .cv-skills-table td { padding:3px 6px; vertical-align:top; }
+    .cv-skills-table td:first-child { font-weight:700; color:#0f2044; white-space:nowrap; width:22%; }
+
+    /* Tags */
+    .cv-tags { display:flex; flex-wrap:wrap; gap:0.3rem; }
+    .cv-tag {
+      background:#f0f4f8; border:1px solid #d0d8e4; color:#2c3e50;
+      font-size:8pt; padding:1px 6px; border-radius:3px;
+    }
+
+    /* Project entry */
+    .cv-proj { margin-bottom:0.6rem; }
+    .cv-proj-title { font-weight:700; font-size:9.5pt; color:#0f2044; }
+    .cv-proj-badge { font-size:8pt; color:#e8a020; font-weight:600; margin-left:0.5rem; }
+    .cv-proj p { font-size:9pt; color:#1a1a1a; margin:0.1rem 0; }
+
+    /* Two-column layout */
+    .cv-two-col { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+
+    /* Personal details table */
+    .cv-details { width:100%; border-collapse:collapse; font-size:9pt; margin-bottom:0.5rem; }
+    .cv-details td { padding:2px 8px 2px 0; vertical-align:top; }
+    .cv-details td:first-child { font-weight:700; color:#0f2044; width:35%; }
+
+    /* Teaching module list */
+    .cv-mod-list { columns:2; font-size:8.5pt; color:#1a1a1a; padding-left:1.2em; }
+    .cv-mod-list li { margin-bottom:0.1rem; break-inside:avoid; }
+
+    /* ── Print styles ───────────────────────────────── */
+    @media print {
+      body { background:#fff; }
+      .toolbar { display:none !important; }
+      .cv-wrap { margin:0; padding:0; max-width:100%; }
+      .cv-page { box-shadow:none; padding:1.5cm 1.8cm; page-break-after:always; }
+      .cv-page:last-child { page-break-after:auto; }
+      @page { size:A4; margin:0; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Toolbar ──────────────────────────────────────── -->
+<div class="toolbar no-print">
+  <h1>📄 CV Generator</h1>
+  <div class="toggle-wrap">
+    <button id="btn-academic" class="active" onclick="switchCV('academic')">🎓 Academic CV</button>
+    <button id="btn-industry" onclick="switchCV('industry')">💼 Industry CV</button>
+    <button id="btn-both" onclick="switchCV('both')">⊞ Both</button>
+  </div>
+  <div class="toolbar-actions">
+    <button onclick="window.print()">🖨️ Save as PDF</button>
+    <a href="/">← Portfolio</a>
+  </div>
+</div>
+
+<div class="cv-wrap">
+  <div id="cv-academic"></div>
+  <div id="cv-industry" style="display:none"></div>
+</div>
+
+<script src="js/data.js"></script>
+<script>
+/* ── Utilities ──────────────────────────────────────── */
+const p = DATA.personal;
+
+function esc(s) {
+  return String(s)
+    .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
+    .replace(/<[^>]+>/g,'');
+}
+
+function contacts() {
+  return `<div class="contacts">
+    <span>✉ ${p.email}</span>
+    <span>🔗 ${p.github.replace('https://','')}</span>
+    <span>in ${p.linkedin.replace('https://','').replace('www.','')}</span>
+    <span>📍 ${p.location}</span>
+  </div>`;
+}
+
+function section(title, content) {
+  return `<div class="cv-section"><div class="cv-section-title">${title}</div>${content}</div>`;
+}
+
+function jobEntry(job) {
+  const bullets = job.bullets.map(b => `<li>${esc(b)}</li>`).join('');
+  return `<div class="cv-job">
+    <div class="cv-job-header">
+      <span class="cv-job-title">${job.title}</span>
+      <span class="cv-job-date">${job.date}</span>
+    </div>
+    <div class="cv-job-org">${job.org}</div>
+    <ul>${bullets}</ul>
+  </div>`;
+}
+
+function pubEntry(pub) {
+  return `<div class="cv-pub">
+    <div class="cv-pub-year">${esc(pub.year)}</div>
+    <div class="cv-pub-title">${esc(pub.title)}</div>
+    <div class="cv-pub-meta">${esc(pub.authors)} ${pub.venue ? '— ' + esc(pub.venue) : ''}</div>
+  </div>`;
+}
+
+/* ── Academic CV ─────────────────────────────────────── */
+function buildAcademic() {
+  const edu = p.education.map(e =>
+    `<tr><td>${e.degree.split(',')[0]}</td><td>${e.degree.split(',').slice(1).join(',').trim() || ''} — ${e.institution}</td></tr>`
+  ).join('');
+
+  const experience = DATA.experience.map(jobEntry).join('');
+
+  // Key projects for Academic CV (first 4 that have real content)
+  const projects = DATA.projects.filter(pr => !pr.badge.includes('In Development')).slice(0,5).map(pr =>
+    `<div class="cv-proj">
+      <span class="cv-proj-title">${esc(pr.title)}</span>
+      <span class="cv-proj-badge">${pr.badge}</span>
+      <p>${esc(pr.desc).substring(0,200)}${pr.desc.length>200?'…':''}</p>
+      <p style="font-size:8pt;color:#555;margin-top:2px;">Stack: ${pr.tech.join(', ')}</p>
+    </div>`
+  ).join('');
+
+  const pgMods = DATA.teaching.postgraduate.map(m =>
+    `<li>${m.label}${m.leader?' <strong>★</strong>':''}</li>`).join('');
+  const ugMods = DATA.teaching.undergraduate.map(m =>
+    `<li>${m.label}${m.leader?' <strong>★</strong>':''}</li>`).join('');
+
+  const certs = DATA.certifications.map(c =>
+    `<div style="margin-bottom:0.3rem;font-size:9pt;">
+      <strong>${esc(c.title)}</strong> — ${esc(c.desc)}
+    </div>`).join('');
+
+  const leadership = (DATA.leadership || []).map(l =>
+    `<div style="font-size:9pt;margin-bottom:0.25rem;">
+      <strong>${l.role}</strong> (${l.period}): ${l.desc}
+    </div>`).join('');
+
+  const memberships = p.memberships.join('  ·  ');
+
+  const research = DATA.research.map(r => r.title).join('  ·  ');
+
+  const allPubs = [
+    ...DATA.publications.journal,
+    ...DATA.publications.conference,
+    ...DATA.publications.book,
+  ];
+  const pubs = allPubs.map(pubEntry).join('');
+  const inPrep = DATA.publications.inPrep.map(pubEntry).join('');
+
+  return `<div class="cv-page">
+    <div class="cv-header">
+      <h1>${p.name}</h1>
+      <div class="cred">${p.credentials}</div>
+      <div class="tagline">${p.title}</div>
+      ${contacts()}
+    </div>
+
+    ${section('Personal Details', `
+      <table class="cv-details">
+        <tr><td>Current Position</td><td>${p.title}</td></tr>
+        <tr><td>Academic Qualifications</td><td>${p.education.map(e=>e.degree+' ('+e.institution+')').join('<br>')}</td></tr>
+        <tr><td>GitHub</td><td>${p.github}</td></tr>
+        <tr><td>Email</td><td>${p.email}</td></tr>
+      </table>`)}
+
+    ${section('Academic Career', experience)}
+
+    ${section('Open-Source & Applied Projects', projects)}
+
+    ${section('Teaching Experience', `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        <div>
+          <div style="font-weight:700;font-size:9pt;color:#0f2044;margin-bottom:0.3rem;">Postgraduate (MSc / PGD)</div>
+          <ul class="cv-mod-list">${pgMods}</ul>
+        </div>
+        <div>
+          <div style="font-weight:700;font-size:9pt;color:#0f2044;margin-bottom:0.3rem;">Undergraduate</div>
+          <ul class="cv-mod-list">${ugMods}</ul>
+        </div>
+      </div>
+      <p style="font-size:8pt;color:#888;margin-top:0.3rem;">★ = Module Leader</p>`)}
+
+    ${section('Certifications & Professional Development', certs)}
+
+    ${section('Leadership & Service', leadership)}
+
+    ${section('Professional Memberships', `<p style="font-size:9pt">${memberships}</p>`)}
+
+    ${section('Research Interests', `<p style="font-size:9pt">${research}</p>`)}
+
+    ${section('Publications', `
+      <div style="margin-bottom:0.5rem;font-weight:700;font-size:9pt;color:#0f2044">Journal Articles &amp; Conference Papers</div>
+      ${pubs}
+      <div style="margin-top:0.5rem;margin-bottom:0.3rem;font-weight:700;font-size:9pt;color:#0f2044">In Preparation</div>
+      ${inPrep}
+      <p style="font-size:8pt;color:#888;margin-top:0.4rem">Full list of 14+ peer-reviewed papers available on request.</p>`)}
+  </div>`;
+}
+
+/* ── Industry CV ─────────────────────────────────────── */
+function buildIndustry() {
+  const bio = p.about.map(para => `<p style="margin-bottom:0.4rem">${esc(para)}</p>`).join('');
+
+  const skillsRows = DATA.skills.map(sk =>
+    `<tr>
+      <td>${sk.title}</td>
+      <td>${sk.tags.join(', ')}</td>
+    </tr>`).join('');
+
+  const projects = DATA.projects.filter(pr => !pr.badge.includes('In Development')).slice(0,4).map(pr =>
+    `<div class="cv-proj" style="margin-bottom:0.7rem">
+      <div>
+        <span class="cv-proj-title">${esc(pr.title)}</span>
+        <span class="cv-proj-badge">${pr.badge}</span>
+      </div>
+      <p style="font-size:9pt;margin-top:0.1rem">${esc(pr.desc).substring(0,250)}${pr.desc.length>250?'…':''}</p>
+      <p style="font-size:8pt;color:#555;margin-top:2px">Stack: ${pr.tech.join(', ')}</p>
+    </div>`).join('');
+
+  const experience = DATA.experience.map(jobEntry).join('');
+
+  const edu = p.education.map(e =>
+    `<p style="font-size:9pt;margin-bottom:0.2rem">
+      <strong>${e.degree}</strong> · ${e.institution}
+    </p>`).join('');
+
+  const certs = DATA.certifications.map(c =>
+    `<p style="font-size:9pt;margin-bottom:0.2rem"><strong>${esc(c.title)}</strong> — ${esc(c.desc)}</p>`
+  ).join('');
+
+  const memberships = p.memberships.join('  ·  ');
+
+  // Selected publications (journal + conference only, no inPrep)
+  const selPubs = [...DATA.publications.journal, ...DATA.publications.conference]
+    .slice(0,5).map(pubEntry).join('');
+
+  const research = DATA.research.map(r => r.title).join('  ·  ');
+
+  return `<div class="cv-page">
+    <div class="cv-header">
+      <h1>${p.name}</h1>
+      <div class="cred">${p.credentials}</div>
+      <div class="tagline">${p.title}</div>
+      ${contacts()}
+    </div>
+
+    ${section('Professional Profile', `<div style="font-size:9pt">${bio}</div>`)}
+
+    ${section('Core Technical Skills', `
+      <table class="cv-skills-table">
+        ${skillsRows}
+      </table>`)}
+
+    ${section('Selected Technical Projects', projects)}
+
+    ${section('Professional Experience', experience)}
+
+    ${section('Education', edu)}
+
+    ${section('Certifications & Professional Development', certs)}
+
+    ${section('Professional Memberships', `<p style="font-size:9pt">${memberships}</p>`)}
+
+    ${section('Selected Publications', selPubs + `<p style="font-size:8pt;color:#888;margin-top:0.4rem">Full publication list (14+ peer-reviewed papers) available on request.</p>`)}
+
+    ${section('Research Interests', `<p style="font-size:9pt">${research}</p>`)}
+  </div>`;
+}
+
+/* ── Toggle ──────────────────────────────────────────── */
+function switchCV(type) {
+  const a = document.getElementById('cv-academic');
+  const i = document.getElementById('cv-industry');
+  a.style.display = (type === 'academic' || type === 'both') ? 'block' : 'none';
+  i.style.display = (type === 'industry'  || type === 'both') ? 'block' : 'none';
+  document.getElementById('btn-academic').classList.toggle('active', type === 'academic');
+  document.getElementById('btn-industry').classList.toggle('active', type === 'industry');
+  document.getElementById('btn-both').classList.toggle('active', type === 'both');
+}
+
+/* ── Init ─────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('cv-academic').innerHTML = buildAcademic();
+  document.getElementById('cv-industry').innerHTML = buildIndustry();
+});
+</script>
+</body>
+</html>

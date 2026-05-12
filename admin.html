@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portfolio Admin — Dr. T. J. Anande</title>
+  <style>
+    :root {
+      --navy: #0f2044;
+      --navy2: #1a3060;
+      --accent: #2e7de9;
+      --accent2: #4fa3e0;
+      --bg: #f0f4fa;
+      --card: #fff;
+      --border: #d0d8e8;
+      --text: #1a1a2e;
+      --muted: #6b7a99;
+      --danger: #c0392b;
+      --success: #1a8754;
+      --warn: #d97706;
+      --radius: 8px;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: Arial, sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+    /* ── TOP BAR ── */
+    .topbar {
+      background:var(--navy); color:#fff;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:0 1.5rem; height:52px; position:sticky; top:0; z-index:200;
+      box-shadow:0 2px 8px rgba(0,0,0,0.4);
+    }
+    .topbar-left { display:flex; align-items:center; gap:1rem; }
+    .topbar h1 { font-size:0.95rem; font-weight:700; letter-spacing:0.02em; }
+    .topbar-badge { background:var(--accent); color:#fff; font-size:0.65rem;
+      font-weight:700; padding:2px 7px; border-radius:20px; text-transform:uppercase; }
+    .topbar-right { display:flex; align-items:center; gap:0.75rem; }
+    .btn { display:inline-flex; align-items:center; gap:0.4rem; padding:0.45rem 1rem;
+      border:none; border-radius:var(--radius); font-size:0.82rem; font-weight:600;
+      cursor:pointer; transition:opacity .15s; text-decoration:none; }
+    .btn:hover { opacity:0.85; }
+    .btn-primary { background:var(--accent); color:#fff; }
+    .btn-outline { background:transparent; color:#fff; border:1px solid rgba(255,255,255,0.4); }
+    .btn-outline:hover { background:rgba(255,255,255,0.1); opacity:1; }
+    .btn-success { background:var(--success); color:#fff; }
+    .btn-danger  { background:var(--danger); color:#fff; }
+    .btn-sm { padding:0.3rem 0.7rem; font-size:0.78rem; }
+
+    /* ── LAYOUT ── */
+    .layout { display:flex; min-height:calc(100vh - 52px); }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width:200px; flex-shrink:0; background:var(--navy2); color:#fff;
+      padding:1rem 0; position:sticky; top:52px; height:calc(100vh - 52px);
+      overflow-y:auto;
+    }
+    .sidebar-section { padding:0.5rem 1rem 0.25rem; font-size:0.68rem;
+      text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.4);
+      font-weight:700; }
+    .sidebar a {
+      display:block; padding:0.55rem 1.2rem; color:rgba(255,255,255,0.8);
+      text-decoration:none; font-size:0.84rem; transition:background .15s;
+      cursor:pointer; border-left:3px solid transparent;
+    }
+    .sidebar a:hover { background:rgba(255,255,255,0.08); color:#fff; }
+    .sidebar a.active { background:rgba(46,125,233,0.2); color:#fff;
+      border-left-color:var(--accent2); }
+
+    /* ── MAIN ── */
+    .main { flex:1; padding:1.5rem 2rem; max-width:960px; }
+
+    /* ── AUTH GATE ── */
+    #auth-gate {
+      max-width:480px; margin:4rem auto; background:var(--card);
+      border-radius:var(--radius); box-shadow:0 4px 24px rgba(0,0,0,0.1);
+      padding:2rem;
+    }
+    #auth-gate h2 { font-size:1.1rem; margin-bottom:0.4rem; color:var(--navy); }
+    #auth-gate p { font-size:0.82rem; color:var(--muted); margin-bottom:1.2rem; line-height:1.5; }
+    #auth-gate a { color:var(--accent); }
+
+    /* ── PANEL ── */
+    .panel { display:none; }
+    .panel.active { display:block; }
+    .panel-header { margin-bottom:1.2rem; }
+    .panel-header h2 { font-size:1.15rem; color:var(--navy); }
+    .panel-header p  { font-size:0.82rem; color:var(--muted); margin-top:0.2rem; }
+
+    /* ── CARDS ── */
+    .card { background:var(--card); border:1px solid var(--border);
+      border-radius:var(--radius); padding:1.25rem; margin-bottom:1rem; }
+    .card-title { font-size:0.88rem; font-weight:700; color:var(--navy);
+      margin-bottom:0.75rem; display:flex; align-items:center; justify-content:space-between; }
+    .card-actions { display:flex; gap:0.4rem; }
+
+    /* ── FORM ELEMENTS ── */
+    label { display:block; font-size:0.78rem; font-weight:600; color:var(--muted);
+      text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.3rem; }
+    input[type=text], input[type=email], input[type=url], input[type=password],
+    textarea, select {
+      width:100%; padding:0.55rem 0.75rem; border:1px solid var(--border);
+      border-radius:var(--radius); font-size:0.85rem; font-family:inherit;
+      background:#fff; color:var(--text); transition:border-color .15s;
+      margin-bottom:0.75rem;
+    }
+    input:focus, textarea:focus, select:focus {
+      outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(46,125,233,0.12);
+    }
+    textarea { resize:vertical; min-height:80px; }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; }
+    .form-row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.75rem; }
+    .field-hint { font-size:0.74rem; color:var(--muted); margin-top:-0.5rem; margin-bottom:0.75rem; }
+
+    /* ── TOAST ── */
+    #toast {
+      position:fixed; bottom:1.5rem; right:1.5rem; z-index:999;
+      background:var(--navy); color:#fff; padding:0.75rem 1.25rem;
+      border-radius:var(--radius); font-size:0.85rem; font-weight:600;
+      box-shadow:0 4px 16px rgba(0,0,0,0.3); opacity:0; pointer-events:none;
+      transition:opacity .25s; max-width:360px;
+    }
+    #toast.show { opacity:1; }
+    #toast.ok   { background:var(--success); }
+    #toast.err  { background:var(--danger); }
+    #toast.warn { background:var(--warn); }
+
+    /* ── STATUS BAR ── */
+    #status-bar {
+      display:none; align-items:center; gap:0.6rem;
+      background:#fff3cd; border:1px solid #ffd700; border-radius:var(--radius);
+      padding:0.6rem 1rem; margin-bottom:1rem; font-size:0.82rem; color:#856404;
+    }
+    #status-bar.show { display:flex; }
+    #status-bar .spin { animation:spin 1s linear infinite; display:inline-block; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* ── ITEM ROWS (experience bullets, etc.) ── */
+    .item-row {
+      background:#f7f9fd; border:1px solid var(--border);
+      border-radius:var(--radius); padding:0.85rem 1rem;
+      margin-bottom:0.6rem; position:relative;
+    }
+    .item-row .item-handle { font-size:0.75rem; color:var(--muted);
+      font-weight:700; margin-bottom:0.4rem; }
+    .item-row .remove-btn {
+      position:absolute; top:0.6rem; right:0.75rem;
+      background:none; border:none; color:var(--danger);
+      cursor:pointer; font-size:1rem; line-height:1; padding:0;
+    }
+    .item-row .remove-btn:hover { opacity:0.7; }
+
+    /* ── TAB LIST of experiences ── */
+    .exp-tabs { display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1rem; }
+    .exp-tab { padding:0.35rem 0.85rem; border-radius:20px; font-size:0.8rem;
+      font-weight:600; border:1px solid var(--border); background:#fff;
+      cursor:pointer; transition:all .15s; color:var(--muted); }
+    .exp-tab.active { background:var(--navy); color:#fff; border-color:var(--navy); }
+
+    /* ── JSON EDITOR fallback ── */
+    .json-editor { font-family:'Courier New', monospace; font-size:0.78rem;
+      min-height:300px; line-height:1.6; }
+    .json-error { color:var(--danger); font-size:0.78rem; margin-top:0.25rem;
+      display:none; }
+    .json-error.show { display:block; }
+
+    /* ── DEPLOY SECTION ── */
+    #deploy-bar {
+      position:sticky; bottom:0; background:var(--navy); color:#fff;
+      padding:0.75rem 1.5rem; display:flex; align-items:center;
+      justify-content:space-between; gap:1rem; margin-top:2rem;
+      border-top:1px solid rgba(255,255,255,0.1);
+    }
+    #deploy-bar .deploy-info { font-size:0.8rem; opacity:0.75; }
+    #deploy-bar .deploy-actions { display:flex; gap:0.6rem; }
+    #changes-badge {
+      background:var(--accent); color:#fff; font-size:0.72rem; font-weight:700;
+      padding:1px 7px; border-radius:12px; margin-left:0.4rem;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width:700px) {
+      .sidebar { display:none; }
+      .main { padding:1rem; }
+      .form-row, .form-row-3 { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── TOP BAR ── -->
+<div class="topbar">
+  <div class="topbar-left">
+    <h1>Portfolio Admin</h1>
+    <span class="topbar-badge">CMS</span>
+  </div>
+  <div class="topbar-right">
+    <span id="user-info" style="font-size:0.78rem;opacity:0.6;"></span>
+    <a href="index.html" class="btn btn-outline btn-sm">← Portfolio</a>
+    <button id="logout-btn" class="btn btn-outline btn-sm" style="display:none" onclick="logout()">Sign Out</button>
+  </div>
+</div>
+
+<div class="layout">
+  <!-- ── SIDEBAR ── -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-section">Content</div>
+    <a onclick="showPanel('personal')"      class="active" data-panel="personal">👤 Personal</a>
+    <a onclick="showPanel('experience')"    data-panel="experience">💼 Experience</a>
+    <a onclick="showPanel('projects')"      data-panel="projects">🚀 Projects</a>
+    <a onclick="showPanel('publications')"  data-panel="publications">📄 Publications</a>
+    <a onclick="showPanel('teaching')"      data-panel="teaching">🎓 Teaching</a>
+    <a onclick="showPanel('certifications')" data-panel="certifications">🏅 Certifications</a>
+    <a onclick="showPanel('leadership')"    data-panel="leadership">🏛 Leadership</a>
+    <div class="sidebar-section">Tools</div>
+    <a onclick="showPanel('advanced')"      data-panel="advanced">⚙️ Advanced / JSON</a>
+    <a href="cv.html" target="_blank">📄 Generate CV</a>
+    <a onclick="showPanel('deploy')"        data-panel="deploy">🚀 Deploy</a>
+  </nav>
+
+  <!-- ── MAIN ── -->
+  <main class="main" id="main-area">
+
+    <!-- AUTH GATE -->
+    <div id="auth-gate">
+      <h2>🔐 Admin Sign-In</h2>
+      <p>Enter your GitHub Personal Access Token to load and save your portfolio data.<br>
+         Your token is stored only in your browser's local storage and never sent anywhere except directly to GitHub.<br><br>
+         <a href="https://github.com/settings/tokens/new?scopes=repo&description=Portfolio+Admin" target="_blank">
+           Generate a token ↗
+         </a> — needs the <strong>repo</strong> scope.
+      </p>
+      <label for="pat-input">GitHub Token</label>
+      <input type="password" id="pat-input" placeholder="ghp_…" autocomplete="off">
+      <label for="repo-input">Repository (owner/repo)</label>
+      <input type="text" id="repo-input" value="Tertsegha1/tertsegha1.github.io">
+      <button class="btn btn-primary" onclick="signIn()" style="width:100%">Load Portfolio Data</button>
+      <p id="auth-error" style="color:var(--danger);font-size:0.8rem;margin-top:0.75rem;display:none;"></p>
+    </div>
+
+    <!-- STATUS BAR -->
+    <div id="status-bar">
+      <span class="spin">⏳</span>
+      <span id="status-msg">Loading…</span>
+    </div>
+
+    <!-- ════════════════════════════════ PANELS ════════════════════════════════ -->
+
+    <!-- PERSONAL -->
+    <div class="panel" id="panel-personal">
+      <div class="panel-header">
+        <h2>👤 Personal Details</h2>
+        <p>Core identity, contact info, bio and booking configuration.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Identity</div>
+        <div class="form-row">
+          <div><label>Full Name</label><input type="text" id="p-name"></div>
+          <div><label>Credentials (after name)</label><input type="text" id="p-credentials"></div>
+        </div>
+        <label>Professional Title</label>
+        <input type="text" id="p-title">
+        <div class="form-row">
+          <div><label>Location</label><input type="text" id="p-location"></div>
+          <div><label>Email</label><input type="email" id="p-email"></div>
+        </div>
+        <div class="form-row">
+          <div><label>GitHub URL</label><input type="url" id="p-github"></div>
+          <div><label>LinkedIn URL</label><input type="url" id="p-linkedin"></div>
+        </div>
+        <div class="form-row">
+          <div><label>Google Scholar URL</label><input type="url" id="p-scholar"></div>
+          <div><label>Latest Publication DOI / URL</label><input type="url" id="p-latestPub"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Bio &amp; About</div>
+        <label>Short Bio (hero / industry CV)</label>
+        <textarea id="p-bio" style="min-height:120px;"></textarea>
+        <label>About Paragraphs (one per line)</label>
+        <textarea id="p-about" style="min-height:120px;"></textarea>
+        <p class="field-hint">Each line becomes a separate paragraph in the About section.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Stats (hero counters)</div>
+        <div id="stats-container"></div>
+        <button class="btn btn-primary btn-sm" onclick="addStat()">+ Add Stat</button>
+      </div>
+      <div class="card">
+        <div class="card-title">Booking Configuration</div>
+        <label>Calendly URL <span style="font-weight:400;color:var(--muted)">(leave blank to hide widget)</span></label>
+        <input type="url" id="p-calendlyUrl" placeholder="https://calendly.com/your-link">
+        <label>Formspree Form ID <span style="font-weight:400;color:var(--muted)">(leave blank for mailto fallback)</span></label>
+        <input type="text" id="p-formspreeId" placeholder="xyzabcde">
+      </div>
+    </div>
+
+    <!-- EXPERIENCE -->
+    <div class="panel" id="panel-experience">
+      <div class="panel-header">
+        <h2>💼 Experience</h2>
+        <p>Edit roles, organisations, dates and bullet points.</p>
+      </div>
+      <div class="exp-tabs" id="exp-tabs"></div>
+      <div id="exp-editor"></div>
+      <button class="btn btn-primary btn-sm" onclick="addExperience()" style="margin-top:0.5rem">+ Add Role</button>
+    </div>
+
+    <!-- PROJECTS -->
+    <div class="panel" id="panel-projects">
+      <div class="panel-header">
+        <h2>🚀 Projects</h2>
+        <p>Add, edit or reorder project cards.</p>
+      </div>
+      <div id="projects-container"></div>
+      <button class="btn btn-primary btn-sm" onclick="addProject()">+ Add Project</button>
+    </div>
+
+    <!-- PUBLICATIONS -->
+    <div class="panel" id="panel-publications">
+      <div class="panel-header">
+        <h2>📄 Publications</h2>
+        <p>Journal articles, conference papers and preprints.</p>
+      </div>
+      <div id="pubs-container"></div>
+      <button class="btn btn-primary btn-sm" onclick="addPublication()">+ Add Publication</button>
+    </div>
+
+    <!-- TEACHING -->
+    <div class="panel" id="panel-teaching">
+      <div class="panel-header">
+        <h2>🎓 Teaching</h2>
+        <p>Modules taught, with UG/PG level and module leader flag.</p>
+      </div>
+      <div id="teaching-container"></div>
+      <button class="btn btn-primary btn-sm" onclick="addTeaching()">+ Add Module</button>
+    </div>
+
+    <!-- CERTIFICATIONS -->
+    <div class="panel" id="panel-certifications">
+      <div class="panel-header">
+        <h2>🏅 Certifications &amp; Awards</h2>
+      </div>
+      <div id="certs-container"></div>
+      <button class="btn btn-primary btn-sm" onclick="addCert()">+ Add Certification</button>
+    </div>
+
+    <!-- LEADERSHIP -->
+    <div class="panel" id="panel-leadership">
+      <div class="panel-header">
+        <h2>🏛 Leadership &amp; Service</h2>
+      </div>
+      <div id="leadership-container"></div>
+      <button class="btn btn-primary btn-sm" onclick="addLeadership()">+ Add Entry</button>
+    </div>
+
+    <!-- ADVANCED JSON -->
+    <div class="panel" id="panel-advanced">
+      <div class="panel-header">
+        <h2>⚙️ Advanced — Full JSON Editor</h2>
+        <p>Edit the raw <code>data.js</code> content as JSON. Changes here override the form editors above.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">
+          Raw DATA object
+          <div class="card-actions">
+            <button class="btn btn-sm btn-primary" onclick="applyJson()">Apply JSON</button>
+            <button class="btn btn-sm btn-outline" style="color:var(--text);border-color:var(--border)" onclick="refreshJson()">↺ Refresh</button>
+          </div>
+        </div>
+        <textarea class="json-editor" id="json-editor"></textarea>
+        <div class="json-error" id="json-error">Invalid JSON — please fix before applying.</div>
+      </div>
+    </div>
+
+    <!-- DEPLOY -->
+    <div class="panel" id="panel-deploy">
+      <div class="panel-header">
+        <h2>🚀 Deploy to GitHub Pages</h2>
+        <p>Preview the changes, then push to publish. GitHub Pages will rebuild in ~60 seconds.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Commit &amp; Push</div>
+        <label>Commit Message</label>
+        <input type="text" id="commit-msg" value="chore: update portfolio content via admin">
+        <button class="btn btn-success" onclick="deploy()" style="width:100%">🚀 Save &amp; Deploy to GitHub Pages</button>
+        <p style="font-size:0.78rem;color:var(--muted);margin-top:0.75rem;">
+          This will commit <code>js/data.js</code> directly to your <code>main</code> branch on GitHub.
+          Your live site will update in approximately 60 seconds.
+        </p>
+      </div>
+      <div class="card">
+        <div class="card-title">Quick Links</div>
+        <p style="font-size:0.85rem;line-height:2;">
+          🌐 <a href="https://drtertseghaanande.com" target="_blank">Live Site</a> &nbsp;|&nbsp;
+          📄 <a href="cv.html" target="_blank">CV Generator</a> &nbsp;|&nbsp;
+          🐙 <a id="repo-link" href="#" target="_blank">GitHub Repository</a>
+        </p>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- DEPLOY BAR (shown when there are unsaved changes) -->
+<div id="deploy-bar" style="display:none">
+  <span class="deploy-info">You have unsaved changes<span id="changes-badge">●</span></span>
+  <div class="deploy-actions">
+    <button class="btn btn-outline btn-sm" onclick="discardChanges()">Discard</button>
+    <button class="btn btn-success btn-sm" onclick="quickDeploy()">💾 Save &amp; Deploy</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script src="js/data.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════════════ */
+let GH_TOKEN  = '';
+let GH_REPO   = 'Tertsegha1/tertsegha1.github.io';
+let GH_SHA    = '';          // SHA of current data.js on GitHub
+let DATA_LIVE = null;        // deep clone from GitHub
+let DATA_EDIT = null;        // working copy
+let dirty     = false;
+let activeExp = 0;
+
+/* ═══════════════════════════════════════════════════════════════
+   BOOT
+═══════════════════════════════════════════════════════════════ */
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('admin_pat');
+  const repo  = localStorage.getItem('admin_repo');
+  if (repo) document.getElementById('repo-input').value = repo;
+  if (saved) {
+    document.getElementById('pat-input').value = saved;
+    signIn(true);
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   AUTH
+═══════════════════════════════════════════════════════════════ */
+async function signIn(silent = false) {
+  const pat  = document.getElementById('pat-input').value.trim();
+  const repo = document.getElementById('repo-input').value.trim();
+  if (!pat) return showAuthError('Please enter your GitHub token.');
+  if (!repo) return showAuthError('Please enter your repository.');
+  GH_TOKEN = pat;
+  GH_REPO  = repo;
+  setStatus('Connecting to GitHub…', true);
+  try {
+    const res = await ghGet(`/repos/${GH_REPO}/contents/js/data.js`);
+    if (!res.ok) throw new Error(`GitHub API ${res.status}: ${await res.text()}`);
+    const json = await res.json();
+    GH_SHA = json.sha;
+    const raw = atob(json.content.replace(/\n/g,''));
+    DATA_LIVE = parseDataJs(raw);
+    DATA_EDIT = deepClone(DATA_LIVE);
+    localStorage.setItem('admin_pat',  pat);
+    localStorage.setItem('admin_repo', repo);
+    document.getElementById('auth-gate').style.display = 'none';
+    document.getElementById('sidebar').style.display   = '';
+    document.getElementById('user-info').textContent   = repo;
+    document.getElementById('logout-btn').style.display = '';
+    document.getElementById('repo-link').href = `https://github.com/${repo}`;
+    setStatus('', false);
+    populateAll();
+    showPanel('personal');
+    if (!silent) toast('✅ Portfolio data loaded!', 'ok');
+  } catch(e) {
+    setStatus('', false);
+    showAuthError('Could not load data: ' + e.message);
+  }
+}
+
+function showAuthError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function logout() {
+  localStorage.removeItem('admin_pat');
+  location.reload();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GITHUB API HELPERS
+═══════════════════════════════════════════════════════════════ */
+function ghGet(path) {
+  return fetch(`https://api.github.com${path}`, {
+    headers: { Authorization: `token ${GH_TOKEN}`, Accept: 'application/vnd.github.v3+json' }
+  });
+}
+function ghPut(path, body) {
+  return fetch(`https://api.github.com${path}`, {
+    method: 'PUT',
+    headers: { Authorization: `token ${GH_TOKEN}`, Accept: 'application/vnd.github.v3+json',
+               'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PARSE / SERIALISE data.js
+═══════════════════════════════════════════════════════════════ */
+function parseDataJs(src) {
+  // Strip the "const DATA = " wrapper and trailing semicolon
+  const match = src.match(/const\s+DATA\s*=\s*(\{[\s\S]*\})\s*;?\s*$/);
+  if (!match) throw new Error('Could not parse data.js structure.');
+  return JSON.parse(match[1]
+    .replace(/\/\*[\s\S]*?\*\//g, '')   // block comments
+    .replace(/\/\/[^\n]*/g, '')          // line comments
+    .replace(/,\s*([}\]])/g, '$1')       // trailing commas
+  );
+}
+function serializeDataJs(d) {
+  const lines = [
+    '/**',
+    ' * data.js — all site content for Dr. Tertsegha Joseph Anande\'s portfolio.',
+    ' *',
+    ' * To update the site, edit the objects below and push to GitHub.',
+    ' * No rebuild step required — GitHub Pages serves static files directly.',
+    ' */',
+    '',
+    'const DATA = ' + JSON.stringify(d, null, 2) + ';',
+    ''
+  ];
+  return lines.join('\n');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DEEP CLONE / DIRTY FLAG
+═══════════════════════════════════════════════════════════════ */
+function deepClone(o) { return JSON.parse(JSON.stringify(o)); }
+function markDirty() {
+  dirty = true;
+  document.getElementById('deploy-bar').style.display = 'flex';
+}
+function discardChanges() {
+  DATA_EDIT = deepClone(DATA_LIVE);
+  dirty = false;
+  document.getElementById('deploy-bar').style.display = 'none';
+  populateAll();
+  toast('Changes discarded.', 'warn');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DEPLOY
+═══════════════════════════════════════════════════════════════ */
+async function quickDeploy() {
+  collectAll();
+  await deploy();
+}
+
+async function deploy() {
+  collectAll();
+  const msg  = document.getElementById('commit-msg')?.value.trim() || 'chore: update portfolio content via admin';
+  const body = serializeDataJs(DATA_EDIT);
+  const b64  = btoa(unescape(encodeURIComponent(body)));
+  setStatus('Pushing to GitHub…', true);
+  try {
+    const res = await ghPut(`/repos/${GH_REPO}/contents/js/data.js`, {
+      message: msg,
+      content: b64,
+      sha: GH_SHA
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const json = await res.json();
+    GH_SHA    = json.content.sha;
+    DATA_LIVE = deepClone(DATA_EDIT);
+    dirty     = false;
+    document.getElementById('deploy-bar').style.display = 'none';
+    setStatus('', false);
+    toast('🚀 Deployed! Site will update in ~60s.', 'ok');
+  } catch(e) {
+    setStatus('', false);
+    toast('Deploy failed: ' + e.message, 'err');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PANELS
+═══════════════════════════════════════════════════════════════ */
+function showPanel(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sidebar a[data-panel]').forEach(a => a.classList.remove('active'));
+  const panel = document.getElementById('panel-' + name);
+  if (panel) panel.classList.add('active');
+  const link = document.querySelector(`.sidebar a[data-panel="${name}"]`);
+  if (link) link.classList.add('active');
+  if (name === 'advanced') refreshJson();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   POPULATE ALL FORMS
+═══════════════════════════════════════════════════════════════ */
+function populateAll() {
+  if (!DATA_EDIT) return;
+  populatePersonal();
+  populateExperience();
+  populateProjects();
+  populatePublications();
+  populateTeaching();
+  populateCerts();
+  populateLeadership();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   COLLECT ALL FORMS → DATA_EDIT
+═══════════════════════════════════════════════════════════════ */
+function collectAll() {
+  if (!DATA_EDIT) return;
+  collectPersonal();
+  collectExperience();
+  collectProjects();
+  collectPublications();
+  collectTeaching();
+  collectCerts();
+  collectLeadership();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PERSONAL
+═══════════════════════════════════════════════════════════════ */
+function populatePersonal() {
+  const p = DATA_EDIT.personal;
+  setVal('p-name',        p.name        || '');
+  setVal('p-credentials', p.credentials || '');
+  setVal('p-title',       p.title       || '');
+  setVal('p-location',    p.location    || '');
+  setVal('p-email',       p.email       || '');
+  setVal('p-github',      p.github      || '');
+  setVal('p-linkedin',    p.linkedin    || '');
+  setVal('p-scholar',     p.scholar     || '');
+  setVal('p-latestPub',   p.latestPub   || '');
+  setVal('p-bio',         p.bio         || '');
+  setVal('p-about',       (p.about||[]).join('\n'));
+  setVal('p-calendlyUrl', p.calendlyUrl || '');
+  setVal('p-formspreeId', p.formspreeId || '');
+  renderStats();
+}
+function collectPersonal() {
+  const p = DATA_EDIT.personal;
+  p.name        = getVal('p-name');
+  p.credentials = getVal('p-credentials');
+  p.title       = getVal('p-title');
+  p.location    = getVal('p-location');
+  p.email       = getVal('p-email');
+  p.github      = getVal('p-github');
+  p.linkedin    = getVal('p-linkedin');
+  p.scholar     = getVal('p-scholar');
+  p.latestPub   = getVal('p-latestPub');
+  p.bio         = getVal('p-bio');
+  p.about       = getVal('p-about').split('\n').map(s=>s.trim()).filter(Boolean);
+  p.calendlyUrl = getVal('p-calendlyUrl');
+  p.formspreeId = getVal('p-formspreeId');
+  collectStats();
+}
+
+function renderStats() {
+  const c = document.getElementById('stats-container');
+  c.innerHTML = '';
+  (DATA_EDIT.stats||[]).forEach((s,i) => {
+    c.innerHTML += `
+      <div class="item-row">
+        <div class="item-handle">Stat #${i+1}</div>
+        <button class="remove-btn" onclick="removeStat(${i})">✕</button>
+        <div class="form-row-3">
+          <div><label>Value</label><input type="text" id="stat-val-${i}" value="${esc(s.value||'')}" oninput="markDirty()"></div>
+          <div><label>Suffix</label><input type="text" id="stat-suf-${i}" value="${esc(s.suffix||'')}" oninput="markDirty()"></div>
+          <div><label>Label</label><input type="text" id="stat-lbl-${i}" value="${esc(s.label||'')}" oninput="markDirty()"></div>
+        </div>
+      </div>`;
+  });
+}
+function collectStats() {
+  DATA_EDIT.stats = (DATA_EDIT.stats||[]).map((_,i) => ({
+    value:  getVal(`stat-val-${i}`),
+    suffix: getVal(`stat-suf-${i}`),
+    label:  getVal(`stat-lbl-${i}`)
+  }));
+}
+function addStat() {
+  collectStats();
+  DATA_EDIT.stats.push({ value:'0', suffix:'', label:'New Stat' });
+  renderStats(); markDirty();
+}
+function removeStat(i) {
+  collectStats();
+  DATA_EDIT.stats.splice(i,1);
+  renderStats(); markDirty();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   EXPERIENCE
+═══════════════════════════════════════════════════════════════ */
+function populateExperience() {
+  renderExpTabs();
+  renderExpEditor(activeExp);
+}
+function renderExpTabs() {
+  const tabs = document.getElementById('exp-tabs');
+  tabs.innerHTML = '';
+  (DATA_EDIT.experience||[]).forEach((e,i) => {
+    const btn = document.createElement('button');
+    btn.className = 'exp-tab' + (i===activeExp?' active':'');
+    btn.textContent = e.role ? e.role.split('—')[0].trim().substring(0,28) : `Role ${i+1}`;
+    btn.onclick = () => { collectExperience(); activeExp=i; renderExpTabs(); renderExpEditor(i); };
+    tabs.appendChild(btn);
+  });
+}
+function renderExpEditor(i) {
+  const c = document.getElementById('exp-editor');
+  const exp = DATA_EDIT.experience||[];
+  if (!exp[i]) { c.innerHTML=''; return; }
+  const e = exp[i];
+  c.innerHTML = `
+    <div class="card">
+      <div class="card-title">
+        Role Details
+        <button class="btn btn-danger btn-sm" onclick="removeExperience(${i})">🗑 Remove Role</button>
+      </div>
+      <div class="form-row">
+        <div><label>Role / Title</label><input type="text" id="ex-role" value="${esc(e.role||'')}" oninput="markDirty()"></div>
+        <div><label>Organisation</label><input type="text" id="ex-org" value="${esc(e.org||'')}" oninput="markDirty()"></div>
+      </div>
+      <div class="form-row">
+        <div><label>Location</label><input type="text" id="ex-loc" value="${esc(e.location||'')}" oninput="markDirty()"></div>
+        <div><label>Period</label><input type="text" id="ex-period" value="${esc(e.period||'')}" oninput="markDirty()"></div>
+      </div>
+      <div class="card-title" style="margin-top:0.75rem">Bullet Points</div>
+      <div id="exp-bullets"></div>
+      <button class="btn btn-primary btn-sm" onclick="addBullet()">+ Add Bullet</button>
+    </div>`;
+  renderBullets(e.bullets||[]);
+}
+function renderBullets(bullets) {
+  const c = document.getElementById('exp-bullets');
+  if (!c) return;
+  c.innerHTML = '';
+  bullets.forEach((b,j) => {
+    c.innerHTML += `
+      <div class="item-row">
+        <div class="item-handle">Bullet #${j+1}</div>
+        <button class="remove-btn" onclick="removeBullet(${j})">✕</button>
+        <textarea id="bul-${j}" oninput="markDirty()" style="margin-bottom:0">${esc(b)}</textarea>
+      </div>`;
+  });
+}
+function collectExperience() {
+  if (!DATA_EDIT.experience) return;
+  const e = DATA_EDIT.experience[activeExp];
+  if (!e) return;
+  e.role     = getVal('ex-role');
+  e.org      = getVal('ex-org');
+  e.location = getVal('ex-loc');
+  e.period   = getVal('ex-period');
+  e.bullets  = (e.bullets||[]).map((_,j) => getVal(`bul-${j}`));
+}
+function addBullet() {
+  collectExperience();
+  const e = DATA_EDIT.experience[activeExp];
+  if (!e) return;
+  e.bullets = e.bullets||[];
+  e.bullets.push('New bullet point.');
+  renderBullets(e.bullets); markDirty();
+}
+function removeBullet(j) {
+  collectExperience();
+  DATA_EDIT.experience[activeExp].bullets.splice(j,1);
+  renderBullets(DATA_EDIT.experience[activeExp].bullets); markDirty();
+}
+function addExperience() {
+  collectExperience();
+  DATA_EDIT.experience = DATA_EDIT.experience||[];
+  DATA_EDIT.experience.push({ role:'New Role', org:'Organisation', location:'Location', period:'2026–Present', bullets:[] });
+  activeExp = DATA_EDIT.experience.length - 1;
+  renderExpTabs(); renderExpEditor(activeExp); markDirty();
+}
+function removeExperience(i) {
+  if (!confirm('Remove this role?')) return;
+  DATA_EDIT.experience.splice(i,1);
+  activeExp = Math.max(0, i-1);
+  renderExpTabs(); renderExpEditor(activeExp); markDirty();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PROJECTS
+═══════════════════════════════════════════════════════════════ */
+function populateProjects() {
+  const c = document.getElementById('projects-container');
+  c.innerHTML = '';
+  (DATA_EDIT.projects||[]).forEach((p,i) => {
+    c.innerHTML += `
+      <div class="card">
+        <div class="card-title">
+          Project #${i+1}: ${esc(p.title||'')}
+          <button class="btn btn-danger btn-sm" onclick="removeProject(${i})">🗑</button>
+        </div>
+        <div class="form-row">
+          <div><label>Title</label><input type="text" id="pr-title-${i}" value="${esc(p.title||'')}" oninput="markDirty()"></div>
+          <div><label>Category / Tag</label><input type="text" id="pr-tag-${i}" value="${esc(p.tag||'')}" oninput="markDirty()"></div>
+        </div>
+        <label>Description</label>
+        <textarea id="pr-desc-${i}" oninput="markDirty()">${esc(p.desc||'')}</textarea>
+        <label>Tech Stack (comma-separated)</label>
+        <input type="text" id="pr-stack-${i}" value="${esc((p.stack||[]).join(', '))}" oninput="markDirty()">
+        <label>Links (JSON array — e.g. [{"label":"GitHub","url":"https://..."}])</label>
+        <textarea id="pr-links-${i}" style="min-height:60px;font-family:monospace;font-size:0.78rem" oninput="markDirty()">${esc(JSON.stringify(p.links||[]))}</textarea>
+      </div>`;
+  });
+}
+function collectProjects() {
+  DATA_EDIT.projects = (DATA_EDIT.projects||[]).map((_,i) => {
+    let links = [];
+    try { links = JSON.parse(getVal(`pr-links-${i}`)||'[]'); } catch(e){}
+    return {
+      ...(DATA_EDIT.projects[i]||{}),
+      title: getVal(`pr-title-${i}`),
+      tag:   getVal(`pr-tag-${i}`),
+      desc:  getVal(`pr-desc-${i}`),
+      stack: getVal(`pr-stack-${i}`).split(',').map(s=>s.trim()).filter(Boolean),
+      links
+    };
+  });
+}
+function addProject() {
+  collectProjects();
+  DATA_EDIT.projects = DATA_EDIT.projects||[];
+  DATA_EDIT.projects.push({ title:'New Project', tag:'Research', desc:'', stack:[], links:[] });
+  populateProjects(); markDirty();
+}
+function removeProject(i) {
+  if (!confirm('Remove this project?')) return;
+  collectProjects();
+  DATA_EDIT.projects.splice(i,1);
+  populateProjects(); markDirty();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PUBLICATIONS
+═══════════════════════════════════════════════════════════════ */
+function populatePublications() {
+  const c = document.getElementById('pubs-container');
+  c.innerHTML = '';
+  (DATA_EDIT.publications||[]).forEach((p,i) => {
+    c.innerHTML += `
+      <div class="card">
+        <div class="card-title">
+          Publication #${i+1}
+          <button class="btn btn-danger btn-sm" onclick="removePub(${i})">🗑</button>
+        </div>
+        <div class="form-row">
+          <div><label>Type</label>
+            <select id="pub-type-${i}" oninput="markDirty()">
+              <option value="journal"     ${p.type==='journal'    ?'selected':''}>Journal</option>
+              <option value="conference"  ${p.type==='conference' ?'selected':''}>Conference</option>
+              <option value="preprint"    ${p.type==='preprint'   ?'selected':''}>Preprint</option>
+              <option value="thesis"      ${p.type==='thesis'     ?'selected':''}>Thesis</option>
+            </select>
+          </div>
+          <div><label>Year</label><input type="text" id="pub-year-${i}" value="${esc(p.year||'')}" oninput="markDirty()"></div>
+        </div>
+        <label>Authors</label>
+        <input type="text" id="pub-authors-${i}" value="${esc(p.authors||'')}" oninput="markDirty()">
+        <label>Title</label>
+        <textarea id="pub-title-${i}" style="min-height:60px" oninput="markDirty()">${esc(p.title||'')}</textarea>
+        <div class="form-row">
+          <div><label>Venue (Journal/Conference)</label><input type="text" id="pub-venue-${i}" value="${esc(p.venue||'')}" oninput="markDirty()"></div>
+          <div><label>DOI / URL</label><input type="url" id="pub-doi-${i}" value="${esc(p.doi||'')}" oninput="markDirty()"></div>
+        </div>
+      </div>`;
+  });
+}
+function collectPublications() {
+  DATA_EDIT.publications = (DATA_EDIT.publications||[]).map((_,i) => ({
+    type:    document.getElementById(`pub-type-${i}`)?.value||'journal',
+    year:    getVal(`pub-year-${i}`),
+    authors: getVal(`pub-authors-${i}`),
+    title:   getVal(`pub-title-${i}`),
+    venue:   getVal(`pub-venue-${i}`),
+    doi:     getVal(`pub-doi-${i}`)
+  }));
+}
+function addPublication() {
+  collectPublications();
+  DATA_EDIT.publications = DATA_EDIT.publications||[];
+  DATA_EDIT.publications.unshift({ type:'journal', year:'2026', authors:'', title:'', venue:'', doi:'' });
+  populatePublications(); markDirty();
+}
+function removePub(i) {
+  if (!confirm('Remove this publication?')) return;
+  collectPublications();
+  DATA_EDIT.publications.splice(i,1);
+  populatePublications(); markDirty();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TEACHING
+═══════════════════════════════════════════════════════════════ */
+function populateTeaching() {
+  const c = document.getElementById('teaching-container');
+  c.innerHTML = '';
+  (DATA_EDIT.teaching||[]).forEach((t,i) => {
+    c.innerHTML += `
+      <div class="item-row">
+        <div class="item-handle">Module #${i+1}</div>
+        <button class="remove-btn" onclick="removeTeaching(${i})">✕</button>
+        <div class="form-row">
+          <div><label>Module Name</label><input type="text" id="t-name-${i}" value="${esc(t.name||'')}" oninput="markDirty()"></div>
+          <div><label>Level</label>
+            <select id="t-level-${i}" oninput="markDirty()">
+              <option value="UG"    ${t.level==='UG'   ?'selected':''}>UG</option>
+              <option value="PG"    ${t.level==='PG'   ?'selected':''}>PG</option>
+              <option value="UG/PG" ${t.level==='UG/PG'?'selected':''}>UG/PG</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div><label>Institution</label><input type="text" id="t-inst-${i}" value="${esc(t.institution||'')}" oninput="markDirty()"></div>
+          <div style="display:flex;align-items:center;gap:0.5rem;padding-top:1.5rem">
+            <input type="checkbox" id="t-leader-${i}" ${t.leader?'checked':''} onchange="markDirty()" style="width:auto;margin:0">
+            <label for="t-leader-${i}" style="text-transform:none;font-size:0.85rem;margin:0">Module Leader</label>
+          </div>
+        </div>
+      </div>`;
+  });
+}
+function collectTeaching() {
+  DATA_EDIT.teaching = (DATA_EDIT.teaching||[]).map((_,i) => ({
+    name:        getVal(`t-name-${i}`),
+    level:       document.getElementById(`t-level-${i}`)?.value||'UG',
+    institution: getVal(`t-inst-${i}`),
+    leader:      document.getElementById(`t-leader-${i}`)?.checked||false
+  }));
+}
+function addTeaching() {
+  collectTeaching();
+  DATA_EDIT.teaching = DATA_EDIT.teaching||[];
+  DATA_EDIT.teaching.push({ name:'New Module', level:'PG', institution:'', leader:false });
+  populateTeaching(); markDirty();
+}
+function removeTeaching(i) {
+  collectTeaching();
+  DATA_EDIT.teaching.splice(i,1);
+  populateTeaching(); markDirty();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CERTIFICATIONS
+═══════════════════════════════════════════════════════════════ */
+function populateCerts() {
+  const c = document.getElementById('certs-container');
+  c.innerHTML = '';
+  (DATA_EDIT.certifications||[]).forEach((cert,i) => {
+    c.innerHTML += `
+      <div class="item-row">
+        <div class="item-handle">Cert #${i+1}</div>
+        <button class="remove-btn" onclick="removeCert(${i})">✕</button>
+        <div class="form-row">
+          <div><label>Icon / Emoji</label><input type="text" id="cert-icon-${i}" value="${esc(cert.icon||'')}" oninput="markDirty()" style="max-width:80px"></div>
+          <div><label>Title</label><input type="text" id="cert-title-${i}" value="${esc(cert.title||'')}" oninput="markDirty()"></div>
+        </div>
+        <div class="form-row">
+          <div><label>Issuer</label><input type="text" id="cert-issuer-${i}" value="${esc(cert.issuer||'')}" oninput="markDirty()"></div>
+          <div style="display:flex;align-items:center;gap:0.5rem;padding-top:1.5rem">
+            <input type="checkbox" id="cert-hl-${i}" ${cert.highlight?'checked':''} onchange="markDirty()" style="width:auto;margin:0">
+            <label for="cert-hl-${i}" style="text-transform:none;font-size:0.85rem;margin:0">Highlight (NEW badge)</label>
+          </div>
+        </div>
+      </div>`;
+  });
+}
+function collectCerts() {
+  DATA_EDIT.certifications = (DATA_EDIT.certifications||[]).map((_,i) => ({
+    ...(DATA_EDIT.certifications[i]||{}),
+    icon:      getVal(`cert-icon-${i}`),
+    title:     getVal(`cert-title-${i}`),
+    issuer:    getVal(`cert-issuer-${i}`),
+    highlight: document.getElementById(`cert-hl-${i}`)?.checked||false
+  }));
+}
+function addCert() {
+  collectCerts();
+  DATA_EDIT.certifications = DATA_EDIT.certifications||[];
+  DATA_EDIT.certifications.push({ icon:'🏅', title:'', issuer:'', highlight:false });
+  populateCerts(); markDirty();
+}
+function removeCert(i) {
+  collectCerts();
+  DATA_EDIT.certifications.splice(i,1);
+  populateCerts(); markDirty();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LEADERSHIP
+═══════════════════════════════════════════════════════════════ */
+function populateLeadership() {
+  const c = document.getElementById('leadership-container');
+  c.innerHTML = '';
+  (DATA_EDIT.leadership||[]).forEach((l,i) => {
+    c.innerHTML += `
+      <div class="item-row">
+        <div class="item-handle">Entry #${i+1}</div>
+        <button class="remove-btn" onclick="removeLeadership(${i})">✕</button>
+        <div class="form-row">
+          <div><label>Role</label><input type="text" id="ldr-role-${i}" value="${esc(l.role||'')}" oninput="markDirty()"></div>
+          <div><label>Period</label><input type="text" id="ldr-period-${i}" value="${esc(l.period||'')}" oninput="markDirty()"></div>
+        </div>
+        <label>Description</label>
+        <textarea id="ldr-desc-${i}" oninput="markDirty()">${esc(l.desc||'')}</textarea>
+      </div>`;
+  });
+}
+function collectLeadership() {
+  DATA_EDIT.leadership = (DATA_EDIT.leadership||[]).map((_,i) => ({
+    role:   getVal(`ldr-role-${i}`),
+    period: getVal(`ldr-period-${i}`),
+    desc:   getVal(`ldr-desc-${i}`)
+  }));
+}
+function addLeadership() {
+  collectLeadership();
+  DATA_EDIT.leadership = DATA_EDIT.leadership||[];
+  DATA_EDIT.leadership.push({ role:'', period:'', desc:'' });
+  populateLeadership(); markDirty();
+}
+function removeLeadership(i) {
+  collectLeadership();
+  DATA_EDIT.leadership.splice(i,1);
+  populateLeadership(); markDirty();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ADVANCED JSON
+═══════════════════════════════════════════════════════════════ */
+function refreshJson() {
+  collectAll();
+  document.getElementById('json-editor').value = JSON.stringify(DATA_EDIT, null, 2);
+  document.getElementById('json-error').classList.remove('show');
+}
+function applyJson() {
+  const src = document.getElementById('json-editor').value;
+  try {
+    DATA_EDIT = JSON.parse(src);
+    populateAll();
+    markDirty();
+    document.getElementById('json-error').classList.remove('show');
+    toast('JSON applied.', 'ok');
+  } catch(e) {
+    document.getElementById('json-error').classList.add('show');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   UTILS
+═══════════════════════════════════════════════════════════════ */
+function setVal(id, val) { const el=document.getElementById(id); if(el) el.value=val; }
+function getVal(id) { const el=document.getElementById(id); return el ? el.value : ''; }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function setStatus(msg, show) {
+  const bar = document.getElementById('status-bar');
+  bar.classList.toggle('show', show);
+  document.getElementById('status-msg').textContent = msg;
+}
+
+function toast(msg, type='ok', duration=3500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show ' + type;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), duration);
+}
+
+// Auto-collect on input changes across all panels
+document.addEventListener('input', e => {
+  if (e.target.closest('#panel-personal, #panel-projects, #panel-publications, #panel-teaching, #panel-certifications, #panel-leadership')) {
+    markDirty();
+  }
+});
+</script>
+</body>
+</html>

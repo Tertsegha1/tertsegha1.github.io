@@ -409,4 +409,11 @@ of the Higher Education Academy (FHEA), and a Member of the BCS, IET, and IEEE.`
     },
   ],
 
+  /* ── Leadership & Service ─────────────────────────────── */
+  leadership: [
+    { role: 'Module Leader', period: '2024–Present', desc: 'UX Strategies, Advanced Database Systems, Object-Oriented Design & Development — QAHE / Ulster University' },
+    { role: 'Lead Tutor',    period: '2022',         desc: 'Professional Skills Module, Department of Computer Science, University of Warwick' },
+    { role: 'Team Lead',     period: '2023',         desc: 'Technology Department, Limbrick Woods Baptist Church, Coventry, UK' },
+  ],
+
 };
