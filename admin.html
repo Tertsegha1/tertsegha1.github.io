@@ -419,13 +419,25 @@
 /* ═══════════════════════════════════════════════════════════════
    STATE
 ═══════════════════════════════════════════════════════════════ */
-let GH_TOKEN  = '';
-let GH_REPO   = 'Tertsegha1/tertsegha1.github.io';
-let GH_SHA    = '';          // SHA of current data.js on GitHub
-let DATA_LIVE = null;        // deep clone from GitHub
-let DATA_EDIT = null;        // working copy
-let dirty     = false;
-let activeExp = 0;
+let GH_TOKEN   = '';
+let GH_REPO    = 'Tertsegha1/tertsegha1.github.io';
+let GH_SHA     = '';          // SHA of current data.js on GitHub
+let DATA_LIVE  = null;        // deep clone from GitHub
+let DATA_EDIT  = null;        // working copy
+let dirty      = false;
+let activeExp  = 0;
+let activePanel = 'personal'; // tracks which panel is currently open
+
+// Maps panel name → its collect function (called when leaving the panel)
+const COLLECTORS = {
+  personal:       () => collectPersonal(),
+  experience:     () => collectExperience(),
+  projects:       () => collectProjects(),
+  publications:   () => collectPublications(),
+  teaching:       () => collectTeaching(),
+  certifications: () => collectCerts(),
+  leadership:     () => collectLeadership(),
+};
 
 /* ═══════════════════════════════════════════════════════════════
    BOOT
@@ -545,6 +557,8 @@ function discardChanges() {
    DEPLOY
 ═══════════════════════════════════════════════════════════════ */
 async function quickDeploy() {
+  // Collect current panel first, then deploy
+  if (DATA_EDIT && COLLECTORS[activePanel]) COLLECTORS[activePanel]();
   await deploy();
 }
 
@@ -573,7 +587,9 @@ async function deploy() {
 
   setStatus('Preparing content…', true);
   try {
-    collectAll();
+    // Only collect the panel currently open — other panels already saved their
+    // data to DATA_EDIT when the user navigated away from them.
+    if (COLLECTORS[activePanel]) COLLECTORS[activePanel]();
     const msg  = document.getElementById('commit-msg')?.value.trim()
                  || 'chore: update portfolio content via admin';
     const b64  = toBase64(serializeDataJs(DATA_EDIT));
@@ -621,6 +637,9 @@ function showError(msg) {
    PANELS
 ═══════════════════════════════════════════════════════════════ */
 function showPanel(name) {
+  // Save the panel we're leaving before switching
+  if (DATA_EDIT && COLLECTORS[activePanel]) COLLECTORS[activePanel]();
+  activePanel = name;
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.sidebar a[data-panel]').forEach(a => a.classList.remove('active'));
   const panel = document.getElementById('panel-' + name);
