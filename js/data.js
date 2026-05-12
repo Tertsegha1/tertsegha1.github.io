@@ -110,7 +110,7 @@ of the Higher Education Academy (FHEA), and a Member of the BCS, IET, and IEEE.`
       org:    'QAHE Limited / Ulster University — Birmingham, UK',
       bullets: [
         'Teaches UG and PG modules across programming, databases, software engineering, and web/UX engineering',
-        'Module leader for three core MSc / UG modules; designs assessments and provides structured technical feedback at scale',
+        'Module leader for four core MSc / UG modules; designs assessments and provides structured technical feedback at scale',
         'Introduced the <strong>Digital Transformation Studio (DT Studio)</strong> — a 12-week formative scaffold with weekly Guild Quest tasks; drove student pass rate to <strong>98%+</strong> and failure rate to <strong>1.14%</strong> (2025–26 cohort)',
         'Designed and deployed the <strong>Automated Marking &amp; Grading System</strong> — AI-powered browser-based tool (Llama 3.3 70B / Whisper) for rubric-driven grading and Blackboard-ready feedback at zero server cost',
         'Created a tracking system for monitoring and managing marking across cohorts',
