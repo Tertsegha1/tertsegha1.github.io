@@ -879,58 +879,91 @@ function removeProject(i) {
 /* ═══════════════════════════════════════════════════════════════
    PUBLICATIONS
 ═══════════════════════════════════════════════════════════════ */
+// publications in data.js is { journal:[], conference:[], book:[], inPrep:[] }
+// We flatten to a working array [ {..., _group:'journal'}, ... ] for editing,
+// then rebuild the object on collect.
+const PUB_GROUPS = ['journal','conference','book','inPrep'];
+const PUB_LABELS = { journal:'Journal', conference:'Conference', book:'Book / Chapter', inPrep:'In Preparation' };
+
+function pubsFlat() {
+  const pub = DATA_EDIT.publications || {};
+  const flat = [];
+  PUB_GROUPS.forEach(g => (pub[g]||[]).forEach(p => flat.push({...p, _group: g})));
+  return flat;
+}
+
 function populatePublications() {
   const c = document.getElementById('pubs-container');
   c.innerHTML = '';
-  (DATA_EDIT.publications||[]).forEach((p,i) => {
+  pubsFlat().forEach((p, i) => {
     c.innerHTML += `
       <div class="card">
         <div class="card-title">
-          Publication #${i+1}
+          #${i+1} — ${esc(p.title ? p.title.substring(0,60)+'…' : 'New Publication')}
           <button class="btn btn-danger btn-sm" onclick="removePub(${i})">🗑</button>
         </div>
         <div class="form-row">
-          <div><label>Type</label>
-            <select id="pub-type-${i}" oninput="markDirty()">
-              <option value="journal"     ${p.type==='journal'    ?'selected':''}>Journal</option>
-              <option value="conference"  ${p.type==='conference' ?'selected':''}>Conference</option>
-              <option value="preprint"    ${p.type==='preprint'   ?'selected':''}>Preprint</option>
-              <option value="thesis"      ${p.type==='thesis'     ?'selected':''}>Thesis</option>
+          <div><label>Group</label>
+            <select id="pub-group-${i}" oninput="markDirty()">
+              ${PUB_GROUPS.map(g=>`<option value="${g}" ${p._group===g?'selected':''}>${PUB_LABELS[g]}</option>`).join('')}
             </select>
           </div>
-          <div><label>Year</label><input type="text" id="pub-year-${i}" value="${esc(p.year||'')}" oninput="markDirty()"></div>
+          <div><label>Year / Issue</label><input type="text" id="pub-year-${i}" value="${esc(p.year||'')}" oninput="markDirty()"></div>
         </div>
         <label>Authors</label>
         <input type="text" id="pub-authors-${i}" value="${esc(p.authors||'')}" oninput="markDirty()">
         <label>Title</label>
         <textarea id="pub-title-${i}" style="min-height:60px" oninput="markDirty()">${esc(p.title||'')}</textarea>
         <div class="form-row">
-          <div><label>Venue (Journal/Conference)</label><input type="text" id="pub-venue-${i}" value="${esc(p.venue||'')}" oninput="markDirty()"></div>
-          <div><label>DOI / URL</label><input type="url" id="pub-doi-${i}" value="${esc(p.doi||'')}" oninput="markDirty()"></div>
+          <div><label>Venue (Journal / Conference name)</label><input type="text" id="pub-venue-${i}" value="${esc(p.venue||'')}" oninput="markDirty()"></div>
+          <div><label>DOI / URL</label><input type="text" id="pub-doi-${i}" value="${esc(p.doi||'')}" oninput="markDirty()"></div>
         </div>
       </div>`;
   });
 }
+
 function collectPublications() {
-  DATA_EDIT.publications = (DATA_EDIT.publications||[]).map((_,i) => ({
-    type:    document.getElementById(`pub-type-${i}`)?.value||'journal',
+  const orig = pubsFlat();
+  const flat = orig.map((p, i) => ({
+    _group:  document.getElementById(`pub-group-${i}`)?.value || 'journal',
     year:    getVal(`pub-year-${i}`),
     authors: getVal(`pub-authors-${i}`),
     title:   getVal(`pub-title-${i}`),
-    venue:   getVal(`pub-venue-${i}`),
-    doi:     getVal(`pub-doi-${i}`)
+    venue:   getVal(`pub-venue-${i}`) || undefined,
+    doi:     getVal(`pub-doi-${i}`)   || undefined,
+    cls:     p.cls  // preserve existing cls field (conf / chap / prep)
   }));
+  // Rebuild the nested object
+  const rebuilt = {};
+  PUB_GROUPS.forEach(g => { rebuilt[g] = []; });
+  flat.forEach(p => {
+    const { _group, ...rest } = p;
+    // Remove undefined fields to keep data.js clean
+    Object.keys(rest).forEach(k => rest[k] === undefined && delete rest[k]);
+    rebuilt[_group || 'journal'].push(rest);
+  });
+  DATA_EDIT.publications = rebuilt;
 }
+
 function addPublication() {
   collectPublications();
-  DATA_EDIT.publications = DATA_EDIT.publications||[];
-  DATA_EDIT.publications.unshift({ type:'journal', year:'2026', authors:'', title:'', venue:'', doi:'' });
+  DATA_EDIT.publications.journal.unshift({ year:'2026', authors:'', title:'', venue:'', doi:'' });
   populatePublications(); markDirty();
 }
+
 function removePub(i) {
   if (!confirm('Remove this publication?')) return;
   collectPublications();
-  DATA_EDIT.publications.splice(i,1);
+  // Remove from the flat index — rebuild flat, splice, then re-collect
+  const flat = pubsFlat();
+  flat.splice(i, 1);
+  const rebuilt = {};
+  PUB_GROUPS.forEach(g => { rebuilt[g] = []; });
+  flat.forEach(p => {
+    const { _group, ...rest } = p;
+    rebuilt[_group || 'journal'].push(rest);
+  });
+  DATA_EDIT.publications = rebuilt;
   populatePublications(); markDirty();
 }
 
