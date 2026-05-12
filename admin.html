@@ -989,51 +989,76 @@ function removePub(i) {
 /* ═══════════════════════════════════════════════════════════════
    TEACHING
 ═══════════════════════════════════════════════════════════════ */
+// teaching in data.js is { postgraduate: [...], undergraduate: [...] }
+// Each item: { label, leader? }
+const TEACH_GROUPS = ['postgraduate','undergraduate'];
+const TEACH_LABELS = { postgraduate:'Postgraduate (PG)', undergraduate:'Undergraduate (UG)' };
+
+function teachFlat() {
+  const t = DATA_EDIT.teaching || {};
+  const flat = [];
+  TEACH_GROUPS.forEach(g => (t[g]||[]).forEach(m => flat.push({...m, _group: g})));
+  return flat;
+}
+
 function populateTeaching() {
   const c = document.getElementById('teaching-container');
   c.innerHTML = '';
-  (DATA_EDIT.teaching||[]).forEach((t,i) => {
+  teachFlat().forEach((t, i) => {
     c.innerHTML += `
       <div class="item-row">
         <div class="item-handle">Module #${i+1}</div>
         <button class="remove-btn" onclick="removeTeaching(${i})">✕</button>
         <div class="form-row">
-          <div><label>Module Name</label><input type="text" id="t-name-${i}" value="${esc(t.name||'')}" oninput="markDirty()"></div>
+          <div><label>Module Name / Label</label><input type="text" id="t-name-${i}" value="${esc(t.label||'')}" oninput="markDirty()"></div>
           <div><label>Level</label>
             <select id="t-level-${i}" oninput="markDirty()">
-              <option value="UG"    ${t.level==='UG'   ?'selected':''}>UG</option>
-              <option value="PG"    ${t.level==='PG'   ?'selected':''}>PG</option>
-              <option value="UG/PG" ${t.level==='UG/PG'?'selected':''}>UG/PG</option>
+              ${TEACH_GROUPS.map(g=>`<option value="${g}" ${t._group===g?'selected':''}>${TEACH_LABELS[g]}</option>`).join('')}
             </select>
           </div>
         </div>
-        <div class="form-row">
-          <div><label>Institution</label><input type="text" id="t-inst-${i}" value="${esc(t.institution||'')}" oninput="markDirty()"></div>
-          <div style="display:flex;align-items:center;gap:0.5rem;padding-top:1.5rem">
-            <input type="checkbox" id="t-leader-${i}" ${t.leader?'checked':''} onchange="markDirty()" style="width:auto;margin:0">
-            <label for="t-leader-${i}" style="text-transform:none;font-size:0.85rem;margin:0">Module Leader</label>
-          </div>
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.25rem">
+          <input type="checkbox" id="t-leader-${i}" ${t.leader?'checked':''} onchange="markDirty()" style="width:auto;margin:0">
+          <label for="t-leader-${i}" style="text-transform:none;font-size:0.85rem;margin:0;font-weight:400">Module Leader</label>
         </div>
       </div>`;
   });
 }
+
 function collectTeaching() {
-  DATA_EDIT.teaching = (DATA_EDIT.teaching||[]).map((_,i) => ({
-    name:        getVal(`t-name-${i}`),
-    level:       document.getElementById(`t-level-${i}`)?.value||'UG',
-    institution: getVal(`t-inst-${i}`),
-    leader:      document.getElementById(`t-leader-${i}`)?.checked||false
+  const flat = teachFlat().map((_, i) => ({
+    _group: document.getElementById(`t-level-${i}`)?.value || 'postgraduate',
+    label:  getVal(`t-name-${i}`),
+    leader: document.getElementById(`t-leader-${i}`)?.checked || false
   }));
+  const rebuilt = {};
+  TEACH_GROUPS.forEach(g => { rebuilt[g] = []; });
+  flat.forEach(({ _group, leader, ...rest }) => {
+    const entry = { ...rest };
+    if (leader) entry.leader = true;   // only include leader if true (keeps data.js clean)
+    rebuilt[_group].push(entry);
+  });
+  DATA_EDIT.teaching = rebuilt;
 }
+
 function addTeaching() {
   collectTeaching();
-  DATA_EDIT.teaching = DATA_EDIT.teaching||[];
-  DATA_EDIT.teaching.push({ name:'New Module', level:'PG', institution:'', leader:false });
+  DATA_EDIT.teaching.postgraduate.push({ label: 'New Module (MSc)' });
   populateTeaching(); markDirty();
 }
+
 function removeTeaching(i) {
   collectTeaching();
-  DATA_EDIT.teaching.splice(i,1);
+  const flat = teachFlat();
+  flat.splice(i, 1);
+  const rebuilt = {};
+  TEACH_GROUPS.forEach(g => { rebuilt[g] = []; });
+  flat.forEach(({ _group, leader, ...rest }) => {
+    const entry = { ...rest };
+    if (leader) entry.leader = true;
+    rebuilt[_group].push(entry);
+  });
+  DATA_EDIT.teaching = rebuilt;
   populateTeaching(); markDirty();
 }
 
