@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Episode 10: Monitoring · Re-Inventing Myself</title>
+<meta name="description" content="Stage 08 of the AutoML pipeline — Monitoring. The deployed model is now in production. Whether it stays effective depends entirely on whether anyone is watching. Episode 10 of Re-Inventing Myself by Dr. Tertsegha J. Anande.">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --deep:#050516;--panel:#0F0F2E;--panel2:#0B0B26;
+  --purple:#9490E8;--purple-soft:#6560CC;
+  --teal:#6DD8B3;--teal-dark:#25B585;
+  --amber:#F5A830;--text:#F2F1FF;--muted:#B0ADA6;--dim:#8A8883;
+  --border:rgba(148,144,232,0.28);
+}
+html{scroll-behavior:smooth}
+body{background:var(--deep);background-image:radial-gradient(ellipse 80% 40% at 20% 10%,rgba(101,96,204,0.18) 0%,transparent 70%),radial-gradient(ellipse 60% 30% at 80% 5%,rgba(37,181,133,0.10) 0%,transparent 60%),radial-gradient(ellipse 50% 50% at 50% 90%,rgba(101,96,204,0.08) 0%,transparent 70%);color:var(--text);font-family:Arial,sans-serif;min-height:100vh;line-height:1.6}
+nav{position:sticky;top:0;z-index:100;background:rgba(5,5,22,0.95);backdrop-filter:blur(8px);border-bottom:0.5px solid var(--border);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.nav-brand{font-size:10px;letter-spacing:4px;color:var(--purple);text-transform:uppercase}
+.nav-links{display:flex;gap:20px}
+.nav-links a{font-size:11px;color:var(--muted);text-decoration:none;letter-spacing:1px;transition:color .2s}
+.nav-links a:hover{color:var(--text)}
+.nav-back{font-size:11px;color:var(--teal);border:0.5px solid rgba(109,216,179,0.4);border-radius:4px;padding:5px 12px;text-decoration:none;transition:border-color .2s}
+.nav-back:hover{border-color:var(--teal)}
+.hero{position:relative;overflow:hidden;padding:70px 32px 56px;border-bottom:0.5px solid var(--border)}
+canvas#hero-c{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.hero-inner{position:relative;z-index:2;max-width:820px;margin:0 auto;text-align:center}
+.ep-pill{display:inline-flex;align-items:center;gap:8px;background:rgba(109,216,179,0.12);border:0.5px solid rgba(109,216,179,0.4);border-radius:20px;padding:6px 16px;margin-bottom:24px}
+.ep-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.6)}}
+.ep-text{font-size:10px;letter-spacing:3px;color:var(--teal);text-transform:uppercase}
+.hero h1{font-family:Georgia,serif;font-size:clamp(32px,5vw,60px);font-weight:700;color:var(--text);line-height:1.1;margin-bottom:12px}
+.hero h1 em{font-style:normal;color:var(--purple)}
+.hero-sub{font-size:12px;letter-spacing:4px;color:#AFA9EC;text-transform:uppercase;margin-bottom:24px}
+.hero-desc{font-size:16px;color:var(--muted);line-height:1.75;max-width:660px;margin:0 auto 32px}
+.progress-row{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap}
+.prog-step{display:flex;align-items:center;gap:5px;font-size:9px;letter-spacing:1px;color:rgba(255,255,255,0.3);text-transform:uppercase}
+.prog-step.done{color:var(--teal)}.prog-step.current{color:var(--purple)}
+.prog-num{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;border:0.5px solid}
+.prog-step.done .prog-num{background:rgba(109,216,179,0.2);border-color:var(--teal);color:var(--teal)}
+.prog-step.current .prog-num{background:rgba(101,96,204,0.25);border-color:var(--purple);color:var(--purple)}
+.prog-step .prog-num{background:transparent;border-color:rgba(255,255,255,0.15);color:rgba(255,255,255,0.3)}
+.prog-divider{width:10px;height:0.5px;background:rgba(255,255,255,0.1)}
+.section{max-width:860px;margin:0 auto;padding:56px 32px}
+.section-label{font-size:10px;letter-spacing:4px;color:var(--purple);text-transform:uppercase;margin-bottom:10px}
+.section h2{font-family:Georgia,serif;font-size:30px;color:var(--text);margin-bottom:20px;line-height:1.2}
+.divider{border:none;border-top:0.5px solid var(--border);margin:0}
+.content-card{background:var(--panel);border:0.5px solid var(--border);border-radius:12px;padding:28px 32px;margin-bottom:20px}
+.content-card p{font-size:15px;color:#D8D5CE;line-height:1.8;margin-bottom:14px}
+.content-card p:last-child{margin-bottom:0}
+.content-card h3{font-family:Georgia,serif;font-size:20px;color:var(--text);margin-bottom:12px}
+.highlight-box{background:rgba(101,96,204,0.1);border-left:3px solid var(--purple);border-radius:0 8px 8px 0;padding:16px 20px;margin:16px 0;font-size:15px;color:#C8C5BE;line-height:1.7;font-style:italic}
+.highlight-box.teal{background:rgba(37,181,133,0.1);border-color:var(--teal);color:#B8EDD9}
+.highlight-box.amber{background:rgba(245,168,48,0.1);border-color:var(--amber);color:#FFE0A0}
+.highlight-box.red{background:rgba(231,76,60,0.08);border-color:#E87070;color:#FFBABA}
+
+/* MONITORING CONCEPTS */
+.monitor-stages{display:flex;flex-direction:column;gap:12px;margin:24px 0}
+.monitor-stage{display:flex;gap:16px;background:#06061C;border:0.5px solid var(--border);border-radius:10px;padding:18px;align-items:flex-start}
+.ms-num{width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;background:rgba(101,96,204,0.15);border:0.5px solid rgba(148,144,232,0.4);color:var(--purple)}
+.ms-body{flex:1}
+.ms-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px}
+.ms-ml{font-size:12px;color:var(--muted);margin-bottom:6px;line-height:1.5}
+.ms-life{font-size:12px;color:#B8EDD9;line-height:1.5;padding-top:6px;border-top:0.5px solid var(--border)}
+
+/* DRIFT COMPARISON */
+.drift-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}
+@media(max-width:600px){.drift-grid{grid-template-columns:1fr}}
+.drift-col{background:#06061C;border:0.5px solid var(--border);border-radius:12px;padding:20px}
+.drift-col.data-drift{border-top:2px solid rgba(101,96,204,0.5)}
+.drift-col.concept-drift{border-top:2px solid rgba(245,168,48,0.5)}
+.drift-col-head{font-size:10px;letter-spacing:3px;text-transform:uppercase;font-weight:700;margin-bottom:12px;padding-bottom:8px;border-bottom:0.5px solid var(--border)}
+.drift-col.data-drift .drift-col-head{color:var(--purple)}
+.drift-col.concept-drift .drift-col-head{color:var(--amber)}
+.drift-item{font-size:12px;color:#D8D5CE;line-height:1.5;padding:7px 0;border-bottom:0.5px solid rgba(148,144,232,0.08)}
+.drift-item:last-child{border-bottom:none}
+
+/* MONITORING DASHBOARD VISUAL */
+.mon-dash{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0}
+@media(max-width:600px){.mon-dash{grid-template-columns:1fr}}
+.mon-metric{background:#06061C;border:0.5px solid var(--border);border-radius:10px;padding:16px;text-align:center}
+.mon-metric.healthy{border-top:2px solid rgba(37,181,133,0.5)}
+.mon-metric.warning{border-top:2px solid rgba(245,168,48,0.5)}
+.mon-metric.alert{border-top:2px solid rgba(231,76,60,0.4)}
+.mon-status{font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;font-weight:700}
+.mon-metric.healthy .mon-status{color:var(--teal)}
+.mon-metric.warning .mon-status{color:var(--amber)}
+.mon-metric.alert .mon-status{color:#E87070}
+.mon-val{font-size:28px;font-weight:700;margin-bottom:4px}
+.mon-metric.healthy .mon-val{color:var(--teal)}
+.mon-metric.warning .mon-val{color:var(--amber)}
+.mon-metric.alert .mon-val{color:#E87070}
+.mon-label{font-size:11px;color:var(--muted);line-height:1.4}
+
+/* DAILY TIMELINE */
+.daily-timeline{display:flex;flex-direction:column;gap:0;margin:24px 0}
+.dt-row{display:flex;gap:16px;position:relative;padding-bottom:20px}
+.dt-row:last-child{padding-bottom:0}
+.dt-row:not(:last-child)::before{content:'';position:absolute;left:19px;top:40px;bottom:0;width:0.5px;background:rgba(148,144,232,0.2)}
+.dt-left{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:6px}
+.dt-dot{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:0.5px solid var(--border);background:#06061C;flex-shrink:0}
+.dt-time{font-size:9px;color:var(--amber);letter-spacing:1px;text-align:center;white-space:nowrap}
+.dt-body{flex:1;background:var(--panel);border:0.5px solid var(--border);border-radius:10px;padding:14px 18px;margin-top:4px}
+.dt-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px}
+.dt-badge-row{display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.dt-badge{font-size:9px;padding:2px 8px;border-radius:8px;letter-spacing:1px;text-transform:uppercase;font-weight:700}
+.dt-badge.unmonitored{background:rgba(231,76,60,0.1);border:0.5px solid rgba(231,76,60,0.3);color:#E87070}
+.dt-badge.monitored{background:rgba(37,181,133,0.1);border:0.5px solid rgba(37,181,133,0.3);color:var(--teal)}
+.dt-raw{font-size:12px;color:#E87070;margin-bottom:4px;line-height:1.5}
+.dt-clean{font-size:12px;color:var(--teal);line-height:1.5}
+
+/* TASK SECTION */
+.task-section-header{background:linear-gradient(135deg,#08082A 0%,#0D1040 100%);border-top:0.5px solid var(--border);border-bottom:0.5px solid var(--border);padding:40px 32px;text-align:center}
+.task-section-header .label{font-size:10px;letter-spacing:4px;color:var(--amber);text-transform:uppercase;margin-bottom:10px}
+.task-section-header h2{font-family:Georgia,serif;font-size:32px;color:var(--text);margin-bottom:10px}
+.task-section-header p{font-size:14px;color:var(--muted);max-width:560px;margin:0 auto}
+.task-card{background:var(--panel);border:0.5px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:20px;transition:border-color .2s}
+.task-card.completed{border-color:var(--teal)}
+.task-header{padding:20px 24px;display:flex;align-items:center;gap:16px;border-bottom:0.5px solid var(--border)}
+.task-num{width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;background:rgba(245,168,48,0.15);border:0.5px solid rgba(245,168,48,0.4);color:var(--amber)}
+.task-card.completed .task-num{background:rgba(109,216,179,0.15);border-color:var(--teal);color:var(--teal)}
+.task-meta{flex:1}
+.task-label{font-size:9px;letter-spacing:3px;color:var(--amber);text-transform:uppercase;margin-bottom:3px}
+.task-card.completed .task-label{color:var(--teal)}
+.task-title{font-size:16px;font-weight:700;color:var(--text)}
+.task-badge{font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border-radius:10px;background:rgba(245,168,48,0.1);border:0.5px solid rgba(245,168,48,0.3);color:var(--amber)}
+.task-badge.done{background:rgba(109,216,179,0.15);border-color:var(--teal);color:var(--teal)}
+.task-body{padding:24px}
+.task-body p{font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:16px}
+
+/* TASK 1: DRIFT AUDIT */
+.drift-list{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.drift-item-check{background:#0A0A24;border:0.5px solid var(--border);border-radius:10px;padding:14px 16px;cursor:pointer;transition:all .2s;display:flex;align-items:flex-start;gap:14px}
+.drift-item-check.checked{border-color:rgba(231,76,60,0.4);background:rgba(231,76,60,0.05)}
+.drift-cb{width:20px;height:20px;border-radius:5px;border:0.5px solid var(--border);background:#06061C;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .2s}
+.drift-cb.checked{background:rgba(231,76,60,0.2);border-color:#E87070;color:#E87070}
+.drift-text{flex:1}
+.drift-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px}
+.drift-desc{font-size:11px;color:var(--muted);line-height:1.5}
+.drift-submit{margin-top:14px;width:100%;padding:12px;background:var(--purple-soft);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:1px;transition:background .2s}
+.drift-submit:hover{background:var(--purple)}
+.drift-result{display:none;margin-top:14px;padding:18px;background:rgba(101,96,204,0.1);border:0.5px solid var(--border);border-radius:8px;font-size:13px;color:#C8C5BE;line-height:1.7;text-align:center}
+
+/* TASK 2: PERFORMANCE DASHBOARD */
+.dash-fields{display:flex;flex-direction:column;gap:14px;margin-bottom:16px}
+.dash-field{background:#0A0A24;border:0.5px solid var(--border);border-radius:10px;padding:16px}
+.dash-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-bottom:6px}
+.dash-label.metric{color:var(--purple)}
+.dash-label.reading{color:var(--teal)}
+.dash-label.threshold{color:var(--amber)}
+.dash-label.trend{color:#AFA9EC}
+.dash-input{width:100%;padding:10px 14px;background:#06061C;border:0.5px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:Arial,sans-serif;outline:none;transition:border-color .2s}
+.dash-input:focus{border-color:var(--purple)}
+.dash-input::placeholder{color:rgba(255,255,255,0.2);font-style:italic}
+.dash-hint{font-size:11px;color:var(--dim);margin-top:5px;line-height:1.4}
+.dash-save{padding:11px 24px;background:transparent;border:0.5px solid var(--border);border-radius:8px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;transition:all .2s;letter-spacing:1px}
+.dash-save:hover{border-color:var(--teal);color:var(--teal)}
+.dash-save.saved{border-color:var(--teal);color:var(--teal);background:rgba(37,181,133,0.1)}
+
+/* TASK 3: MONITORING CADENCE */
+.cadence-form{display:flex;flex-direction:column;gap:14px;margin-bottom:16px}
+.cadence-field{background:#0A0A24;border:0.5px solid var(--border);border-radius:10px;padding:16px}
+.cadence-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-bottom:6px;color:var(--purple)}
+.cadence-input{width:100%;padding:10px 14px;background:#06061C;border:0.5px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:Arial,sans-serif;outline:none;transition:border-color .2s}
+.cadence-input:focus{border-color:var(--purple)}
+.cadence-input::placeholder{color:rgba(255,255,255,0.2);font-style:italic}
+.cadence-hint{font-size:11px;color:var(--dim);margin-top:5px;line-height:1.4}
+.cadence-save{padding:11px 24px;background:transparent;border:0.5px solid var(--border);border-radius:8px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;transition:all .2s;letter-spacing:1px}
+.cadence-save:hover{border-color:var(--teal);color:var(--teal)}
+.cadence-save.saved{border-color:var(--teal);color:var(--teal);background:rgba(37,181,133,0.1)}
+
+/* TASK 4 */
+.reflection-area{width:100%;min-height:120px;padding:16px;background:#080820;border:0.5px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:Arial,sans-serif;line-height:1.7;resize:vertical;outline:none;transition:border-color .2s;margin-bottom:12px}
+.reflection-area:focus{border-color:var(--purple)}
+.reflection-area::placeholder{color:rgba(255,255,255,0.2);font-style:italic}
+.char-count{font-size:11px;color:var(--dim);text-align:right;margin-bottom:12px}
+.reflection-save{padding:11px 24px;background:transparent;border:0.5px solid var(--border);border-radius:8px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;transition:all .2s;letter-spacing:1px}
+.reflection-save:hover{border-color:var(--teal);color:var(--teal)}
+.reflection-save.saved{border-color:var(--teal);color:var(--teal);background:rgba(37,181,133,0.1)}
+.saved-note{display:none;font-size:12px;color:var(--teal);margin-top:10px}
+.commit-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+@media(max-width:600px){.commit-options{grid-template-columns:1fr}}
+.commit-card{background:#0A0A24;border:0.5px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;transition:all .2s;text-align:center}
+.commit-card:hover{border-color:var(--purple);background:rgba(101,96,204,0.1)}
+.commit-card.selected{border-color:var(--teal);background:rgba(37,181,133,0.1)}
+.commit-icon{font-size:28px;margin-bottom:8px}
+.commit-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px}
+.commit-desc{font-size:11px;color:var(--muted);line-height:1.4}
+.commit-confirm{width:100%;padding:13px;background:rgba(37,181,133,0.12);border:0.5px solid var(--teal);border-radius:8px;font-size:13px;font-weight:700;color:var(--teal);cursor:pointer;transition:background .2s;letter-spacing:1px;display:none}
+.commit-confirm:hover{background:rgba(37,181,133,0.22)}
+.commit-result{display:none;margin-top:14px;padding:18px;text-align:center;background:rgba(37,181,133,0.1);border:0.5px solid var(--teal);border-radius:10px}
+.commit-result p{font-size:14px;color:#B8EDD9;line-height:1.6}
+
+/* PROGRESS TRACKER */
+.progress-tracker{position:fixed;right:24px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;z-index:50}
+@media(max-width:768px){.progress-tracker{display:none}}
+.pt-dot{width:10px;height:10px;border-radius:50%;border:1.5px solid rgba(148,144,232,0.3);background:transparent;cursor:pointer;transition:all .2s;position:relative}
+.pt-dot:hover{border-color:var(--purple)}
+.pt-dot.active{border-color:var(--purple);background:var(--purple)}
+.pt-dot.done{border-color:var(--teal);background:var(--teal)}
+.pt-dot .pt-tip{position:absolute;right:18px;top:50%;transform:translateY(-50%);background:rgba(15,15,46,0.95);border:0.5px solid var(--border);border-radius:6px;padding:4px 10px;font-size:10px;color:var(--text);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s}
+.pt-dot:hover .pt-tip{opacity:1}
+.ep-nav{max-width:860px;margin:0 auto;padding:0 32px 60px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.ep-nav-btn{flex:1;min-width:200px;background:var(--panel);border:0.5px solid var(--border);border-radius:12px;padding:20px 22px;text-decoration:none;transition:border-color .2s}
+.ep-nav-btn:hover{border-color:var(--purple)}
+.ep-nav-dir{font-size:9px;letter-spacing:3px;color:var(--dim);text-transform:uppercase;margin-bottom:6px}
+.ep-nav-title{font-size:14px;font-weight:700;color:var(--text)}
+.ep-nav-sub{font-size:12px;color:var(--muted);margin-top:3px}
+.ep-nav-btn.next{text-align:right;border-color:rgba(109,216,179,0.25)}
+.ep-nav-btn.next:hover{border-color:var(--teal)}
+footer{border-top:0.5px solid var(--border);padding:24px 32px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.footer-left{font-size:11px;color:var(--dim)}
+.footer-right{font-size:10px;color:var(--purple-soft);letter-spacing:2px;text-transform:uppercase}
+</style>
+</head>
+<body>
+
+<nav class="progress-tracker" aria-label="Page sections">
+  <div class="pt-dot active" onclick="document.querySelector('#intro').scrollIntoView({behavior:'smooth'})" data-section="intro"><span class="pt-tip">Introduction</span></div>
+  <div class="pt-dot" onclick="document.querySelector('#what').scrollIntoView({behavior:'smooth'})" data-section="what"><span class="pt-tip">What is it?</span></div>
+  <div class="pt-dot" onclick="document.querySelector('#life').scrollIntoView({behavior:'smooth'})" data-section="life"><span class="pt-tip">Life parallel</span></div>
+  <div class="pt-dot" onclick="document.querySelector('#daily').scrollIntoView({behavior:'smooth'})" data-section="daily"><span class="pt-tip">Daily practice</span></div>
+  <div class="pt-dot" onclick="document.querySelector('#tasks').scrollIntoView({behavior:'smooth'})" data-section="tasks"><span class="pt-tip">Your tasks</span></div>
+</nav>
+
+<nav>
+  <span class="nav-brand">Re-Inventing Myself</span>
+  <div class="nav-links">
+    <a href="#what">The concept</a>
+    <a href="#life">Life parallel</a>
+    <a href="#daily">Daily practice</a>
+    <a href="#tasks">Your tasks</a>
+  </div>
+  <a class="nav-back" href="reinventing-myself.html">← All Episodes</a>
+</nav>
+
+<section class="hero" id="intro">
+  <canvas id="hero-c"></canvas>
+  <div class="hero-inner">
+    <div class="ep-pill"><div class="ep-dot"></div><span class="ep-text">Episode 10 · Stage 08 of 09</span></div>
+    <h1><em>Monitoring</em> —<br>the model that doesn't<br>know it's <em>failing</em></h1>
+    <div class="hero-sub">Re-Inventing Myself · AutoML &amp; You</div>
+    <p class="hero-desc">The model has been deployed. Production inputs are arriving. Results are being generated. And somewhere in the data — quietly, invisibly — the world is beginning to drift away from the conditions the model was trained on. This week: Stage 08 of the AutoML pipeline. The stage that determines whether a deployed model stays effective — or silently fails without anyone noticing.</p>
+    <div class="progress-row">
+      <div class="prog-step done"><div class="prog-num">1</div><span>Intro</span></div>
+      <div class="prog-divider"></div>
+      <div class="prog-step done"><div class="prog-num">2</div><span>AutoML</span></div>
+      <div class="prog-divider"></div>
+      <div class="prog-step done"><div class="prog-num">3</div><span>Ingest</span></div>
+      <div class="prog-divider"></div>
+      <div class="prog-step done"><div class="prog-num">4</div><span>Prep</span></div>
+      <div class="prog-divider"></div>
+      <div class="prog-step done"><div class="prog-num">5</div><span>Features</span></div>
+      <div class="prog-divider"></div>
+      <div class="prog-step done"><div class="prog-num">6</div><span>Select</span></div>
+      <div class="prog-divider"></div>
+      <div class="prog-step done"><div class="prog-num">7</div><span>Train</span></div>
+      <div class="prog-divider"></div>
+      <div class="prog-step done"><div class="prog-num">8</div><span>Evaluate</span></div>
+      <div class="prog-divider"></div>
+      <div class="prog-step done"><div class="prog-num">9</div><span>Deploy</span></div>
+      <div class="prog-divider"></div>
+      <div class="prog-step current"><div class="prog-num">10</div><span>Monitor</span></div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section class="section" id="what">
+  <div class="section-label">Stage 08 · The Concept</div>
+  <h2>What is Monitoring?</h2>
+
+  <div style="background:#06061C;background-image:radial-gradient(ellipse 70% 50% at 50% 50%,rgba(101,96,204,0.15) 0%,transparent 70%);border:0.5px solid var(--border);border-radius:14px;padding:32px;text-align:center;margin-bottom:24px;box-shadow:0 0 40px rgba(101,96,204,0.12)">
+    <div style="font-family:Georgia,serif;font-size:38px;font-weight:700;color:var(--text);margin-bottom:8px"><span style="color:var(--purple)">Monitoring</span></div>
+    <div style="font-size:15px;color:var(--muted);line-height:1.7;max-width:600px;margin:0 auto">The <strong style="color:var(--text)">continuous observation of a deployed model's behaviour and performance</strong> against the conditions it was trained on — detecting drift, degradation, and anomalies before they become damage. Deployment without monitoring is not a pipeline. It is a pipeline with the last stage missing.</div>
+  </div>
+
+  <div class="content-card">
+    <p>A model that is deployed is not a model that is done. The production environment it was released into is not static — it evolves. User behaviour shifts. The distribution of incoming data changes. The context that made a particular feature informative becomes less relevant. The world moves, and the model stays where it was trained.</p>
+    <p>This is the core problem that monitoring solves: the gap between the world the model learned in and the world it is now operating in. That gap starts at zero on the day of deployment. Left unmonitored, it widens silently — and the model's predictions degrade in ways that no single output makes obvious. Only a sustained view of performance over time reveals the pattern.</p>
+    <div class="highlight-box">"Silent degradation is the most dangerous failure mode. Not the spectacular failure you can see — the quiet one you can't. The model that gives plausible-looking answers that are increasingly wrong. The system that appears to be working because no one is checking whether it still does."</div>
+    <p>AutoML monitoring systems are designed specifically for this: tracking the statistical properties of incoming data against the training distribution, measuring prediction confidence over time, and setting alert thresholds that trigger human investigation — or automatic retraining — when meaningful drift is detected.</p>
+  </div>
+
+  <div class="content-card">
+    <h3>Five monitoring concepts — and their life equivalents</h3>
+    <div class="monitor-stages">
+
+      <div class="monitor-stage">
+        <div class="ms-num">01</div>
+        <div class="ms-body">
+          <div class="ms-name">📉 Data Drift</div>
+          <div class="ms-ml">The statistical distribution of incoming features shifts away from the training distribution. The model was built on one slice of the world; the world has moved on. The model's inputs no longer look like the inputs it was trained on — even when the outputs still appear reasonable.</div>
+          <div class="ms-life">Your context has changed — new role, new environment, new demands, new audience — but you are still operating on the assumptions and behaviours that worked in the old one. The inputs arriving in your life no longer match the ones your current approach was calibrated for.</div>
+        </div>
+      </div>
+
+      <div class="monitor-stage">
+        <div class="ms-num">02</div>
+        <div class="ms-body">
+          <div class="ms-name">🔀 Concept Drift</div>
+          <div class="ms-ml">The relationship between inputs and the correct output changes. The inputs look the same, but the right answer has changed. The model's learned mapping is now producing systematically incorrect outputs because the underlying rules of the environment have shifted.</div>
+          <div class="ms-life">What used to work stops working. The approach that produced results in one phase of your career or life produces diminishing returns in the next. Not because you have regressed — because the environment has evolved and the old model no longer maps correctly to the new conditions.</div>
+        </div>
+      </div>
+
+      <div class="monitor-stage">
+        <div class="ms-num">03</div>
+        <div class="ms-body">
+          <div class="ms-name">📊 Performance Metrics</div>
+          <div class="ms-ml">Tracked continuously in production: accuracy, error rate, prediction confidence, latency. Each metric is a signal. No single data point is conclusive — the trend over time is the signal. A metric that was stable for three months and is now declining is a monitoring alert worth investigating.</div>
+          <div class="ms-life">The numbers that tell you whether you are actually improving — not how busy you feel or how much effort you are expending, but how the key outputs are trending. The discipline of measuring rather than estimating. A metric you check weekly is honest. An impression you form occasionally is not.</div>
+        </div>
+      </div>
+
+      <div class="monitor-stage">
+        <div class="ms-num">04</div>
+        <div class="ms-body">
+          <div class="ms-name">🔔 Alerting Thresholds</div>
+          <div class="ms-ml">Pre-defined values that trigger investigation when crossed. Monitoring without thresholds is observation without accountability — you are watching the metrics but not committing in advance to what constitutes a problem worth acting on. The threshold is the promise you make before degradation begins.</div>
+          <div class="ms-life">Non-negotiables. The point at which the gap between where you are and where you committed to being is large enough to require honest investigation rather than passive observation. Named in advance, not defined reactively when you have already drifted further than you would have chosen to.</div>
+        </div>
+      </div>
+
+      <div class="monitor-stage">
+        <div class="ms-num">05</div>
+        <div class="ms-body">
+          <div class="ms-name">🔄 Retraining Triggers</div>
+          <div class="ms-ml">The combination of drift detection and threshold breaches that signals a new training cycle is needed. Not every drift signal requires retraining — some are noise. But when the drift is sustained, the metrics are declining, and the thresholds have been crossed, the pipeline has accumulated the signal it needs to build a better version.</div>
+          <div class="ms-life">The signal that a new reinvention cycle is due. Not because things have collapsed — because the evidence has accumulated. The monitoring data tells you that the current model, however well it was trained, has reached the limit of what it can do in the current environment. A new cycle begins not from failure but from data.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>Data drift vs concept drift — two different problems</h3>
+    <p style="margin-bottom:16px">Both produce performance degradation. They require different responses. The first tells you the world has changed. The second tells you the rules have changed.</p>
+    <div class="drift-grid">
+      <div class="drift-col data-drift">
+        <div class="drift-col-head">Data Drift — the inputs have changed</div>
+        <div class="drift-item">Input distribution shifts away from training data</div>
+        <div class="drift-item">The model was not trained on inputs that look like this</div>
+        <div class="drift-item">Prediction confidence may drop even when outputs look plausible</div>
+        <div class="drift-item">Response: recalibrate with data that reflects the new distribution</div>
+        <div class="drift-item">Life: the audience, the context, or the type of challenge has changed</div>
+        <div class="drift-item">Detection: track feature distributions over time, compare to training baseline</div>
+      </div>
+      <div class="drift-col concept-drift">
+        <div class="drift-col-head">Concept Drift — the rules have changed</div>
+        <div class="drift-item">The input-output relationship has fundamentally shifted</div>
+        <div class="drift-item">What predicted success before no longer predicts it reliably</div>
+        <div class="drift-item">The model produces outputs that look correct but are systematically wrong</div>
+        <div class="drift-item">Response: full retraining on data from the new environment</div>
+        <div class="drift-item">Life: the domain, the incentives, or the definition of performance has changed</div>
+        <div class="drift-item">Detection: track prediction accuracy over time; label a sample of recent outputs</div>
+      </div>
+    </div>
+    <div class="highlight-box amber">The most common monitoring failure is not detecting degradation — it is having no monitoring at all. A model deployed without a monitoring system is a model that will degrade silently and be blamed when the damage is already done.</div>
+  </div>
+
+  <div class="content-card">
+    <h3>What a model health dashboard tracks</h3>
+    <p style="margin-bottom:16px">Three states — healthy, warning, alert. Every metric has a threshold. The dashboard exists so that degradation is never a surprise.</p>
+    <div class="mon-dash">
+      <div class="mon-metric healthy">
+        <div class="mon-status">Healthy</div>
+        <div class="mon-val">97.2%</div>
+        <div class="mon-label">Prediction accuracy — within baseline, no drift signal, consistent with evaluation</div>
+      </div>
+      <div class="mon-metric warning">
+        <div class="mon-status">Warning</div>
+        <div class="mon-val">↓ 8.4%</div>
+        <div class="mon-label">Input feature drift — distribution shifting away from training baseline, investigation warranted</div>
+      </div>
+      <div class="mon-metric alert">
+        <div class="mon-status">Alert</div>
+        <div class="mon-val">↓ 19%</div>
+        <div class="mon-label">Confidence score decline — model increasingly uncertain about predictions, retraining likely required</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section class="section" id="life">
+  <div class="section-label">The Human Parallel</div>
+  <h2>You cannot know you are drifting if you are not watching</h2>
+
+  <div class="content-card">
+    <p>The most common human monitoring failure is not drift — it is the absence of a monitoring system. Most people have no structured mechanism for checking whether they are still performing against their commitments, whether the environment has changed around them, or whether the approach they deployed six months ago is still producing the results it was designed to produce.</p>
+    <p>Without monitoring, the only signal is subjective: you feel like things are going well, or you feel uneasy, but there is no data to test either feeling against. The gap between the version of yourself you deployed and the version the environment now requires widens silently. The degradation is never named — until it is large enough to be impossible to ignore.</p>
+    <div class="highlight-box">Monitoring is not pessimism. It is the discipline of staying honest about how the model is actually performing against what it was built for. The alternative — operating on an impression of performance rather than a measurement of it — is the same as deploying a model and switching off the logs.</div>
+    <p>The equivalent of a monitoring system for humans is simple but requires deliberate design: <strong style="color:var(--text)">a cadence of honest check-ins</strong>, <strong style="color:var(--text)">pre-defined thresholds</strong> that trigger honest investigation rather than rationalisation, and <strong style="color:var(--text)">explicit drift detection</strong> — the question you ask regularly about whether the environment has changed and whether your current approach is still suited to it.</p>
+  </div>
+
+  <div class="content-card">
+    <h3>Monitored vs unmonitored — the same six months</h3>
+    <p style="margin-bottom:14px">Both start from the same deployment. One has a monitoring system. One does not. Six months later, they are in very different places.</p>
+    <div class="drift-grid">
+      <div class="drift-col data-drift">
+        <div class="drift-col-head">Unmonitored — no check-in system</div>
+        <div class="drift-item">Drift detected only when it becomes failure</div>
+        <div class="drift-item">Performance assessed by feeling, not measurement</div>
+        <div class="drift-item">Environment changes go unnoticed until the gap is large</div>
+        <div class="drift-item">Thresholds are undefined — nothing triggers investigation</div>
+        <div class="drift-item">Retraining happens reactively, after damage</div>
+        <div class="drift-item">The model believes it is performing because it has no data saying otherwise</div>
+      </div>
+      <div class="drift-col concept-drift" style="border-top-color:rgba(37,181,133,0.5)">
+        <div class="drift-col-head" style="color:var(--teal)">Monitored — structured check-ins</div>
+        <div class="drift-item">Drift detected early, before performance impact is significant</div>
+        <div class="drift-item">Performance tracked against specific metrics on a regular cadence</div>
+        <div class="drift-item">Environment changes noticed and named — is this data drift or concept drift?</div>
+        <div class="drift-item">Thresholds pre-defined — a specific point triggers investigation, not discomfort</div>
+        <div class="drift-item">Retraining initiated from signal, not from crisis</div>
+        <div class="drift-item">The model knows what it knows and knows what it doesn't</div>
+      </div>
+    </div>
+    <div class="highlight-box teal">The goal of monitoring is not to avoid change. It is to ensure that when the environment changes, you are the first to know — not the last.</div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section class="section" id="daily">
+  <div class="section-label">In Your Life · Every Day</div>
+  <h2>Building a monitoring practice — checking in before the drift becomes damage</h2>
+
+  <div class="content-card">
+    <p>In AutoML, monitoring is continuous. The system does not check in once a year and call it sufficient. Metrics are tracked in real time. Thresholds are evaluated against every batch. The system is designed to detect drift as early as possible, so that the cost of correction is minimised.</p>
+    <p>The human equivalent is not continuous monitoring — it is a <strong style="color:var(--text)">structured cadence</strong>: lightweight daily signals that surface obvious anomalies early, a weekly review that checks the key metrics honestly, a monthly audit that looks at trends rather than individual data points, and a trigger condition that initiates a deeper reinvention cycle when the evidence warrants it.</p>
+    <div class="highlight-box teal">The monitoring system that exists is better than the monitoring system that is planned. A brief, honest weekly check is worth more than an occasional lengthy reflection that happens when things feel wrong enough to force it.</div>
+  </div>
+
+  <div class="content-card">
+    <h3>Monitoring moments — drifting vs watching</h3>
+    <p style="margin-bottom:20px">Each moment below contrasts operating without a monitoring system against operating with one.</p>
+    <div class="daily-timeline">
+
+      <div class="dt-row">
+        <div class="dt-left"><div class="dt-dot">📊</div><div class="dt-time">Daily signal</div></div>
+        <div class="dt-body">
+          <div class="dt-badge-row"><span class="dt-badge unmonitored">Unmonitored</span><span class="dt-badge monitored">Monitored</span></div>
+          <div class="dt-title">The daily check — one metric, thirty seconds</div>
+          <div class="dt-raw">Unmonitored: the day passes without a single measurement against the key output — not because things are obviously wrong, but because no one has defined what "obviously wrong" looks like in real-time data</div>
+          <div class="dt-clean">Monitored: one pre-defined metric is checked each day — a lightweight habit that surfaces anomalies early and keeps the model honest about whether it is still producing what it was designed to produce.</div>
+        </div>
+      </div>
+
+      <div class="dt-row">
+        <div class="dt-left"><div class="dt-dot">⚠️</div><div class="dt-time">Early warning</div></div>
+        <div class="dt-body">
+          <div class="dt-badge-row"><span class="dt-badge unmonitored">Unmonitored</span><span class="dt-badge monitored">Monitored</span></div>
+          <div class="dt-title">Noticing drift before it becomes degradation</div>
+          <div class="dt-raw">Unmonitored: the shift in the environment goes unnoticed — new expectations, changing demands, a context that no longer matches the one the model was trained for — until the model's outputs are clearly inadequate</div>
+          <div class="dt-clean">Monitored: the early signal is named — something feels different, or a metric is moving in the wrong direction — and it is investigated before it compounds. Is this noise or drift? Data drift or concept drift? The question is asked while the gap is still small.</div>
+        </div>
+      </div>
+
+      <div class="dt-row">
+        <div class="dt-left"><div class="dt-dot">🔔</div><div class="dt-time">Weekly review</div></div>
+        <div class="dt-body">
+          <div class="dt-badge-row"><span class="dt-badge unmonitored">Unmonitored</span><span class="dt-badge monitored">Monitored</span></div>
+          <div class="dt-title">The structured weekly check-in against commitments</div>
+          <div class="dt-raw">Unmonitored: weekly passes without a structured review — the model's performance is assessed by a general feeling of productivity rather than measurement against the specific outputs it was deployed to produce</div>
+          <div class="dt-clean">Monitored: a brief structured review asks three questions — What was the key output this week? How did it compare to the target? What drift signal, if any, appeared? Fifteen minutes. Honest answers. Logged rather than estimated.</div>
+        </div>
+      </div>
+
+      <div class="dt-row">
+        <div class="dt-left"><div class="dt-dot">📋</div><div class="dt-time">Monthly audit</div></div>
+        <div class="dt-body">
+          <div class="dt-badge-row"><span class="dt-badge unmonitored">Unmonitored</span><span class="dt-badge monitored">Monitored</span></div>
+          <div class="dt-title">The trend review — is performance improving, flat, or declining?</div>
+          <div class="dt-raw">Unmonitored: performance is assessed by comparing this month to last month by memory — a comparison that is unreliable, optimistic, and unable to detect slow trends that don't show up in adjacent comparisons</div>
+          <div class="dt-clean">Monitored: the monthly audit reviews the accumulated weekly data — three or four data points that reveal a trend. The question is not "how do I feel this month?" but "what does the data show over the last four weeks?" A trend is only visible at this resolution.</div>
+        </div>
+      </div>
+
+      <div class="dt-row">
+        <div class="dt-left"><div class="dt-dot">🔄</div><div class="dt-time">Retraining signal</div></div>
+        <div class="dt-body">
+          <div class="dt-badge-row"><span class="dt-badge unmonitored">Unmonitored</span><span class="dt-badge monitored">Monitored</span></div>
+          <div class="dt-title">Recognising when a new reinvention cycle is needed</div>
+          <div class="dt-raw">Unmonitored: the retraining signal — the accumulated evidence that the current model has reached its limits in the current environment — is missed entirely, or only noticed when degradation is severe enough to force acknowledgement</div>
+          <div class="dt-clean">Monitored: the threshold has been crossed — drift is sustained, performance is declining, the environment has shifted beyond what calibration can fix. The monitoring system has done its job: the signal is clean, the evidence is clear, and the new reinvention cycle begins from data, not from crisis.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<div class="task-section-header" id="tasks">
+  <div class="label">Interactive Tasks · Episode 10</div>
+  <h2>Your Monitoring Audit</h2>
+  <p>Four tasks to detect drift, build a performance dashboard, design a monitoring cadence, and commit to staying accountable.</p>
+</div>
+
+<section class="section" style="padding-top:40px">
+
+  <!-- TASK 1: DRIFT AUDIT -->
+  <div class="task-card" id="task1-card">
+    <div class="task-header">
+      <div class="task-num" id="t1-num">1</div>
+      <div class="task-meta">
+        <div class="task-label">Task 01 · Drift Detection</div>
+        <div class="task-title">Check each area where drift may have occurred since your last calibration</div>
+      </div>
+      <span class="task-badge" id="t1-badge">~4 min</span>
+    </div>
+    <div class="task-body">
+      <p>Check every area where you have noticed a shift — in the inputs arriving in your life, in the performance of your current approach, or in the environment you are operating in. This is not a failure inventory. It is a drift detection scan. Drift is normal. Undetected drift is the problem.</p>
+
+      <div class="drift-list">
+        <div class="drift-item-check" id="d1" onclick="toggleDrift(1)">
+          <div class="drift-cb" id="dcb1"></div>
+          <div class="drift-text"><div class="drift-name">⚠️ Input pattern shift — the types of challenges arriving have changed</div><div class="drift-desc">The demands, questions, or problems arriving in your work or life no longer match the distribution you were operating in when you last recalibrated your approach</div></div>
+        </div>
+        <div class="drift-item-check" id="d2" onclick="toggleDrift(2)">
+          <div class="drift-cb" id="dcb2"></div>
+          <div class="drift-text"><div class="drift-name">⚠️ Output quality drift — the work is not as strong as it was</div><div class="drift-desc">The quality, depth, or impact of what you are producing has quietly declined — not dramatically, but noticeably when compared against your own benchmark from three to six months ago</div></div>
+        </div>
+        <div class="drift-item-check" id="d3" onclick="toggleDrift(3)">
+          <div class="drift-cb" id="dcb3"></div>
+          <div class="drift-text"><div class="drift-name">⚠️ Concept drift — what used to work is producing diminishing returns</div><div class="drift-desc">The approach or framework that reliably produced results in the previous environment is generating less signal in the current one — not because the approach is wrong but because the rules have shifted</div></div>
+        </div>
+        <div class="drift-item-check" id="d4" onclick="toggleDrift(4)">
+          <div class="drift-cb" id="dcb4"></div>
+          <div class="drift-text"><div class="drift-name">⚠️ Performance metric decline — a key indicator is trending downward</div><div class="drift-desc">At least one specific, measurable output — publications, presentations, feedback scores, response rates, completed deliverables — has been trending in the wrong direction for more than four weeks</div></div>
+        </div>
+        <div class="drift-item-check" id="d5" onclick="toggleDrift(5)">
+          <div class="drift-cb" id="dcb5"></div>
+          <div class="drift-text"><div class="drift-name">⚠️ Context misalignment — you are running an old model in a new environment</div><div class="drift-desc">Your current role, audience, or operating context has materially changed since you last updated your approach — and the current model was not trained on these conditions</div></div>
+        </div>
+      </div>
+      <button class="drift-submit" onclick="runDriftAudit()">Run my drift audit →</button>
+      <div class="drift-result" id="drift-result"></div>
+    </div>
+  </div>
+
+  <!-- TASK 2: PERFORMANCE DASHBOARD -->
+  <div class="task-card" id="task2-card">
+    <div class="task-header">
+      <div class="task-num" id="t2-num">2</div>
+      <div class="task-meta">
+        <div class="task-label">Task 02 · Performance Dashboard</div>
+        <div class="task-title">Define your key metric, current reading, threshold, and trend</div>
+      </div>
+      <span class="task-badge" id="t2-badge">~4 min</span>
+    </div>
+    <div class="task-body">
+      <p>For your most important current work or reinvention goal, define the one metric that most honestly reflects performance — and the three values that make your dashboard: the current reading, the alert threshold, and the direction of the trend over the last month.</p>
+      <div class="dash-fields">
+        <div class="dash-field">
+          <div class="dash-label metric">The key metric — what are you actually measuring?</div>
+          <input class="dash-input" id="dm1" placeholder="e.g. Number of research outputs submitted per quarter / LinkedIn engagement rate / presentations delivered outside home institution">
+          <div class="dash-hint">Not a general sense of progress — a specific, countable output that reflects the model's production performance in the real world.</div>
+        </div>
+        <div class="dash-field">
+          <div class="dash-label reading">Current reading — where is it right now?</div>
+          <input class="dash-input" id="dm2" placeholder="e.g. 1 submission this quarter — below the target of 2, and below the 3 from Q4 last year">
+          <div class="dash-hint">The honest number, not the adjusted one. If you have been rationalising the reading, write the real one here instead.</div>
+        </div>
+        <div class="dash-field">
+          <div class="dash-label threshold">Alert threshold — the value that triggers honest investigation</div>
+          <input class="dash-input" id="dm3" placeholder="e.g. If submissions drop below 1 per quarter for two consecutive quarters, that is a retraining signal — not a temporary dip">
+          <div class="dash-hint">Define this before you are in alert territory. A threshold set in advance is a commitment. A threshold set after the fact is rationalisation.</div>
+        </div>
+        <div class="dash-field">
+          <div class="dash-label trend">Three-month trend — improving, flat, or declining?</div>
+          <input class="dash-input" id="dm4" placeholder="e.g. Flat for two months, now showing a slight decline — not yet at alert threshold but drift signal is present">
+          <div class="dash-hint">Compare the last three data points honestly. A trend is only visible over time — individual data points are noise. Three consecutive readings that move in the same direction are a trend.</div>
+        </div>
+      </div>
+      <button class="dash-save" id="dash-save" onclick="saveDashboard()">Save my performance dashboard</button>
+      <div class="saved-note" id="dash-saved-note">✓ Saved. The dashboard exists. The drift can now be measured, not imagined.</div>
+    </div>
+  </div>
+
+  <!-- TASK 3: MONITORING CADENCE -->
+  <div class="task-card" id="task3-card">
+    <div class="task-header">
+      <div class="task-num" id="t3-num">3</div>
+      <div class="task-meta">
+        <div class="task-label">Task 03 · Monitoring Cadence</div>
+        <div class="task-title">Design your four-level monitoring system</div>
+      </div>
+      <span class="task-badge" id="t3-badge">~4 min</span>
+    </div>
+    <div class="task-body">
+      <p>Design your monitoring cadence: a four-level system that catches drift at the right resolution. The daily signal is lightweight. The weekly review is structured. The monthly audit looks at trends. The retraining trigger is a named condition — defined in advance — that tells you when a new reinvention cycle is needed.</p>
+      <div class="cadence-form">
+        <div class="cadence-field">
+          <div class="cadence-label">Daily signal — one thing, thirty seconds</div>
+          <input class="cadence-input" id="cd1" placeholder="e.g. At the end of every working day: did I produce the primary output I set out to produce? Yes or no — logged in the same place every day">
+          <div class="cadence-hint">The lightest possible monitoring. Not a reflection — a data point. The signal that surfaces anomalies before they compound.</div>
+        </div>
+        <div class="cadence-field">
+          <div class="cadence-label">Weekly review — structured, against your key metric</div>
+          <input class="cadence-input" id="cd2" placeholder="e.g. Every Friday: what was the output this week against target? Any drift signal? One sentence each — not a journal, a dashboard entry">
+          <div class="cadence-hint">Structured means consistent questions, answered honestly. The weekly review is where individual data points accumulate into a readable signal.</div>
+        </div>
+        <div class="cadence-field">
+          <div class="cadence-label">Monthly audit — trend analysis across four weekly reviews</div>
+          <input class="cadence-input" id="cd3" placeholder="e.g. First Sunday of each month: review four weekly entries. Is the trend healthy, flat, or declining? What drift — if any — is present? Does any metric require investigation?">
+          <div class="cadence-hint">The monthly audit is where trends become visible. A single week is a data point. Four weeks are a pattern. Six months are a dataset.</div>
+        </div>
+        <div class="cadence-field">
+          <div class="cadence-label">Retraining trigger — the named condition that starts a new cycle</div>
+          <input class="cadence-input" id="cd4" placeholder="e.g. If the monthly audit shows declining trend for two consecutive months AND the alert threshold has been crossed, a new reinvention cycle is initiated — not deferred">
+          <div class="cadence-hint">The promise you make to yourself in advance. A retraining trigger defined now is a commitment. One defined when things are already declining is damage control.</div>
+        </div>
+      </div>
+      <button class="cadence-save" id="cadence-save" onclick="saveCadence()">Save my monitoring cadence</button>
+      <div class="saved-note" id="cadence-saved-note">✓ Saved. The monitoring system is live. The pipeline is complete.</div>
+    </div>
+  </div>
+
+  <!-- TASK 4: MONITORING PROTOCOL -->
+  <div class="task-card" id="task4-card">
+    <div class="task-header">
+      <div class="task-num" id="t4-num">4</div>
+      <div class="task-meta">
+        <div class="task-label">Task 04 · Protocol Design</div>
+        <div class="task-title">Write your accountability protocol</div>
+      </div>
+      <span class="task-badge" id="t4-badge">~3 min</span>
+    </div>
+    <div class="task-body">
+      <p>Write your monitoring protocol: the specific habit or system that will keep you accountable to the pipeline you have built. Not a vague intention — a named mechanism that keeps the model honest about how it is actually performing.</p>
+      <textarea class="reflection-area" id="reflection-text" placeholder="e.g.&#10;Daily: one data point logged — output produced vs target. No rationalisation, just a reading.&#10;Weekly: Friday review — key metric, drift signal, one observation. Fifteen minutes maximum.&#10;Monthly: trend audit across four weekly entries. If the trend is declining, the cause is investigated honestly — not explained away.&#10;Retraining trigger: two consecutive monthly declines below the alert threshold initiates a new reinvention cycle." oninput="updateCharCount()" maxlength="900"></textarea>
+      <div class="char-count"><span id="char-count">0</span> / 900 characters</div>
+      <button class="reflection-save" id="save-btn" onclick="saveReflection()">Save my monitoring protocol</button>
+      <div class="saved-note" id="saved-note">✓ Saved. The model is being watched.</div>
+
+      <p style="margin-top:24px">Choose the one monitoring habit to start this week:</p>
+      <div class="commit-options">
+        <div class="commit-card" onclick="selectCommit(this,'daily-log')" data-val="daily-log">
+          <div class="commit-icon">📊</div>
+          <div class="commit-title">Start the daily log</div>
+          <div class="commit-desc">One data point per day, logged consistently — the lightest possible monitoring system that catches drift before it compounds</div>
+        </div>
+        <div class="commit-card" onclick="selectCommit(this,'weekly-review')" data-val="weekly-review">
+          <div class="commit-icon">🔔</div>
+          <div class="commit-title">Weekly metric review</div>
+          <div class="commit-desc">A brief structured check-in every week: key metric, drift signal, one honest observation — not an impression, a measurement</div>
+        </div>
+        <div class="commit-card" onclick="selectCommit(this,'threshold')" data-val="threshold">
+          <div class="commit-icon">⚠️</div>
+          <div class="commit-title">Name the alert threshold</div>
+          <div class="commit-desc">Define in advance the specific value below which honest investigation is required — not a feeling, a number, named before you are already in alert territory</div>
+        </div>
+        <div class="commit-card" onclick="selectCommit(this,'drift-check')" data-val="drift-check">
+          <div class="commit-icon">🔀</div>
+          <div class="commit-title">Run a drift check</div>
+          <div class="commit-desc">Ask explicitly this week: has the environment changed since my last calibration? Is this data drift, concept drift, or both? Name it before it compounds</div>
+        </div>
+      </div>
+      <button class="commit-confirm" id="commit-btn" onclick="confirmCommit()">I commit to this monitoring habit →</button>
+      <div class="commit-result" id="commit-result">
+        <p><strong>Monitoring system active.</strong><br>The model is deployed and watched. Drift will be detected before it becomes damage. The pipeline is complete — and ready to feed the final stage.<br><br>Share using <strong style="color:var(--teal)">#ReInventingMyself</strong></p>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<hr class="divider">
+
+<div class="ep-nav">
+  <a class="ep-nav-btn" href="ep09_deployment.html">
+    <div class="ep-nav-dir">← Previous</div>
+    <div class="ep-nav-title">Episode 09</div>
+    <div class="ep-nav-sub">Deployment</div>
+  </a>
+  <a class="ep-nav-btn next" href="reinventing-myself.html#episodes">
+    <div class="ep-nav-dir">Next →</div>
+    <div class="ep-nav-title">Episode 11</div>
+    <div class="ep-nav-sub">Re-Optimisation · Coming next week</div>
+  </a>
+</div>
+
+<footer>
+  <div class="footer-left">© 2026 Dr. Tertsegha J. Anande · drtertseghaanande.com</div>
+  <div class="footer-right">#ReInventingMyself · #AutoML</div>
+</footer>
+
+<script>
+const hc=document.getElementById('hero-c'),hx=hc.getContext('2d');
+function resizeHero(){const r=hc.parentElement.getBoundingClientRect();hc.width=r.width;hc.height=r.height||480;drawHeroStars()}
+function drawHeroStars(){hx.clearRect(0,0,hc.width,hc.height);for(let i=0;i<100;i++){const x=Math.random()*hc.width,y=Math.random()*hc.height,r=Math.random()*1.3+0.2,o=Math.random()*0.5+0.1;hx.beginPath();hx.arc(x,y,r,0,Math.PI*2);hx.fillStyle=`rgba(255,255,255,${o})`;hx.fill()}const g=hx.createRadialGradient(hc.width/2,hc.height*.6,0,hc.width/2,hc.height*.6,hc.width*.5);g.addColorStop(0,'rgba(83,74,183,0.14)');g.addColorStop(1,'rgba(0,0,0,0)');hx.fillStyle=g;hx.fillRect(0,0,hc.width,hc.height)}
+setTimeout(resizeHero,100);window.addEventListener('resize',resizeHero);
+
+const sections=['intro','what','life','daily','tasks'];
+const dots=document.querySelectorAll('.pt-dot');
+function updateTracker(){let c=0;sections.forEach((id,i)=>{const el=document.getElementById(id);if(el&&el.getBoundingClientRect().top<window.innerHeight*0.5)c=i});dots.forEach((d,i)=>{d.classList.toggle('active',i===c);d.classList.toggle('done',i<c)})}
+window.addEventListener('scroll',updateTracker,{passive:true});
+
+// Task 1: Drift Audit
+const driftChecked={};
+function toggleDrift(n){
+  driftChecked[n]=!driftChecked[n];
+  const cb=document.getElementById('dcb'+n),item=document.getElementById('d'+n);
+  if(driftChecked[n]){cb.textContent='✓';cb.classList.add('checked');item.classList.add('checked')}
+  else{cb.textContent='';cb.classList.remove('checked');item.classList.remove('checked')}
+}
+function runDriftAudit(){
+  const detected=Object.values(driftChecked).filter(Boolean).length;
+  const total=5;
+  let msg='';
+  if(detected===total){msg=`All five drift signals detected. This is not a crisis — it is a comprehensive monitoring report. Each signal named here is data the next reinvention cycle needs. The monitoring system has done its job: the drift is visible, named, and actionable rather than invisible and compounding.`}
+  else if(detected>=3){msg=`${detected} of ${total} drift signals detected. Significant drift is present. The question now is classification: is this data drift — the inputs have changed — or concept drift — the rules have changed? The distinction determines the response. Both are solvable. Neither is solved by waiting.`}
+  else if(detected>=1){msg=`${detected} of ${total} drift signals detected. Early-stage drift. The monitoring system is working — this signal was caught before it compounded into degradation. The unchecked areas are worth examining: are they genuinely stable, or simply unmonitored?`}
+  else{msg=`No drift signals detected. Two possibilities: the model is genuinely well-calibrated to the current environment — or there is no monitoring system in place and drift is present but invisible. Check: is this stability, or the absence of measurement?`}
+  const res=document.getElementById('drift-result');
+  res.innerHTML=`<div style="font-size:28px;font-weight:700;color:var(--purple);margin-bottom:10px">${detected}/${total} <span style="font-size:14px;color:var(--muted)">drift signals detected</span></div><p style="text-align:left;margin:0;font-size:13px">${msg}</p>`;
+  res.style.display='block';
+  localStorage.setItem('rim_ep10_drift',JSON.stringify({detected,driftChecked}));
+  markComplete('task1-card','t1-num','t1-badge');
+}
+
+// Task 2: Performance Dashboard
+function saveDashboard(){
+  const d={dm1:document.getElementById('dm1').value.trim(),dm2:document.getElementById('dm2').value.trim(),dm3:document.getElementById('dm3').value.trim(),dm4:document.getElementById('dm4').value.trim()};
+  if(!Object.values(d).some(v=>v))return;
+  localStorage.setItem('rim_ep10_dashboard',JSON.stringify(d));
+  const btn=document.getElementById('dash-save');btn.textContent='✓ Saved';btn.classList.add('saved');
+  document.getElementById('dash-saved-note').style.display='block';
+  markComplete('task2-card','t2-num','t2-badge');
+}
+
+// Task 3: Monitoring Cadence
+function saveCadence(){
+  const d={cd1:document.getElementById('cd1').value.trim(),cd2:document.getElementById('cd2').value.trim(),cd3:document.getElementById('cd3').value.trim(),cd4:document.getElementById('cd4').value.trim()};
+  if(!Object.values(d).some(v=>v))return;
+  localStorage.setItem('rim_ep10_cadence',JSON.stringify(d));
+  const btn=document.getElementById('cadence-save');btn.textContent='✓ Saved';btn.classList.add('saved');
+  document.getElementById('cadence-saved-note').style.display='block';
+  markComplete('task3-card','t3-num','t3-badge');
+}
+
+// Task 4: Protocol
+function updateCharCount(){document.getElementById('char-count').textContent=document.getElementById('reflection-text').value.length}
+function saveReflection(){
+  const text=document.getElementById('reflection-text').value.trim();if(!text)return;
+  localStorage.setItem('rim_ep10_protocol',text);
+  const btn=document.getElementById('save-btn');btn.textContent='✓ Saved';btn.classList.add('saved');
+  document.getElementById('saved-note').style.display='block';
+}
+let selectedCommit=null;
+function selectCommit(el,val){document.querySelectorAll('.commit-card').forEach(c=>c.classList.remove('selected'));el.classList.add('selected');selectedCommit=val;document.getElementById('commit-btn').style.display='block'}
+function confirmCommit(){if(!selectedCommit)return;localStorage.setItem('rim_ep10_commit',selectedCommit);document.getElementById('commit-result').style.display='block';document.getElementById('commit-btn').style.display='none';markComplete('task4-card','t4-num','t4-badge')}
+
+function markComplete(cardId,numId,badgeId){
+  const card=document.getElementById(cardId),num=document.getElementById(numId),badge=document.getElementById(badgeId);
+  if(card)card.classList.add('completed');if(num)num.textContent='✓';if(badge){badge.textContent='Done';badge.classList.add('done')}
+}
+
+window.addEventListener('load',()=>{
+  const dr=localStorage.getItem('rim_ep10_drift');
+  if(dr){try{const d=JSON.parse(dr);Object.entries(d.driftChecked||{}).forEach(([k,v])=>{if(v){driftChecked[k]=true;const cb=document.getElementById('dcb'+k),item=document.getElementById('d'+k);if(cb){cb.textContent='✓';cb.classList.add('checked')}if(item)item.classList.add('checked')}});markComplete('task1-card','t1-num','t1-badge')}catch(e){}}
+  const db=localStorage.getItem('rim_ep10_dashboard');
+  if(db){try{const d=JSON.parse(db);['dm1','dm2','dm3','dm4'].forEach(k=>{if(d[k])document.getElementById(k).value=d[k]});markComplete('task2-card','t2-num','t2-badge')}catch(e){}}
+  const ca=localStorage.getItem('rim_ep10_cadence');
+  if(ca){try{const d=JSON.parse(ca);['cd1','cd2','cd3','cd4'].forEach(k=>{if(d[k])document.getElementById(k).value=d[k]});markComplete('task3-card','t3-num','t3-badge')}catch(e){}}
+  const p=localStorage.getItem('rim_ep10_protocol');if(p){document.getElementById('reflection-text').value=p;updateCharCount()}
+  if(localStorage.getItem('rim_ep10_commit'))markComplete('task4-card','t4-num','t4-badge');
+});
+</script>
+</body>
+</html>
