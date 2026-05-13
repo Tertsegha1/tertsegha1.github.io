@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Episode 08: Evaluation · Re-Inventing Myself</title>
+<meta name="description" content="Stage 06 of the AutoML pipeline — Evaluation. Real progress is measured in unfamiliar conditions. Episode 08 of Re-Inventing Myself by Dr. Tertsegha J. Anande.">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --deep:#050516;--panel:#0F0F2E;--panel2:#0B0B26;
+  --purple:#9490E8;--purple-soft:#6560CC;
+  --teal:#6DD8B3;--teal-dark:#25B585;
+  --amber:#F5A830;--text:#F2F1FF;--muted:#B0ADA6;--dim:#8A8883;
+  --border:rgba(148,144,232,0.28);
+}
+html{scroll-behavior:smooth}
+body{background:var(--deep);background-image:radial-gradient(ellipse 80% 40% at 20% 10%,rgba(101,96,204,0.18) 0%,transparent 70%),radial-gradient(ellipse 60% 30% at 80% 5%,rgba(37,181,133,0.10) 0%,transparent 60%),radial-gradient(ellipse 50% 50% at 50% 90%,rgba(101,96,204,0.08) 0%,transparent 70%);color:var(--text);font-family:Arial,sans-serif;min-height:100vh;line-height:1.6}
+nav{position:sticky;top:0;z-index:100;background:rgba(5,5,22,0.95);backdrop-filter:blur(8px);border-bottom:0.5px solid var(--border);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.nav-brand{font-size:10px;letter-spacing:4px;color:var(--purple);text-transform:uppercase}
+.nav-links{display:flex;gap:20px}
+.nav-links a{font-size:11px;color:var(--muted);text-decoration:none;letter-spacing:1px;transition:color .2s}
+.nav-links a:hover{color:var(--text)}
+.nav-back{font-size:11px;color:var(--teal);border:0.5px solid rgba(109,216,179,0.4);border-radius:4px;padding:5px 12px;text-decoration:none;transition:border-color .2s}
+.nav-back:hover{border-color:var(--teal)}
+.hero{position:relative;overflow:hidden;padding:70px 32px 56px;border-bottom:0.5px solid var(--border)}
+canvas#hero-c{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.hero-inner{position:relative;z-index:2;max-width:820px;margin:0 auto;text-align:center}
+.ep-pill{display:inline-flex;align-items:center;gap:8px;background:rgba(109,216,179,0.12);border:0.5px solid rgba(109,216,179,0.4);border-radius:20px;padding:6px 16px;margin-bottom:24px}
+.ep-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.6)}}
+.ep-text{font-size:10px;letter-spacing:3px;color:var(--teal);text-transform:uppercase}
+.hero h1{font-family:Georgia,serif;font-size:clamp(32px,5vw,60px);font-weight:700;color:var(--text);line-height:1.1;margin-bottom:12px}
+.hero h1 em{font-style:normal;color:var(--purple)}
+.hero-sub{font-size:12px;letter-spacing:4px;color:#AFA9EC;text-transform:uppercase;margin-bottom:24px}
+.hero-desc{font-size:16px;color:var(--muted);line-height:1.75;max-width:660px;margin:0 auto 32px}
+.progress-row{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+.prog-step{display:flex;align-items:center;gap:6px;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.3);text-transform:uppercase}
+.prog-step.done{color:var(--teal)}.prog-step.current{color:var(--purple)}
+.prog-num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;border:0.5px solid}
+.prog-step.done .prog-num{background:rgba(109,216,179,0.2);border-color:var(--teal);color:var(--teal)}
+.prog-step.current .prog-num{background:rgba(101,96,204,0.25);border-color:var(--purple);color:var(--purple)}
+.prog-step .prog-num{background:transparent;border-color:rgba(255,255,255,0.15);color:rgba(255,255,255,0.3)}
+.prog-divider{width:16px;height:0.5px;background:rgba(255,255,255,0.1)}
+.section{max-width:860px;margin:0 auto;padding:56px 32px}
+.section-label{font-size:10px;letter-spacing:4px;color:var(--purple);text-transform:uppercase;margin-bottom:10px}
+.section h2{font-family:Georgia,serif;font-size:30px;color:var(--text);margin-bottom:20px;line-height:1.2}
+.divider{border:none;border-top:0.5px solid var(--border);margin:0}
+.content-card{background:var(--panel);border:0.5px solid var(--border);border-radius:12px;padding:28px 32px;margin-bottom:20px}
+.content-card p{font-size:15px;color:#D8D5CE;line-height:1.8;margin-bottom:14px}
+.content-card p:last-child{margin-bottom:0}
+.content-card h3{font-family:Georgia,serif;font-size:20px;color:var(--text);margin-bottom:12px}
+.highlight-box{background:rgba(101,96,204,0.1);border-left:3px solid var(--purple);border-radius:0 8px 8px 0;padding:16px 20px;margin:16px 0;font-size:15px;color:#C8C5BE;line-height:1.7;font-style:italic}
+.highlight-box.teal{background:rgba(37,181,133,0.1);border-color:var(--teal);color:#B8EDD9}
+.highlight-box.amber{background:rgba(245,168,48,0.1);border-color:var(--amber);color:#FFE0A0}
+.highlight-box.red{background:rgba(231,76,60,0.08);border-color:#E87070;color:#FFBABA}
+
+/* DATA SPLIT DIAGRAM */
+.split-diagram{display:grid;grid-template-columns:6fr 2fr 2fr;gap:6px;margin:24px 0;height:56px}
+@media(max-width:600px){.split-diagram{grid-template-columns:1fr;height:auto;gap:6px}}
+.split-seg{border-radius:8px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;padding:8px}
+.split-seg.train{background:rgba(101,96,204,0.2);border:0.5px solid rgba(148,144,232,0.4)}
+.split-seg.val{background:rgba(245,168,48,0.12);border:0.5px solid rgba(245,168,48,0.35)}
+.split-seg.test{background:rgba(37,181,133,0.12);border:0.5px solid rgba(109,216,179,0.35)}
+.split-name{font-size:11px;font-weight:700;color:var(--text)}
+.split-pct{font-size:10px;color:var(--muted)}
+
+/* METRICS GRID */
+.metrics-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin:20px 0}
+.metric-card{background:#06061C;border:0.5px solid var(--border);border-radius:10px;padding:16px}
+.metric-card:nth-child(1){border-top:2px solid rgba(148,144,232,0.6)}
+.metric-card:nth-child(2){border-top:2px solid rgba(37,181,133,0.6)}
+.metric-card:nth-child(3){border-top:2px solid rgba(245,168,48,0.6)}
+.metric-card:nth-child(4){border-top:2px solid rgba(231,76,60,0.4)}
+.metric-card:nth-child(5){border-top:2px solid rgba(37,181,133,0.8)}
+.metric-icon{font-size:20px;margin-bottom:6px}
+.metric-name{font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px}
+.metric-ml{font-size:11px;color:var(--muted);line-height:1.4;margin-bottom:6px}
+.metric-life{font-size:11px;color:#B8EDD9;line-height:1.4;border-top:0.5px solid var(--border);padding-top:6px}
+
+/* CONFUSION MATRIX */
+.cm-wrap{display:flex;flex-direction:column;align-items:center;margin:24px 0}
+.cm-table{border-collapse:collapse;width:100%;max-width:560px}
+.cm-table td,.cm-table th{padding:16px;text-align:center;font-size:12px;border:0.5px solid var(--border)}
+.cm-table thead th{background:rgba(148,144,232,0.08);color:var(--muted);font-size:10px;letter-spacing:2px;text-transform:uppercase}
+.cm-table .row-head{background:rgba(148,144,232,0.08);color:var(--muted);font-size:10px;letter-spacing:2px;text-transform:uppercase;writing-mode:horizontal-tb;font-weight:700;max-width:80px}
+.cm-tp{background:rgba(37,181,133,0.12);border-color:rgba(37,181,133,0.3)}
+.cm-tn{background:rgba(37,181,133,0.08);border-color:rgba(37,181,133,0.2)}
+.cm-fp{background:rgba(245,168,48,0.1);border-color:rgba(245,168,48,0.3)}
+.cm-fn{background:rgba(231,76,60,0.1);border-color:rgba(231,76,60,0.3)}
+.cm-label{font-size:13px;font-weight:700;margin-bottom:4px}
+.cm-desc{font-size:11px;color:var(--muted);line-height:1.4}
+
+/* DAILY TIMELINE */
+.daily-timeline{display:flex;flex-direction:column;gap:0;margin:24px 0}
+.dt-row{display:flex;gap:16px;position:relative;padding-bottom:20px}
+.dt-row:last-child{padding-bottom:0}
+.dt-row:not(:last-child)::before{content:'';position:absolute;left:19px;top:40px;bottom:0;width:0.5px;background:rgba(148,144,232,0.2)}
+.dt-left{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:6px}
+.dt-dot{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:0.5px solid var(--border);background:#06061C;flex-shrink:0}
+.dt-time{font-size:9px;color:var(--amber);letter-spacing:1px;text-align:center;white-space:nowrap}
+.dt-body{flex:1;background:var(--panel);border:0.5px solid var(--border);border-radius:10px;padding:14px 18px;margin-top:4px}
+.dt-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px}
+.dt-badge-row{display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.dt-badge{font-size:9px;padding:2px 8px;border-radius:8px;letter-spacing:1px;text-transform:uppercase;font-weight:700}
+.dt-badge.train{background:rgba(101,96,204,0.15);border:0.5px solid rgba(148,144,232,0.4);color:var(--purple)}
+.dt-badge.test{background:rgba(37,181,133,0.1);border:0.5px solid rgba(37,181,133,0.3);color:var(--teal)}
+.dt-raw{font-size:12px;color:var(--purple);margin-bottom:4px;line-height:1.5}
+.dt-clean{font-size:12px;color:var(--teal);line-height:1.5}
+
+/* TASK SECTION */
+.task-section-header{background:linear-gradient(135deg,#08082A 0%,#0D1040 100%);border-top:0.5px solid var(--border);border-bottom:0.5px solid var(--border);padding:40px 32px;text-align:center}
+.task-section-header .label{font-size:10px;letter-spacing:4px;color:var(--amber);text-transform:uppercase;margin-bottom:10px}
+.task-section-header h2{font-family:Georgia,serif;font-size:32px;color:var(--text);margin-bottom:10px}
+.task-section-header p{font-size:14px;color:var(--muted);max-width:560px;margin:0 auto}
+.task-card{background:var(--panel);border:0.5px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:20px;transition:border-color .2s}
+.task-card.completed{border-color:var(--teal)}
+.task-header{padding:20px 24px;display:flex;align-items:center;gap:16px;border-bottom:0.5px solid var(--border)}
+.task-num{width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;background:rgba(245,168,48,0.15);border:0.5px solid rgba(245,168,48,0.4);color:var(--amber)}
+.task-card.completed .task-num{background:rgba(109,216,179,0.15);border-color:var(--teal);color:var(--teal)}
+.task-meta{flex:1}
+.task-label{font-size:9px;letter-spacing:3px;color:var(--amber);text-transform:uppercase;margin-bottom:3px}
+.task-card.completed .task-label{color:var(--teal)}
+.task-title{font-size:16px;font-weight:700;color:var(--text)}
+.task-badge{font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border-radius:10px;background:rgba(245,168,48,0.1);border:0.5px solid rgba(245,168,48,0.3);color:var(--amber)}
+.task-badge.done{background:rgba(109,216,179,0.15);border-color:var(--teal);color:var(--teal)}
+.task-body{padding:24px}
+.task-body p{font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:16px}
+
+/* TASK 1: METRICS */
+.metric-select-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+@media(max-width:600px){.metric-select-grid{grid-template-columns:1fr}}
+.metric-opt{background:#0A0A24;border:1.5px solid var(--border);border-radius:10px;padding:14px 16px;cursor:pointer;transition:all .2s}
+.metric-opt:hover{border-color:rgba(148,144,232,0.5)}
+.metric-opt.selected{border-color:var(--purple);background:rgba(101,96,204,0.1)}
+.metric-opt-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px}
+.metric-opt-desc{font-size:11px;color:var(--muted);line-height:1.4}
+.metric-false-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--amber);margin:16px 0 8px;font-weight:700}
+.metric-input{width:100%;padding:10px 14px;background:#06061C;border:0.5px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:Arial,sans-serif;outline:none;transition:border-color .2s}
+.metric-input:focus{border-color:var(--purple)}
+.metric-input::placeholder{color:rgba(255,255,255,0.2);font-style:italic}
+.metric-submit{margin-top:14px;width:100%;padding:12px;background:var(--purple-soft);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:1px;transition:background .2s}
+.metric-submit:hover{background:var(--purple)}
+.metric-result{display:none;margin-top:14px;padding:16px;background:rgba(101,96,204,0.1);border:0.5px solid var(--border);border-radius:8px;font-size:13px;color:#C8C5BE;line-height:1.7}
+
+/* TASK 2: CONFUSION MATRIX */
+.cm-input-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+@media(max-width:600px){.cm-input-grid{grid-template-columns:1fr}}
+.cm-input-cell{border-radius:10px;padding:16px}
+.cm-input-cell.tp{background:rgba(37,181,133,0.08);border:0.5px solid rgba(37,181,133,0.3)}
+.cm-input-cell.fp{background:rgba(245,168,48,0.07);border:0.5px solid rgba(245,168,48,0.3)}
+.cm-input-cell.fn{background:rgba(231,76,60,0.07);border:0.5px solid rgba(231,76,60,0.3)}
+.cm-input-cell.tn{background:rgba(37,181,133,0.05);border:0.5px solid rgba(37,181,133,0.2)}
+.cm-cell-head{font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-bottom:6px}
+.cm-input-cell.tp .cm-cell-head{color:var(--teal)}
+.cm-input-cell.fp .cm-cell-head{color:var(--amber)}
+.cm-input-cell.fn .cm-cell-head{color:#E87070}
+.cm-input-cell.tn .cm-cell-head{color:var(--teal-dark)}
+.cm-cell-desc{font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.4}
+.cm-cell-input{width:100%;padding:9px 12px;background:#06061C;border:0.5px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;font-family:Arial,sans-serif;outline:none;transition:border-color .2s}
+.cm-cell-input:focus{border-color:var(--purple)}
+.cm-cell-input::placeholder{color:rgba(255,255,255,0.2);font-style:italic}
+.cm-save{padding:11px 24px;background:transparent;border:0.5px solid var(--border);border-radius:8px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;transition:all .2s;letter-spacing:1px}
+.cm-save:hover{border-color:var(--teal);color:var(--teal)}
+.cm-save.saved{border-color:var(--teal);color:var(--teal);background:rgba(37,181,133,0.1)}
+
+/* TASK 3: GENERALISATION TEST */
+.gen-fields{display:flex;flex-direction:column;gap:14px;margin-bottom:16px}
+.gen-field{background:#0A0A24;border:0.5px solid var(--border);border-radius:10px;padding:16px}
+.gen-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-bottom:6px}
+.gen-label.familiar{color:var(--purple)}
+.gen-label.new{color:var(--teal)}
+.gen-label.predict{color:var(--amber)}
+.gen-label.gap{color:#E87070}
+.gen-input{width:100%;padding:10px 14px;background:#06061C;border:0.5px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:Arial,sans-serif;outline:none;transition:border-color .2s}
+.gen-input:focus{border-color:var(--purple)}
+.gen-input::placeholder{color:rgba(255,255,255,0.2);font-style:italic}
+.gen-hint{font-size:11px;color:var(--dim);margin-top:5px;line-height:1.4}
+.gen-save{padding:11px 24px;background:transparent;border:0.5px solid var(--border);border-radius:8px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;transition:all .2s;letter-spacing:1px}
+.gen-save:hover{border-color:var(--teal);color:var(--teal)}
+.gen-save.saved{border-color:var(--teal);color:var(--teal);background:rgba(37,181,133,0.1)}
+
+/* TASK 4 */
+.reflection-area{width:100%;min-height:120px;padding:16px;background:#080820;border:0.5px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:Arial,sans-serif;line-height:1.7;resize:vertical;outline:none;transition:border-color .2s;margin-bottom:12px}
+.reflection-area:focus{border-color:var(--purple)}
+.reflection-area::placeholder{color:rgba(255,255,255,0.2);font-style:italic}
+.char-count{font-size:11px;color:var(--dim);text-align:right;margin-bottom:12px}
+.reflection-save{padding:11px 24px;background:transparent;border:0.5px solid var(--border);border-radius:8px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;transition:all .2s;letter-spacing:1px}
+.reflection-save:hover{border-color:var(--teal);color:var(--teal)}
+.reflection-save.saved{border-color:var(--teal);color:var(--teal);background:rgba(37,181,133,0.1)}
+.saved-note{display:none;font-size:12px;color:var(--teal);margin-top:10px}
+.commit-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+@media(max-width:600px){.commit-options{grid-template-columns:1fr}}
+.commit-card{background:#0A0A24;border:0.5px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;transition:all .2s;text-align:center}
+.commit-card:hover{border-color:var(--purple);background:rgba(101,96,204,0.1)}
+.commit-card.selected{border-color:var(--teal);background:rgba(37,181,133,0.1)}
+.commit-icon{font-size:28px;margin-bottom:8px}
+.commit-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px}
+.commit-desc{font-size:11px;color:var(--muted);line-height:1.4}
+.commit-confirm{width:100%;padding:13px;background:rgba(37,181,133,0.12);border:0.5px solid var(--teal);border-radius:8px;font-size:13px;font-weight:700;color:var(--teal);cursor:pointer;transition:background .2s;letter-spacing:1px;display:none}
+.commit-confirm:hover{background:rgba(37,181,133,0.22)}
+.commit-result{display:none;margin-top:14px;padding:18px;text-align:center;background:rgba(37,181,133,0.1);border:0.5px solid var(--teal);border-radius:10px}
+.commit-result p{font-size:14px;color:#B8EDD9;line-height:1.6}
+
+/* PROGRESS TRACKER */
+.progress-tracker{position:fixed;right:24px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;z-index:50}
+@media(max-width:768px){.progress-tracker{display:none}}
+.pt-dot{width:10px;height:10px;border-radius:50%;border:1.5px solid rgba(148,144,232,0.3);background:transparent;cursor:pointer;transition:all .2s;position:relative}
+.pt-dot:hover{border-color:var(--purple)}
+.pt-dot.active{border-color:var(--purple);background:var(--purple)}
+.pt-dot.done{border-color:var(--teal);background:var(--teal)}
+.pt-dot .pt-tip{position:absolute;right:18px;top:50%;transform:translateY(-50%);background:rgba(15,15,46,0.95);border:0.5px solid var(--border);border-radius:6px;padding:4px 10px;font-size:10px;color:var(--text);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s}
+.pt-dot:hover .pt-tip{opacity:1}
+.ep-nav{max-width:860px;margin:0 auto;padding:0 32px 60px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.ep-nav-btn{flex:1;min-width:200px;background:var(--panel);border:0.5px solid var(--border);border-radius:12px;padding:20px 22px;text-decoration:none;transition:border-color .2s}
+.ep-nav-btn:hover{border-color:var(--purple)}
+.ep-nav-dir{font-size:9px;letter-spacing:3px;color:var(--dim);text-transform:uppercase;margin-bottom:6px}
+.ep-nav-title{font-size:14px;font-weight:700;color:var(--text)}
+.ep-nav-sub{font-size:12px;color:var(--muted);margin-top:3px}
+.ep-nav-btn.next{text-align:right;border-color:rgba(109,216,179,0.25)}
+.ep-nav-btn.next:hover{border-color:var(--teal)}
+footer{border-top:0.5px solid var(--border);padding:24px 32px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.footer-left{font-size:11px;color:var(--dim)}
+.footer-right{font-size:10px;color:var(--purple-soft);letter-spacing:2px;text-transform:uppercase}
+</style>
+</head>
+<body>
+
+<nav class="progress-tracker" aria-label="Page sections">
+  <div class="pt-dot active" onclick="document.querySelector('#intro').scrollIntoView({behavior:'smooth'})" data-section="intro"><span class="pt-tip">Introduction</span></div>
+  <div class="pt-dot" onclick="document.querySelector('#what').scrollIntoView({behavior:'smooth'})" data-section="what"><span class="pt-tip">What is it?</span></div>
+  <div class="pt-dot" onclick="document.querySelector('#life').scrollIntoView({behavior:'smooth'})" data-section="life"><span class="pt-tip">Life parallel</span></div>
+  <div class="pt-dot" onclick="document.querySelector('#daily').scrollIntoView({behavior:'smooth'})" data-section="daily"><span class="pt-tip">Daily practice</span></div>
+  <div class="pt-dot" onclick="document.querySelector('#tasks').scrollIntoView({behavior:'smooth'})" data-section="tasks"><span class="pt-tip">Your tasks</span></div>
+</nav>
+
+<nav>
+  <span class="nav-brand">Re-Inventing Myself</span>
+  <div class="nav-links">
+    <a href="#what">The concept</a>
+    <a href="#life">Life parallel</a>
+    <a href="#daily">Daily practice</a>
+    <a href="#tasks">Your tasks</a>
+  </div>
+  <a class="nav-back" href="reinventing-myself.html">← All Episodes</a>
+</nav>
+
+<section class="hero" id="intro">
+  <canvas id="hero-c"></canvas>
+  <div class="hero-inner">
+    <div class="ep-pill"><div class="ep-dot"></div><span class="ep-text">Episode 08 · Stage 06 of 09</span></div>
+    <h1><em>Evaluation</em> —<br>real progress is measured<br>in <em>unfamiliar conditions</em></h1>
+    <div class="hero-sub">Re-Inventing Myself · AutoML &amp; You</div>
+    <p class="hero-desc">The model has been trained. Now comes the question that training cannot answer: does it actually work — on data it has never seen? Performing well in practice is not the same as performing well in production. This week: Stage 06 of the AutoML pipeline — the stage where honesty is non-negotiable.</p>
+    <div class="progress-row">
+      <div class="prog-step done"><div class="prog-num">1</div><span>Intro</span></div>
+      <div class="prog-divider"></div>
+      <div class="prog-step done"><div class="prog-num">2</div><span>AutoML</span></div>
+      <div class="prog-divider"></div>
+      <div class="prog-step done"><div class="prog-num">3</div><span>Ingestion</span></div>
+      <div class="prog-divider"></div>
+      <div class="prog-step done"><div class="prog-num">4</div><span>Preprocessing</span></div>
+      <div class="prog-divider"></div>
+      <div class="prog-step done"><div class="prog-num">5</div><span>Features</span></div>
+      <div class="prog-divider"></div>
+      <div class="prog-step done"><div class="prog-num">6</div><span>Selection</span></div>
+      <div class="prog-divider"></div>
+      <div class="prog-step done"><div class="prog-num">7</div><span>Training</span></div>
+      <div class="prog-divider"></div>
+      <div class="prog-step current"><div class="prog-num">8</div><span>Evaluation</span></div>
+      <div class="prog-divider"></div>
+      <div class="prog-step"><div class="prog-num">···</div><span>More</span></div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section class="section" id="what">
+  <div class="section-label">Stage 06 · The Concept</div>
+  <h2>What is Evaluation?</h2>
+
+  <div style="background:#06061C;background-image:radial-gradient(ellipse 70% 50% at 50% 50%,rgba(101,96,204,0.15) 0%,transparent 70%);border:0.5px solid var(--border);border-radius:14px;padding:32px;text-align:center;margin-bottom:24px;box-shadow:0 0 40px rgba(101,96,204,0.12)">
+    <div style="font-family:Georgia,serif;font-size:38px;font-weight:700;color:var(--text);margin-bottom:8px"><span style="color:var(--purple)">Evaluation</span></div>
+    <div style="font-size:15px;color:var(--muted);line-height:1.7;max-width:600px;margin:0 auto">The rigorous assessment of <strong style="color:var(--text)">model performance on held-out data it has never seen during training</strong>. Evaluation answers the question training cannot: does the model generalise — or did it memorise? The answer determines whether it is ready for deployment.</div>
+  </div>
+
+  <div class="content-card">
+    <p>Training tells you how well the model performs on data it has already seen. This is a necessary but insufficient measure — a model can achieve near-perfect training accuracy by memorising the training examples rather than learning the underlying pattern. On new data, it will fail completely.</p>
+    <p>Evaluation uses a <strong style="color:var(--text)">held-out test set</strong> — data the model has never encountered — to measure its true performance. Critically, this test set should be used only once. Repeated testing on the same held-out data contaminates it, causing the practitioner to unknowingly tune the model toward that specific sample. The integrity of evaluation depends entirely on the discipline of keeping the test set sealed until the model is finalised.</p>
+    <div class="highlight-box">"A model evaluated on its training data is a student who wrote the exam and marked it themselves. A model evaluated on held-out data is a student sitting a paper they have never seen, in conditions they cannot control. Only the second result tells you anything real."</div>
+    <div class="split-diagram">
+      <div class="split-seg train"><span class="split-name">Training Set — 60%</span><span class="split-pct">Model learns from this</span></div>
+      <div class="split-seg val"><span class="split-name">Validation — 20%</span><span class="split-pct">Tuning decisions</span></div>
+      <div class="split-seg test"><span class="split-name">Test Set — 20%</span><span class="split-pct">Final honest verdict</span></div>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>Evaluation metrics — choosing the right measure for the actual objective</h3>
+    <p style="margin-bottom:16px">The wrong metric produces a model that optimises for the wrong thing. Choosing the evaluation metric is as consequential as choosing the model architecture.</p>
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-icon">🎯</div>
+        <div class="metric-name">Accuracy</div>
+        <div class="metric-ml">Proportion of all predictions that were correct. Misleading when classes are imbalanced — 99% accuracy on a 1%-positive dataset means the model predicted "no" every time.</div>
+        <div class="metric-life">Overall hit rate. A useful headline — but easily inflated by performance in easy, low-stakes situations that make up the bulk of the distribution.</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon">🔬</div>
+        <div class="metric-name">Precision</div>
+        <div class="metric-ml">Of everything the model predicted as positive, how many actually were? High precision means few false alarms — the model doesn't cry wolf.</div>
+        <div class="metric-life">When you say you can do something, how often is it true? Precision is about the credibility of your claims. Low precision means overpromising.</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon">📡</div>
+        <div class="metric-name">Recall</div>
+        <div class="metric-ml">Of all actual positives, how many did the model catch? High recall means few missed opportunities — the model doesn't let important things slip through.</div>
+        <div class="metric-life">Of all the opportunities, moments, or threats that were real, how many did you catch? Low recall means things that mattered slipped past unnoticed.</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon">⚖️</div>
+        <div class="metric-name">F1 Score</div>
+        <div class="metric-ml">The harmonic mean of precision and recall — balances both without letting one dominate. Most useful when you can't afford to sacrifice either.</div>
+        <div class="metric-life">The balanced measure. Neither overpromising nor missing what matters — performing both with consistency under real conditions.</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon">📈</div>
+        <div class="metric-name">AUC-ROC</div>
+        <div class="metric-ml">Measures how well the model distinguishes between classes across all possible thresholds. Robust to class imbalance. A score of 0.5 is random chance; 1.0 is perfect separation.</div>
+        <div class="metric-life">Discrimination ability — can you reliably tell the difference between what is signal and what is noise, across a wide range of conditions? Not just at one convenient threshold.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3>The confusion matrix — an honest map of where you succeed and fail</h3>
+    <p style="margin-bottom:16px">The confusion matrix breaks performance into four categories that reveal far more than a single accuracy score. Each quadrant tells a different story about the model's failure modes.</p>
+    <div class="cm-wrap">
+      <table class="cm-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Predicted: Positive</th>
+            <th>Predicted: Negative</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="row-head">Actual: Positive</td>
+            <td class="cm-tp">
+              <div class="cm-label" style="color:var(--teal)">True Positive ✓</div>
+              <div class="cm-desc">You predicted success — and it succeeded. The model is right about what works. In life: you backed something confidently and it delivered.</div>
+            </td>
+            <td class="cm-fn">
+              <div class="cm-label" style="color:#E87070">False Negative ✗</div>
+              <div class="cm-desc">You predicted failure — but it would have succeeded. Missed opportunities. In life: you held back from things that would have worked.</div>
+            </td>
+          </tr>
+          <tr>
+            <td class="row-head">Actual: Negative</td>
+            <td class="cm-fp">
+              <div class="cm-label" style="color:var(--amber)">False Positive ✗</div>
+              <div class="cm-desc">You predicted success — but it failed. Wasted resources. In life: you committed to things that didn't deliver, confident they would.</div>
+            </td>
+            <td class="cm-tn">
+              <div class="cm-label" style="color:var(--teal-dark)">True Negative ✓</div>
+              <div class="cm-desc">You predicted failure — and it failed. Correctly avoided dead ends. In life: you said no to things that would have drained you, and were right.</div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="highlight-box amber">Most people only track their true positives — the things they tried that worked. Honest evaluation requires accounting for all four quadrants. Your false negatives — the things you didn't try that would have worked — are often the most costly and the least visible.</div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section class="section" id="life">
+  <div class="section-label">The Human Parallel</div>
+  <h2>Training performance and test performance are not the same thing</h2>
+
+  <div class="content-card">
+    <p>Most people evaluate themselves on training data. They measure how well they perform in familiar contexts — with people they know, on problems they have solved before, in environments that are supportive and low-stakes. The result is almost always encouraging. They are, after all, measuring a model that has been optimised for exactly these conditions.</p>
+    <p>The test set is something different. It is the new role. The unfamiliar audience. The challenge that doesn't match any previous training example. The high-stakes moment where the support structure isn't there. This is where generalisation — or its absence — becomes visible.</p>
+    <div class="highlight-box">Generalisation is the only kind of competence that matters outside the training environment. A skill that only works in the conditions where you practiced it is a skill that hasn't finished training yet — not a skill that is ready to deploy.</div>
+    <p>The discipline of honest evaluation is the discipline of deliberately seeking test conditions — not waiting for them to arrive by accident. It means proactively putting yourself in situations where the familiar variables are absent and measuring honestly what happens. Not to find failure, but to find the gap between training performance and real performance — the only gap that can be closed through the next training cycle.</p>
+  </div>
+
+  <div class="content-card">
+    <h3>Evaluation errors that corrupt the result</h3>
+    <ul style="list-style:none;display:flex;flex-direction:column;gap:12px;margin:16px 0">
+      <li style="background:#0A0A24;border:0.5px solid rgba(231,76,60,0.2);border-radius:8px;padding:14px 16px;font-size:13px;color:#D8D5CE;line-height:1.6"><strong style="color:#E87070">Data leakage:</strong> Evaluating on data that was implicitly used during training. Asking for feedback only from people who already believe in you. Testing your ideas only in contexts where you are already credible. The result looks strong — but it tells you nothing about performance on genuinely unseen cases.</li>
+      <li style="background:#0A0A24;border:0.5px solid rgba(231,76,60,0.2);border-radius:8px;padding:14px 16px;font-size:13px;color:#D8D5CE;line-height:1.6"><strong style="color:#E87070">Metric gaming:</strong> Optimising for a measure that is easy to move rather than the one that matters. Publishing volume instead of publishing impact. Busyness metrics instead of output quality. The number improves; the underlying capability doesn't.</li>
+      <li style="background:#0A0A24;border:0.5px solid rgba(231,76,60,0.2);border-radius:8px;padding:14px 16px;font-size:13px;color:#D8D5CE;line-height:1.6"><strong style="color:#E87070">Confirmation bias in evaluation:</strong> Interpreting ambiguous feedback as confirmation that the model is performing well. Discounting critical signals. Remembering successes with high fidelity and encoding failures vaguely. The evaluation produces the result it was designed to produce.</li>
+      <li style="background:#0A0A24;border:0.5px solid rgba(109,216,179,0.2);border-radius:8px;padding:14px 16px;font-size:13px;color:#D8D5CE;line-height:1.6"><strong style="color:var(--teal)">Honest evaluation:</strong> Deliberately seeking feedback from sources unlikely to confirm your existing view. Testing in conditions where you have no home advantage. Measuring with the metric that reflects the actual objective — even when it produces a less flattering result than the one you were tracking.</li>
+    </ul>
+    <div class="highlight-box teal">The purpose of evaluation is not to produce a good score. It is to produce an accurate score. A good score on the wrong test is worse than a modest score on the right one — because it delays the adjustment the pipeline actually needs.</div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section class="section" id="daily">
+  <div class="section-label">In Your Life · Every Day</div>
+  <h2>Creating honest test conditions</h2>
+
+  <div class="content-card">
+    <p>AutoML evaluation runs on held-out data — information deliberately kept separate from training so that when evaluation runs, the result is clean. There is no equivalent of this in casual self-assessment. Most feedback arrives in the training environment, from training-set sources, measured on training-set metrics.</p>
+    <p>Deliberate evaluation requires designing test conditions: placing yourself in situations where the familiar variables are absent and observing what happens. Not as a source of anxiety — but as the most efficient way to identify exactly which capabilities are ready for production and which still need another training cycle.</p>
+    <div class="highlight-box teal">The most valuable feedback you will receive this year will almost certainly come from an unfamiliar context — not from your home environment. That discomfort is not a sign the model is broken. It is evaluation running correctly.</div>
+  </div>
+
+  <div class="content-card">
+    <h3>Training conditions vs. test conditions — daily</h3>
+    <p style="margin-bottom:20px">Each moment below contrasts the training-set context (familiar, controlled) with a genuine test-set condition (unfamiliar, uncontrolled). Growth happens at the boundary between them.</p>
+    <div class="daily-timeline">
+
+      <div class="dt-row">
+        <div class="dt-left"><div class="dt-dot">🏠</div><div class="dt-time">Training set</div></div>
+        <div class="dt-body">
+          <div class="dt-badge-row"><span class="dt-badge train">Training condition</span><span class="dt-badge test">Test condition</span></div>
+          <div class="dt-title">Presenting your work — familiar vs. unfamiliar audience</div>
+          <div class="dt-raw">Training condition: presenting to your team, your supervisor, your existing network — people who already understand your context, value your work, and are predisposed to interpret it charitably</div>
+          <div class="dt-clean">Test condition: presenting to someone with no prior relationship to you or your work — a new stakeholder, an external reviewer, a room that doesn't know your name. Performance here is the only honest measure of whether the capability generalises.</div>
+        </div>
+      </div>
+
+      <div class="dt-row">
+        <div class="dt-left"><div class="dt-dot">💬</div><div class="dt-time">Feedback</div></div>
+        <div class="dt-body">
+          <div class="dt-badge-row"><span class="dt-badge train">Training condition</span><span class="dt-badge test">Test condition</span></div>
+          <div class="dt-title">Seeking feedback — supportive sources vs. critical ones</div>
+          <div class="dt-raw">Training condition: feedback from people who care about you and want you to succeed — which means the signal is warm but filtered. Useful for confidence; limited for calibration.</div>
+          <div class="dt-clean">Test condition: feedback from someone with no stake in your feelings — a rigorous peer reviewer, a skeptical stakeholder, someone who will tell you where the argument breaks. This is the held-out test set. It will sting. It is also the only accurate signal.</div>
+        </div>
+      </div>
+
+      <div class="dt-row">
+        <div class="dt-left"><div class="dt-dot">🔧</div><div class="dt-time">Application</div></div>
+        <div class="dt-body">
+          <div class="dt-badge-row"><span class="dt-badge train">Training condition</span><span class="dt-badge test">Test condition</span></div>
+          <div class="dt-title">Applying a skill — practised domain vs. new context</div>
+          <div class="dt-raw">Training condition: applying a capability in the domain where it was developed, with the familiar tools, terminology, and peer group — the conditions that produced it</div>
+          <div class="dt-clean">Test condition: applying the same capability in a different domain, with different terminology and a different audience. Whether the skill holds is the test. Whether it doesn't reveals exactly what was domain-specific rather than genuinely portable.</div>
+        </div>
+      </div>
+
+      <div class="dt-row">
+        <div class="dt-left"><div class="dt-dot">🌙</div><div class="dt-time">Evening</div></div>
+        <div class="dt-body">
+          <div class="dt-badge-row"><span class="dt-badge train">Training condition</span><span class="dt-badge test">Test condition</span></div>
+          <div class="dt-title">End-of-day evaluation — sentiment vs. honest metric</div>
+          <div class="dt-raw">Training condition: did the day feel productive? Did people respond well? Did I feel competent? Evaluating on the training metric — effort and comfort.</div>
+          <div class="dt-clean">Test condition: did today's work move the actual objective forward? Where did performance fall short of what the situation required? One honest question against the real metric — not the one that produces a comfortable answer.</div>
+        </div>
+      </div>
+
+      <div class="dt-row">
+        <div class="dt-left"><div class="dt-dot">📋</div><div class="dt-time">Quarterly</div></div>
+        <div class="dt-body">
+          <div class="dt-badge-row"><span class="dt-badge train">Training condition</span><span class="dt-badge test">Test condition</span></div>
+          <div class="dt-title">Quarterly evaluation — are you ready for the next level?</div>
+          <div class="dt-raw">Training condition: comparing current performance to past performance — the only baseline is yourself, in conditions you controlled, measured by metrics you chose</div>
+          <div class="dt-clean">Test condition: seek an external benchmark. How does your current output compare to someone operating one level above where you are now? What would it take to close that gap? This is the baseline that tells you whether training has produced genuine progress.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<div class="task-section-header" id="tasks">
+  <div class="label">Interactive Tasks · Episode 08</div>
+  <h2>Your Evaluation Audit</h2>
+  <p>Four tasks to select the right metrics, build your confusion matrix, design a genuine test condition, and create your evaluation protocol.</p>
+</div>
+
+<section class="section" style="padding-top:40px">
+
+  <!-- TASK 1: CHOOSE YOUR METRICS -->
+  <div class="task-card" id="task1-card">
+    <div class="task-header">
+      <div class="task-num" id="t1-num">1</div>
+      <div class="task-meta">
+        <div class="task-label">Task 01 · Metric Selection</div>
+        <div class="task-title">What is the right measure for your actual objective?</div>
+      </div>
+      <span class="task-badge" id="t1-badge">~3 min</span>
+    </div>
+    <div class="task-body">
+      <p>Select the evaluation approach that most accurately reflects what success looks like for your primary current goal. Then name the false metric you have been defaulting to.</p>
+      <div class="metric-select-grid">
+        <div class="metric-opt" id="mopt-a" onclick="selectMetric('a')">
+          <div class="metric-opt-name">🎯 Output quality over output volume</div>
+          <div class="metric-opt-desc">My primary goal is best measured by the quality of what I produce — not how much I produce. One excellent output outweighs ten mediocre ones.</div>
+        </div>
+        <div class="metric-opt" id="mopt-b" onclick="selectMetric('b')">
+          <div class="metric-opt-name">📡 Reach and genuine impact</div>
+          <div class="metric-opt-desc">My primary goal involves influence or contribution that reaches beyond my immediate environment. Success means the work actually changes something for someone.</div>
+        </div>
+        <div class="metric-opt" id="mopt-c" onclick="selectMetric('c')">
+          <div class="metric-opt-name">🔬 Capability in genuinely new contexts</div>
+          <div class="metric-opt-desc">My primary goal requires building portable skills — the measure is whether I can perform in conditions I haven't practiced in before, not just in familiar ones.</div>
+        </div>
+        <div class="metric-opt" id="mopt-d" onclick="selectMetric('d')">
+          <div class="metric-opt-name">⚖️ Consistent performance under pressure</div>
+          <div class="metric-opt-desc">My primary goal requires reliable performance when the stakes are high and conditions aren't optimal — not just when everything is set up in my favour.</div>
+        </div>
+        <div class="metric-opt" id="mopt-e" onclick="selectMetric('e')">
+          <div class="metric-opt-name">🤝 Precision in collaboration and trust</div>
+          <div class="metric-opt-desc">My primary goal involves how well I perform in relationships and team contexts — the measure is whether commitments are kept and trust is built, not just whether tasks are completed.</div>
+        </div>
+        <div class="metric-opt" id="mopt-f" onclick="selectMetric('f')">
+          <div class="metric-opt-name">📈 Progress against a meaningful external benchmark</div>
+          <div class="metric-opt-desc">My primary goal requires comparison against a challenging external standard — not just improvement relative to my past self, but progress toward a specific level of performance I am building toward.</div>
+        </div>
+      </div>
+      <div class="metric-false-label">The false metric I have been defaulting to instead:</div>
+      <input class="metric-input" id="false-metric" placeholder="e.g. Hours worked, tasks completed, LinkedIn engagement, number of drafts written">
+      <button class="metric-submit" onclick="runMetricAudit()">Save my evaluation metric →</button>
+      <div class="metric-result" id="metric-result"></div>
+    </div>
+  </div>
+
+  <!-- TASK 2: CONFUSION MATRIX -->
+  <div class="task-card" id="task2-card">
+    <div class="task-header">
+      <div class="task-num" id="t2-num">2</div>
+      <div class="task-meta">
+        <div class="task-label">Task 02 · Confusion Matrix</div>
+        <div class="task-title">Map your four performance quadrants honestly</div>
+      </div>
+      <span class="task-badge" id="t2-badge">~5 min</span>
+    </div>
+    <div class="task-body">
+      <p>For your primary current goal or capability, complete all four quadrants of the confusion matrix. The false negatives — opportunities you predicted would fail that would have worked — are the hardest to complete and the most valuable to name.</p>
+      <div class="cm-input-grid">
+        <div class="cm-input-cell tp">
+          <div class="cm-cell-head">True Positives — what I backed that worked</div>
+          <div class="cm-cell-desc">Commitments, decisions, or attempts you predicted would succeed — and did.</div>
+          <input class="cm-cell-input" id="cm-tp" placeholder="e.g. Publishing the research despite self-doubt; the conference talk that landed better than expected">
+        </div>
+        <div class="cm-input-cell fn">
+          <div class="cm-cell-head">False Negatives — what I held back from that would have worked</div>
+          <div class="cm-cell-desc">Opportunities you predicted would fail — but would likely have succeeded. The most costly quadrant.</div>
+          <input class="cm-cell-input" id="cm-fn" placeholder="e.g. The collaboration I didn't pursue; the application I talked myself out of">
+        </div>
+        <div class="cm-input-cell fp">
+          <div class="cm-cell-head">False Positives — what I backed that failed</div>
+          <div class="cm-cell-desc">Commitments you predicted would succeed — but didn't. Resources spent on the wrong direction.</div>
+          <input class="cm-cell-input" id="cm-fp" placeholder="e.g. The project I invested heavily in that didn't deliver; the approach I was confident would work and didn't">
+        </div>
+        <div class="cm-input-cell tn">
+          <div class="cm-cell-head">True Negatives — what I correctly avoided</div>
+          <div class="cm-cell-desc">Things you predicted would drain or fail — and they would have. Good pattern recognition.</div>
+          <input class="cm-cell-input" id="cm-tn" placeholder="e.g. The distraction I correctly identified and declined; the commitment I knew wasn't right">
+        </div>
+      </div>
+      <button class="cm-save" id="cm-save" onclick="saveCM()">Save my confusion matrix</button>
+      <div class="saved-note" id="cm-saved-note">✓ Saved. Revisit this in six months — has the balance shifted?</div>
+    </div>
+  </div>
+
+  <!-- TASK 3: GENERALISATION TEST -->
+  <div class="task-card" id="task3-card">
+    <div class="task-header">
+      <div class="task-num" id="t3-num">3</div>
+      <div class="task-meta">
+        <div class="task-label">Task 03 · Generalisation Test</div>
+        <div class="task-title">Design a genuine test condition for your capability</div>
+      </div>
+      <span class="task-badge" id="t3-badge">~4 min</span>
+    </div>
+    <div class="task-body">
+      <p>Identify one capability you believe you have developed through training. Then design a genuine test condition — one that removes the familiar variables and places the capability in an unfamiliar context. This is your held-out test set.</p>
+      <div class="gen-fields">
+        <div class="gen-field">
+          <div class="gen-label familiar">The capability I believe training has produced</div>
+          <input class="gen-input" id="gen1" placeholder="e.g. The ability to explain complex AI concepts clearly to a non-specialist audience">
+          <div class="gen-hint">Be specific — not "I am a better communicator" but the exact capability the training cycle was developing.</div>
+        </div>
+        <div class="gen-field">
+          <div class="gen-label familiar">The familiar conditions where I have been testing it (training set)</div>
+          <input class="gen-input" id="gen2" placeholder="e.g. With my students, who are already familiar with the subject and predisposed to engage with my framing">
+          <div class="gen-hint">Name the environment where you have most of your evidence. This is the training distribution — not the test set.</div>
+        </div>
+        <div class="gen-field">
+          <div class="gen-label new">The genuine test condition — unfamiliar, honest, no home advantage</div>
+          <input class="gen-input" id="gen3" placeholder="e.g. An industry audience with no academic background — people who will tell me immediately if the explanation doesn't land">
+          <div class="gen-hint">The test condition removes at least one key familiar variable. Design it specifically, not vaguely. "Present at a conference" is not a test condition. "Present to a room of practitioners who have never heard of AutoML" is.</div>
+        </div>
+        <div class="gen-field">
+          <div class="gen-label predict">My prediction — how well will the capability hold in this test?</div>
+          <input class="gen-input" id="gen4" placeholder="e.g. I think the core explanation will hold but the examples will need translation — I'm too reliant on academic framing">
+          <div class="gen-hint">Write this before you run the test. The gap between this prediction and the actual result is your most precise evaluation signal.</div>
+        </div>
+      </div>
+      <button class="gen-save" id="gen-save" onclick="saveGen()">Save my generalisation test</button>
+      <div class="saved-note" id="gen-saved-note">✓ Saved. Run the test — then come back and record what actually happened.</div>
+    </div>
+  </div>
+
+  <!-- TASK 4: EVALUATION PROTOCOL -->
+  <div class="task-card" id="task4-card">
+    <div class="task-header">
+      <div class="task-num" id="t4-num">4</div>
+      <div class="task-meta">
+        <div class="task-label">Task 04 · Protocol Design</div>
+        <div class="task-title">Design your honest evaluation protocol</div>
+      </div>
+      <span class="task-badge" id="t4-badge">~3 min</span>
+    </div>
+    <div class="task-body">
+      <p>Write your evaluation protocol: the specific, recurring practice of honest self-assessment against the right metrics, in conditions that include genuine test-set exposure — not just training-environment feedback.</p>
+      <textarea class="reflection-area" id="reflection-text" placeholder="e.g.&#10;Weekly: evaluate one output against the real metric (quality, not volume) — not how it felt, but specifically what the gap was between what I produced and what the standard required.&#10;Monthly: one piece of genuine test-set feedback — from a source not predisposed to confirm my view.&#10;Quarterly: one deliberate test condition — placing a capability in a new context and measuring honestly what holds." oninput="updateCharCount()" maxlength="900"></textarea>
+      <div class="char-count"><span id="char-count">0</span> / 900 characters</div>
+      <button class="reflection-save" id="save-btn" onclick="saveReflection()">Save my evaluation protocol</button>
+      <div class="saved-note" id="saved-note">✓ Saved. Honest evaluation is now part of the pipeline.</div>
+
+      <p style="margin-top:24px">Choose the one evaluation habit to start this week:</p>
+      <div class="commit-options">
+        <div class="commit-card" onclick="selectCommit(this,'real-metric')" data-val="real-metric">
+          <div class="commit-icon">🎯</div>
+          <div class="commit-title">Replace the false metric</div>
+          <div class="commit-desc">This week, evaluate your primary work using the true metric from Task 1 — not the default proxy that measures effort instead of output</div>
+        </div>
+        <div class="commit-card" onclick="selectCommit(this,'test-feedback')" data-val="test-feedback">
+          <div class="commit-icon">🔬</div>
+          <div class="commit-title">Seek one test-set feedback</div>
+          <div class="commit-desc">Identify one person this week who will give you an honest, unfiltered assessment — not someone predisposed to confirm your view</div>
+        </div>
+        <div class="commit-card" onclick="selectCommit(this,'gen-test')" data-val="gen-test">
+          <div class="commit-icon">🌍</div>
+          <div class="commit-title">Run your generalisation test</div>
+          <div class="commit-desc">Execute the specific test condition you designed in Task 3 — and record what actually happened versus your prediction</div>
+        </div>
+        <div class="commit-card" onclick="selectCommit(this,'cm-review')" data-val="cm-review">
+          <div class="commit-icon">⚖️</div>
+          <div class="commit-title">Complete the confusion matrix</div>
+          <div class="commit-desc">Spend 20 minutes specifically on the false-negative quadrant — the opportunities you predicted would fail that would have worked. Name three.</div>
+        </div>
+      </div>
+      <button class="commit-confirm" id="commit-btn" onclick="confirmCommit()">I commit to this evaluation habit →</button>
+      <div class="commit-result" id="commit-result">
+        <p><strong>Evaluation stage active.</strong><br>You are now measuring against the right metric, in conditions that include the test set.<br><br>Share using <strong style="color:var(--teal)">#ReInventingMyself</strong></p>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<hr class="divider">
+
+<div class="ep-nav">
+  <a class="ep-nav-btn" href="ep07_training_tuning.html">
+    <div class="ep-nav-dir">← Previous</div>
+    <div class="ep-nav-title">Episode 07</div>
+    <div class="ep-nav-sub">Training &amp; Tuning</div>
+  </a>
+  <a class="ep-nav-btn next" href="reinventing-myself.html#episodes">
+    <div class="ep-nav-dir">Next →</div>
+    <div class="ep-nav-title">Episode 09</div>
+    <div class="ep-nav-sub">Deployment · Coming next week</div>
+  </a>
+</div>
+
+<footer>
+  <div class="footer-left">© 2026 Dr. Tertsegha J. Anande · drtertseghaanande.com</div>
+  <div class="footer-right">#ReInventingMyself · #AutoML</div>
+</footer>
+
+<script>
+const hc=document.getElementById('hero-c'),hx=hc.getContext('2d');
+function resizeHero(){const r=hc.parentElement.getBoundingClientRect();hc.width=r.width;hc.height=r.height||480;drawHeroStars()}
+function drawHeroStars(){hx.clearRect(0,0,hc.width,hc.height);for(let i=0;i<100;i++){const x=Math.random()*hc.width,y=Math.random()*hc.height,r=Math.random()*1.3+0.2,o=Math.random()*0.5+0.1;hx.beginPath();hx.arc(x,y,r,0,Math.PI*2);hx.fillStyle=`rgba(255,255,255,${o})`;hx.fill()}const g=hx.createRadialGradient(hc.width/2,hc.height*.6,0,hc.width/2,hc.height*.6,hc.width*.5);g.addColorStop(0,'rgba(83,74,183,0.14)');g.addColorStop(1,'rgba(0,0,0,0)');hx.fillStyle=g;hx.fillRect(0,0,hc.width,hc.height)}
+setTimeout(resizeHero,100);window.addEventListener('resize',resizeHero);
+
+const sections=['intro','what','life','daily','tasks'];
+const dots=document.querySelectorAll('.pt-dot');
+function updateTracker(){let c=0;sections.forEach((id,i)=>{const el=document.getElementById(id);if(el&&el.getBoundingClientRect().top<window.innerHeight*0.5)c=i});dots.forEach((d,i)=>{d.classList.toggle('active',i===c);d.classList.toggle('done',i<c)})}
+window.addEventListener('scroll',updateTracker,{passive:true});
+
+// Task 1: Metric Selection
+const metricInsights={
+  a:'Output quality is the right primary metric when the work is meant to endure — research, creative output, teaching. Volume is a false proxy that fills dashboards while the true signal stays flat. Measuring quality requires defining what "excellent" looks like before you produce, not after.',
+  b:'Reach and genuine impact require tracing the chain from output to changed behaviour or belief. Engagement metrics are a false proxy. The honest test: did someone do something differently because of this work? That is harder to measure and far more meaningful.',
+  c:'Portable capability is measured only by performance in genuinely novel contexts — not how comfortable you feel in the ones you have practised in. Schedule a real test condition. Your training environment cannot tell you whether the skill generalises.',
+  d:'Consistency under pressure requires deliberately creating difficult conditions — not waiting for them. Train in low-stakes versions of high-pressure scenarios until reliable performance in adverse conditions becomes a documented feature of the model, not a hope.',
+  e:'Trust and precision in collaboration are measured by whether commitments were kept and whether the relationship became more capable after working together. Social comfort is a false proxy — someone can enjoy working with you and have lower confidence in you after the collaboration.',
+  f:'External benchmarks are the only measure that corrects for self-referential evaluation. Choose a specific exemplar one level above current performance. Map the gap concretely — not generally. That gap is the training target for the next cycle.'
+};
+let selectedMetric=null;
+function selectMetric(key){document.querySelectorAll('.metric-opt').forEach(o=>o.classList.remove('selected'));document.getElementById('mopt-'+key).classList.add('selected');selectedMetric=key}
+function runMetricAudit(){
+  if(!selectedMetric){alert('Select a metric first.');return}
+  const fm=document.getElementById('false-metric').value.trim();
+  const res=document.getElementById('metric-result');
+  res.innerHTML=`<p style="font-size:13px;color:#C8C5BE;line-height:1.7;margin:0 0 10px">${metricInsights[selectedMetric]}</p>${fm?`<div style="font-size:11px;color:var(--amber);margin-top:8px">False metric to stop tracking: <strong>${fm}</strong></div>`:''}`;
+  res.style.display='block';
+  localStorage.setItem('rim_ep08_metric',JSON.stringify({key:selectedMetric,falseMetric:fm}));
+  markComplete('task1-card','t1-num','t1-badge');
+}
+
+// Task 2: Confusion Matrix
+function saveCM(){
+  const d={tp:document.getElementById('cm-tp').value.trim(),fn:document.getElementById('cm-fn').value.trim(),fp:document.getElementById('cm-fp').value.trim(),tn:document.getElementById('cm-tn').value.trim()};
+  if(!Object.values(d).some(v=>v))return;
+  localStorage.setItem('rim_ep08_cm',JSON.stringify(d));
+  const btn=document.getElementById('cm-save');btn.textContent='✓ Saved';btn.classList.add('saved');
+  document.getElementById('cm-saved-note').style.display='block';
+  markComplete('task2-card','t2-num','t2-badge');
+}
+
+// Task 3: Generalisation Test
+function saveGen(){
+  const d={g1:document.getElementById('gen1').value.trim(),g2:document.getElementById('gen2').value.trim(),g3:document.getElementById('gen3').value.trim(),g4:document.getElementById('gen4').value.trim()};
+  if(!Object.values(d).some(v=>v))return;
+  localStorage.setItem('rim_ep08_gen',JSON.stringify(d));
+  const btn=document.getElementById('gen-save');btn.textContent='✓ Saved';btn.classList.add('saved');
+  document.getElementById('gen-saved-note').style.display='block';
+  markComplete('task3-card','t3-num','t3-badge');
+}
+
+// Task 4: Protocol
+function updateCharCount(){document.getElementById('char-count').textContent=document.getElementById('reflection-text').value.length}
+function saveReflection(){
+  const text=document.getElementById('reflection-text').value.trim();if(!text)return;
+  localStorage.setItem('rim_ep08_protocol',text);
+  const btn=document.getElementById('save-btn');btn.textContent='✓ Saved';btn.classList.add('saved');
+  document.getElementById('saved-note').style.display='block';
+}
+let selectedCommit=null;
+function selectCommit(el,val){document.querySelectorAll('.commit-card').forEach(c=>c.classList.remove('selected'));el.classList.add('selected');selectedCommit=val;document.getElementById('commit-btn').style.display='block'}
+function confirmCommit(){if(!selectedCommit)return;localStorage.setItem('rim_ep08_commit',selectedCommit);document.getElementById('commit-result').style.display='block';document.getElementById('commit-btn').style.display='none';markComplete('task4-card','t4-num','t4-badge')}
+
+function markComplete(cardId,numId,badgeId){
+  const card=document.getElementById(cardId),num=document.getElementById(numId),badge=document.getElementById(badgeId);
+  if(card)card.classList.add('completed');if(num)num.textContent='✓';if(badge){badge.textContent='Done';badge.classList.add('done')}
+}
+
+window.addEventListener('load',()=>{
+  const m=localStorage.getItem('rim_ep08_metric');
+  if(m){try{const d=JSON.parse(m);selectedMetric=d.key;const el=document.getElementById('mopt-'+d.key);if(el)el.classList.add('selected');if(d.falseMetric)document.getElementById('false-metric').value=d.falseMetric;markComplete('task1-card','t1-num','t1-badge')}catch(e){}}
+  const cm=localStorage.getItem('rim_ep08_cm');
+  if(cm){try{const d=JSON.parse(cm);if(d.tp)document.getElementById('cm-tp').value=d.tp;if(d.fn)document.getElementById('cm-fn').value=d.fn;if(d.fp)document.getElementById('cm-fp').value=d.fp;if(d.tn)document.getElementById('cm-tn').value=d.tn;markComplete('task2-card','t2-num','t2-badge')}catch(e){}}
+  const g=localStorage.getItem('rim_ep08_gen');
+  if(g){try{const d=JSON.parse(g);if(d.g1)document.getElementById('gen1').value=d.g1;if(d.g2)document.getElementById('gen2').value=d.g2;if(d.g3)document.getElementById('gen3').value=d.g3;if(d.g4)document.getElementById('gen4').value=d.g4;markComplete('task3-card','t3-num','t3-badge')}catch(e){}}
+  const p=localStorage.getItem('rim_ep08_protocol');if(p){document.getElementById('reflection-text').value=p;updateCharCount()}
+  if(localStorage.getItem('rim_ep08_commit'))markComplete('task4-card','t4-num','t4-badge');
+});
+</script>
+</body>
+</html>
