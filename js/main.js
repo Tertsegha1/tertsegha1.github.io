@@ -426,6 +426,152 @@ function initFadeIn () {
   document.querySelectorAll('.fade-in').forEach(el => obs.observe(el));
 }
 
+/* ── Overview Dashboard ────────────────────────────────── */
+function renderDashboard () {
+  const grid = el('dashboard-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  const p    = DATA.personal;
+  const pubs = DATA.publications;
+  const publishedCount = pubs.journal.length + pubs.conference.length + pubs.book.length;
+  const pgCount  = DATA.teaching.postgraduate.length;
+  const ugCount  = DATA.teaching.undergraduate.length;
+  const leaderCount = [...DATA.teaching.postgraduate, ...DATA.teaching.undergraduate]
+    .filter(m => m.leader).length;
+  const currentJob = DATA.experience[0];
+
+  /* ── Welcome banner ── */
+  const banner = document.createElement('div');
+  banner.className = 'dash-banner';
+  banner.innerHTML = `
+    <div class="dash-banner-inner">
+      <div class="dash-banner-text">
+        <h2 class="dash-welcome">${p.name}</h2>
+        <p class="dash-tagline">${p.title}</p>
+        <p class="dash-location">📍 ${p.location} &nbsp;·&nbsp; ${p.credentials}</p>
+      </div>
+      <div class="dash-stats-row">
+        ${p.stats.map(s => `
+          <div class="dash-hero-stat">
+            <div class="dash-hero-num">${s.num}</div>
+            <div class="dash-hero-lbl">${s.label}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="dash-banner-links">
+      <a href="cv.html" target="_blank" class="dash-hero-btn">📄 Download CV</a>
+      <a href="${p.scholar}" target="_blank" rel="noopener" class="dash-hero-btn">🎓 Google Scholar</a>
+      <a href="${p.github}" target="_blank" rel="noopener" class="dash-hero-btn">🐙 GitHub</a>
+      <a href="${p.linkedin}" target="_blank" rel="noopener" class="dash-hero-btn">in LinkedIn</a>
+    </div>`;
+  grid.appendChild(banner);
+
+  /* ── Section cards ── */
+  const cards = [
+    {
+      id: 'experience', icon: '💼', accent: '#0f2044', title: 'Experience',
+      kpi: { n: '10+', l: 'Years' },
+      items: [
+        currentJob.title.replace(' & Module Leader', '').replace(' &amp; Module Leader', ''),
+        currentJob.org.split('—')[0].trim(),
+        DATA.experience.length + ' professional roles across academia & industry',
+      ],
+      cta: 'View Career',
+    },
+    {
+      id: 'publications', icon: '📄', accent: '#e8a020', title: 'Publications',
+      kpi: { n: publishedCount + '+', l: 'Papers' },
+      items: [
+        pubs.journal.length + ' peer-reviewed journal articles',
+        pubs.conference.length + ' conference papers  ·  ' + pubs.book.length + ' book chapter',
+        pubs.inPrep.length + ' papers currently in preparation',
+      ],
+      cta: 'View Publications',
+    },
+    {
+      id: 'projects', icon: '🚀', accent: '#5b4fcf', title: 'Projects',
+      kpi: { n: DATA.projects.length, l: 'Projects' },
+      items: DATA.projects.slice(0, 3)
+        .map(pr => pr.title.length > 44 ? pr.title.slice(0, 42) + '…' : pr.title),
+      cta: 'View Projects',
+    },
+    {
+      id: 'teaching', icon: '🎓', accent: '#16a085', title: 'Teaching',
+      kpi: { n: pgCount + ugCount, l: 'Modules' },
+      items: [
+        pgCount + ' postgraduate modules',
+        ugCount + ' undergraduate modules',
+        leaderCount + ' module leader appointments',
+      ],
+      cta: 'View Teaching',
+    },
+    {
+      id: 'research', icon: '🔬', accent: '#8e44ad', title: 'Research',
+      kpi: { n: DATA.research.length, l: 'Areas' },
+      items: DATA.research.slice(0, 3).map(r => r.icon + '  ' + r.title),
+      cta: 'View Research',
+    },
+    {
+      id: 'certifications', icon: '🏅', accent: '#c0392b', title: 'Credentials',
+      kpi: { n: DATA.certifications.length, l: 'Credentials' },
+      items: [
+        'PhD — Engineering (Communication Systems), Warwick',
+        'Fellow of the Higher Education Academy (FHEA)',
+        'MBCS · IEEE · IET · INSTICC',
+      ],
+      cta: 'View Credentials',
+    },
+    {
+      id: 'series', icon: '📺', accent: '#d35400', title: 'Re-Inventing Myself',
+      kpi: { n: '🔴', l: 'Live' },
+      items: [
+        'Weekly AutoML + personal growth series',
+        'Blending research insights with real-world application',
+        'Published on LinkedIn, Facebook & this portfolio',
+      ],
+      cta: 'View Series',
+    },
+    {
+      id: 'contact', icon: '📞', accent: '#2980b9', title: 'Get In Touch',
+      kpi: { n: '✉', l: 'Connect' },
+      items: [
+        'Open to research & industry collaborations',
+        'Academic partnerships & speaking invitations',
+        p.email,
+      ],
+      cta: 'Contact Me',
+    },
+  ];
+
+  const wrap = document.createElement('div');
+  wrap.className = 'dash-cards';
+
+  cards.forEach(sec => {
+    const card = document.createElement('div');
+    card.className = 'dash-card';
+    card.style.setProperty('--card-accent', sec.accent);
+    card.innerHTML = `
+      <div class="dash-card-top">
+        <span class="dash-card-icon">${sec.icon}</span>
+        <h3 class="dash-card-title">${sec.title}</h3>
+        <div class="dash-card-kpi">
+          <div class="dash-kpi-num">${sec.kpi.n}</div>
+          <div class="dash-kpi-lbl">${sec.kpi.l}</div>
+        </div>
+      </div>
+      <ul class="dash-card-list">
+        ${sec.items.map(item => `<li>${item}</li>`).join('')}
+      </ul>
+      <button class="dash-card-cta" onclick="showTab('${sec.id}')">
+        ${sec.cta} <span aria-hidden="true">→</span>
+      </button>`;
+    wrap.appendChild(card);
+  });
+
+  grid.appendChild(wrap);
+}
+
 /* ── Section tab navigator ─────────────────────────────── */
 function initSectionTabs () {
   const tabs    = document.querySelectorAll('.sec-tab');
@@ -474,7 +620,7 @@ function initSectionTabs () {
   if (hash && validIds.includes(hash)) {
     showTab(hash);
   } else {
-    showTab('about');
+    showTab('overview');
   }
 
   // Keep top-nav links working: clicking any nav link switches to the right tab
@@ -488,6 +634,7 @@ function initSectionTabs () {
 
 /* ── Bootstrap ─────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
+  renderDashboard();
   renderHero();
   renderAbout();
   renderSkills();

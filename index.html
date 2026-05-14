@@ -76,7 +76,8 @@
 
 <!-- ── Section tab navigator ──────────────────────────── -->
 <div id="sec-nav" role="tablist" aria-label="Portfolio sections">
-  <button class="sec-tab active" data-sec="about"          role="tab">👤 About</button>
+  <button class="sec-tab active" data-sec="overview"       role="tab">🏠 Overview</button>
+  <button class="sec-tab"        data-sec="about"          role="tab">👤 About</button>
   <button class="sec-tab"        data-sec="skills"         role="tab">🛠 Skills</button>
   <button class="sec-tab"        data-sec="experience"     role="tab">💼 Experience</button>
   <button class="sec-tab"        data-sec="projects"       role="tab">🚀 Projects</button>
@@ -88,8 +89,15 @@
   <button class="sec-tab"        data-sec="contact"        data-also="booking" role="tab">📞 Contact</button>
 </div>
 
+<!-- ── Overview Dashboard ─────────────────────────────── -->
+<section id="overview" class="sec-panel active">
+  <div class="container">
+    <div id="dashboard-grid"></div>
+  </div>
+</section>
+
 <!-- ── About ──────────────────────────────────────────── -->
-<section id="about" class="sec-panel active">
+<section id="about" class="sec-panel">
   <div class="container fade-in">
     <p class="sl">Background</p>
     <h2 class="st">About Me</h2>
