@@ -87,8 +87,22 @@
   </div>
 </section>
 
+<!-- ── Section tab navigator ──────────────────────────── -->
+<div id="sec-nav" role="tablist" aria-label="Portfolio sections">
+  <button class="sec-tab active" data-sec="about"          role="tab">👤 About</button>
+  <button class="sec-tab"        data-sec="skills"         role="tab">🛠 Skills</button>
+  <button class="sec-tab"        data-sec="experience"     role="tab">💼 Experience</button>
+  <button class="sec-tab"        data-sec="projects"       role="tab">🚀 Projects</button>
+  <button class="sec-tab"        data-sec="publications"   role="tab">📄 Publications</button>
+  <button class="sec-tab"        data-sec="research"       role="tab">🔬 Research</button>
+  <button class="sec-tab"        data-sec="teaching"       role="tab">🎓 Teaching</button>
+  <button class="sec-tab"        data-sec="certifications" role="tab">🏅 Credentials</button>
+  <button class="sec-tab"        data-sec="series"         role="tab">📺 Series</button>
+  <button class="sec-tab"        data-sec="contact"        data-also="booking" role="tab">📞 Contact</button>
+</div>
+
 <!-- ── About ──────────────────────────────────────────── -->
-<section id="about">
+<section id="about" class="sec-panel active">
   <div class="container fade-in">
     <p class="sl">Background</p>
     <h2 class="st">About Me</h2>
@@ -118,7 +132,7 @@
 </section>
 
 <!-- ── Skills ─────────────────────────────────────────── -->
-<section id="skills">
+<section id="skills" class="sec-panel">
   <div class="container fade-in">
     <p class="sl">Technical Expertise</p>
     <h2 class="st">Core Skills</h2>
@@ -128,7 +142,7 @@
 </section>
 
 <!-- ── Experience ─────────────────────────────────────── -->
-<section id="experience">
+<section id="experience" class="sec-panel">
   <div class="container fade-in">
     <p class="sl">Career</p>
     <h2 class="st">Experience</h2>
@@ -138,21 +152,33 @@
 </section>
 
 <!-- ── Projects ───────────────────────────────────────── -->
-<section id="projects">
+<section id="projects" class="sec-panel">
   <div class="container fade-in">
     <p class="sl">Open Source &amp; Applied</p>
     <h2 class="st">Projects</h2>
     <div class="sline"></div>
+    <div class="sec-ext-links">
+      <span style="font-size:0.75rem;font-weight:700;color:var(--text-light);align-self:center;">Find the code:</span>
+      <a href="https://github.com/Tertsegha1" target="_blank" rel="noopener">🐙 GitHub Profile</a>
+      <a href="mailto:tertseghaanande@gmail.com?subject=Repository Access Request" >🔒 Request Private Access</a>
+    </div>
     <div class="proj-grid" id="proj-grid"></div>
   </div>
 </section>
 
 <!-- ── Publications ───────────────────────────────────── -->
-<section id="publications">
+<section id="publications" class="sec-panel">
   <div class="container fade-in">
     <p class="sl">Research Output</p>
     <h2 class="st">Publications</h2>
     <div class="sline"></div>
+    <div class="sec-ext-links">
+      <span style="font-size:0.75rem;font-weight:700;color:var(--text-light);align-self:center;">View on:</span>
+      <a href="https://scholar.google.com/citations?user=J5pMcosAAAAJ&hl=en" target="_blank" rel="noopener">🎓 Google Scholar</a>
+      <a href="https://www.researchgate.net/" target="_blank" rel="noopener">🔬 ResearchGate</a>
+      <a href="https://orcid.org/" target="_blank" rel="noopener">🆔 ORCID</a>
+      <a href="https://doi.org/10.1007/s42979-024-03544-3" target="_blank" rel="noopener">📄 Latest Paper → SN Comp. Sci.</a>
+    </div>
 
     <div class="pub-filters" id="pub-filters"></div>
 
@@ -181,7 +207,7 @@
 </section>
 
 <!-- ── Research Interests ─────────────────────────────── -->
-<section id="research">
+<section id="research" class="sec-panel">
   <div class="container fade-in">
     <p class="sl">Focus Areas</p>
     <h2 class="st">Research Interests</h2>
@@ -191,7 +217,7 @@
 </section>
 
 <!-- ── Teaching ───────────────────────────────────────── -->
-<section id="teaching">
+<section id="teaching" class="sec-panel">
   <div class="container fade-in">
     <p class="sl">Higher Education</p>
     <h2 class="st">Teaching Experience</h2>
@@ -210,7 +236,7 @@
 </section>
 
 <!-- ── Certifications ─────────────────────────────────── -->
-<section id="certifications">
+<section id="certifications" class="sec-panel">
   <div class="container fade-in">
     <p class="sl">Credentials</p>
     <h2 class="st">Certifications &amp; Professional Development</h2>
@@ -220,7 +246,7 @@
 </section>
 
 <!-- ── Re-Inventing Myself Series ─────────────────────── -->
-<section id="series">
+<section id="series" class="sec-panel">
   <div class="container fade-in">
     <p class="sl">Weekly Public Series</p>
     <h2 class="st">Re-Inventing Myself</h2>
@@ -278,7 +304,7 @@
 </section>
 
 <!-- ── Contact ────────────────────────────────────────── -->
-<section id="contact">
+<section id="contact" class="sec-panel">
   <div class="container fade-in">
     <p class="sl">Get in Touch</p>
     <h2 class="st">Contact</h2>
@@ -302,7 +328,7 @@
 </section>
 
 <!-- ── Book a Meeting ──────────────────────────────────── -->
-<section id="booking">
+<section id="booking" class="sec-panel">
   <div class="container fade-in">
     <p class="sl">Collaborate &amp; Connect</p>
     <h2 class="st">Book a Meeting</h2>

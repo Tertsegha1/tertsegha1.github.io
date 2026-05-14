@@ -426,6 +426,63 @@ function initFadeIn () {
   document.querySelectorAll('.fade-in').forEach(el => obs.observe(el));
 }
 
+/* ── Section tab navigator ─────────────────────────────── */
+function initSectionTabs () {
+  const tabs    = document.querySelectorAll('.sec-tab');
+  const panels  = document.querySelectorAll('.sec-panel');
+
+  function showTab (secId) {
+    // Find the tab that owns this secId
+    const targetTab = [...tabs].find(t => t.dataset.sec === secId);
+    if (!targetTab) return;
+
+    // Deactivate all
+    tabs.forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected','false'); });
+    panels.forEach(p => p.classList.remove('active'));
+
+    // Activate primary panel
+    targetTab.classList.add('active');
+    targetTab.setAttribute('aria-selected','true');
+    const primary = document.getElementById(secId);
+    if (primary) primary.classList.add('active');
+
+    // Activate companion panel (e.g. booking alongside contact)
+    const also = targetTab.dataset.also;
+    if (also) {
+      const companion = document.getElementById(also);
+      if (companion) companion.classList.add('active');
+    }
+
+    // Update URL hash without triggering a scroll jump
+    history.replaceState(null, '', '#' + secId);
+
+    // Scroll to top of tab bar
+    const nav = document.getElementById('sec-nav');
+    if (nav) window.scrollTo({ top: nav.offsetTop - 62, behavior: 'smooth' });
+  }
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => showTab(tab.dataset.sec));
+  });
+
+  // Respect incoming hash (e.g. direct link to #publications)
+  const hash = location.hash.replace('#','');
+  const validIds = [...tabs].map(t => t.dataset.sec);
+  if (hash && validIds.includes(hash)) {
+    showTab(hash);
+  } else {
+    showTab('about');
+  }
+
+  // Keep top-nav links working: clicking any nav link switches to the right tab
+  document.querySelectorAll('.nav-links a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const id = a.getAttribute('href').replace('#','');
+      if (validIds.includes(id)) { e.preventDefault(); showTab(id); }
+    });
+  });
+}
+
 /* ── Bootstrap ─────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   renderHero();
@@ -440,6 +497,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderContact();
   renderBooking();
 
+  initSectionTabs();
   initNav();
   initFadeIn();
   initScrollProgress();
