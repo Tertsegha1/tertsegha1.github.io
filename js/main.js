@@ -465,6 +465,9 @@ function initSectionTabs () {
     tab.addEventListener('click', () => showTab(tab.dataset.sec));
   });
 
+  // Expose globally so inline onclick="showTab(...)" in the nav works
+  window.showTab = showTab;
+
   // Respect incoming hash (e.g. direct link to #publications)
   const hash = location.hash.replace('#','');
   const validIds = [...tabs].map(t => t.dataset.sec);

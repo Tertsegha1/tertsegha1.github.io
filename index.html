@@ -43,23 +43,10 @@
 <nav>
   <div class="nav-brand"></div>
   <ul class="nav-links" id="navLinks">
-    <li><a href="#about">About</a></li>
-    <li><a href="#skills">Skills</a></li>
-    <li><a href="#experience">Experience</a></li>
-    <li><a href="#projects">Projects</a></li>
-    <li><a href="#publications">Publications</a></li>
-    <li><a href="#research">Research</a></li>
-    <li><a href="#teaching">Teaching</a></li>
-    <li><a href="#certifications">Certifications</a></li>
-    <li><a href="#series">Series</a></li>
-    <li><a href="#contact">Contact</a></li>
-    <li><a href="#booking">Book Meeting</a></li>
-    <li><a href="cv.html" target="_blank">📄 CV</a></li>
+    <li><a href="cv.html" target="_blank">📄 Download CV</a></li>
+    <li><a href="#contact" onclick="event.preventDefault();showTab('contact')">📞 Contact</a></li>
   </ul>
   <button id="dark-toggle" class="dark-toggle" aria-label="Switch to dark mode">☾</button>
-  <div class="nav-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')">
-    <span></span><span></span><span></span>
-  </div>
 </nav>
 
 <!-- ── Hero ───────────────────────────────────────────── -->
