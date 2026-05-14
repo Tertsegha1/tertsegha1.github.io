@@ -31,6 +31,27 @@ No build step, no dependencies, no framework — plain HTML/CSS/JS served direct
 
 ---
 
+## Design
+
+The portfolio uses a **tabbed single-page layout**:
+
+- The **hero section** is always visible at the top with profile photo, stats, and quick links
+- A **sticky tab bar** below the hero lets visitors jump between sections — only one section is shown at a time, eliminating the endless scroll
+- Hash-based routing (`/#publications`, `/#projects`, etc.) means direct links still land on the right section
+- **Dark mode** is supported throughout, with preference saved to localStorage
+- Sections animate in with a fade-slide transition on each tab switch
+
+### Updating the profile photo
+
+Replace `assets/img/profile.jpg` with a new image (keep the same filename). To do this without the command line:
+
+1. Go to [github.com/Tertsegha1/tertsegha1.github.io/tree/main/assets/img](https://github.com/Tertsegha1/tertsegha1.github.io/tree/main/assets/img)
+2. Click `profile.jpg` → click the pencil (edit) icon → upload new file → commit
+
+Recommended enhancement workflow: crop face/shoulders → **Remini** app to sharpen → **remove.bg** for background removal → **Canva** to set a clean background.
+
+---
+
 ## How to update the site
 
 ### Option 1 — Admin Panel (recommended, no code required)
@@ -132,20 +153,21 @@ Generates both an **Academic CV** and an **Industry CV** directly from `data.js`
 
 ## Sections
 
-| Section | Content source in `data.js` |
-|---|---|
-| Hero | `personal` (name, credentials, title, stats, bio) |
-| About | `personal` (about paragraphs, memberships, education) |
-| Skills | `skills` array |
-| Experience | `experience` array |
-| Projects | `projects` array |
-| Publications | `publications` array |
-| Research Interests | `research` array |
-| Teaching | `teaching` array |
-| Certifications | `certifications` array |
-| Leadership & Service | `leadership` array |
-| Booking | `personal` (calendlyUrl, formspreeId) |
-| Contact | `personal` (email, github, linkedin, latestPub) |
+Each section is accessible via the sticky tab bar. Sections map to `data.js` as follows:
+
+| Tab | Section ID | Content source in `data.js` |
+|---|---|---|
+| Always visible | `#hero` | `personal` (name, credentials, title, stats, bio) |
+| 👤 About | `#about` | `personal` (about paragraphs, memberships, education) |
+| 🛠 Skills | `#skills` | `skills` array |
+| 💼 Experience | `#experience` | `experience` array |
+| 🚀 Projects | `#projects` | `projects` array |
+| 📄 Publications | `#publications` | `publications` object (journal / conference / book / inPrep) |
+| 🔬 Research | `#research` | `research` array |
+| 🎓 Teaching | `#teaching` | `teaching` object (postgraduate / undergraduate) |
+| 🏅 Credentials | `#certifications` | `certifications` array |
+| 📺 Series | `#series` | Hard-coded in `index.html` |
+| 📞 Contact | `#contact` + `#booking` | `personal` (email, github, linkedin, latestPub, calendlyUrl, formspreeId) |
 
 ---
 
@@ -155,11 +177,12 @@ Generates both an **Academic CV** and an **Industry CV** directly from `data.js`
 |---|---|
 | Hosting | GitHub Pages (free, auto-deploys on push) |
 | Custom domain | drtertseghaanande.com (Cloudflare DNS) |
-| Styles | Vanilla CSS with custom properties |
+| Navigation | Tabbed single-page layout with hash-based routing (`js/main.js`) |
+| Styles | Vanilla CSS with custom properties and dark mode |
 | Content | Plain JS data object (`js/data.js`) |
 | Rendering | Vanilla JS DOM API (`js/main.js`) |
 | CV generation | `cv.html` — reads `data.js`, prints to PDF |
-| Admin / CMS | `admin.html` — GitHub API, no backend |
+| Admin / CMS | `admin.html` — GitHub API, no backend required |
 | Private app hosting | Cloudflare Workers (cmp701-studio, cmp701-tracker, grading system) |
 | Build | None required |
 
