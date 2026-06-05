@@ -391,7 +391,7 @@ function makeResearchInterestsContent(){
 /* ── Education ── */
 function makeEducationContent(){
   const wrap = el('div');
-  DATA.education.forEach(e => {
+  DATA.personal.education.forEach(e => {
     const w = el('div','cv-job'); w.style.marginBottom = '5px';
     const tt = el('div','cv-jt'); tt.textContent = e.degree; w.appendChild(tt);
     const io = el('div','cv-jo'); io.textContent = e.institution; w.appendChild(io);
@@ -572,7 +572,7 @@ async function downloadDocx(){
     const expParas = jobs.flatMap(j=>djob(j));
 
     // Build education
-    const eduParas = DATA.education.flatMap(e=>[
+    const eduParas = DATA.personal.education.flatMap(e=>[
       new Paragraph({...sp(80,0),children:[bold(e.degree,{size:20,color:NAVY})]}),
       new Paragraph({...sp(0,50),children:[run(e.institution,{size:18,color:MGRAY,italics:true})]})
     ]);
