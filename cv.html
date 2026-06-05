@@ -6,461 +6,717 @@
   <title>CV — Dr. Tertsegha Joseph Anande</title>
   <link rel="icon" href="assets/img/profile.jpg" type="image/jpeg">
   <style>
-    /* ── Design tokens ── */
     :root {
-      --navy:   #0f2044;
-      --navy2:  #1a3260;
-      --gold:   #e8a020;
-      --text:   #2c3e50;
-      --light:  #5a6a7e;
-      --rule:   #e1e8f0;
-      --bg:     #f5f7fa;
-      --white:  #ffffff;
+      --navy:#0f2044; --navy2:#1a3260; --gold:#e8a020; --gold2:#f0b840;
+      --text:#2c3e50; --muted:#5a6a7e; --rule:#e1e8f0; --bg:#f0f3f8; --white:#fff;
     }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:Arial,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
 
-    /* ── Screen chrome ── */
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Arial, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
+    /* ── Action bar ── */
+    .abar{
+      position:sticky;top:0;z-index:200;background:var(--navy);
+      padding:.6rem 1.5rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;
+      box-shadow:0 2px 12px rgba(0,0,0,.3);
+    }
+    .abar a.back{color:rgba(255,255,255,.6);font-size:.8rem;text-decoration:none;margin-right:auto;}
+    .abar a.back:hover{color:var(--gold);}
+    .abtn{padding:6px 16px;border-radius:6px;font-size:.8rem;font-weight:700;
+      cursor:pointer;border:none;font-family:inherit;transition:all .2s;}
+    .abtn-pdf{background:var(--gold);color:var(--navy);}
+    .abtn-pdf:hover{background:var(--gold2);}
+    .abtn-doc{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25);}
+    .abtn-doc:hover{background:rgba(255,255,255,.2);}
+    .abtn:disabled{opacity:.5;cursor:not-allowed;}
 
-    /* ── Action bar (hidden on print) ── */
-    .action-bar {
-      position: sticky; top: 0; z-index: 100;
-      background: var(--navy); padding: 0.75rem 2rem;
-      display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+    /* ── Profile selector ── */
+    .prof-bar{background:var(--navy2);padding:.75rem 1.5rem;}
+    .prof-hint{font-size:.72rem;color:rgba(255,255,255,.5);margin-bottom:.5rem;}
+    .prof-tabs{display:flex;gap:.5rem;flex-wrap:wrap;}
+    .ptab{
+      display:flex;align-items:center;gap:.4rem;
+      padding:7px 16px;border-radius:20px;font-size:.78rem;font-weight:600;
+      cursor:pointer;border:1.5px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07);
+      color:rgba(255,255,255,.7);transition:all .2s;white-space:nowrap;
     }
-    .action-bar a.back {
-      color: rgba(255,255,255,0.65); font-size: 0.82rem; text-decoration: none; margin-right: auto;
-    }
-    .action-bar a.back:hover { color: var(--gold); }
-    .ab-btn {
-      padding: 7px 18px; border-radius: 6px; font-size: 0.82rem; font-weight: 700;
-      cursor: pointer; border: none; font-family: inherit; transition: all 0.2s;
-    }
-    .ab-btn-pdf  { background: var(--gold); color: var(--navy); }
-    .ab-btn-pdf:hover  { background: #f0b840; }
-    .ab-btn-docx { background: rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.25); }
-    .ab-btn-docx:hover { background: rgba(255,255,255,0.2); }
-    .ab-hint { font-size: 0.75rem; color: rgba(255,255,255,0.45); }
+    .ptab:hover{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.4);color:#fff;}
+    .ptab.active{background:var(--gold);color:var(--navy);border-color:var(--gold);}
+    .ptab-icon{font-size:1rem;}
 
-    /* ── CV page shell ── */
-    .cv-page {
-      width: 210mm;
-      min-height: 297mm;
-      margin: 2rem auto;
-      background: var(--white);
-      padding: 18mm 18mm 20mm;
-      box-shadow: 0 4px 32px rgba(0,0,0,0.12);
+    /* ── CV page ── */
+    .cv-wrap{max-width:820px;margin:2rem auto;padding:0 1rem 3rem;}
+    .cv-page{
+      background:var(--white);padding:18mm 18mm 20mm;
+      box-shadow:0 4px 32px rgba(0,0,0,.12);
     }
 
     /* ── Header ── */
-    .cv-name { font-size: 28pt; font-weight: 800; color: var(--navy); line-height: 1.1; }
-    .cv-creds { font-size: 10pt; color: var(--gold); font-weight: 700; margin-top: 4px; letter-spacing: 0.5px; }
-    .cv-contact {
-      display: flex; flex-wrap: wrap; gap: 0 1.5rem;
-      font-size: 8.5pt; color: var(--light); margin-top: 6px;
-    }
-    .cv-contact a { color: var(--navy2); text-decoration: none; }
-    .cv-contact a:hover { text-decoration: underline; }
-    .cv-rule-thick { height: 3px; background: var(--navy); margin: 10px 0 14px; }
+    .cv-name{font-size:26pt;font-weight:800;color:var(--navy);line-height:1.1;}
+    .cv-creds{font-size:9.5pt;color:var(--gold);font-weight:700;margin-top:3px;letter-spacing:.5px;}
+    .cv-contact{display:flex;flex-wrap:wrap;gap:0 1.4rem;font-size:8pt;color:var(--muted);margin-top:5px;}
+    .cv-contact a{color:var(--navy2);text-decoration:none;}
+    .cv-contact a:hover{text-decoration:underline;}
+    .cv-rule{height:3px;background:var(--navy);margin:9px 0 12px;}
 
     /* ── Section headings ── */
-    .cv-sh {
-      font-size: 8.5pt; font-weight: 700; color: var(--navy);
-      letter-spacing: 1px; text-transform: uppercase;
-      border-bottom: 2px solid var(--gold);
-      padding-bottom: 2px; margin: 14px 0 7px;
+    .cv-sh{
+      font-size:8pt;font-weight:700;color:var(--navy);
+      letter-spacing:1.2px;text-transform:uppercase;
+      border-bottom:2px solid var(--gold);padding-bottom:2px;margin:13px 0 6px;
+    }
+
+    /* ── Profile badge ── */
+    .cv-profile-badge{
+      display:inline-block;font-size:7.5pt;font-weight:700;
+      padding:2px 10px;border-radius:10px;margin-bottom:6px;
+      background:#f0f3f8;color:var(--navy2);border:1px solid var(--rule);
     }
 
     /* ── Body text ── */
-    .cv-p  { font-size: 9pt; color: var(--text); line-height: 1.6; margin-bottom: 5px; }
-    .cv-sm { font-size: 8.5pt; color: var(--light); line-height: 1.5; margin-bottom: 2px; }
+    .cv-p{font-size:8.5pt;color:var(--text);line-height:1.6;margin-bottom:4px;}
+    .cv-sm{font-size:8pt;color:var(--muted);line-height:1.5;margin-bottom:2px;}
 
     /* ── Job block ── */
-    .cv-job { margin-bottom: 10px; }
-    .cv-job-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
-    .cv-job-title { font-size: 9.5pt; font-weight: 700; color: var(--navy); }
-    .cv-job-date  { font-size: 8.5pt; color: var(--light); font-style: italic; white-space: nowrap; }
-    .cv-job-org   { font-size: 8.5pt; color: var(--light); font-style: italic; margin-bottom: 3px; }
-    .cv-ul { margin: 3px 0 0 14px; }
-    .cv-ul li {
-      font-size: 8.5pt; color: var(--text); line-height: 1.55;
-      margin-bottom: 2px; list-style: none; position: relative; padding-left: 10px;
+    .cv-job{margin-bottom:9px;}
+    .cv-jh{display:flex;justify-content:space-between;align-items:baseline;gap:.8rem;}
+    .cv-jt{font-size:9pt;font-weight:700;color:var(--navy);}
+    .cv-jd{font-size:7.5pt;color:var(--muted);font-style:italic;white-space:nowrap;}
+    .cv-jo{font-size:8pt;color:var(--muted);font-style:italic;margin-bottom:2px;}
+    .cv-ul{margin:2px 0 0 12px;}
+    .cv-ul li{
+      font-size:8pt;color:var(--text);line-height:1.55;
+      margin-bottom:2px;list-style:none;position:relative;padding-left:10px;
     }
-    .cv-ul li::before { content: '–'; position: absolute; left: 0; color: var(--gold); font-weight: 700; }
-    .cv-ul li strong { color: var(--navy); }
+    .cv-ul li::before{content:'–';position:absolute;left:0;color:var(--gold);font-weight:700;}
+    .cv-ul li strong{color:var(--navy);}
 
-    /* ── Skills chips ── */
-    .cv-skill-row { margin-bottom: 4px; font-size: 8.5pt; line-height: 1.6; }
-    .cv-skill-row strong { color: var(--navy); }
+    /* ── Skills rows ── */
+    .cv-sr{font-size:8pt;line-height:1.6;margin-bottom:3px;}
+    .cv-sr strong{color:var(--navy);}
 
-    /* ── Two-column layout ── */
-    .cv-two { display: grid; grid-template-columns: 1fr 1fr; gap: 0 2rem; margin-top: 6px; }
+    /* ── Two-column ── */
+    .cv-2col{display:grid;grid-template-columns:1fr 1fr;gap:0 2rem;margin-top:5px;}
 
-    /* ── Publication entry ── */
-    .cv-pub { font-size: 8.5pt; line-height: 1.55; margin-bottom: 4px; }
-    .cv-pub strong { color: var(--navy); }
+    /* ── Project card ── */
+    .cv-proj{margin-bottom:7px;padding-left:10px;border-left:2px solid var(--gold);}
+    .cv-proj-title{font-size:8.5pt;font-weight:700;color:var(--navy);margin-bottom:1px;}
+    .cv-proj-tech{font-size:7.5pt;color:var(--gold);margin-bottom:1px;}
+    .cv-proj-desc{font-size:7.5pt;color:var(--muted);line-height:1.5;}
+
+    /* ── Publications ── */
+    .cv-pub{font-size:8pt;line-height:1.55;margin-bottom:4px;}
+    .cv-pub strong{color:var(--navy);}
+
+    /* ── Research interests grid ── */
+    .cv-ri{display:grid;grid-template-columns:repeat(3,1fr);gap:3px 1rem;margin-top:4px;}
+    .cv-ri-item{font-size:8pt;color:var(--text);padding:2px 0;}
+    .cv-ri-item::before{content:'▸ ';color:var(--gold);}
 
     /* ── Footer ── */
-    .cv-footer {
-      margin-top: 14px; padding-top: 6px;
-      border-top: 1px solid var(--rule);
-      font-size: 7.5pt; color: var(--light); text-align: center;
+    .cv-footer{
+      margin-top:12px;padding-top:5px;
+      border-top:1px solid var(--rule);
+      font-size:7pt;color:var(--muted);text-align:center;
     }
 
-    /* ── PRINT STYLES ── */
-    @media print {
-      body { background: white; }
-      .action-bar { display: none !important; }
-      .cv-page { width: 100%; margin: 0; padding: 14mm 16mm 16mm; box-shadow: none; }
-      a { color: inherit !important; text-decoration: none !important; }
-      .cv-contact a { color: var(--navy2) !important; }
+    /* ── Transition ── */
+    #cvRoot{transition:opacity .15s;}
+    #cvRoot.fading{opacity:0;}
+
+    /* ── PRINT ── */
+    @media print{
+      body{background:#fff;}
+      .abar,.prof-bar{display:none!important;}
+      .cv-wrap{max-width:100%;margin:0;padding:0;}
+      .cv-page{padding:12mm 15mm 15mm;box-shadow:none;}
+      a{color:inherit!important;text-decoration:none!important;}
+      .cv-contact a{color:var(--navy2)!important;}
+      .cv-profile-badge{display:none!important;}
     }
-    @page { size: A4; margin: 0; }
+    @page{size:A4;margin:0;}
   </style>
 </head>
 <body>
 
 <!-- ── Action bar ── -->
-<div class="action-bar">
-  <a class="back" href="index.html">&#8592; Back to Portfolio</a>
-  <span class="ab-hint">For best PDF: Chrome / Edge &rarr; Print &rarr; Save as PDF &rarr; A4, no margins</span>
-  <button class="ab-btn ab-btn-docx" id="docxBtn" onclick="downloadDocx()">&#8595; Download DOCX</button>
-  <button class="ab-btn ab-btn-pdf"  onclick="window.print()">&#128438; Save as PDF</button>
+<div class="abar">
+  <a class="back" href="index.html">&#8592; Portfolio</a>
+  <span style="font-size:.72rem;color:rgba(255,255,255,.4);">PDF: Chrome → Print → Save as PDF → A4, no margins</span>
+  <button class="abtn abtn-doc" id="docxBtn" onclick="downloadDocx()">&#8595; Download DOCX</button>
+  <button class="abtn abtn-pdf" onclick="window.print()">&#128438; Save as PDF</button>
 </div>
 
-<!-- ── CV page (rendered by JS from data.js) ── -->
-<div class="cv-page" id="cvRoot"></div>
+<!-- ── Profile selector ── -->
+<div class="prof-bar">
+  <p class="prof-hint">Select a CV profile — the document updates instantly</p>
+  <div class="prof-tabs" id="profTabs"></div>
+</div>
+
+<!-- ── CV ── -->
+<div class="cv-wrap">
+  <div class="cv-page">
+    <div id="cvRoot"></div>
+  </div>
+</div>
 
 <script src="js/data.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 <script>
-/* ── Tiny DOM helpers ── */
+/* ═══════════════════════════════════════════════════════
+   PROFILE DEFINITIONS
+═══════════════════════════════════════════════════════ */
+const PROFILES = {
+
+  database: {
+    id: 'database', label: 'Database Engineering', icon: '🗄️', type: 'industry',
+    summary: [
+      'PhD-trained computing lecturer and database practitioner with over 10 years of combined experience in enterprise database engineering, software development, applied machine learning, and higher education. Brings hands-on PostgreSQL expertise developed through academic teaching, module leadership, and applied research — including practical delivery of PostgreSQL laboratory sessions at the University of Warwick and current module leadership of Advanced Database Systems and Database Systems at QAHE / Ulster University.',
+      'Demonstrates comprehensive command of PostgreSQL administration, advanced SQL engineering, performance tuning, indexing strategy, MVCC and concurrency, data governance and UK GDPR compliance, ETL/ELT pipeline design, and high availability with replication. Fellow of the Higher Education Academy (FHEA), Member of the BCS and IET, with a strong record of structured, outcome-driven technical training delivery.',
+    ],
+    skillsLabel: 'Database Engineering Expertise',
+    skillsFirst: ['Database Engineering'],
+    skillsAlso:  ['Data Engineering','Software Engineering','Languages','ML / AI'],
+    projectKeys: ['MoSELA','Automated Marking'],
+    pubCount: 4,
+    teachingFirst: false,
+  },
+
+  ml: {
+    id: 'ml', label: 'Machine Learning / AI', icon: '🤖', type: 'industry',
+    summary: [
+      'PhD-trained machine learning researcher and computing lecturer specialising in AutoML, ensemble and meta-learning, and GAN-based synthetic data generation. Over 10 years of combined experience spanning end-to-end ML pipeline engineering, applied research, and higher education — with a track record of >99% classification accuracy on imbalanced datasets and an 80%+ throughput improvement through a novel stack ensemble meta-learning architecture.',
+      'Currently building production-grade AutoML frameworks (MoSELA, THA-AutoML) and leading MSc Computing programmes at QAHE / Ulster University. Author of 14+ peer-reviewed publications in machine learning, network security, and synthetic data generation. Fellow of the Higher Education Academy (FHEA), Member of the BCS, IET, and IEEE.',
+    ],
+    skillsLabel: 'Machine Learning & AI Expertise',
+    skillsFirst: ['ML / AI'],
+    skillsAlso:  ['Data Engineering','Software Engineering','Languages','Cyber Security','Database Engineering'],
+    projectKeys: ['MoSELA','THA-AutoML','Ensemble Meta','GAN-based'],
+    pubCount: 4,
+    teachingFirst: false,
+  },
+
+  security: {
+    id: 'security', label: 'Cyber Security', icon: '🔒', type: 'industry',
+    summary: [
+      'PhD-trained cyber security researcher and computing lecturer with expertise in network intrusion detection, cyber-physical systems security, and ML-based anomaly detection. Brings hands-on research and teaching experience across DDoS analysis, SDN security, rootkit analysis, and EV charging infrastructure protection — combining deep technical proficiency with applied machine learning for security-critical systems.',
+      'Research Fellow at the University of Warwick (2023–2024), investigating ML-based detection of cyber and cyber-physical attacks on EV charging infrastructure. OCPP v1.6, v1.6 Advanced, and v2.0+ certified. Published author across network intrusion detection, synthetic traffic generation, and cyber-physical security. Fellow of the Higher Education Academy (FHEA) and Member of the BCS and IET.',
+    ],
+    skillsLabel: 'Cyber Security & Technical Expertise',
+    skillsFirst: ['Cyber Security'],
+    skillsAlso:  ['ML / AI','Data Engineering','Languages','Software Engineering','Database Engineering'],
+    projectKeys: ['ML-driven Cyber','Ensemble Meta','GAN-based'],
+    pubCount: 4,
+    teachingFirst: false,
+    expReorder: ['Research Fellow','Senior Graduate','Full-time PhD','Deputy','Lecturer in Computing','Lecturer & Module'],
+  },
+
+  academic: {
+    id: 'academic', label: 'Academic / Research', icon: '🎓', type: 'academic',
+    summary: [
+      'PhD-trained academic and researcher with over 10 years of experience in higher education and applied research. Deputy Programme Leader and Lecturer in Computing at QAHE / Ulster University, with primary research interests in machine learning, ensemble and meta-learning, AutoML pipeline design, GAN-based synthetic data generation, and cyber-physical systems security.',
+      'Author of 14+ peer-reviewed publications in journals and international conference proceedings, including SN Computer Science, EIDWT (Springer), DeLTA (Springer), and IJMLC. Fellow of the Higher Education Academy (FHEA — PR336175), Member of the BCS, IET, and IEEE. Committed to research excellence, curriculum innovation, and impactful technology transfer.',
+    ],
+    skillsLabel: 'Research & Technical Competencies',
+    skillsFirst: ['ML / AI'],
+    skillsAlso:  ['Cyber Security','Data Engineering','Database Engineering','Software Engineering'],
+    allPubs: true,
+    teachingFirst: false,
+  },
+
+  edtech: {
+    id: 'edtech', label: 'EdTech Leadership', icon: '🏫', type: 'industry',
+    summary: [
+      'Fellow of the Higher Education Academy (FHEA) and Deputy Programme Leader at QAHE / Ulster University with over 10 years of experience in higher education leadership, curriculum design, and AI-powered educational technology. Specialises in designing structured pedagogical frameworks that deliver measurable outcomes — driving Digital Transformation student pass rates to 98%+ through the DT Studio initiative.',
+      'Creator of three production EdTech tools deployed across Birmingham, London, and Manchester campuses: the Digital Transformation Studio (Firebase + Claude API), the Automated Marking & Grading System (Llama 3.3 70B / Whisper), and the Live Marking Tracker. Member of the BCS, IET, and IEEE, with a strong commitment to responsible AI in education and inclusive, data-driven pedagogy.',
+    ],
+    skillsLabel: 'Educational Technology & Computing Expertise',
+    skillsFirst: ['AI in EdTech'],
+    skillsAlso:  ['Software Engineering','Database Engineering','ML / AI','Languages'],
+    projectKeys: ['Digital Transformation Studio','Automated Marking','Marking Tracker'],
+    pubCount: 3,
+    teachingFirst: true,
+  },
+};
+
+let currentProfileId = 'database';
+
+/* ═══════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════ */
 function strip(s){ return (s||'').replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/&gt;/g,'>').replace(/&lt;/g,'<').replace(/&nbsp;/g,' ').trim(); }
 function el(tag,cls,html){ const e=document.createElement(tag); if(cls)e.className=cls; if(html!==undefined)e.innerHTML=html; return e; }
 
-/* ═══════════════════════════════════════════════
-   RENDER CV ON SCREEN
-═══════════════════════════════════════════════ */
-function renderCV(){
-  const p = DATA.personal;
-  const root = document.getElementById('cvRoot');
+function makeJobBlock(j){
+  const w=el('div','cv-job');
+  const hr=el('div','cv-jh');
+  const tt=el('span','cv-jt'); tt.textContent=j.title; hr.appendChild(tt);
+  const dt=el('span','cv-jd'); dt.textContent=j.date;  hr.appendChild(dt);
+  w.appendChild(hr);
+  w.appendChild(el('div','cv-jo',j.org));
+  const ul=el('ul','cv-ul');
+  j.bullets.forEach(b=>{ const li=el('li'); li.innerHTML=b; ul.appendChild(li); });
+  w.appendChild(ul);
+  return w;
+}
 
-  /* — Header — */
-  const hdr = el('div');
-  const nm = el('div','cv-name'); nm.textContent = p.name; hdr.appendChild(nm);
-  const cr = el('div','cv-creds'); cr.textContent = 'PhD  ·  FHEA  ·  MBCS  ·  IET  ·  IEEE'; hdr.appendChild(cr);
+function makeHeader(p){
+  const hdr=el('div');
+  hdr.appendChild(el('div','cv-name',p.name));
+  hdr.appendChild(el('div','cv-creds','PhD  ·  FHEA  ·  MBCS  ·  IET  ·  IEEE'));
   hdr.appendChild(el('div','cv-contact',
     `<span>Birmingham, UK</span>
      <a href="mailto:${p.email}">${p.email}</a>
      <a href="https://www.drtertseghaanande.com" target="_blank">drtertseghaanande.com</a>
-     <a href="${p.linkedin}" target="_blank">LinkedIn Profile</a>
-     <a href="${p.github}" target="_blank">github.com/Tertsegha1</a>`
-  ));
-  hdr.appendChild(el('div','cv-rule-thick'));
-  root.appendChild(hdr);
-
-  /* — Professional Profile — */
-  root.appendChild(el('div','cv-sh','Professional Profile'));
-  root.appendChild(el('p','cv-p',
-    'PhD-trained computing lecturer and database practitioner with over 10 years of combined experience in enterprise ' +
-    'database engineering, software development, applied machine learning, and higher education. Brings hands-on PostgreSQL ' +
-    'expertise developed through academic teaching, module leadership, and applied research — including practical delivery ' +
-    'of PostgreSQL laboratory sessions at the University of Warwick and current module leadership of Advanced Database Systems ' +
-    'and Database Systems at QAHE / Ulster University (affiliated with Ulster University).'
-  ));
-  root.appendChild(el('p','cv-p',
-    'Demonstrates comprehensive command of PostgreSQL administration, advanced SQL engineering, performance tuning, indexing ' +
-    'strategy, MVCC and concurrency, data governance and UK GDPR compliance, ETL/ELT pipeline design, and high availability ' +
-    'with replication. Fellow of the Higher Education Academy (FHEA), Member of the BCS and IET, with a strong record of ' +
-    'structured, outcome-driven technical training delivery.'
-  ));
-
-  /* — Database Engineering Expertise — */
-  root.appendChild(el('div','cv-sh','Database Engineering Expertise'));
-  [
-    ['Core Platform',            'PostgreSQL 16  ·  SQL Engineering  ·  PL/pgSQL  ·  JSONB  ·  psql  ·  pgAdmin 4'],
-    ['Performance Tuning',       'EXPLAIN / EXPLAIN ANALYSE  ·  pg_stat_statements  ·  postgresql.conf Tuning  ·  pgBouncer  ·  pgBadger  ·  pgtune'],
-    ['Indexing',                 'B-tree  ·  GIN  ·  GiST  ·  BRIN  ·  Partial Indexes  ·  Covering Indexes  ·  Expression Indexes'],
-    ['Data Architecture',        'Partitioning & Sharding  ·  Replication & HA  ·  Patroni  ·  PITR  ·  Barman / pgBackRest'],
-    ['ETL / ELT',                'COPY / pgloader  ·  CDC (Logical Replication)  ·  dbt  ·  Apache Airflow  ·  postgres_fdw  ·  UPSERT / MERGE'],
-    ['Governance & Security',    'RBAC  ·  Row-Level Security  ·  pgAudit  ·  pgcrypto  ·  UK GDPR Compliance  ·  Data Masking  ·  TLS'],
-    ['Monitoring & Scale',       'Prometheus + Grafana  ·  postgres_exporter  ·  Citus  ·  pg_partman  ·  AWS RDS / Aurora'],
-    ['Additional Skills',        'Python  ·  Machine Learning  ·  AutoML  ·  Docker  ·  FastAPI  ·  Git / GitHub  ·  Bash'],
-  ].forEach(([k,v])=>root.appendChild(el('div','cv-skill-row',`<strong>${k}:</strong> ${v}`)));
-
-  /* — Professional Experience — */
-  root.appendChild(el('div','cv-sh','Professional Experience'));
-  [
-    { date:'Mar 2025 – Present', title:'Deputy Programme Leader & Module Leader',
-      org:'QAHE Limited / Ulster University — Birmingham, UK',
-      bullets:[
-        'Module Leader for <strong>Advanced Database Systems</strong> (Y2 UG) and <strong>Database Systems</strong> (Y2 UG) — covering relational design, SQL, normalisation, transactions, and PostgreSQL in enterprise contexts',
-        'Oversees curriculum QA across MSc Computing programmes; leads UX Strategies and Object-Oriented Design & Development',
-        'Mentors teaching staff; collaborates with Ulster University academic committees to validate QAA and industry alignment',
-      ]},
-    { date:'Jan 2024 – Present', title:'Lecturer in Computing & Module Leader',
-      org:'QAHE Limited / Ulster University — Birmingham, UK',
-      bullets:[
-        'Teaches UG and PG modules across databases, programming, software engineering, and web/UX engineering',
-        'Designed and deployed the Automated Marking & Grading System — AI-powered tool (Llama 3.3 70B / Whisper) contributing to a 98%+ student pass rate (2025–26 cohort)',
-        'Introduced the Digital Transformation Studio — a 12-week formative scaffold that reduced module failure rate to 1.14%',
-      ]},
-    { date:'Oct 2021 – Dec 2023', title:'Senior Graduate Teaching Assistant',
-      org:'University of Warwick — Coventry, UK',
-      bullets:[
-        '<strong>Delivered PostgreSQL laboratory sessions</strong> within the Computer Security module — covering database architecture, SQL engineering, query optimisation, indexing, and security-oriented data management',
-        'Coordinated a team of Graduate Teaching Assistants supporting 80+ students across seminars and practical labs',
-        'Lead Tutor for the Professional Skills module (2022), Department of Computer Science',
-      ]},
-    { date:'Dec 2023 – May 2024', title:'Research Fellow — ML for Power Grid & EV Charging Security',
-      org:'University of Warwick, School of Engineering — Coventry, UK',
-      bullets:[
-        'Applied machine learning to detect cyber and cyber-physical attacks on EV charging systems and smart-grid infrastructure',
-        'Obtained OCPP certification (v1.6, v1.6 Advanced, v2.0+); hands-on with ISO 15118 secure-charging standards',
-      ]},
-    { date:'Oct 2019 – Sept 2023', title:'Full-time PhD Researcher — Engineering (Communication Systems)',
-      org:'University of Warwick, School of Engineering — Coventry, UK',
-      bullets:[
-        'Built end-to-end ML pipelines for synthetic network traffic generation and multi-class attack classification; >99% detection accuracy on imbalanced datasets',
-        'Developed an enhanced Stack Ensemble Meta-Learning framework — boosting modelling performance and training throughput by over 80%',
-        'Presented at international conferences; authored 8+ peer-reviewed publications',
-      ]},
-    { date:'Nov 2014 – Oct 2019', title:'Lecturer & Module Leader',
-      org:'Federal University of Agriculture, Makurdi — Nigeria',
-      bullets:['Designed and delivered six computing and engineering modules; supervised 30+ students with a 100% pass rate']},
-  ].forEach(j=>{
-    const w = el('div','cv-job');
-    const hr = el('div','cv-job-head');
-    const tt = el('span','cv-job-title'); tt.textContent = j.title; hr.appendChild(tt);
-    const dt = el('span','cv-job-date');  dt.textContent = j.date;  hr.appendChild(dt);
-    w.appendChild(hr);
-    w.appendChild(el('div','cv-job-org',j.org));
-    const ul = el('ul','cv-ul');
-    j.bullets.forEach(b=>{ const li=el('li'); li.innerHTML=b; ul.appendChild(li); });
-    w.appendChild(ul);
-    root.appendChild(w);
-  });
-
-  /* — Education — */
-  root.appendChild(el('div','cv-sh','Education'));
-  [
-    ['PhD, Engineering (Communication Systems)',            'University of Warwick, UK',                         '2019 – 2023'],
-    ['MSc, Communication Systems',                          'Swansea University, UK',                            '2017 – 2018'],
-    ['B.Tech., Information and Communications Technology',  'Federal University of Technology, Yola, Nigeria',   '2008 – 2013'],
-  ].forEach(([d,i,y])=>{
-    const w=el('div','cv-job'); w.style.marginBottom='5px';
-    const hr=el('div','cv-job-head');
-    const tt=el('span','cv-job-title'); tt.textContent=d; hr.appendChild(tt);
-    const dt=el('span','cv-job-date');  dt.textContent=y; hr.appendChild(dt);
-    w.appendChild(hr); w.appendChild(el('div','cv-job-org',i)); root.appendChild(w);
-  });
-
-  /* — Teaching — */
-  root.appendChild(el('div','cv-sh','Teaching Portfolio  (★ = Module Leader)'));
-  const two = el('div','cv-two');
-  const pgD = el('div');
-  pgD.appendChild(el('p','cv-sm','<strong style="color:#0f2044">Postgraduate (MSc / PGD)</strong>'));
-  ['Digital Transformation (MSc) ★','Scalable Advanced Software Solutions (MSc) ★','Network Traffic Control & Organization (MSc)','High Performance Computing (Y4 / MSc)','Network Modelling & Simulation (MSc)','Numerical Methods (PGD)','Computer Programming (PGD)']
-    .forEach(m=>pgD.appendChild(el('p','cv-sm',m)));
-  two.appendChild(pgD);
-  const ugD = el('div');
-  ugD.appendChild(el('p','cv-sm','<strong style="color:#0f2044">Undergraduate</strong>'));
-  [['Advanced Database Systems (Y2) ★',true],['Database Systems (Y2)',true],['UX Strategies (Y3) ★',false],
-   ['Object-Oriented Design & Development (Y2) ★',false],['Computer Security (Y1)',false],['Web Application Development (Y2)',false],['High Performance Computing (Y3)',false]]
-    .forEach(([m,b])=>ugD.appendChild(el('p','cv-sm',b?`<strong style="color:#0f2044">${m}</strong>`:m)));
-  two.appendChild(ugD);
-  root.appendChild(two);
-
-  /* — Selected Publications — */
-  root.appendChild(el('div','cv-sh','Selected Publications  (14+ peer-reviewed)'));
-  [
-    '<strong>Anande, T., Alsaadi, S., & Leeson, M. (2024).</strong> Enhanced Modelling Performance with Boosting Ensemble Meta-Learning and Optuna Optimization. <em>SN Computer Science, 6(1), 12.</em> doi.org/10.1007/s42979-024-03544-3',
-    '<strong>Anande, T. J., & Leeson, M. S. (2023).</strong> Synthetic Network Traffic Data Generation and Classification of Advanced Persistent Threat Samples. <em>DeLTA 2023, Springer, pp. 1–18.</em>',
-    '<strong>Alsaadi, S., Anande, T. J., & Leeson, M. S. (2024).</strong> Comparative Analysis of 1D-CNN and 2D-CNN for Network Intrusion Detection in SDN. <em>EIDWT 2024, Springer, pp. 480–491.</em>',
-    '<strong>Anande, T. J., & Leeson, M. S. (2022).</strong> Generative Adversarial Networks (GANs): A Survey of Network Traffic Generation. <em>IJMLC, 12(6), 333–343.</em>',
-  ].forEach(pub=>root.appendChild(el('p','cv-pub',pub)));
-  root.appendChild(el('p','cv-sm','Full list available on request and at: scholar.google.com/citations?user=J5pMcosAAAAJ'));
-
-  /* — Memberships & Certifications — */
-  root.appendChild(el('div','cv-sh','Professional Memberships & Certifications'));
-  root.appendChild(el('div','cv-skill-row','<strong>Memberships:</strong> Fellow of the Higher Education Academy (FHEA, PR336175)  ·  Member of the BCS (MBCS)  ·  IET Member  ·  IEEE & ComSoc  ·  INSTICC'));
-  root.appendChild(el('div','cv-skill-row','<strong>Certifications:</strong> OCPP v1.6, v1.6 Advanced & v2.0+ (EV Charging Infrastructure)  ·  Build Basic GANs — DeepLearning.AI / Coursera  ·  Preparing to Teach in Higher Education  ·  Project Management & Science Communication  ·  Business, Innovation & Commercialisation for Researchers (Warwick Doctoral College)'));
-
-  /* — Footer — */
-  root.appendChild(el('div','cv-footer','www.drtertseghaanande.com &nbsp;|&nbsp; tertseghaanande@gmail.com &nbsp;|&nbsp; github.com/Tertsegha1'));
+     <a href="${p.linkedin}" target="_blank">LinkedIn</a>
+     <a href="${p.github}" target="_blank">github.com/Tertsegha1</a>`));
+  hdr.appendChild(el('div','cv-rule'));
+  return hdr;
 }
 
-/* ═══════════════════════════════════════════════
-   GENERATE & DOWNLOAD DOCX
-═══════════════════════════════════════════════ */
+function makeSkillsSection(profile){
+  const frag = document.createDocumentFragment();
+  frag.appendChild(el('div','cv-sh', profile.skillsLabel));
+
+  // Build ordered skill list from DATA.skills
+  const allSkills = DATA.skills;
+  const first = allSkills.filter(s => profile.skillsFirst.some(k => s.title.includes(k)));
+  const also  = (profile.skillsAlso || []).map(k => allSkills.find(s => s.title.includes(k))).filter(Boolean);
+  const ordered = [...first, ...also];
+
+  ordered.forEach(sk => {
+    const row = el('div','cv-sr');
+    row.innerHTML = `<strong>${sk.title}:</strong> ${sk.tags.join('  ·  ')}`;
+    frag.appendChild(row);
+  });
+  return frag;
+}
+
+function makeExperience(profile){
+  const frag = document.createDocumentFragment();
+  frag.appendChild(el('div','cv-sh','Professional Experience'));
+
+  let jobs = [...DATA.experience];
+  // Optionally reorder for security profile (Research Fellow first)
+  if(profile.expReorder){
+    jobs.sort((a,b)=>{
+      const ai = profile.expReorder.findIndex(k => a.title.includes(k));
+      const bi = profile.expReorder.findIndex(k => b.title.includes(k));
+      return (ai===-1?99:ai) - (bi===-1?99:bi);
+    });
+  }
+  jobs.forEach(j => frag.appendChild(makeJobBlock(j)));
+  return frag;
+}
+
+function makeTeaching(){
+  const frag = document.createDocumentFragment();
+  frag.appendChild(el('div','cv-sh','Teaching Portfolio  (★ = Module Leader)'));
+  const two = el('div','cv-2col');
+
+  const pgDiv = el('div');
+  pgDiv.appendChild(el('p','cv-sm','<strong style="color:#0f2044">Postgraduate (MSc / PGD)</strong>'));
+  DATA.teaching.postgraduate.forEach(m => {
+    pgDiv.appendChild(el('p','cv-sm', m.leader ? `<strong style="color:#0f2044">${m.label} ★</strong>` : m.label));
+  });
+  two.appendChild(pgDiv);
+
+  const ugDiv = el('div');
+  ugDiv.appendChild(el('p','cv-sm','<strong style="color:#0f2044">Undergraduate</strong>'));
+  DATA.teaching.undergraduate.forEach(m => {
+    const isDb = m.label.toLowerCase().includes('database');
+    ugDiv.appendChild(el('p','cv-sm',
+      m.leader
+        ? `<strong style="color:#0f2044">${m.label} ★</strong>`
+        : (isDb ? `<strong style="color:#0f2044">${m.label}</strong>` : m.label)
+    ));
+  });
+  two.appendChild(ugDiv);
+  frag.appendChild(two);
+  return frag;
+}
+
+function makeProjects(profile){
+  if(!profile.projectKeys || profile.projectKeys.length === 0) return null;
+  const frag = document.createDocumentFragment();
+  frag.appendChild(el('div','cv-sh','Selected Projects'));
+  const matched = DATA.projects.filter(p =>
+    profile.projectKeys.some(k => p.title.includes(k))
+  );
+  matched.forEach(proj => {
+    const card = el('div','cv-proj');
+    card.appendChild(el('div','cv-proj-title', strip(proj.title)));
+    card.appendChild(el('div','cv-proj-tech', proj.tech.slice(0,5).join('  ·  ')));
+    card.appendChild(el('div','cv-proj-desc', strip(proj.desc).substring(0,200) + '…'));
+    frag.appendChild(card);
+  });
+  return frag;
+}
+
+function makePublications(profile){
+  const frag = document.createDocumentFragment();
+  const pubs = DATA.publications;
+  const showAll = profile.allPubs;
+  const count = profile.pubCount || 4;
+
+  frag.appendChild(el('div','cv-sh', showAll ? 'Publications' : `Selected Publications  (${DATA.publications.journal.length + 2}+ peer-reviewed)`));
+
+  if(showAll){
+    // Academic format: all sections
+    frag.appendChild(el('p','cv-sm','<strong style="color:#0f2044">Journal Articles</strong>'));
+    pubs.journal.forEach(p => {
+      frag.appendChild(el('p','cv-pub',
+        `<strong>${p.authors}</strong> ${p.title}. <em>${p.year}.</em>${p.venue ? ' ' + strip(p.venue) : ''}`));
+    });
+    frag.appendChild(el('p','cv-sm','<strong style="color:#0f2044;margin-top:5px;display:block">Conference Papers</strong>'));
+    pubs.conference.forEach(p => {
+      frag.appendChild(el('p','cv-pub', `<strong>${p.authors}</strong> ${p.title}. <em>${p.year}.</em>`));
+    });
+    frag.appendChild(el('p','cv-sm','<strong style="color:#0f2044;margin-top:5px;display:block">Book</strong>'));
+    pubs.book.forEach(p => {
+      frag.appendChild(el('p','cv-pub', `<strong>${p.authors}</strong> <em>${p.title}.</em> ${p.venue || ''}`));
+    });
+    frag.appendChild(el('p','cv-sm','<strong style="color:#0f2044;margin-top:5px;display:block">In Preparation</strong>'));
+    pubs.inPrep.forEach(p => {
+      frag.appendChild(el('p','cv-pub', `<strong>${p.authors}</strong> ${p.title}. <em>Manuscript in preparation.</em>`));
+    });
+  } else {
+    // Industry format: top N from journal + all conference
+    const selected = pubs.journal.slice(0, count);
+    selected.forEach(p => {
+      frag.appendChild(el('p','cv-pub',
+        `<strong>${p.authors}</strong> ${p.title}. <em>${p.year}.</em>${p.venue ? ' ' + strip(p.venue) : ''}`));
+    });
+    pubs.conference.forEach(p => {
+      frag.appendChild(el('p','cv-pub', `<strong>${p.authors}</strong> ${p.title}. <em>${p.year}.</em>`));
+    });
+  }
+  frag.appendChild(el('p','cv-sm','<em>Full list: scholar.google.com/citations?user=J5pMcosAAAAJ</em>'));
+  return frag;
+}
+
+function makeResearchInterests(){
+  const frag = document.createDocumentFragment();
+  frag.appendChild(el('div','cv-sh','Research Interests'));
+  const grid = el('div','cv-ri');
+  DATA.research.forEach(r => grid.appendChild(el('div','cv-ri-item', r.title)));
+  frag.appendChild(grid);
+  return frag;
+}
+
+function makeMemberships(){
+  const frag = document.createDocumentFragment();
+  frag.appendChild(el('div','cv-sh','Professional Memberships & Certifications'));
+  frag.appendChild(el('div','cv-sr','<strong>Memberships:</strong> Fellow of the Higher Education Academy (FHEA, PR336175)  ·  Member of the BCS (MBCS)  ·  IET Member  ·  IEEE & ComSoc  ·  INSTICC'));
+  frag.appendChild(el('div','cv-sr','<strong>Certifications:</strong> OCPP v1.6, v1.6 Advanced & v2.0+ (EV Charging)  ·  Build Basic GANs — DeepLearning.AI / Coursera  ·  Preparing to Teach in Higher Education  ·  Project Management & Science Communication  ·  Business, Innovation & Commercialisation for Researchers (Warwick Doctoral College)'));
+  return frag;
+}
+
+function makeEducation(){
+  const frag = document.createDocumentFragment();
+  frag.appendChild(el('div','cv-sh','Education'));
+  DATA.education.forEach(e => {
+    const w=el('div','cv-job'); w.style.marginBottom='5px';
+    w.appendChild(el('div','cv-jt',e.degree));
+    w.appendChild(el('div','cv-jo',e.institution));
+    frag.appendChild(w);
+  });
+  return frag;
+}
+
+/* ═══════════════════════════════════════════════════════
+   RENDER
+═══════════════════════════════════════════════════════ */
+function renderCV(profileId){
+  currentProfileId = profileId;
+  const profile = PROFILES[profileId];
+  const p = DATA.personal;
+  const root = document.getElementById('cvRoot');
+
+  root.classList.add('fading');
+  setTimeout(()=>{
+    root.innerHTML = '';
+
+    // Header
+    root.appendChild(makeHeader(p));
+
+    // Profile badge
+    const badge = el('div','cv-profile-badge', `${profile.icon} ${profile.label} CV`);
+    root.appendChild(badge);
+
+    // Summary
+    profile.summary.forEach((s,i) => {
+      const pp = el('p','cv-p',s);
+      if(i>0) pp.style.marginTop='4px';
+      root.appendChild(pp);
+    });
+
+    if(profile.type === 'academic'){
+      // ── Academic layout ──
+      root.appendChild(makeResearchInterests());
+      root.appendChild(makeEducation());
+      root.appendChild(makeExperience(profile));
+      root.appendChild(makeTeaching());
+      root.appendChild(makePublications(profile));
+      root.appendChild(makeSkillsSection(profile));
+      root.appendChild(makeMemberships());
+
+    } else {
+      // ── Industry layout ──
+      root.appendChild(makeSkillsSection(profile));
+
+      if(profile.teachingFirst){
+        root.appendChild(makeTeaching());
+        root.appendChild(makeExperience(profile));
+      } else {
+        root.appendChild(makeExperience(profile));
+        root.appendChild(makeEducation());
+      }
+
+      const projFrag = makeProjects(profile);
+      if(projFrag) root.appendChild(projFrag);
+
+      if(!profile.teachingFirst) root.appendChild(makeTeaching());
+
+      root.appendChild(makePublications(profile));
+      root.appendChild(makeMemberships());
+    }
+
+    // Footer
+    root.appendChild(el('div','cv-footer',
+      'www.drtertseghaanande.com &nbsp;|&nbsp; tertseghaanande@gmail.com &nbsp;|&nbsp; github.com/Tertsegha1'
+    ));
+
+    root.classList.remove('fading');
+  }, 150);
+}
+
+/* ═══════════════════════════════════════════════════════
+   PROFILE TABS
+═══════════════════════════════════════════════════════ */
+function buildTabs(){
+  const bar = document.getElementById('profTabs');
+  Object.values(PROFILES).forEach(prof => {
+    const btn = el('button','ptab');
+    btn.innerHTML = `<span class="ptab-icon">${prof.icon}</span>${prof.label}`;
+    btn.dataset.id = prof.id;
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.ptab').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      renderCV(prof.id);
+    });
+    if(prof.id === 'database') btn.classList.add('active');
+    bar.appendChild(btn);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   DOCX DOWNLOAD (profile-aware)
+═══════════════════════════════════════════════════════ */
 async function downloadDocx(){
   const btn = document.getElementById('docxBtn');
   btn.textContent = 'Generating…'; btn.disabled = true;
+
   try {
     const {
       Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
       AlignmentType, LevelFormat, BorderStyle, WidthType,
-      TabStopType, TabStopPosition, PageNumber, Header, ExternalHyperlink,
+      TabStopType, PageNumber, Header, ExternalHyperlink,
     } = docx;
 
     const NAVY='0F2044', NAVY2='1A3260', GOLD='E8A020', DGRAY='2C3E50', MGRAY='5A6A7E';
     const CW = 9890;
-    const sp = (b,a)=>({spacing:{before:b,after:a}});
-    const run = (text,opts={})=>new TextRun({text,font:'Arial',...opts});
-    const bold = (text,opts={})=>run(text,{bold:true,...opts});
+    const sp=(b,a)=>({spacing:{before:b,after:a}});
+    const run=(t,o={})=>new TextRun({text:t,font:'Arial',...o});
+    const bold=(t,o={})=>run(t,{bold:true,...o});
 
-    function sh(text){
-      return new Paragraph({...sp(220,80),
+    function dsh(text){
+      return new Paragraph({...sp(200,70),
         border:{bottom:{style:BorderStyle.SINGLE,size:12,color:GOLD,space:4}},
-        children:[new TextRun({text:text.toUpperCase(),font:'Arial',size:21,bold:true,color:NAVY,characterSpacing:40})]});
+        children:[new TextRun({text:text.toUpperCase(),font:'Arial',size:19,bold:true,color:NAVY,characterSpacing:40})]});
     }
-    function jobBlock(date,title,org,bullets){
+    function dstrip(s){ return (s||'').replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/&gt;/g,'>'); }
+    function djob(j){
       return [
-        new Paragraph({...sp(140,0),tabStops:[{type:TabStopType.RIGHT,position:CW}],
-          children:[bold(title,{size:21,color:NAVY}),run('\t',{size:21}),run(date,{size:19,color:MGRAY,italics:true})]}),
-        new Paragraph({...sp(0,50),children:[run(org,{size:19,color:MGRAY,italics:true})]}),
-        ...bullets.map(b=>new Paragraph({numbering:{reference:'bul',level:0},...sp(0,30),
-          children:[run(strip(b),{size:19,color:DGRAY})]}))
+        new Paragraph({...sp(120,0),tabStops:[{type:TabStopType.RIGHT,position:CW}],
+          children:[bold(j.title,{size:20,color:NAVY}),run('\t',{size:20}),run(j.date,{size:18,color:MGRAY,italics:true})]}),
+        new Paragraph({...sp(0,40),children:[run(j.org,{size:18,color:MGRAY,italics:true})]}),
+        ...j.bullets.map(b=>new Paragraph({numbering:{reference:'bul',level:0},...sp(0,25),
+          children:[run(dstrip(b),{size:18,color:DGRAY})]}))
       ];
     }
-    function strip(s){ return (s||'').replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/&gt;/g,'>'); }
-    function chipRow(label,chips){
-      return new Paragraph({...sp(30,30),children:[bold(label+': ',{size:19,color:NAVY}),run(chips.join('  ·  '),{size:19,color:DGRAY})]});
+    function dchip(label,chips){
+      return new Paragraph({...sp(25,25),
+        children:[bold(label+': ',{size:18,color:NAVY}),run(chips.join('  ·  '),{size:18,color:DGRAY})]});
+    }
+    function dpub(p){
+      return new Paragraph({...sp(50,0),
+        children:[bold(p.authors+' ',{size:17}),run(p.title+'. ',{size:17,italics:true}),run(p.year+'.',{size:17})]});
     }
 
+    const profile = PROFILES[currentProfileId];
     const p = DATA.personal;
+
+    // Build skills paragraphs
+    const allSkills = DATA.skills;
+    const first = allSkills.filter(s => profile.skillsFirst.some(k => s.title.includes(k)));
+    const also  = (profile.skillsAlso||[]).map(k=>allSkills.find(s=>s.title.includes(k))).filter(Boolean);
+    const skillParas = [...first,...also].map(sk=>dchip(sk.title, sk.tags));
+
+    // Build experience paragraphs
+    let jobs = [...DATA.experience];
+    if(profile.expReorder){
+      jobs.sort((a,b)=>{
+        const ai=profile.expReorder.findIndex(k=>a.title.includes(k));
+        const bi=profile.expReorder.findIndex(k=>b.title.includes(k));
+        return (ai===-1?99:ai)-(bi===-1?99:bi);
+      });
+    }
+    const expParas = jobs.flatMap(j=>djob(j));
+
+    // Build education
+    const eduParas = DATA.education.flatMap(e=>[
+      new Paragraph({...sp(80,0),children:[bold(e.degree,{size:20,color:NAVY})]}),
+      new Paragraph({...sp(0,50),children:[run(e.institution,{size:18,color:MGRAY,italics:true})]})
+    ]);
+
+    // Build teaching table
+    const teachTable = new Table({
+      width:{size:CW,type:WidthType.DXA},
+      columnWidths:[Math.floor(CW/2),Math.ceil(CW/2)],
+      borders:{top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.NONE},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE},insideH:{style:BorderStyle.NONE},insideV:{style:BorderStyle.NONE}},
+      rows:[new TableRow({children:[
+        new TableCell({width:{size:Math.floor(CW/2),type:WidthType.DXA},margins:{top:40,bottom:40,left:0,right:120},
+          children:[
+            new Paragraph({...sp(0,40),children:[bold('Postgraduate (MSc / PGD)',{size:18,color:NAVY})]}),
+            ...DATA.teaching.postgraduate.map(m=>new Paragraph({...sp(0,18),children:[run(m.leader?m.label+' ★':m.label,{size:17,bold:m.leader,color:m.leader?NAVY:DGRAY})]}))
+          ]}),
+        new TableCell({width:{size:Math.ceil(CW/2),type:WidthType.DXA},margins:{top:40,bottom:40,left:120,right:0},
+          children:[
+            new Paragraph({...sp(0,40),children:[bold('Undergraduate',{size:18,color:NAVY})]}),
+            ...DATA.teaching.undergraduate.map(m=>{
+              const isDb=m.label.toLowerCase().includes('database');
+              return new Paragraph({...sp(0,18),children:[run(m.leader?m.label+' ★':m.label,{size:17,bold:m.leader||isDb,color:(m.leader||isDb)?NAVY:DGRAY})]});
+            })
+          ]})
+      ]})]
+    });
+
+    // Build publications
+    const pubParas = [];
+    if(profile.allPubs){
+      pubParas.push(new Paragraph({...sp(60,30),children:[bold('Journal Articles',{size:18,color:NAVY})]}));
+      DATA.publications.journal.forEach(p=>pubParas.push(dpub(p)));
+      pubParas.push(new Paragraph({...sp(60,30),children:[bold('Conference Papers',{size:18,color:NAVY})]}));
+      DATA.publications.conference.forEach(p=>pubParas.push(dpub(p)));
+      pubParas.push(new Paragraph({...sp(60,30),children:[bold('Book',{size:18,color:NAVY})]}));
+      DATA.publications.book.forEach(p=>pubParas.push(dpub(p)));
+      pubParas.push(new Paragraph({...sp(60,30),children:[bold('In Preparation',{size:18,color:NAVY})]}));
+      DATA.publications.inPrep.forEach(p=>pubParas.push(dpub(p)));
+    } else {
+      DATA.publications.journal.slice(0,profile.pubCount||4).forEach(p=>pubParas.push(dpub(p)));
+      DATA.publications.conference.forEach(p=>pubParas.push(dpub(p)));
+    }
+    pubParas.push(new Paragraph({...sp(30,0),children:[run('Full list: scholar.google.com/citations?user=J5pMcosAAAAJ',{size:16,color:MGRAY,italics:true})]}));
+
+    // Build projects
+    const projParas = [];
+    if(profile.projectKeys && profile.projectKeys.length>0){
+      projParas.push(dsh('Selected Projects'));
+      DATA.projects.filter(p=>profile.projectKeys.some(k=>p.title.includes(k))).forEach(proj=>{
+        projParas.push(new Paragraph({...sp(80,0),children:[bold(dstrip(proj.title),{size:19,color:NAVY})]}));
+        projParas.push(new Paragraph({...sp(0,20),children:[run(proj.tech.slice(0,5).join(' · '),{size:16,color:GOLD})]}));
+        projParas.push(new Paragraph({...sp(0,60),children:[run(dstrip(proj.desc).substring(0,220)+'…',{size:17,color:DGRAY})]}));
+      });
+    }
+
+    // Build research interests (academic only)
+    const riParas = [];
+    if(profile.type==='academic'){
+      riParas.push(dsh('Research Interests'));
+      const riText = DATA.research.map(r=>r.title).join('  ·  ');
+      riParas.push(new Paragraph({...sp(60,120),children:[run(riText,{size:18,color:DGRAY})]}));
+    }
+
+    // Assemble section order
+    const allChildren = [
+      // Name block
+      new Paragraph({...sp(0,0),children:[new TextRun({text:p.name,font:'Arial',size:48,bold:true,color:NAVY})]}),
+      new Paragraph({...sp(40,0),children:[run('PhD  ·  FHEA  ·  MBCS  ·  IET  ·  IEEE',{size:20,color:GOLD,bold:true})]}),
+      new Paragraph({...sp(40,70),tabStops:[{type:TabStopType.LEFT,position:2000},{type:TabStopType.LEFT,position:4900},{type:TabStopType.LEFT,position:7600}],
+        children:[run('Birmingham, UK',{size:18,color:MGRAY}),run('\t'),run(p.email,{size:18,color:MGRAY}),run('\t'),
+          new ExternalHyperlink({link:'https://www.drtertseghaanande.com',children:[new TextRun({text:'drtertseghaanande.com',font:'Arial',size:18,color:NAVY2,underline:{}})]}),
+          run('\t'),new ExternalHyperlink({link:p.linkedin,children:[new TextRun({text:'LinkedIn',font:'Arial',size:18,color:NAVY2,underline:{}})]})]}),
+      new Paragraph({...sp(0,140),border:{bottom:{style:BorderStyle.SINGLE,size:18,color:NAVY,space:1}},children:[]}),
+
+      // Profile label
+      new Paragraph({...sp(0,50),children:[run(`${profile.icon}  ${profile.label} CV`,{size:17,color:MGRAY,italics:true})]}),
+
+      // Summary
+      new Paragraph({...sp(0,0),children:[run(profile.summary[0],{size:18,color:DGRAY})]}),
+      new Paragraph({...sp(50,130),children:[run(profile.summary[1],{size:18,color:DGRAY})]}),
+    ];
+
+    if(profile.type==='academic'){
+      allChildren.push(...riParas);
+      allChildren.push(dsh('Education'),...eduParas,new Paragraph({...sp(120,0),children:[]}));
+      allChildren.push(dsh('Academic Experience'),...expParas,new Paragraph({...sp(120,0),children:[]}));
+      allChildren.push(dsh('Teaching Portfolio  (★ = Module Leader)'),teachTable,new Paragraph({...sp(120,0),children:[]}));
+      allChildren.push(dsh(profile.allPubs?'Publications':`Selected Publications  (${DATA.publications.journal.length+2}+ peer-reviewed)`),...pubParas,new Paragraph({...sp(120,0),children:[]}));
+      allChildren.push(dsh(profile.skillsLabel),...skillParas,new Paragraph({...sp(120,0),children:[]}));
+    } else {
+      allChildren.push(dsh(profile.skillsLabel),...skillParas,new Paragraph({...sp(120,0),children:[]}));
+      if(profile.teachingFirst){
+        allChildren.push(dsh('Teaching Portfolio  (★ = Module Leader)'),teachTable,new Paragraph({...sp(120,0),children:[]}));
+        allChildren.push(dsh('Professional Experience'),...expParas,new Paragraph({...sp(120,0),children:[]}));
+      } else {
+        allChildren.push(dsh('Professional Experience'),...expParas,new Paragraph({...sp(120,0),children:[]}));
+        allChildren.push(dsh('Education'),...eduParas,new Paragraph({...sp(120,0),children:[]}));
+      }
+      if(projParas.length) allChildren.push(...projParas,new Paragraph({...sp(120,0),children:[]}));
+      if(!profile.teachingFirst){ allChildren.push(dsh('Teaching Portfolio  (★ = Module Leader)'),teachTable,new Paragraph({...sp(120,0),children:[]})); }
+      allChildren.push(dsh(`Selected Publications`),...pubParas,new Paragraph({...sp(120,0),children:[]}));
+    }
+
+    allChildren.push(
+      dsh('Professional Memberships & Certifications'),
+      new Paragraph({...sp(50,30),children:[bold('Memberships: ',{size:18}),run('Fellow of the Higher Education Academy (FHEA, PR336175) · Member of the BCS (MBCS) · IET Member · IEEE & ComSoc · INSTICC',{size:18})]}),
+      new Paragraph({...sp(0,0),children:[bold('Certifications: ',{size:18}),run('OCPP v1.6, v1.6 Advanced & v2.0+ (EV Charging) · Build Basic GANs — DeepLearning.AI / Coursera · Preparing to Teach in Higher Education · Project Management & Science Communication · Business, Innovation & Commercialisation (Warwick Doctoral College)',{size:18})]}),
+      new Paragraph({...sp(140,0),border:{bottom:{style:BorderStyle.SINGLE,size:4,color:'E1E8F0',space:1}},children:[]}),
+      new Paragraph({...sp(70,0),alignment:AlignmentType.CENTER,children:[run('www.drtertseghaanande.com   |   tertseghaanande@gmail.com   |   github.com/Tertsegha1',{size:16,color:MGRAY})]})
+    );
+
     const doc2 = new Document({
-      numbering:{config:[{reference:'bul',levels:[{level:0,format:LevelFormat.BULLET,text:'–',alignment:AlignmentType.LEFT,
-        style:{paragraph:{indent:{left:320,hanging:200}},run:{font:'Arial',color:GOLD}}}]}]},
-      styles:{default:{document:{run:{font:'Arial',size:21,color:DGRAY}}}},
+      numbering:{config:[{reference:'bul',levels:[{level:0,format:LevelFormat.BULLET,text:'–',
+        alignment:AlignmentType.LEFT,style:{paragraph:{indent:{left:300,hanging:180}},run:{font:'Arial',color:GOLD}}}]}]},
+      styles:{default:{document:{run:{font:'Arial',size:19,color:DGRAY}}}},
       sections:[{
         properties:{page:{size:{width:11906,height:16838},margin:{top:720,right:1008,bottom:720,left:1008}}},
         headers:{default:new Header({children:[new Paragraph({...sp(0,0),
           border:{bottom:{style:BorderStyle.SINGLE,size:6,color:GOLD,space:2}},
           tabStops:[{type:TabStopType.RIGHT,position:CW}],
-          children:[run('Dr. Tertsegha Joseph Anande',{size:17,color:MGRAY}),run('\t',{size:17}),
-            new TextRun({children:['Page ',PageNumber.CURRENT,' of ',PageNumber.TOTAL_PAGES],font:'Arial',size:17,color:MGRAY})]})]})} ,
-        children:[
-          // Name block
-          new Paragraph({...sp(0,0),children:[new TextRun({text:p.name,font:'Arial',size:52,bold:true,color:NAVY})]}),
-          new Paragraph({...sp(50,0),children:[run('PhD  ·  FHEA  ·  MBCS  ·  IET  ·  IEEE',{size:21,color:GOLD,bold:true})]}),
-          new Paragraph({...sp(50,80),tabStops:[{type:TabStopType.LEFT,position:2000},{type:TabStopType.LEFT,position:5000},{type:TabStopType.LEFT,position:7600}],
-            children:[run('Birmingham, UK',{size:19,color:MGRAY}),run('\t'),run(p.email,{size:19,color:MGRAY}),run('\t'),
-              new ExternalHyperlink({link:'https://www.drtertseghaanande.com',children:[new TextRun({text:'drtertseghaanande.com',font:'Arial',size:19,color:NAVY2,underline:{}})]}),
-              run('\t'),new ExternalHyperlink({link:p.linkedin,children:[new TextRun({text:'LinkedIn Profile',font:'Arial',size:19,color:NAVY2,underline:{}})]})]}),
-          new Paragraph({...sp(0,160),border:{bottom:{style:BorderStyle.SINGLE,size:18,color:NAVY,space:1}},children:[]}),
-
-          // Profile
-          sh('Professional Profile'),
-          new Paragraph({...sp(60,0),children:[run('PhD-trained computing lecturer and database practitioner with over 10 years of combined experience in enterprise database engineering, software development, applied machine learning, and higher education. Brings hands-on PostgreSQL expertise developed through academic teaching, module leadership, and applied research — including practical delivery of PostgreSQL laboratory sessions at the University of Warwick and current module leadership of Advanced Database Systems and Database Systems at QAHE / Ulster University.',{size:19,color:DGRAY})]}),
-          new Paragraph({...sp(60,160),children:[run('Demonstrates comprehensive command of PostgreSQL administration, advanced SQL engineering, performance tuning, indexing strategy, MVCC and concurrency, data governance and UK GDPR compliance, ETL/ELT pipeline design, and high availability with replication. Fellow of the Higher Education Academy (FHEA), Member of the BCS and IET, with a strong record of structured, outcome-driven technical training delivery.',{size:19,color:DGRAY})]}),
-
-          // DB Expertise
-          sh('Database Engineering Expertise'),
-          chipRow('Core Platform',         ['PostgreSQL 16','SQL Engineering','PL/pgSQL','JSONB','psql','pgAdmin 4']),
-          chipRow('Performance Tuning',    ['EXPLAIN / EXPLAIN ANALYSE','pg_stat_statements','postgresql.conf Tuning','pgBouncer','pgBadger']),
-          chipRow('Indexing',              ['B-tree','GIN','GiST','BRIN','Partial Indexes','Covering Indexes','Expression Indexes']),
-          chipRow('Data Architecture',     ['Partitioning & Sharding','Replication & HA','Patroni','PITR','Barman / pgBackRest']),
-          chipRow('ETL / ELT',             ['COPY / pgloader','CDC (Logical Replication)','dbt','Apache Airflow','postgres_fdw','UPSERT / MERGE']),
-          chipRow('Governance & Security', ['RBAC','Row-Level Security','pgAudit','pgcrypto','UK GDPR Compliance','Data Masking','TLS']),
-          chipRow('Monitoring & Scale',    ['Prometheus + Grafana','postgres_exporter','Citus','pg_partman','AWS RDS / Aurora']),
-          chipRow('Additional Skills',     ['Python','Machine Learning','AutoML','Docker','FastAPI','Git / GitHub','Bash']),
-          new Paragraph({...sp(160,0),children:[]}),
-
-          // Experience
-          sh('Professional Experience'),
-          ...jobBlock('Mar 2025 – Present','Deputy Programme Leader & Module Leader','QAHE Limited / Ulster University — Birmingham, UK',
-            ['Module Leader for Advanced Database Systems (Y2 UG) and Database Systems (Y2 UG) — covering relational design, SQL, normalisation, transactions, and PostgreSQL in enterprise contexts',
-             'Oversees curriculum QA across MSc Computing programmes; leads UX Strategies and Object-Oriented Design & Development',
-             'Mentors teaching staff; collaborates with Ulster University academic committees to validate QAA and industry alignment']),
-          ...jobBlock('Jan 2024 – Present','Lecturer in Computing & Module Leader','QAHE Limited / Ulster University — Birmingham, UK',
-            ['Teaches UG and PG modules across databases, programming, software engineering, and web/UX engineering',
-             'Designed and deployed the Automated Marking & Grading System — AI-powered tool contributing to a 98%+ student pass rate (2025–26 cohort)',
-             'Introduced the Digital Transformation Studio — a 12-week formative scaffold that reduced failure rate to 1.14%']),
-          ...jobBlock('Oct 2021 – Dec 2023','Senior Graduate Teaching Assistant','University of Warwick — Coventry, UK',
-            ['Delivered PostgreSQL laboratory sessions within the Computer Security module — covering database architecture, SQL engineering, query optimisation, indexing, and security-oriented data management',
-             'Coordinated a team of Graduate Teaching Assistants supporting 80+ students across seminars and practical labs',
-             'Lead Tutor for the Professional Skills module (2022), Department of Computer Science']),
-          ...jobBlock('Dec 2023 – May 2024','Research Fellow — ML for Power Grid & EV Charging Security','University of Warwick, School of Engineering — Coventry, UK',
-            ['Applied machine learning to detect cyber and cyber-physical attacks on EV charging systems and smart-grid infrastructure',
-             'Obtained OCPP certification (v1.6, v1.6 Advanced, v2.0+); hands-on with ISO 15118 secure-charging standards']),
-          ...jobBlock('Oct 2019 – Sept 2023','Full-time PhD Researcher — Engineering (Communication Systems)','University of Warwick, School of Engineering — Coventry, UK',
-            ['Built end-to-end ML pipelines achieving >99% detection accuracy on imbalanced network-traffic datasets',
-             'Developed enhanced Stack Ensemble Meta-Learning framework — boosting performance and throughput by over 80%',
-             'Presented at international conferences; authored 8+ peer-reviewed publications']),
-          ...jobBlock('Nov 2014 – Oct 2019','Lecturer & Module Leader','Federal University of Agriculture, Makurdi — Nigeria',
-            ['Designed and delivered six computing and engineering modules; supervised 30+ students with a 100% pass rate']),
-          new Paragraph({...sp(160,0),children:[]}),
-
-          // Education
-          sh('Education'),
-          ...['PhD, Engineering (Communication Systems)|University of Warwick, UK|2019 – 2023',
-              'MSc, Communication Systems|Swansea University, UK|2017 – 2018',
-              'B.Tech., Information and Communications Technology|Federal University of Technology, Yola, Nigeria|2008 – 2013'
-             ].flatMap(s=>{ const[d,i,y]=s.split('|'); return [
-               new Paragraph({...sp(100,0),tabStops:[{type:TabStopType.RIGHT,position:CW}],children:[bold(d,{size:21,color:NAVY}),run('\t'),run(y,{size:19,color:MGRAY,italics:true})]}),
-               new Paragraph({...sp(0,60),children:[run(i,{size:19,color:MGRAY,italics:true})]})
-             ]; }),
-          new Paragraph({...sp(160,0),children:[]}),
-
-          // Teaching
-          sh('Teaching Portfolio  (★ = Module Leader)'),
-          new Table({width:{size:CW,type:WidthType.DXA},columnWidths:[Math.floor(CW/2),Math.ceil(CW/2)],
-            borders:{top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.NONE},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE},insideH:{style:BorderStyle.NONE},insideV:{style:BorderStyle.NONE}},
-            rows:[new TableRow({children:[
-              new TableCell({width:{size:Math.floor(CW/2),type:WidthType.DXA},margins:{top:40,bottom:40,left:0,right:120},children:[
-                new Paragraph({...sp(0,40),children:[bold('Postgraduate (MSc / PGD)',{size:19,color:NAVY})]}),
-                ...['Digital Transformation (MSc) ★','Scalable Advanced Software Solutions (MSc) ★','Network Traffic Control & Organization (MSc)',
-                    'High Performance Computing (Y4 / MSc)','Network Modelling & Simulation (MSc)','Numerical Methods (PGD)']
-                  .map(m=>new Paragraph({...sp(0,20),children:[run(m,{size:18})]}))
-              ]}),
-              new TableCell({width:{size:Math.ceil(CW/2),type:WidthType.DXA},margins:{top:40,bottom:40,left:120,right:0},children:[
-                new Paragraph({...sp(0,40),children:[bold('Undergraduate',{size:19,color:NAVY})]}),
-                ...[ ['Advanced Database Systems (Y2) ★',true],['Database Systems (Y2)',true],
-                     ['UX Strategies (Y3) ★',false],['Object-Oriented Design & Development (Y2) ★',false],
-                     ['Computer Security (Y1)',false],['Web Application Development (Y2)',false],['High Performance Computing (Y3)',false] ]
-                  .map(([m,b])=>new Paragraph({...sp(0,20),children:[b?bold(m,{size:18,color:NAVY}):run(m,{size:18})]}))
-              ]})
-            ]})]
-          }),
-          new Paragraph({...sp(160,0),children:[]}),
-
-          // Publications
-          sh('Selected Publications  (14+ peer-reviewed)'),
-          ...['Anande, T., Alsaadi, S., & Leeson, M. (2024). Enhanced Modelling Performance with Boosting Ensemble Meta-Learning and Optuna Optimization. SN Computer Science, 6(1), 12. doi.org/10.1007/s42979-024-03544-3',
-              'Anande, T. J., & Leeson, M. S. (2023). Synthetic Network Traffic Data Generation and Classification of APT Samples. DeLTA 2023, Springer, pp. 1–18.',
-              'Alsaadi, S., Anande, T. J., & Leeson, M. S. (2024). Comparative Analysis of 1D-CNN and 2D-CNN for Network Intrusion Detection in SDN. EIDWT 2024, Springer, pp. 480–491.',
-              'Anande, T. J., & Leeson, M. S. (2022). Generative Adversarial Networks: A Survey of Network Traffic Generation. IJMLC, 12(6), 333–343.'
-             ].map(pub=>new Paragraph({...sp(60,0),children:[run(pub,{size:18})]})),
-          new Paragraph({...sp(40,160),children:[run('Full list: scholar.google.com/citations?user=J5pMcosAAAAJ',{size:17,color:MGRAY,italics:true})]}),
-
-          // Memberships
-          sh('Professional Memberships & Certifications'),
-          new Paragraph({...sp(60,40),children:[bold('Memberships: ',{size:19}),run('Fellow of the Higher Education Academy (FHEA, PR336175) · Member of the BCS (MBCS) · IET Member · IEEE & ComSoc · INSTICC',{size:19})]}),
-          new Paragraph({...sp(0,0),children:[bold('Certifications: ',{size:19}),run('OCPP v1.6, v1.6 Advanced & v2.0+ (EV Charging) · Build Basic GANs — DeepLearning.AI / Coursera · Preparing to Teach in Higher Education · Project Management & Science Communication · Business, Innovation & Commercialisation for Researchers (Warwick Doctoral College)',{size:19})]}),
-
-          // Footer rule
-          new Paragraph({...sp(160,0),border:{bottom:{style:BorderStyle.SINGLE,size:4,color:'E1E8F0',space:1}},children:[]}),
-          new Paragraph({...sp(80,0),alignment:AlignmentType.CENTER,children:[run('www.drtertseghaanande.com   |   tertseghaanande@gmail.com   |   github.com/Tertsegha1',{size:17,color:MGRAY})]})
-        ]
+          children:[run(`Dr. Tertsegha Anande  —  ${profile.label} CV`,{size:16,color:MGRAY}),run('\t'),
+            new TextRun({children:['Page ',PageNumber.CURRENT,' of ',PageNumber.TOTAL_PAGES],font:'Arial',size:16,color:MGRAY})]})]})} ,
+        children: allChildren,
       }]
     });
 
     const blob = await Packer.toBlob(doc2);
-    saveAs(blob, 'CV_Dr_Tertsegha_Anande.docx');
+    const filename = `CV_Tertsegha_Anande_${profile.label.replace(/[/ ]+/g,'_')}.docx`;
+    saveAs(blob, filename);
     btn.textContent = '✓ Downloaded';
   } catch(err){
     console.error(err);
-    btn.textContent = 'Error — try again';
+    btn.textContent = 'Error — see console';
   } finally {
     btn.disabled = false;
     setTimeout(()=>{ btn.textContent = '↓ Download DOCX'; }, 3000);
   }
 }
 
-renderCV();
+/* ── Init ── */
+buildTabs();
+renderCV('database');
 </script>
 </body>
 </html>
