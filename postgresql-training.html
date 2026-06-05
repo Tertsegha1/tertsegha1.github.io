@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PostgreSQL Executive Training — Dr. Tertsegha Anande</title>
+  <meta name="description" content="10-day PostgreSQL Database Fundamentals with Performance & Tuning executive programme delivered by Dr. Tertsegha Joseph Anande, Coventry UK, 22 June – 3 July 2026.">
+  <link rel="icon" href="assets/img/profile.jpg" type="image/jpeg">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* ── Remap lesson-plan design tokens to portfolio palette ── */
+    :root {
+      --color-background-primary:   #ffffff;
+      --color-background-secondary: #f5f7fa;
+      --color-background-info:      #dbeafe;
+      --color-background-success:   #dcfce7;
+      --color-background-warning:   #fef3c7;
+      --color-background-danger:    #fee2e2;
+      --color-text-primary:         #2c3e50;
+      --color-text-secondary:       #5a6a7e;
+      --color-text-tertiary:        #94a3b8;
+      --color-text-info:            #1d4ed8;
+      --color-text-success:         #15803d;
+      --color-text-warning:         #92400e;
+      --color-text-danger:          #991b1b;
+      --color-border-secondary:     #e1e8f0;
+      --color-border-tertiary:      #eef2f7;
+      --border-radius-md:           8px;
+      --border-radius-lg:           12px;
+      --font-sans:                  'Segoe UI', system-ui, -apple-system, sans-serif;
+      --font-mono:                  'Consolas', 'Courier New', monospace;
+    }
+    [data-theme="dark"] {
+      --color-background-primary:   #1f2937;
+      --color-background-secondary: #161d2b;
+      --color-background-info:      #1e3a5f;
+      --color-background-success:   #14532d;
+      --color-background-warning:   #451a03;
+      --color-background-danger:    #450a0a;
+      --color-text-primary:         #d1dce8;
+      --color-text-secondary:       #8898aa;
+      --color-text-tertiary:        #4b5563;
+      --color-text-info:            #93c5fd;
+      --color-text-success:         #86efac;
+      --color-text-warning:         #fcd34d;
+      --color-text-danger:          #fca5a5;
+      --color-border-secondary:     #1e2d42;
+      --color-border-tertiary:      #1a2535;
+    }
+
+    /* ── Page chrome ── */
+    .pg-header {
+      background: var(--navy);
+      color: var(--white);
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+    }
+    .pg-back {
+      color: var(--accent);
+      font-size: 0.88rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: color 0.2s;
+    }
+    .pg-back:hover { color: var(--accent2); }
+    .pg-header-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--white);
+      text-align: center;
+      flex: 1;
+    }
+    .pg-header-title span { color: var(--accent); }
+    .pg-header-meta {
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.65);
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .pg-hero {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy2) 100%);
+      color: var(--white);
+      padding: 4rem 2rem 3rem;
+      text-align: center;
+    }
+    .pg-hero-badge {
+      display: inline-block;
+      background: var(--accent);
+      color: var(--navy);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 14px;
+      border-radius: 20px;
+      margin-bottom: 1.25rem;
+      letter-spacing: 0.5px;
+    }
+    .pg-hero h1 {
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 0.75rem;
+    }
+    .pg-hero h1 span { color: var(--accent); }
+    .pg-hero-sub {
+      font-size: 1.05rem;
+      color: rgba(255,255,255,0.75);
+      margin-bottom: 2rem;
+    }
+    .pg-meta-chips {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.6rem;
+    }
+    .pg-chip {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: var(--white);
+      font-size: 0.8rem;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+
+    .pg-overview {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 3rem 2rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.25rem;
+    }
+    .pg-stat-card {
+      background: var(--color-background-secondary);
+      border: 1px solid var(--color-border-secondary);
+      border-radius: var(--border-radius-lg);
+      padding: 1.25rem 1.5rem;
+      text-align: center;
+    }
+    .pg-stat-card .num {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--navy);
+      line-height: 1;
+    }
+    [data-theme="dark"] .pg-stat-card .num { color: var(--accent); }
+    .pg-stat-card .lbl {
+      font-size: 0.8rem;
+      color: var(--color-text-secondary);
+      margin-top: 0.4rem;
+    }
+
+    .pg-content {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 2rem 4rem;
+    }
+    .pg-section-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--accent);
+      display: inline-block;
+    }
+    [data-theme="dark"] .pg-section-title { color: var(--color-text-primary); }
+
+    .pg-topics {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-bottom: 3rem;
+    }
+    .pg-topic-card {
+      background: var(--color-background-secondary);
+      border: 1px solid var(--color-border-secondary);
+      border-radius: var(--border-radius-lg);
+      padding: 1.25rem;
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+    }
+    .pg-topic-icon { font-size: 1.5rem; flex-shrink: 0; }
+    .pg-topic-title { font-size: 0.9rem; font-weight: 700; color: var(--color-text-primary); margin-bottom: 0.25rem; }
+    .pg-topic-desc { font-size: 0.8rem; color: var(--color-text-secondary); line-height: 1.5; }
+
+    /* ── Lesson plan component (from original file) ── */
+    .lp-root { padding: 1.5rem 0; font-family: var(--font-sans); }
+    .sr-only { position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0); }
+    .week-tabs { display:flex;gap:6px;margin-bottom:1.5rem;flex-wrap:wrap; }
+    .wtab { font-size:13px;padding:8px 20px;border-radius:var(--border-radius-md);border:1.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-secondary);cursor:pointer;transition:all 0.15s;font-weight:500; }
+    .wtab:hover { background:var(--color-background-secondary); }
+    .wtab.on { font-weight:600;color:var(--navy);background:var(--color-background-warning);border-color:var(--accent); }
+    [data-theme="dark"] .wtab.on { color:var(--accent); }
+    .week { display:none; }
+    .week.on { display:block; }
+    .day-card { background:var(--color-background-primary);border:1px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);margin-bottom:14px;overflow:hidden;box-shadow:0 2px 8px rgba(15,32,68,0.06); }
+    [data-theme="dark"] .day-card { box-shadow:none; }
+    .day-head { display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid var(--color-border-tertiary);cursor:pointer;user-select:none;transition:background 0.15s; }
+    .day-head:hover { background:var(--color-background-secondary); }
+    .day-num-badge { min-width:38px;height:38px;border-radius:var(--border-radius-md);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700; }
+    .day-title-block { flex:1; }
+    .day-title { font-size:15px;font-weight:600;color:var(--color-text-primary); }
+    .day-subtitle { font-size:12px;color:var(--color-text-secondary);margin-top:2px; }
+    .day-toggle { font-size:18px;color:var(--color-text-tertiary);transition:transform 0.2s; }
+    .day-toggle.open { transform:rotate(180deg); }
+    .day-body { display:none;padding:0 18px 18px; }
+    .day-body.open { display:block; }
+    .time-row { display:grid;grid-template-columns:90px minmax(0,1fr);gap:0;margin-top:14px; }
+    .time-label { font-size:11px;color:var(--color-text-tertiary);padding-top:14px;font-family:var(--font-mono);font-weight:500; }
+    .session { padding:10px 14px;border-radius:var(--border-radius-md);margin-bottom:8px; }
+    .session-title { font-size:13px;font-weight:600;margin-bottom:4px;color:var(--color-text-primary); }
+    .session-items { font-size:12px;line-height:1.75;color:var(--color-text-secondary); }
+    .session-items li { list-style:none;padding-left:16px;position:relative; }
+    .session-items li::before { content:"·";position:absolute;left:5px;color:var(--color-text-tertiary);font-size:14px; }
+    .tag { display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:99px;margin-right:4px;margin-top:8px;font-weight:600; }
+    .tag-lab     { background:var(--color-background-success);color:var(--color-text-success); }
+    .tag-theory  { background:var(--color-background-secondary);color:var(--color-text-secondary); }
+    .tag-demo    { background:var(--color-background-warning);color:var(--color-text-warning); }
+    .tag-assess  { background:var(--color-background-danger);color:var(--color-text-danger); }
+    .day-outcomes { margin-top:14px;padding:12px 14px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);border-left:3px solid var(--accent); }
+    .day-outcomes-title { font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px; }
+    .day-outcomes ul { font-size:12px;color:var(--color-text-secondary);line-height:1.8; }
+    .day-outcomes li { list-style:none;padding-left:16px;position:relative; }
+    .day-outcomes li::before { content:"✓";position:absolute;left:0;color:var(--color-text-success);font-size:10px;top:2px; }
+    .week-summary { display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:1.5rem; }
+    .ws-card { background:var(--color-background-secondary);border:1px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:12px;text-align:center; }
+    .ws-num { font-size:1.5rem;font-weight:700;color:var(--navy); }
+    [data-theme="dark"] .ws-num { color:var(--accent); }
+    .ws-label { font-size:11px;color:var(--color-text-tertiary);margin-top:4px; }
+
+    /* ── Footer ── */
+    .pg-footer {
+      background: var(--navy);
+      color: rgba(255,255,255,0.6);
+      text-align: center;
+      padding: 1.5rem;
+      font-size: 0.82rem;
+    }
+    .pg-footer a { color: var(--accent); }
+
+    @media (max-width: 640px) {
+      .pg-header { padding: 0.75rem 1rem; }
+      .pg-header-meta { display: none; }
+      .pg-hero { padding: 2.5rem 1.25rem 2rem; }
+      .pg-overview, .pg-content { padding-left: 1.25rem; padding-right: 1.25rem; }
+      .time-row { grid-template-columns: 70px minmax(0,1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Sticky page header ── -->
+<div id="scroll-progress"></div>
+<header class="pg-header">
+  <a class="pg-back" href="index.html">&#8592; Back to Portfolio</a>
+  <div class="pg-header-title">🗄️ <span>PostgreSQL</span> Executive Training</div>
+  <div class="pg-header-meta">Coventry, UK · Jun–Jul 2026</div>
+  <button id="dark-toggle" class="dark-toggle" aria-label="Switch to dark mode">☾</button>
+</header>
+
+<!-- ── Hero ── -->
+<div class="pg-hero">
+  <div class="pg-hero-badge">Executive Training Programme</div>
+  <h1>PostgreSQL Database Fundamentals<br><span>with Performance &amp; Tuning</span></h1>
+  <p class="pg-hero-sub">Delivered by Dr. Tertsegha Joseph Anande · PhD · FHEA · MBCS</p>
+  <div class="pg-meta-chips">
+    <span class="pg-chip">📍 Coventry, UK</span>
+    <span class="pg-chip">📅 22 June – 3 July 2026</span>
+    <span class="pg-chip">🕐 10 Full Days</span>
+    <span class="pg-chip">⚡ Offline / In-Person</span>
+    <span class="pg-chip">🏢 Executive Cohort</span>
+  </div>
+</div>
+
+<!-- ── Programme stats ── -->
+<div class="pg-overview">
+  <div class="pg-stat-card"><div class="num">10</div><div class="lbl">Training Days</div></div>
+  <div class="pg-stat-card"><div class="num">14</div><div class="lbl">Lab Sessions</div></div>
+  <div class="pg-stat-card"><div class="num">2</div><div class="lbl">Weeks</div></div>
+  <div class="pg-stat-card"><div class="num">1</div><div class="lbl">Capstone Project</div></div>
+  <div class="pg-stat-card"><div class="num">7</div><div class="lbl">Core Topic Areas</div></div>
+  <div class="pg-stat-card"><div class="num">4</div><div class="lbl">Assessments</div></div>
+</div>
+
+<!-- ── Topic overview cards ── -->
+<div class="pg-content">
+  <div class="pg-section-title">Programme Coverage</div>
+  <div class="pg-topics">
+    <div class="pg-topic-card">
+      <div class="pg-topic-icon">🏗️</div>
+      <div><div class="pg-topic-title">Architecture & Administration</div><div class="pg-topic-desc">Process model, memory layout, configuration, installation, schema design and PostgreSQL-native data types.</div></div>
+    </div>
+    <div class="pg-topic-card">
+      <div class="pg-topic-icon">⚙️</div>
+      <div><div class="pg-topic-title">Advanced SQL Engineering</div><div class="pg-topic-desc">Window functions, recursive CTEs, LATERAL joins, GROUPING SETS, JSONB querying, PL/pgSQL and triggers.</div></div>
+    </div>
+    <div class="pg-topic-card">
+      <div class="pg-topic-icon">🚀</div>
+      <div><div class="pg-topic-title">Indexing & Query Optimisation</div><div class="pg-topic-desc">B-tree, GIN, GiST, BRIN, partial, covering and expression indexes. EXPLAIN ANALYZE mastery. Partitioning.</div></div>
+    </div>
+    <div class="pg-topic-card">
+      <div class="pg-topic-icon">📊</div>
+      <div><div class="pg-topic-title">Performance Tuning</div><div class="pg-topic-desc">postgresql.conf masterclass, pg_stat_statements workload profiling, pgBadger log analysis, pgBouncer pooling.</div></div>
+    </div>
+    <div class="pg-topic-card">
+      <div class="pg-topic-icon">🔄</div>
+      <div><div class="pg-topic-title">Transactions, MVCC & Locking</div><div class="pg-topic-desc">MVCC internals, vacuum tuning, isolation levels, lock contention diagnosis and deadlock prevention.</div></div>
+    </div>
+    <div class="pg-topic-card">
+      <div class="pg-topic-icon">🔒</div>
+      <div><div class="pg-topic-title">Data Governance & Security</div><div class="pg-topic-desc">RBAC, row-level security, pgAudit, TLS, pgcrypto, UK GDPR compliance, data masking and retention policies.</div></div>
+    </div>
+    <div class="pg-topic-card">
+      <div class="pg-topic-icon">🔁</div>
+      <div><div class="pg-topic-title">ETL/ELT & Data Pipelines</div><div class="pg-topic-desc">COPY, pgloader, FDWs, incremental loading, CDC with logical replication, dbt models and Airflow DAGs.</div></div>
+    </div>
+    <div class="pg-topic-card">
+      <div class="pg-topic-icon">🏛️</div>
+      <div><div class="pg-topic-title">High Availability & Enterprise Scale</div><div class="pg-topic-desc">Streaming replication, Patroni failover, PITR, Prometheus/Grafana monitoring, Citus sharding, cloud trade-offs.</div></div>
+    </div>
+  </div>
+
+  <!-- ── Detailed lesson plan ── -->
+  <div class="pg-section-title">Detailed Day-by-Day Lesson Plan</div>
+
+  <div class="lp-root">
+    <h2 class="sr-only">Detailed 10-day lesson plan for PostgreSQL executive training programme, Coventry, 22 June to 3 July 2026</h2>
+
+    <div class="week-tabs">
+      <button class="wtab on" onclick="showWeek('w1',this)">📅 Week 1 — Foundations &amp; SQL (22–26 Jun)</button>
+      <button class="wtab" onclick="showWeek('w2',this)">📅 Week 2 — Enterprise &amp; Scale (30 Jun–3 Jul)</button>
+    </div>
+
+    <!-- ═══════════════ WEEK 1 ═══════════════ -->
+    <div class="week on" id="w1">
+      <div class="week-summary">
+        <div class="ws-card"><div class="ws-num">5</div><div class="ws-label">Training days</div></div>
+        <div class="ws-card"><div class="ws-num">8</div><div class="ws-label">Lab sessions</div></div>
+        <div class="ws-card"><div class="ws-num">10+</div><div class="ws-label">Demo queries</div></div>
+        <div class="ws-card"><div class="ws-num">22–26</div><div class="ws-label">June 2026</div></div>
+      </div>
+
+      <!-- D1 -->
+      <div class="day-card">
+        <div class="day-head" onclick="toggle(this)">
+          <div class="day-num-badge" style="background:var(--color-background-info);color:var(--color-text-info)">D1</div>
+          <div class="day-title-block">
+            <div class="day-title">PostgreSQL architecture &amp; installation</div>
+            <div class="day-subtitle">Mon 22 June · Setting the foundations</div>
+          </div>
+          <span class="day-toggle">▾</span>
+        </div>
+        <div class="day-body">
+          <div class="time-row"><div class="time-label">09:00–09:30</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Programme kickoff &amp; introductions</div><ul class="session-items"><li>Trainer and cohort introductions</li><li>Learning objectives, schedule overview, ground rules</li><li>Verify all environments (VMs / Docker) are running</li></ul><span class="tag tag-theory">Setup</span></div></div></div>
+          <div class="time-row"><div class="time-label">09:30–11:00</div><div><div class="session" style="background:var(--color-background-info)"><div class="session-title" style="color:var(--color-text-info)">PostgreSQL in the enterprise landscape</div><ul class="session-items"><li>History: Ingres → PostgreSQL 16 evolution</li><li>Why PostgreSQL over Oracle / SQL Server / MySQL at scale</li><li>Process model: postmaster, backend processes, background workers</li><li>Memory architecture: shared_buffers, work_mem, WAL buffers</li><li>Storage layout: tablespaces, TOAST, 8 kB page structure</li></ul><span class="tag tag-theory">Theory</span><span class="tag tag-demo">Demo</span></div></div></div>
+          <div class="time-row"><div class="time-label">11:00–11:15</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Break</div></div></div></div>
+          <div class="time-row"><div class="time-label">11:15–12:30</div><div><div class="session" style="background:var(--color-background-info)"><div class="session-title" style="color:var(--color-text-info)">Installation, configuration &amp; first connections</div><ul class="session-items"><li>postgresql.conf, pg_hba.conf, pg_ident.conf hierarchy</li><li>ALTER SYSTEM, SHOW, pg_settings catalogue view</li><li>psql essentials: \l, \dt, \d+, \timing, \x</li><li>pgAdmin 4 orientation</li></ul><span class="tag tag-demo">Demo</span></div></div></div>
+          <div class="time-row"><div class="time-label">12:30–13:30</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Lunch</div></div></div></div>
+          <div class="time-row"><div class="time-label">13:30–15:00</div><div><div class="session" style="background:var(--color-background-success)"><div class="session-title" style="color:var(--color-text-success)">Lab 1 — Environment setup &amp; exploration</div><ul class="session-items"><li>Connect to PostgreSQL 16 instance via psql and pgAdmin</li><li>Load sample dataset (retail sales, ~2M rows)</li><li>Explore pg_stat_activity, pg_stat_bgwriter, pg_settings</li><li>Modify work_mem via ALTER SYSTEM and observe effect</li></ul><span class="tag tag-lab">Lab</span></div></div></div>
+          <div class="time-row"><div class="time-label">15:00–15:15</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Break</div></div></div></div>
+          <div class="time-row"><div class="time-label">15:15–16:30</div><div><div class="session" style="background:var(--color-background-info)"><div class="session-title" style="color:var(--color-text-info)">Schema design &amp; data types</div><ul class="session-items"><li>Schemas, databases, tablespaces — when to use each</li><li>PostgreSQL-specific types: JSONB, arrays, ranges, UUID, ENUM</li><li>Constraints: CHECK, EXCLUDE, DEFERRABLE foreign keys</li><li>Sequences and GENERATED columns</li></ul><span class="tag tag-theory">Theory</span></div></div></div>
+          <div class="time-row"><div class="time-label">16:30–17:00</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Day 1 recap &amp; Q&amp;A</div><ul class="session-items"><li>Key takeaways, open questions, preview of Day 2</li></ul></div></div></div>
+          <div class="day-outcomes"><div class="day-outcomes-title">Day 1 outcomes</div><ul><li>Navigate PostgreSQL's process and memory model confidently</li><li>Configure postgresql.conf for a development environment</li><li>Connect via psql and pgAdmin, inspect system catalogues</li><li>Design schemas using appropriate PostgreSQL-native types</li></ul></div>
+        </div>
+      </div>
+
+      <!-- D2 -->
+      <div class="day-card">
+        <div class="day-head" onclick="toggle(this)">
+          <div class="day-num-badge" style="background:var(--color-background-success);color:var(--color-text-success)">D2</div>
+          <div class="day-title-block">
+            <div class="day-title">Advanced SQL engineering</div>
+            <div class="day-subtitle">Tue 23 June · Beyond the basics</div>
+          </div>
+          <span class="day-toggle">▾</span>
+        </div>
+        <div class="day-body">
+          <div class="time-row"><div class="time-label">09:00–09:10</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Morning stand-up — Day 1 recap</div></div></div></div>
+          <div class="time-row"><div class="time-label">09:10–10:45</div><div><div class="session" style="background:var(--color-background-success)"><div class="session-title" style="color:var(--color-text-success)">Window functions &amp; analytical SQL</div><ul class="session-items"><li>OVER, PARTITION BY, ORDER BY, frame specifications</li><li>RANK, DENSE_RANK, ROW_NUMBER, NTILE</li><li>LAG, LEAD, FIRST_VALUE, LAST_VALUE, NTH_VALUE</li><li>Running totals, moving averages, cumulative distributions</li><li>Demo: regional sales rankings + 7-day rolling revenue</li></ul><span class="tag tag-theory">Theory</span><span class="tag tag-demo">Demo</span></div></div></div>
+          <div class="time-row"><div class="time-label">10:45–11:00</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Break</div></div></div></div>
+          <div class="time-row"><div class="time-label">11:00–12:30</div><div><div class="session" style="background:var(--color-background-success)"><div class="session-title" style="color:var(--color-text-success)">CTEs, recursive queries &amp; lateral joins</div><ul class="session-items"><li>WITH clause patterns, chained CTEs, materialisation hints</li><li>Recursive CTEs: org hierarchy, bill-of-materials, graph traversal</li><li>LATERAL: top-N per group, correlated subquery replacement</li><li>GROUPING SETS, ROLLUP, CUBE for multi-dimensional aggregation</li></ul><span class="tag tag-theory">Theory</span><span class="tag tag-demo">Demo</span></div></div></div>
+          <div class="time-row"><div class="time-label">12:30–13:30</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Lunch</div></div></div></div>
+          <div class="time-row"><div class="time-label">13:30–15:15</div><div><div class="session" style="background:var(--color-background-success)"><div class="session-title" style="color:var(--color-text-success)">Lab 2 — Advanced SQL workshop</div><ul class="session-items"><li>Exercise A: window function — top 3 products per category by revenue with dense rank</li><li>Exercise B: recursive CTE — traverse a 5-level employee hierarchy</li><li>Exercise C: LATERAL — latest 2 orders per customer without subquery</li><li>Exercise D: ROLLUP — regional × monthly sales cube</li></ul><span class="tag tag-lab">Lab</span></div></div></div>
+          <div class="time-row"><div class="time-label">15:15–15:30</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Break</div></div></div></div>
+          <div class="time-row"><div class="time-label">15:30–16:30</div><div><div class="session" style="background:var(--color-background-success)"><div class="session-title" style="color:var(--color-text-success)">JSONB &amp; PL/pgSQL</div><ul class="session-items"><li>JSONB operators: ->, ->>, #>, @>, jsonb_path_query</li><li>GIN indexing for JSONB; jsonb_agg, jsonb_build_object</li><li>PL/pgSQL: functions vs procedures, RETURN TABLE, exception handling</li><li>Triggers: BEFORE / AFTER, audit log pattern</li></ul><span class="tag tag-theory">Theory</span><span class="tag tag-demo">Demo</span></div></div></div>
+          <div class="time-row"><div class="time-label">16:30–17:00</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Day 2 recap &amp; Q&amp;A</div></div></div></div>
+          <div class="day-outcomes"><div class="day-outcomes-title">Day 2 outcomes</div><ul><li>Write window functions for ranking, moving averages and cumulative stats</li><li>Use recursive CTEs to traverse hierarchical data</li><li>Replace complex subqueries with LATERAL and CTEs</li><li>Query and index JSONB documents effectively</li><li>Write PL/pgSQL functions with error handling</li></ul></div>
+        </div>
+      </div>
+
+      <!-- D3 -->
+      <div class="day-card">
+        <div class="day-head" onclick="toggle(this)">
+          <div class="day-num-badge" style="background:var(--color-background-warning);color:var(--color-text-warning)">D3</div>
+          <div class="day-title-block">
+            <div class="day-title">Indexing strategy &amp; query optimisation</div>
+            <div class="day-subtitle">Wed 24 June · Make queries fly</div>
+          </div>
+          <span class="day-toggle">▾</span>
+        </div>
+        <div class="day-body">
+          <div class="time-row"><div class="time-label">09:00–09:10</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Morning stand-up — Day 2 recap</div></div></div></div>
+          <div class="time-row"><div class="time-label">09:10–10:45</div><div><div class="session" style="background:var(--color-background-warning)"><div class="session-title" style="color:var(--color-text-warning)">Index types &amp; selection strategy</div><ul class="session-items"><li>B-tree internals: page splits, fill factor, bloat detection</li><li>Hash indexes: equality-only use cases</li><li>GIN: JSONB, arrays, full-text search</li><li>GiST: ranges, PostGIS geometry, nearest-neighbour</li><li>BRIN: time-series, naturally ordered large tables</li><li>Partial indexes: WHERE clause filters</li><li>Covering indexes: INCLUDE columns, index-only scans</li><li>Expression indexes: LOWER(email), date_trunc patterns</li></ul><span class="tag tag-theory">Theory</span><span class="tag tag-demo">Demo</span></div></div></div>
+          <div class="time-row"><div class="time-label">10:45–11:00</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Break</div></div></div></div>
+          <div class="time-row"><div class="time-label">11:00–12:30</div><div><div class="session" style="background:var(--color-background-warning)"><div class="session-title" style="color:var(--color-text-warning)">Reading EXPLAIN ANALYZE</div><ul class="session-items"><li>Plan node anatomy: cost, rows, width, actual time</li><li>Seq Scan vs Index Scan vs Bitmap Heap Scan vs Index Only Scan</li><li>Hash Join vs Merge Join vs Nested Loop — when each wins</li><li>Using explain.depesz.com and PEV2 for visual analysis</li><li>EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) deep dive</li></ul><span class="tag tag-theory">Theory</span><span class="tag tag-demo">Demo</span></div></div></div>
+          <div class="time-row"><div class="time-label">12:30–13:30</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Lunch</div></div></div></div>
+          <div class="time-row"><div class="time-label">13:30–15:15</div><div><div class="session" style="background:var(--color-background-warning)"><div class="session-title" style="color:var(--color-text-warning)">Lab 3 — Index design challenge</div><ul class="session-items"><li>5 slow queries on the retail dataset — diagnose via EXPLAIN ANALYZE</li><li>Design and CREATE appropriate indexes (partial, covering, GIN)</li><li>Measure before/after execution time with \timing</li><li>Identify index bloat using pgstatindex extension</li></ul><span class="tag tag-lab">Lab</span></div></div></div>
+          <div class="time-row"><div class="time-label">15:15–15:30</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Break</div></div></div></div>
+          <div class="time-row"><div class="time-label">15:30–16:30</div><div><div class="session" style="background:var(--color-background-warning)"><div class="session-title" style="color:var(--color-text-warning)">Table partitioning</div><ul class="session-items"><li>Declarative partitioning: range, list, hash</li><li>Partition pruning, partition-wise joins and aggregates</li><li>pg_partman for automated partition management</li><li>Attaching / detaching partitions for data lifecycle management</li></ul><span class="tag tag-theory">Theory</span></div></div></div>
+          <div class="time-row"><div class="time-label">16:30–17:00</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Day 3 recap &amp; Q&amp;A</div></div></div></div>
+          <div class="day-outcomes"><div class="day-outcomes-title">Day 3 outcomes</div><ul><li>Select the correct index type for any given access pattern</li><li>Read and interpret EXPLAIN ANALYZE output fluently</li><li>Design partial and covering indexes to eliminate seq scans</li><li>Implement range and hash partitioning for large tables</li></ul></div>
+        </div>
+      </div>
+
+      <!-- D4 -->
+      <div class="day-card">
+        <div class="day-head" onclick="toggle(this)">
+          <div class="day-num-badge" style="background:var(--color-background-danger);color:var(--color-text-danger)">D4</div>
+          <div class="day-title-block">
+            <div class="day-title">Performance tuning deep dive</div>
+            <div class="day-subtitle">Thu 25 June · Diagnose &amp; fix real bottlenecks</div>
+          </div>
+          <span class="day-toggle">▾</span>
+        </div>
+        <div class="day-body">
+          <div class="time-row"><div class="time-label">09:00–09:10</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Morning stand-up — Day 3 recap</div></div></div></div>
+          <div class="time-row"><div class="time-label">09:10–10:45</div><div><div class="session" style="background:var(--color-background-danger)"><div class="session-title" style="color:var(--color-text-danger)">postgresql.conf tuning masterclass</div><ul class="session-items"><li>Memory: shared_buffers (25% RAM), effective_cache_size, work_mem strategy</li><li>WAL: wal_buffers, checkpoint_completion_target, synchronous_commit trade-offs</li><li>Planner: random_page_cost, seq_page_cost, default_statistics_target</li><li>Parallelism: max_parallel_workers, max_parallel_workers_per_gather</li><li>Using pgtune as a starting baseline</li></ul><span class="tag tag-theory">Theory</span><span class="tag tag-demo">Demo</span></div></div></div>
+          <div class="time-row"><div class="time-label">10:45–11:00</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Break</div></div></div></div>
+          <div class="time-row"><div class="time-label">11:00–12:30</div><div><div class="session" style="background:var(--color-background-danger)"><div class="session-title" style="color:var(--color-text-danger)">pg_stat_statements &amp; workload profiling</div><ul class="session-items"><li>Enabling pg_stat_statements in shared_preload_libraries</li><li>Top queries by total_time, mean_time, calls, stddev</li><li>Identifying N+1 patterns, over-fetching, missing indexes from stats</li><li>pgBadger log analysis: slow query report, lock waits, error patterns</li><li>pg_activity for real-time session monitoring</li></ul><span class="tag tag-demo">Demo</span></div></div></div>
+          <div class="time-row"><div class="time-label">12:30–13:30</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Lunch</div></div></div></div>
+          <div class="time-row"><div class="time-label">13:30–15:30</div><div><div class="session" style="background:var(--color-background-danger)"><div class="session-title" style="color:var(--color-text-danger)">Lab 4 — Performance audit</div><ul class="session-items"><li>Deliberately misconfigured database with 8 identified slow queries</li><li>Step 1: profile using pg_stat_statements and pgBadger log</li><li>Step 2: diagnose each query with EXPLAIN (ANALYZE, BUFFERS)</li><li>Step 3: apply fixes (indexes, config changes, query rewrites)</li><li>Step 4: document before/after metrics — present findings to group</li></ul><span class="tag tag-lab">Lab</span><span class="tag tag-assess">Assessment</span></div></div></div>
+          <div class="time-row"><div class="time-label">15:30–15:45</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Break</div></div></div></div>
+          <div class="time-row"><div class="time-label">15:45–16:30</div><div><div class="session" style="background:var(--color-background-danger)"><div class="session-title" style="color:var(--color-text-danger)">Connection pooling with pgBouncer</div><ul class="session-items"><li>Why max_connections is not the answer</li><li>Session vs transaction vs statement pooling modes</li><li>pgBouncer configuration, pool sizing formula</li><li>Monitoring: SHOW POOLS, SHOW STATS</li></ul><span class="tag tag-theory">Theory</span></div></div></div>
+          <div class="time-row"><div class="time-label">16:30–17:00</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Day 4 recap &amp; Q&amp;A</div></div></div></div>
+          <div class="day-outcomes"><div class="day-outcomes-title">Day 4 outcomes</div><ul><li>Tune postgresql.conf for a production workload from first principles</li><li>Use pg_stat_statements to identify highest-impact queries to optimise</li><li>Conduct a structured performance audit and present findings</li><li>Configure pgBouncer in transaction-pooling mode</li></ul></div>
+        </div>
+      </div>
+
+      <!-- D5 -->
+      <div class="day-card">
+        <div class="day-head" onclick="toggle(this)">
+          <div class="day-num-badge" style="background:var(--color-background-warning);color:var(--color-text-warning)">D5</div>
+          <div class="day-title-block">
+            <div class="day-title">Transactions, locking &amp; MVCC</div>
+            <div class="day-subtitle">Fri 26 June · Concurrency &amp; consistency</div>
+          </div>
+          <span class="day-toggle">▾</span>
+        </div>
+        <div class="day-body">
+          <div class="time-row"><div class="time-label">09:00–09:10</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Morning stand-up — Day 4 recap</div></div></div></div>
+          <div class="time-row"><div class="time-label">09:10–10:45</div><div><div class="session" style="background:var(--color-background-warning)"><div class="session-title" style="color:var(--color-text-warning)">MVCC internals &amp; vacuum</div><ul class="session-items"><li>xmin, xmax, cmin, cmax — the hidden transaction columns</li><li>Dead tuple accumulation and table bloat mechanics</li><li>Autovacuum: cost_delay, cost_limit, scale_factor, per-table tuning</li><li>VACUUM ANALYZE vs VACUUM FULL — when and why</li><li>Transaction ID wraparound: the critical enterprise DBA risk</li></ul><span class="tag tag-theory">Theory</span><span class="tag tag-demo">Demo</span></div></div></div>
+          <div class="time-row"><div class="time-label">10:45–11:00</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Break</div></div></div></div>
+          <div class="time-row"><div class="time-label">11:00–12:30</div><div><div class="session" style="background:var(--color-background-warning)"><div class="session-title" style="color:var(--color-text-warning)">Locking, isolation levels &amp; deadlocks</div><ul class="session-items"><li>Lock modes: ACCESS SHARE → ACCESS EXCLUSIVE</li><li>pg_locks and pg_blocking_pids() for lock investigation</li><li>Isolation levels: READ COMMITTED vs REPEATABLE READ vs SERIALIZABLE</li><li>Optimistic vs pessimistic locking strategies</li><li>Deadlock detection, log analysis, prevention patterns</li><li>Advisory locks for application-level coordination</li></ul><span class="tag tag-theory">Theory</span><span class="tag tag-demo">Demo</span></div></div></div>
+          <div class="time-row"><div class="time-label">12:30–13:30</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Lunch</div></div></div></div>
+          <div class="time-row"><div class="time-label">13:30–15:00</div><div><div class="session" style="background:var(--color-background-warning)"><div class="session-title" style="color:var(--color-text-warning)">Lab 5 — Concurrency simulation</div><ul class="session-items"><li>Demonstrate MVCC: two sessions reading same row at different snapshots</li><li>Reproduce and identify a deadlock using pg_locks</li><li>Compare isolation levels: phantom read in READ COMMITTED vs REPEATABLE READ</li><li>Tune autovacuum per-table for a high-write scenario table</li></ul><span class="tag tag-lab">Lab</span></div></div></div>
+          <div class="time-row"><div class="time-label">15:00–15:15</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Break</div></div></div></div>
+          <div class="time-row"><div class="time-label">15:15–16:30</div><div><div class="session" style="background:var(--color-background-warning)"><div class="session-title" style="color:var(--color-text-warning)">Week 1 review &amp; capstone brief</div><ul class="session-items"><li>Quiz: 10 questions covering Days 1–5</li><li>Open Q&amp;A and misconception clearing</li><li>Week 2 preview — governance, ETL, HA architecture</li><li>Issue capstone project brief (presented on Day 10)</li></ul><span class="tag tag-assess">Assessment</span></div></div></div>
+          <div class="day-outcomes"><div class="day-outcomes-title">Day 5 outcomes</div><ul><li>Explain MVCC and its impact on storage and performance</li><li>Tune autovacuum for high-write tables</li><li>Diagnose and resolve lock contention using pg_locks</li><li>Choose the appropriate isolation level for a given workload</li></ul></div>
+        </div>
+      </div>
+    </div><!-- /w1 -->
+
+    <!-- ═══════════════ WEEK 2 ═══════════════ -->
+    <div class="week" id="w2">
+      <div class="week-summary">
+        <div class="ws-card"><div class="ws-num">5</div><div class="ws-label">Training days</div></div>
+        <div class="ws-card"><div class="ws-num">6</div><div class="ws-label">Lab sessions</div></div>
+        <div class="ws-card"><div class="ws-num">1</div><div class="ws-label">Capstone project</div></div>
+        <div class="ws-card"><div class="ws-num">30 Jun–3 Jul</div><div class="ws-label">Dates</div></div>
+      </div>
+
+      <!-- D6 -->
+      <div class="day-card">
+        <div class="day-head" onclick="toggle(this)">
+          <div class="day-num-badge" style="background:var(--color-background-danger);color:var(--color-text-danger)">D6</div>
+          <div class="day-title-block">
+            <div class="day-title">Data governance, security &amp; compliance</div>
+            <div class="day-subtitle">Mon 30 June · Lock it down</div>
+          </div>
+          <span class="day-toggle">▾</span>
+        </div>
+        <div class="day-body">
+          <div class="time-row"><div class="time-label">09:00–09:10</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Morning stand-up — Week 1 summary</div></div></div></div>
+          <div class="time-row"><div class="time-label">09:10–10:45</div><div><div class="session" style="background:var(--color-background-danger)"><div class="session-title" style="color:var(--color-text-danger)">Authentication, RBAC &amp; privilege model</div><ul class="session-items"><li>pg_hba.conf: trust, md5, scram-sha-256, cert methods</li><li>Role inheritance, CREATE ROLE, GRANT/REVOKE hierarchy</li><li>Column-level privileges, default privileges</li><li>Row-level security: CREATE POLICY, ENABLE RLS, BYPASSRLS</li><li>Demo: multi-tenant data isolation with RLS</li></ul><span class="tag tag-theory">Theory</span><span class="tag tag-demo">Demo</span></div></div></div>
+          <div class="time-row"><div class="time-label">10:45–11:00</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Break</div></div></div></div>
+          <div class="time-row"><div class="time-label">11:00–12:30</div><div><div class="session" style="background:var(--color-background-danger)"><div class="session-title" style="color:var(--color-text-danger)">Auditing, encryption &amp; data masking</div><ul class="session-items"><li>pgAudit extension: session audit vs object audit</li><li>TLS configuration for connections, certificate rotation</li><li>pgcrypto: pgp_sym_encrypt, crypt(), gen_random_uuid()</li><li>PostgreSQL Anonymizer: dynamic and static masking</li><li>UK GDPR: right to erasure, pseudonymisation, audit trail requirements</li></ul><span class="tag tag-theory">Theory</span><span class="tag tag-demo">Demo</span></div></div></div>
+          <div class="time-row"><div class="time-label">12:30–13:30</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Lunch</div></div></div></div>
+          <div class="time-row"><div class="time-label">13:30–15:15</div><div><div class="session" style="background:var(--color-background-danger)"><div class="session-title" style="color:var(--color-text-danger)">Lab 6 — Governance implementation</div><ul class="session-items"><li>Scenario: UK financial services — implement RBAC for analyst, reporting, and admin roles</li><li>Apply RLS so each analyst only sees their assigned client accounts</li><li>Enable pgAudit, generate a sample audit report</li><li>Implement a GDPR deletion function using pseudonymisation</li></ul><span class="tag tag-lab">Lab</span></div></div></div>
+          <div class="time-row"><div class="time-label">15:15–15:30</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Break</div></div></div></div>
+          <div class="time-row"><div class="time-label">15:30–16:30</div><div><div class="session" style="background:var(--color-background-danger)"><div class="session-title" style="color:var(--color-text-danger)">Data lifecycle &amp; retention policies</div><ul class="session-items"><li>Implementing retention with partitioning + DROP PARTITION</li><li>Scheduled jobs: pg_cron for automated data lifecycle tasks</li><li>Documenting data lineage using pg_catalog comments</li></ul><span class="tag tag-theory">Theory</span></div></div></div>
+          <div class="time-row"><div class="time-label">16:30–17:00</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Day 6 recap &amp; Q&amp;A</div></div></div></div>
+          <div class="day-outcomes"><div class="day-outcomes-title">Day 6 outcomes</div><ul><li>Implement a least-privilege RBAC model with role inheritance</li><li>Apply row-level security for multi-tenant data isolation</li><li>Configure pgAudit for compliance-grade audit logging</li><li>Build GDPR-compliant deletion and pseudonymisation functions</li></ul></div>
+        </div>
+      </div>
+
+      <!-- D7 -->
+      <div class="day-card">
+        <div class="day-head" onclick="toggle(this)">
+          <div class="day-num-badge" style="background:var(--color-background-success);color:var(--color-text-success)">D7</div>
+          <div class="day-title-block">
+            <div class="day-title">ETL/ELT design &amp; pipelines</div>
+            <div class="day-subtitle">Tue 1 July · Move &amp; transform data reliably</div>
+          </div>
+          <span class="day-toggle">▾</span>
+        </div>
+        <div class="day-body">
+          <div class="time-row"><div class="time-label">09:00–09:10</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Morning stand-up — Day 6 recap</div></div></div></div>
+          <div class="time-row"><div class="time-label">09:10–10:45</div><div><div class="session" style="background:var(--color-background-success)"><div class="session-title" style="color:var(--color-text-success)">Bulk loading &amp; foreign data wrappers</div><ul class="session-items"><li>COPY FROM / TO: CSV, binary, delimiter options, error handling</li><li>pgloader for cross-database migrations (MySQL, SQLite → PostgreSQL)</li><li>postgres_fdw: CREATE SERVER, CREATE FOREIGN TABLE, pushdown</li><li>Staging schema patterns: raw → curated → serving</li></ul><span class="tag tag-theory">Theory</span><span class="tag tag-demo">Demo</span></div></div></div>
+          <div class="time-row"><div class="time-label">10:45–11:00</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Break</div></div></div></div>
+          <div class="time-row"><div class="time-label">11:00–12:30</div><div><div class="session" style="background:var(--color-background-success)"><div class="session-title" style="color:var(--color-text-success)">Incremental loading &amp; CDC</div><ul class="session-items"><li>Upsert patterns: INSERT … ON CONFLICT, MERGE (PG 15+)</li><li>Watermark-based incremental loads with updated_at</li><li>Logical replication as CDC: wal_level=logical, publications, subscriptions</li><li>pgoutput plugin; Debezium overview for event-driven architectures</li><li>Dead-letter table pattern for failed record handling</li></ul><span class="tag tag-theory">Theory</span><span class="tag tag-demo">Demo</span></div></div></div>
+          <div class="time-row"><div class="time-label">12:30–13:30</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Lunch</div></div></div></div>
+          <div class="time-row"><div class="time-label">13:30–15:00</div><div><div class="session" style="background:var(--color-background-success)"><div class="session-title" style="color:var(--color-text-success)">dbt &amp; Airflow with PostgreSQL</div><ul class="session-items"><li>dbt: models, materialisations (table, view, incremental, snapshot)</li><li>dbt tests, documentation, lineage graph</li><li>Apache Airflow: PostgresOperator, DAG design for ELT</li><li>Error handling, retries, alerting in Airflow</li></ul><span class="tag tag-demo">Demo</span></div></div></div>
+          <div class="time-row"><div class="time-label">15:00–15:15</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Break</div></div></div></div>
+          <div class="time-row"><div class="time-label">15:15–17:00</div><div><div class="session" style="background:var(--color-background-success)"><div class="session-title" style="color:var(--color-text-success)">Lab 7 — Build an ELT pipeline</div><ul class="session-items"><li>Load raw CSV files into staging using COPY</li><li>Create a postgres_fdw link to a secondary database</li><li>Write dbt incremental model: staging → analytics schema</li><li>Schedule pipeline with a simple Airflow DAG</li><li>Introduce a data error; implement dead-letter capture</li></ul><span class="tag tag-lab">Lab</span></div></div></div>
+          <div class="day-outcomes"><div class="day-outcomes-title">Day 7 outcomes</div><ul><li>Use COPY and pgloader for high-throughput bulk loads</li><li>Implement incremental loading with upsert and watermark patterns</li><li>Configure logical replication for CDC</li><li>Build a dbt incremental model and schedule it via Airflow</li></ul></div>
+        </div>
+      </div>
+
+      <!-- D8 -->
+      <div class="day-card">
+        <div class="day-head" onclick="toggle(this)">
+          <div class="day-num-badge" style="background:var(--color-background-info);color:var(--color-text-info)">D8</div>
+          <div class="day-title-block">
+            <div class="day-title">High availability, replication &amp; backup</div>
+            <div class="day-subtitle">Wed 2 July · Never lose data</div>
+          </div>
+          <span class="day-toggle">▾</span>
+        </div>
+        <div class="day-body">
+          <div class="time-row"><div class="time-label">09:00–09:10</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Morning stand-up — Day 7 recap</div></div></div></div>
+          <div class="time-row"><div class="time-label">09:10–10:45</div><div><div class="session" style="background:var(--color-background-info)"><div class="session-title" style="color:var(--color-text-info)">Streaming replication &amp; standby management</div><ul class="session-items"><li>WAL shipping vs streaming replication architecture</li><li>Primary setup: wal_level=replica, max_wal_senders, replication slots</li><li>Standby setup: pg_basebackup, primary_conninfo, pg_standby_signal</li><li>Synchronous vs asynchronous replication trade-offs</li><li>Monitoring: pg_stat_replication, replay lag</li></ul><span class="tag tag-theory">Theory</span><span class="tag tag-demo">Demo</span></div></div></div>
+          <div class="time-row"><div class="time-label">10:45–11:00</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Break</div></div></div></div>
+          <div class="time-row"><div class="time-label">11:00–12:30</div><div><div class="session" style="background:var(--color-background-info)"><div class="session-title" style="color:var(--color-text-info)">Patroni &amp; automated failover</div><ul class="session-items"><li>Patroni architecture: DCS (etcd/Consul/ZooKeeper), leader election</li><li>patroni.yml configuration walkthrough</li><li>patronictl: list, failover, switchover, reinit</li><li>HAProxy + Patroni for transparent connection routing</li><li>Split-brain prevention; fencing strategies</li></ul><span class="tag tag-theory">Theory</span><span class="tag tag-demo">Demo</span></div></div></div>
+          <div class="time-row"><div class="time-label">12:30–13:30</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Lunch</div></div></div></div>
+          <div class="time-row"><div class="time-label">13:30–15:00</div><div><div class="session" style="background:var(--color-background-info)"><div class="session-title" style="color:var(--color-text-info)">Backup strategy &amp; point-in-time recovery</div><ul class="session-items"><li>pg_dump / pg_dumpall: formats, parallel restore</li><li>pg_basebackup for PITR</li><li>Barman / pgBackRest: enterprise backup, retention, catalogue</li><li>Point-in-time recovery: recovery_target_time, recovery_target_lsn</li><li>RTO vs RPO: defining and testing recovery objectives</li></ul><span class="tag tag-theory">Theory</span><span class="tag tag-demo">Demo</span></div></div></div>
+          <div class="time-row"><div class="time-label">15:00–15:15</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Break</div></div></div></div>
+          <div class="time-row"><div class="time-label">15:15–17:00</div><div><div class="session" style="background:var(--color-background-info)"><div class="session-title" style="color:var(--color-text-info)">Lab 8 — HA failover &amp; PITR drill</div><ul class="session-items"><li>Set up 1-primary / 1-replica cluster with Patroni + etcd (Docker)</li><li>Perform a controlled switchover: observe zero-downtime</li><li>Simulate primary crash: verify automatic failover</li><li>Restore a dropped table using PITR to a target timestamp</li></ul><span class="tag tag-lab">Lab</span><span class="tag tag-assess">Assessment</span></div></div></div>
+          <div class="day-outcomes"><div class="day-outcomes-title">Day 8 outcomes</div><ul><li>Configure streaming replication with monitoring and lag alerting</li><li>Deploy Patroni for automatic failover with HAProxy routing</li><li>Execute a point-in-time recovery to a specific timestamp</li><li>Define RTO/RPO targets and map them to backup strategies</li></ul></div>
+        </div>
+      </div>
+
+      <!-- D9 -->
+      <div class="day-card">
+        <div class="day-head" onclick="toggle(this)">
+          <div class="day-num-badge" style="background:var(--color-background-info);color:var(--color-text-info)">D9</div>
+          <div class="day-title-block">
+            <div class="day-title">Enterprise architecture, monitoring &amp; scaling</div>
+            <div class="day-subtitle">Thu 3 July · Design for the real world</div>
+          </div>
+          <span class="day-toggle">▾</span>
+        </div>
+        <div class="day-body">
+          <div class="time-row"><div class="time-label">09:00–09:10</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Morning stand-up — Day 8 recap</div></div></div></div>
+          <div class="time-row"><div class="time-label">09:10–10:30</div><div><div class="session" style="background:var(--color-background-info)"><div class="session-title" style="color:var(--color-text-info)">Monitoring stack: Prometheus, Grafana &amp; alerting</div><ul class="session-items"><li>postgres_exporter: metrics configuration, custom queries</li><li>Key Grafana panels: connections, cache hit ratio, replication lag, checkpoint frequency, bloat</li><li>Alerting rules: long-running queries, replication lag, low cache hit</li><li>pgBadger for log-based reporting</li></ul><span class="tag tag-demo">Demo</span></div></div></div>
+          <div class="time-row"><div class="time-label">10:30–10:45</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Break</div></div></div></div>
+          <div class="time-row"><div class="time-label">10:45–12:15</div><div><div class="session" style="background:var(--color-background-info)"><div class="session-title" style="color:var(--color-text-info)">Scaling strategies: sharding, read replicas &amp; cloud</div><ul class="session-items"><li>Vertical vs horizontal scaling trade-offs</li><li>Read replica routing: pgBouncer, HAProxy, application-level</li><li>Citus extension: distributed tables, shard rebalancing, colocation</li><li>Cloud managed PostgreSQL: AWS RDS/Aurora, GCP Cloud SQL, Azure Database — trade-offs vs self-managed</li><li>pg_upgrade and logical replication upgrade path</li></ul><span class="tag tag-theory">Theory</span></div></div></div>
+          <div class="time-row"><div class="time-label">12:15–13:15</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Lunch</div></div></div></div>
+          <div class="time-row"><div class="time-label">13:15–15:00</div><div><div class="session" style="background:var(--color-background-info)"><div class="session-title" style="color:var(--color-text-info)">Architecture design workshop (team exercise)</div><ul class="session-items"><li>Teams of 3–4 design a PostgreSQL architecture for one scenario: e-commerce platform, NHS patient records, or fintech transaction ledger</li><li>Must address: HA topology, backup/recovery, access control, ETL pipeline, monitoring, scaling path</li><li>Prepare a 10-minute architecture presentation</li></ul><span class="tag tag-lab">Lab</span><span class="tag tag-assess">Assessment</span></div></div></div>
+          <div class="time-row"><div class="time-label">15:00–15:15</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Break</div></div></div></div>
+          <div class="time-row"><div class="time-label">15:15–17:00</div><div><div class="session" style="background:var(--color-background-info)"><div class="session-title" style="color:var(--color-text-info)">Architecture presentations + peer review</div><ul class="session-items"><li>Each team presents their architecture (10 mins + 5 mins Q&amp;A)</li><li>Structured peer critique using provided rubric</li><li>Trainer feedback on each design</li></ul><span class="tag tag-assess">Assessment</span></div></div></div>
+          <div class="day-outcomes"><div class="day-outcomes-title">Day 9 outcomes</div><ul><li>Build a Prometheus + Grafana monitoring stack for PostgreSQL</li><li>Define scaling strategies appropriate to different workload profiles</li><li>Design and present a complete enterprise PostgreSQL architecture</li></ul></div>
+        </div>
+      </div>
+
+      <!-- D10 -->
+      <div class="day-card">
+        <div class="day-head" onclick="toggle(this)">
+          <div class="day-num-badge" style="background:var(--color-background-warning);color:var(--color-text-warning)">D10</div>
+          <div class="day-title-block">
+            <div class="day-title">Capstone project &amp; programme close</div>
+            <div class="day-subtitle">Fri 4 July · Bring it all together</div>
+          </div>
+          <span class="day-toggle">▾</span>
+        </div>
+        <div class="day-body">
+          <div class="time-row"><div class="time-label">09:00–09:15</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Final morning stand-up &amp; capstone briefing</div></div></div></div>
+          <div class="time-row"><div class="time-label">09:15–12:00</div><div><div class="session" style="background:var(--color-background-warning)"><div class="session-title" style="color:var(--color-text-warning)">Capstone lab — end-to-end system build</div><ul class="session-items"><li>Task 1: Design and create a normalised schema (logistics company domain)</li><li>Task 2: Load data via COPY, validate constraints and report anomalies</li><li>Task 3: Write 4 analytical queries (window function, recursive CTE, JSONB, aggregation)</li><li>Task 4: Identify and fix 3 slow queries using EXPLAIN ANALYZE</li><li>Task 5: Implement RBAC and RLS for two user roles</li><li>Task 6: Write a dbt incremental model to populate a reporting table</li><li>Task 7: Document RTO/RPO plan and backup strategy</li></ul><span class="tag tag-lab">Lab</span><span class="tag tag-assess">Final Assessment</span></div></div></div>
+          <div class="time-row"><div class="time-label">12:00–13:00</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Lunch</div></div></div></div>
+          <div class="time-row"><div class="time-label">13:00–14:30</div><div><div class="session" style="background:var(--color-background-warning)"><div class="session-title" style="color:var(--color-text-warning)">Capstone presentations</div><ul class="session-items"><li>Each participant/pair presents their completed system (8 mins + questions)</li><li>Demonstrate working queries, explain design decisions, show security policies</li><li>Trainer and peer scoring using structured rubric</li></ul><span class="tag tag-assess">Assessment</span></div></div></div>
+          <div class="time-row"><div class="time-label">14:30–15:30</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Programme review &amp; knowledge consolidation</div><ul class="session-items"><li>Final quiz: 20 questions across all topic areas</li><li>Top misconceptions from the 10 days — definitive clarification</li><li>Trainer Q&amp;A: any outstanding questions</li></ul><span class="tag tag-assess">Assessment</span></div></div></div>
+          <div class="time-row"><div class="time-label">15:30–16:00</div><div><div class="session" style="background:var(--color-background-secondary)"><div class="session-title">Break</div></div></div></div>
+          <div class="time-row"><div class="time-label">16:00–17:00</div><div><div class="session" style="background:var(--color-background-warning)"><div class="session-title" style="color:var(--color-text-warning)">Closing session &amp; next steps</div><ul class="session-items"><li>Distribute resource pack: cheat sheets, reference links, recommended reading</li><li>Individual feedback forms</li><li>Certificates of completion</li><li>Recommended next steps: PostgreSQL community, mailing lists, PGConf, pgDay UK</li></ul></div></div></div>
+          <div class="day-outcomes"><div class="day-outcomes-title">Day 10 outcomes</div><ul><li>Demonstrate end-to-end PostgreSQL system design under exam conditions</li><li>Apply tuning, security, ETL and HA concepts in an integrated scenario</li><li>Leave with a structured reference pack and clear next-steps roadmap</li></ul></div>
+        </div>
+      </div>
+    </div><!-- /w2 -->
+  </div><!-- /lp-root -->
+
+  <!-- ── CTA ── -->
+  <div style="text-align:center;margin-top:3rem;padding:2.5rem;background:var(--color-background-secondary);border-radius:var(--border-radius-lg);border:1px solid var(--color-border-secondary);">
+    <p style="font-size:1rem;color:var(--color-text-secondary);margin-bottom:1.25rem;">Interested in this programme or a bespoke PostgreSQL training engagement?</p>
+    <a href="index.html#booking" class="btn btn-primary" style="margin-right:0.75rem;">📅 Book a Discussion</a>
+    <a href="index.html#contact" class="btn btn-outline">✉ Get in Touch</a>
+  </div>
+</div><!-- /pg-content -->
+
+<footer class="pg-footer">
+  <p>&copy; 2026 Dr. Tertsegha Joseph Anande &bull; PhD · FHEA · MBCS &bull;
+  <a href="index.html">Portfolio</a> &bull;
+  <a href="mailto:tertseghaanande@gmail.com">tertseghaanande@gmail.com</a></p>
+</footer>
+
+<script src="js/data.js"></script>
+<script>
+  /* Dark mode — reuse same logic as main site */
+  (function(){
+    const btn  = document.getElementById('dark-toggle');
+    const root = document.documentElement;
+    const apply = dark => {
+      root.setAttribute('data-theme', dark ? 'dark' : 'light');
+      btn.textContent = dark ? '☀' : '☾';
+    };
+    const stored = localStorage.getItem('theme');
+    apply(stored ? stored === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches);
+    btn.addEventListener('click', () => {
+      const isDark = root.getAttribute('data-theme') === 'dark';
+      apply(!isDark);
+      localStorage.setItem('theme', !isDark ? 'dark' : 'light');
+    });
+  })();
+
+  /* Scroll progress bar */
+  const bar = document.getElementById('scroll-progress');
+  window.addEventListener('scroll', () => {
+    bar.style.width = Math.min(window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100, 100) + '%';
+  }, { passive: true });
+
+  /* Lesson plan interactions */
+  function showWeek(id, btn) {
+    document.querySelectorAll('.week').forEach(w => w.classList.remove('on'));
+    document.querySelectorAll('.wtab').forEach(b => b.classList.remove('on'));
+    document.getElementById(id).classList.add('on');
+    btn.classList.add('on');
+  }
+  function toggle(head) {
+    const body = head.nextElementSibling;
+    const icon = head.querySelector('.day-toggle');
+    const open = body.classList.toggle('open');
+    icon.classList.toggle('open', open);
+  }
+</script>
+</body>
+</html>

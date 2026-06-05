@@ -272,7 +272,9 @@ const DATA = {
         "Replication & HA",
         "Enterprise Data Systems"
       ],
-      "links": []
+      "links": [
+        { "label": "📋 View Full Lesson Plan", "url": "postgresql-training.html" }
+      ]
     },
     {
       "icon": "🤖",
