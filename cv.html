@@ -120,8 +120,9 @@
     }
 
     /* ── Transition ── */
-    #cvRoot{transition:opacity .15s;}
-    #cvRoot.fading{opacity:0;}
+    #cvRoot{animation:none;}
+    @keyframes cvFadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+    #cvRoot.rendered{animation:cvFadeIn .2s ease both;}
 
     /* ── PRINT ── */
     @media print{
@@ -247,22 +248,18 @@ let currentProfileId = 'database';
 function strip(s){ return (s||'').replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/&gt;/g,'>').replace(/&lt;/g,'<').replace(/&nbsp;/g,' ').trim(); }
 function el(tag,cls,html){ const e=document.createElement(tag); if(cls)e.className=cls; if(html!==undefined)e.innerHTML=html; return e; }
 
-function makeJobBlock(j){
-  const w=el('div','cv-job');
-  const hr=el('div','cv-jh');
-  const tt=el('span','cv-jt'); tt.textContent=j.title; hr.appendChild(tt);
-  const dt=el('span','cv-jd'); dt.textContent=j.date;  hr.appendChild(dt);
-  w.appendChild(hr);
-  w.appendChild(el('div','cv-jo',j.org));
-  const ul=el('ul','cv-ul');
-  j.bullets.forEach(b=>{ const li=el('li'); li.innerHTML=b; ul.appendChild(li); });
-  w.appendChild(ul);
-  return w;
+/* ── Section wrapper ── */
+function makeSection(heading, contentEl){
+  const wrap = el('div');
+  wrap.appendChild(el('div','cv-sh', heading));
+  if(contentEl) wrap.appendChild(contentEl);
+  return wrap;
 }
 
+/* ── Header ── */
 function makeHeader(p){
-  const hdr=el('div');
-  hdr.appendChild(el('div','cv-name',p.name));
+  const hdr = el('div');
+  const nm = el('div','cv-name'); nm.textContent = p.name; hdr.appendChild(nm);
   hdr.appendChild(el('div','cv-creds','PhD  ·  FHEA  ·  MBCS  ·  IET  ·  IEEE'));
   hdr.appendChild(el('div','cv-contact',
     `<span>Birmingham, UK</span>
@@ -274,30 +271,28 @@ function makeHeader(p){
   return hdr;
 }
 
-function makeSkillsSection(profile){
-  const frag = document.createDocumentFragment();
-  frag.appendChild(el('div','cv-sh', profile.skillsLabel));
-
-  // Build ordered skill list from DATA.skills
+/* ── Skills ── */
+function makeSkillsContent(profile){
+  const wrap = el('div');
   const allSkills = DATA.skills;
-  const first = allSkills.filter(s => profile.skillsFirst.some(k => s.title.includes(k)));
-  const also  = (profile.skillsAlso || []).map(k => allSkills.find(s => s.title.includes(k))).filter(Boolean);
-  const ordered = [...first, ...also];
-
-  ordered.forEach(sk => {
+  // Use exact title match to avoid substring collisions
+  const first = allSkills.filter(s => (profile.skillsFirst||[]).some(k => s.title === k));
+  const seen = new Set(first.map(s => s.title));
+  const also = (profile.skillsAlso||[])
+    .map(k => allSkills.find(s => s.title === k))
+    .filter(s => s && !seen.has(s.title));
+  [...first, ...also].forEach(sk => {
     const row = el('div','cv-sr');
-    row.innerHTML = `<strong>${sk.title}:</strong> ${sk.tags.join('  ·  ')}`;
-    frag.appendChild(row);
+    row.innerHTML = '<strong>' + sk.title + ':</strong> ' + sk.tags.join('  ·  ');
+    wrap.appendChild(row);
   });
-  return frag;
+  return wrap;
 }
 
-function makeExperience(profile){
-  const frag = document.createDocumentFragment();
-  frag.appendChild(el('div','cv-sh','Professional Experience'));
-
+/* ── Experience ── */
+function makeExperienceContent(profile){
+  const wrap = el('div');
   let jobs = [...DATA.experience];
-  // Optionally reorder for security profile (Research Fellow first)
   if(profile.expReorder){
     jobs.sort((a,b)=>{
       const ai = profile.expReorder.findIndex(k => a.title.includes(k));
@@ -305,123 +300,112 @@ function makeExperience(profile){
       return (ai===-1?99:ai) - (bi===-1?99:bi);
     });
   }
-  jobs.forEach(j => frag.appendChild(makeJobBlock(j)));
-  return frag;
+  jobs.forEach(j => {
+    const w = el('div','cv-job');
+    const hr = el('div','cv-jh');
+    const tt = el('span','cv-jt'); tt.textContent = j.title; hr.appendChild(tt);
+    const dt = el('span','cv-jd'); dt.textContent = j.date;  hr.appendChild(dt);
+    w.appendChild(hr);
+    const org = el('div','cv-jo'); org.textContent = j.org; w.appendChild(org);
+    const ul = el('ul','cv-ul');
+    j.bullets.forEach(b => { const li = el('li'); li.innerHTML = b; ul.appendChild(li); });
+    w.appendChild(ul);
+    wrap.appendChild(w);
+  });
+  return wrap;
 }
 
-function makeTeaching(){
-  const frag = document.createDocumentFragment();
-  frag.appendChild(el('div','cv-sh','Teaching Portfolio  (★ = Module Leader)'));
+/* ── Teaching ── */
+function makeTeachingContent(){
   const two = el('div','cv-2col');
-
   const pgDiv = el('div');
   pgDiv.appendChild(el('p','cv-sm','<strong style="color:#0f2044">Postgraduate (MSc / PGD)</strong>'));
   DATA.teaching.postgraduate.forEach(m => {
-    pgDiv.appendChild(el('p','cv-sm', m.leader ? `<strong style="color:#0f2044">${m.label} ★</strong>` : m.label));
+    pgDiv.appendChild(el('p','cv-sm',
+      m.leader ? '<strong style="color:#0f2044">' + m.label + ' ★</strong>' : m.label));
   });
   two.appendChild(pgDiv);
-
   const ugDiv = el('div');
   ugDiv.appendChild(el('p','cv-sm','<strong style="color:#0f2044">Undergraduate</strong>'));
   DATA.teaching.undergraduate.forEach(m => {
     const isDb = m.label.toLowerCase().includes('database');
     ugDiv.appendChild(el('p','cv-sm',
-      m.leader
-        ? `<strong style="color:#0f2044">${m.label} ★</strong>`
-        : (isDb ? `<strong style="color:#0f2044">${m.label}</strong>` : m.label)
-    ));
+      m.leader ? '<strong style="color:#0f2044">' + m.label + ' ★</strong>'
+               : (isDb ? '<strong style="color:#0f2044">' + m.label + '</strong>' : m.label)));
   });
   two.appendChild(ugDiv);
-  frag.appendChild(two);
-  return frag;
+  return two;
 }
 
-function makeProjects(profile){
-  if(!profile.projectKeys || profile.projectKeys.length === 0) return null;
-  const frag = document.createDocumentFragment();
-  frag.appendChild(el('div','cv-sh','Selected Projects'));
-  const matched = DATA.projects.filter(p =>
-    profile.projectKeys.some(k => p.title.includes(k))
-  );
-  matched.forEach(proj => {
-    const card = el('div','cv-proj');
-    card.appendChild(el('div','cv-proj-title', strip(proj.title)));
-    card.appendChild(el('div','cv-proj-tech', proj.tech.slice(0,5).join('  ·  ')));
-    card.appendChild(el('div','cv-proj-desc', strip(proj.desc).substring(0,200) + '…'));
-    frag.appendChild(card);
-  });
-  return frag;
+/* ── Projects ── */
+function makeProjectsContent(profile){
+  if(!profile.projectKeys || !profile.projectKeys.length) return null;
+  const wrap = el('div');
+  DATA.projects
+    .filter(p => profile.projectKeys.some(k => p.title.includes(k)))
+    .forEach(proj => {
+      const card = el('div','cv-proj');
+      card.appendChild(el('div','cv-proj-title', strip(proj.title)));
+      card.appendChild(el('div','cv-proj-tech', proj.tech.slice(0,5).join('  ·  ')));
+      card.appendChild(el('div','cv-proj-desc', strip(proj.desc).substring(0,200) + '…'));
+      wrap.appendChild(card);
+    });
+  return wrap;
 }
 
-function makePublications(profile){
-  const frag = document.createDocumentFragment();
+/* ── Publications ── */
+function makePublicationsContent(profile){
+  const wrap = el('div');
   const pubs = DATA.publications;
-  const showAll = profile.allPubs;
-  const count = profile.pubCount || 4;
-
-  frag.appendChild(el('div','cv-sh', showAll ? 'Publications' : `Selected Publications  (${DATA.publications.journal.length + 2}+ peer-reviewed)`));
-
-  if(showAll){
-    // Academic format: all sections
-    frag.appendChild(el('p','cv-sm','<strong style="color:#0f2044">Journal Articles</strong>'));
-    pubs.journal.forEach(p => {
-      frag.appendChild(el('p','cv-pub',
-        `<strong>${p.authors}</strong> ${p.title}. <em>${p.year}.</em>${p.venue ? ' ' + strip(p.venue) : ''}`));
-    });
-    frag.appendChild(el('p','cv-sm','<strong style="color:#0f2044;margin-top:5px;display:block">Conference Papers</strong>'));
-    pubs.conference.forEach(p => {
-      frag.appendChild(el('p','cv-pub', `<strong>${p.authors}</strong> ${p.title}. <em>${p.year}.</em>`));
-    });
-    frag.appendChild(el('p','cv-sm','<strong style="color:#0f2044;margin-top:5px;display:block">Book</strong>'));
-    pubs.book.forEach(p => {
-      frag.appendChild(el('p','cv-pub', `<strong>${p.authors}</strong> <em>${p.title}.</em> ${p.venue || ''}`));
-    });
-    frag.appendChild(el('p','cv-sm','<strong style="color:#0f2044;margin-top:5px;display:block">In Preparation</strong>'));
-    pubs.inPrep.forEach(p => {
-      frag.appendChild(el('p','cv-pub', `<strong>${p.authors}</strong> ${p.title}. <em>Manuscript in preparation.</em>`));
-    });
+  if(profile.allPubs){
+    wrap.appendChild(el('p','cv-sm','<strong style="color:#0f2044">Journal Articles</strong>'));
+    pubs.journal.forEach(p => wrap.appendChild(el('p','cv-pub',
+      '<strong>' + p.authors + '</strong> ' + p.title + '. <em>' + p.year + '.</em>' + (p.venue ? ' ' + strip(p.venue) : ''))));
+    wrap.appendChild(el('p','cv-sm','<strong style="color:#0f2044;margin-top:6px;display:block">Conference Papers</strong>'));
+    pubs.conference.forEach(p => wrap.appendChild(el('p','cv-pub',
+      '<strong>' + p.authors + '</strong> ' + p.title + '. <em>' + p.year + '.</em>')));
+    wrap.appendChild(el('p','cv-sm','<strong style="color:#0f2044;margin-top:6px;display:block">Book</strong>'));
+    pubs.book.forEach(p => wrap.appendChild(el('p','cv-pub',
+      '<strong>' + p.authors + '</strong> <em>' + p.title + '.</em> ' + (p.venue||''))));
+    wrap.appendChild(el('p','cv-sm','<strong style="color:#0f2044;margin-top:6px;display:block">In Preparation</strong>'));
+    pubs.inPrep.forEach(p => wrap.appendChild(el('p','cv-pub',
+      '<strong>' + p.authors + '</strong> ' + p.title + '. <em>Manuscript in preparation.</em>')));
   } else {
-    // Industry format: top N from journal + all conference
-    const selected = pubs.journal.slice(0, count);
-    selected.forEach(p => {
-      frag.appendChild(el('p','cv-pub',
-        `<strong>${p.authors}</strong> ${p.title}. <em>${p.year}.</em>${p.venue ? ' ' + strip(p.venue) : ''}`));
-    });
-    pubs.conference.forEach(p => {
-      frag.appendChild(el('p','cv-pub', `<strong>${p.authors}</strong> ${p.title}. <em>${p.year}.</em>`));
-    });
+    const count = profile.pubCount || 4;
+    pubs.journal.slice(0, count).forEach(p => wrap.appendChild(el('p','cv-pub',
+      '<strong>' + p.authors + '</strong> ' + p.title + '. <em>' + p.year + '.</em>' + (p.venue ? ' ' + strip(p.venue) : ''))));
+    pubs.conference.forEach(p => wrap.appendChild(el('p','cv-pub',
+      '<strong>' + p.authors + '</strong> ' + p.title + '. <em>' + p.year + '.</em>')));
   }
-  frag.appendChild(el('p','cv-sm','<em>Full list: scholar.google.com/citations?user=J5pMcosAAAAJ</em>'));
-  return frag;
+  wrap.appendChild(el('p','cv-sm','<em>Full list: scholar.google.com/citations?user=J5pMcosAAAAJ</em>'));
+  return wrap;
 }
 
-function makeResearchInterests(){
-  const frag = document.createDocumentFragment();
-  frag.appendChild(el('div','cv-sh','Research Interests'));
+/* ── Research Interests ── */
+function makeResearchInterestsContent(){
   const grid = el('div','cv-ri');
   DATA.research.forEach(r => grid.appendChild(el('div','cv-ri-item', r.title)));
-  frag.appendChild(grid);
-  return frag;
+  return grid;
 }
 
-function makeMemberships(){
-  const frag = document.createDocumentFragment();
-  frag.appendChild(el('div','cv-sh','Professional Memberships & Certifications'));
-  frag.appendChild(el('div','cv-sr','<strong>Memberships:</strong> Fellow of the Higher Education Academy (FHEA, PR336175)  ·  Member of the BCS (MBCS)  ·  IET Member  ·  IEEE & ComSoc  ·  INSTICC'));
-  frag.appendChild(el('div','cv-sr','<strong>Certifications:</strong> OCPP v1.6, v1.6 Advanced & v2.0+ (EV Charging)  ·  Build Basic GANs — DeepLearning.AI / Coursera  ·  Preparing to Teach in Higher Education  ·  Project Management & Science Communication  ·  Business, Innovation & Commercialisation for Researchers (Warwick Doctoral College)'));
-  return frag;
-}
-
-function makeEducation(){
-  const frag = document.createDocumentFragment();
-  frag.appendChild(el('div','cv-sh','Education'));
+/* ── Education ── */
+function makeEducationContent(){
+  const wrap = el('div');
   DATA.education.forEach(e => {
-    const w=el('div','cv-job'); w.style.marginBottom='5px';
-    w.appendChild(el('div','cv-jt',e.degree));
-    w.appendChild(el('div','cv-jo',e.institution));
-    frag.appendChild(w);
+    const w = el('div','cv-job'); w.style.marginBottom = '5px';
+    const tt = el('div','cv-jt'); tt.textContent = e.degree; w.appendChild(tt);
+    const io = el('div','cv-jo'); io.textContent = e.institution; w.appendChild(io);
+    wrap.appendChild(w);
   });
-  return frag;
+  return wrap;
+}
+
+/* ── Memberships ── */
+function makeMembershipsContent(){
+  const wrap = el('div');
+  wrap.appendChild(el('div','cv-sr','<strong>Memberships:</strong> Fellow of the Higher Education Academy (FHEA, PR336175)  ·  Member of the BCS (MBCS)  ·  IET Member  ·  IEEE & ComSoc  ·  INSTICC'));
+  wrap.appendChild(el('div','cv-sr','<strong>Certifications:</strong> OCPP v1.6, v1.6 Advanced & v2.0+ (EV Charging)  ·  Build Basic GANs — DeepLearning.AI / Coursera  ·  Preparing to Teach in Higher Education  ·  Project Management & Science Communication  ·  Business, Innovation & Commercialisation for Researchers (Warwick Doctoral College)'));
+  return wrap;
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -433,53 +417,61 @@ function renderCV(profileId){
   const p = DATA.personal;
   const root = document.getElementById('cvRoot');
 
-  root.classList.add('fading');
-  setTimeout(()=>{
+  // Render synchronously — no setTimeout fragility
+  try {
+    root.classList.remove('rendered');
     root.innerHTML = '';
 
     // Header
     root.appendChild(makeHeader(p));
 
     // Profile badge
-    const badge = el('div','cv-profile-badge', `${profile.icon} ${profile.label} CV`);
-    root.appendChild(badge);
+    root.appendChild(el('div','cv-profile-badge', `${profile.icon}  ${profile.label} CV`));
 
     // Summary
     profile.summary.forEach((s,i) => {
       const pp = el('p','cv-p',s);
-      if(i>0) pp.style.marginTop='4px';
+      if(i > 0) pp.style.marginTop = '4px';
       root.appendChild(pp);
     });
 
     if(profile.type === 'academic'){
-      // ── Academic layout ──
-      root.appendChild(makeResearchInterests());
-      root.appendChild(makeEducation());
-      root.appendChild(makeExperience(profile));
-      root.appendChild(makeTeaching());
-      root.appendChild(makePublications(profile));
-      root.appendChild(makeSkillsSection(profile));
-      root.appendChild(makeMemberships());
+      // ── Academic layout: research first, skills at the end ──
+      root.appendChild(makeSection('Research Interests', makeResearchInterestsContent()));
+      root.appendChild(makeSection('Education', makeEducationContent()));
+      root.appendChild(makeSection('Academic Experience', makeExperienceContent(profile)));
+      root.appendChild(makeSection('Teaching Portfolio  (★ = Module Leader)', makeTeachingContent()));
+      root.appendChild(makeSection(
+        'Publications',
+        makePublicationsContent(profile)
+      ));
+      root.appendChild(makeSection(profile.skillsLabel, makeSkillsContent(profile)));
+      root.appendChild(makeSection('Professional Memberships & Certifications', makeMembershipsContent()));
 
     } else {
       // ── Industry layout ──
-      root.appendChild(makeSkillsSection(profile));
+      root.appendChild(makeSection(profile.skillsLabel, makeSkillsContent(profile)));
 
       if(profile.teachingFirst){
-        root.appendChild(makeTeaching());
-        root.appendChild(makeExperience(profile));
+        root.appendChild(makeSection('Teaching Portfolio  (★ = Module Leader)', makeTeachingContent()));
+        root.appendChild(makeSection('Professional Experience', makeExperienceContent(profile)));
       } else {
-        root.appendChild(makeExperience(profile));
-        root.appendChild(makeEducation());
+        root.appendChild(makeSection('Professional Experience', makeExperienceContent(profile)));
+        root.appendChild(makeSection('Education', makeEducationContent()));
       }
 
-      const projFrag = makeProjects(profile);
-      if(projFrag) root.appendChild(projFrag);
+      const projContent = makeProjectsContent(profile);
+      if(projContent) root.appendChild(makeSection('Selected Projects', projContent));
 
-      if(!profile.teachingFirst) root.appendChild(makeTeaching());
+      if(!profile.teachingFirst){
+        root.appendChild(makeSection('Teaching Portfolio  (★ = Module Leader)', makeTeachingContent()));
+      }
 
-      root.appendChild(makePublications(profile));
-      root.appendChild(makeMemberships());
+      root.appendChild(makeSection(
+        profile.allPubs ? 'Publications' : `Selected Publications  (${DATA.publications.journal.length + 2}+ peer-reviewed)`,
+        makePublicationsContent(profile)
+      ));
+      root.appendChild(makeSection('Professional Memberships & Certifications', makeMembershipsContent()));
     }
 
     // Footer
@@ -487,8 +479,13 @@ function renderCV(profileId){
       'www.drtertseghaanande.com &nbsp;|&nbsp; tertseghaanande@gmail.com &nbsp;|&nbsp; github.com/Tertsegha1'
     ));
 
-    root.classList.remove('fading');
-  }, 150);
+  } catch(err){
+    console.error('CV render error:', err);
+    root.innerHTML = `<p style="color:red;padding:1rem;">Render error: ${err.message} — check console for details.</p>`;
+  }
+
+  // Trigger fade-in animation regardless of success/failure
+  requestAnimationFrame(()=> requestAnimationFrame(()=> root.classList.add('rendered')));
 }
 
 /* ═══════════════════════════════════════════════════════
