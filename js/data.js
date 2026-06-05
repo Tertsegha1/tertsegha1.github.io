@@ -25,7 +25,8 @@ const DATA = {
       "Cyber Security",
       "AI in Education",
       "Ensemble Learning",
-      "EV Security"
+      "EV Security",
+      "Database Engineering"
     ],
     "stats": [
       {
@@ -79,6 +80,7 @@ const DATA = {
       "assurance for MSc Computing programmes, lead three core modules, and have driven Digital Transformation student",
       "pass rates to <strong>98%+</strong> through the Digital Transformation Studio initiative and the",
       "AI-powered Automated Marking &amp; Grading System I designed and built.",
+      "I also bring hands-on expertise in <strong>enterprise database engineering</strong> — including PostgreSQL administration, advanced SQL optimisation, ETL/ELT pipeline design, performance tuning, and data governance — developed through academic teaching (University of Warwick), module leadership in Advanced Database Systems, and applied industry training delivery.",
       "I am an active open-source contributor with production-grade projects on GitHub, a Fellow",
       "of the Higher Education Academy (FHEA), and a Member of the BCS, IET, and IEEE."
     ]
@@ -158,6 +160,24 @@ const DATA = {
       ]
     },
     {
+      "icon": "🗄️",
+      "title": "Database Engineering",
+      "tags": [
+        "PostgreSQL",
+        "SQL Engineering",
+        "Query Optimisation",
+        "Performance Tuning",
+        "EXPLAIN / EXPLAIN ANALYSE",
+        "Indexing Strategies",
+        "Partitioning & Sharding",
+        "Replication & HA",
+        "Connection Pooling",
+        "ETL / ELT Workflows",
+        "Data Governance",
+        "Enterprise Data Systems"
+      ]
+    },
+    {
       "icon": "🏫",
       "title": "AI in EdTech",
       "tags": [
@@ -224,7 +244,7 @@ const DATA = {
       "title": "Senior Graduate Teaching Assistant",
       "org": "University of Warwick — Coventry, UK",
       "bullets": [
-        "Led programming and lab sessions; coordinated GTAs supporting 80+ students in seminars and practical labs"
+        "Delivered PostgreSQL lab sessions as part of the Computer Security module — covering database architecture, SQL engineering, query optimisation, and security-oriented data management; coordinated a team of GTAs supporting 80+ students across seminars and practical labs at the University of Warwick"
       ]
     },
     {
@@ -237,6 +257,23 @@ const DATA = {
     }
   ],
   "projects": [
+    {
+      "icon": "🗄️",
+      "badge": "Jun–Jul 2026",
+      "title": "PostgreSQL Executive Training Programme",
+      "desc": "Invited to design and deliver a two-week intensive executive training programme in Coventry, UK (22 June – 3 July 2026), covering PostgreSQL enterprise database management end-to-end. Curriculum spans: database architecture and administration, advanced SQL engineering and optimisation, performance tuning with EXPLAIN/EXPLAIN ANALYSE, indexing strategies, partitioning, replication and high availability, ETL/ELT pipeline design, data governance frameworks, and enterprise-scale data systems management. Delivered offline to a professional cohort requiring practical, production-grade capability.",
+      "tech": [
+        "PostgreSQL",
+        "SQL Engineering",
+        "Performance Tuning",
+        "ETL / ELT",
+        "Data Governance",
+        "Indexing & Partitioning",
+        "Replication & HA",
+        "Enterprise Data Systems"
+      ],
+      "links": []
+    },
     {
       "icon": "🤖",
       "badge": "2025–Present",
