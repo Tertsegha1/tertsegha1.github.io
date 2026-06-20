@@ -261,19 +261,24 @@ const DATA = {
       "icon": "🗄️",
       "badge": "Jun–Jul 2026",
       "title": "PostgreSQL Executive Training Programme",
-      "desc": "Invited to design and deliver a two-week intensive executive training programme in Coventry, UK (22 June – 3 July 2026), covering PostgreSQL enterprise database management end-to-end. Curriculum spans: database architecture and administration, advanced SQL engineering and optimisation, performance tuning with EXPLAIN/EXPLAIN ANALYSE, indexing strategies, partitioning, replication and high availability, ETL/ELT pipeline design, data governance frameworks, and enterprise-scale data systems management. Delivered offline to a professional cohort requiring practical, production-grade capability.",
+      "desc": "Designed and delivered as Lead Instructor for A UK Trade and Infrastructure Enterprise Limited (AUKTIE) — a two-week intensive executive training programme hosted at Coventry Conferences, The Techno Centre, Coventry University Technology Park (23 June – 3 July 2026). Theme: <em>Strengthening Enterprise Data Management, Digital Government Systems and Social Protection Delivery through PostgreSQL and International Best Practice</em>.<br><br>Programme spans 6 technical teaching days + a Coventry City Council study visit (local government digital transformation) + a Mid-Training Assessment day + a closing ceremony with group blueprint presentations and certificates. Daily timetable: 10:00–17:00. Full instructor guide, participant workbook, lesson plan, and registration &amp; attendance system authored end-to-end by Dr. Anande.<br><br><strong>Technical curriculum:</strong> PostgreSQL 18 architecture (WAL, MVCC, process/memory/storage); normalisation &amp; NSR schema design; DML/DDL, JOINs, window functions &amp; analytics; RBAC, Row-Level Security, backup &amp; disaster recovery; EXPLAIN ANALYSE, indexing strategies, partitioning, monitoring &amp; capacity planning; ETL/ELT pipeline design, data validation, deduplication; NDP Act 2023 data governance, master data management &amp; interoperability frameworks.",
       "tech": [
-        "PostgreSQL",
+        "PostgreSQL 18",
         "SQL Engineering",
-        "Performance Tuning",
+        "WAL / MVCC",
+        "RBAC & RLS",
+        "EXPLAIN ANALYSE",
+        "Indexing & Partitioning",
         "ETL / ELT",
         "Data Governance",
-        "Indexing & Partitioning",
-        "Replication & HA",
+        "NDP Act 2023",
+        "Backup & DR",
         "Enterprise Data Systems"
       ],
       "links": [
-        { "label": "📋 View Full Lesson Plan", "url": "postgresql-training.html" }
+        { "label": "📋 Full Lesson Plan", "url": "postgresql-training.html" },
+        { "label": "📘 Participant Workbook", "url": "auktie-participant-workbook.pdf" },
+        { "label": "📊 Attendance System", "url": "auktie-attendance.html" }
       ]
     },
     {
