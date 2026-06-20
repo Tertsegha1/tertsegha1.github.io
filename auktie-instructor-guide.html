@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AUKTIE Instructor Guide — Restricted Access</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#1B3A6B 0%,#2563A8 100%);min-height:100vh;display:flex;align-items:center;justify-content:center}
+
+  .card{background:white;border-radius:16px;padding:48px 40px;width:100%;max-width:420px;box-shadow:0 24px 64px rgba(0,0,0,0.25)}
+
+  .logo{text-align:center;margin-bottom:32px}
+  .lock-icon{font-size:48px;display:block;margin-bottom:12px}
+  .logo h2{font-size:18px;font-weight:700;color:#1B3A6B}
+  .logo p{font-size:13px;color:#888;margin-top:6px;line-height:1.5}
+
+  .badge{display:inline-block;background:#FBF0F0;color:#CC2229;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;margin-top:8px;letter-spacing:0.5px}
+
+  .field{margin-bottom:20px}
+  .field label{display:block;font-size:13px;font-weight:600;color:#444;margin-bottom:6px}
+  .field input{width:100%;padding:11px 14px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none;transition:border-color 0.2s;letter-spacing:1px}
+  .field input:focus{border-color:#2563A8}
+
+  .btn{width:100%;padding:13px;background:#1B3A6B;color:white;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;transition:background 0.2s;margin-top:4px}
+  .btn:hover{background:#2563A8}
+
+  .err{color:#CC2229;font-size:13px;margin-top:10px;display:none;text-align:center;font-weight:500}
+
+  .attempts{font-size:12px;color:#aaa;text-align:center;margin-top:10px}
+
+  .locked-msg{display:none;text-align:center;padding:16px;background:#FBF0F0;border-radius:8px;color:#CC2229;font-size:13px;font-weight:600;margin-top:16px}
+
+  .footer{text-align:center;margin-top:28px;font-size:11px;color:#bbb}
+  .footer a{color:#2563A8;text-decoration:none}
+
+  /* ── SUCCESS STATE ── */
+  .success{display:none;text-align:center}
+  .success .tick{font-size:48px;margin-bottom:16px}
+  .success h3{font-size:17px;font-weight:700;color:#1A5C35;margin-bottom:8px}
+  .success p{font-size:13px;color:#666;margin-bottom:24px;line-height:1.6}
+  .btn-download{display:inline-block;padding:13px 28px;background:#1A5C35;color:white;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none;transition:background 0.2s}
+  .btn-download:hover{background:#236b3f}
+  .btn-back{display:block;margin-top:12px;font-size:12px;color:#aaa;text-decoration:none}
+  .btn-back:hover{color:#555}
+</style>
+</head>
+<body>
+
+<div class="card">
+
+  <!-- LOGIN FORM -->
+  <div id="loginForm">
+    <div class="logo">
+      <span class="lock-icon">🔐</span>
+      <h2>AUKTIE Instructor Guide</h2>
+      <p>PostgreSQL Database Fundamentals<br>with Performance &amp; Tuning</p>
+      <span class="badge">CONFIDENTIAL — AUTHORISED ACCESS ONLY</span>
+    </div>
+
+    <div class="field">
+      <label>Access Password</label>
+      <input type="password" id="passInput" placeholder="Enter instructor password" autocomplete="off"/>
+    </div>
+    <button class="btn" onclick="checkPass()">Access Document</button>
+    <p class="err" id="errMsg">Incorrect password. Please try again.</p>
+    <p class="attempts" id="attemptsMsg"></p>
+    <div class="locked-msg" id="lockedMsg">
+      🔒 Access temporarily locked after too many attempts.<br>Please contact Dr. Tertsegha Joseph Anande.
+    </div>
+
+    <div class="footer">
+      Lead Instructor: <a href="https://www.drtertseghaanande.com" target="_blank">Dr. Tertsegha Joseph Anande</a><br>
+      AUKTIE PostgreSQL Programme 2026
+    </div>
+  </div>
+
+  <!-- SUCCESS -->
+  <div class="success" id="successView">
+    <div class="tick">✅</div>
+    <h3>Access Granted</h3>
+    <p>You are now authorised to view the Instructor Guide.<br>
+    This document is <strong>confidential</strong> — do not share or distribute.</p>
+    <a class="btn-download" href="auktie-ig-restricted-2026.pdf" target="_blank">📄 Open Instructor Guide (PDF)</a>
+    <a class="btn-back" href="javascript:void(0)" onclick="reset()">← Back to login</a>
+  </div>
+
+</div>
+
+<script>
+const PASS = 'AUKTIE@Instructor26';
+const MAX  = 5;
+let attempts = 0;
+let locked   = false;
+
+document.getElementById('passInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') checkPass();
+});
+
+function checkPass(){
+  if(locked) return;
+  const val = document.getElementById('passInput').value;
+  if(val === PASS){
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('successView').style.display = 'block';
+  } else {
+    attempts++;
+    document.getElementById('passInput').value = '';
+    document.getElementById('errMsg').style.display = 'block';
+    const remaining = MAX - attempts;
+    if(remaining > 0){
+      document.getElementById('attemptsMsg').textContent = remaining + ' attempt' + (remaining===1?'':'s') + ' remaining.';
+    } else {
+      locked = true;
+      document.getElementById('errMsg').style.display = 'none';
+      document.getElementById('attemptsMsg').textContent = '';
+      document.getElementById('lockedMsg').style.display = 'block';
+      document.getElementById('passInput').disabled = true;
+      document.querySelector('.btn').disabled = true;
+    }
+  }
+}
+
+function reset(){
+  document.getElementById('successView').style.display = 'none';
+  document.getElementById('loginForm').style.display   = 'block';
+  document.getElementById('passInput').value = '';
+}
+</script>
+</body>
+</html>

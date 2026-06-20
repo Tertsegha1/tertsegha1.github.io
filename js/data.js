@@ -278,7 +278,8 @@ const DATA = {
       "links": [
         { "label": "📋 Full Lesson Plan", "url": "postgresql-training.html" },
         { "label": "📘 Participant Workbook", "url": "auktie-participant-workbook.pdf" },
-        { "label": "📊 Attendance System", "url": "auktie-attendance.html" }
+        { "label": "📊 Attendance System", "url": "auktie-attendance.html" },
+        { "label": "🔐 Instructor Guide", "url": "auktie-instructor-guide.html" }
       ]
     },
     {
