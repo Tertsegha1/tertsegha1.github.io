@@ -332,7 +332,7 @@ section { padding: 5rem 2rem; }
 .proj-body p { color: var(--text-light); font-size: 0.83rem; line-height: 1.62; flex: 1; }
 .proj-tech { display: flex; flex-wrap: wrap; gap: 0.32rem; }
 .proj-tech span { background: rgba(15,32,68,0.07); color: var(--navy); padding: 2px 7px; border-radius: 3px; font-size: 0.72rem; font-weight: 500; }
-.proj-links { display: flex; gap: 0.45rem; margin-top: auto; padding-top: 0.7rem; border-top: 1px solid var(--border); }
+.proj-links { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: auto; padding-top: 0.7rem; border-top: 1px solid var(--border); }
 .proj-link { display: inline-flex; align-items: center; gap: 4px; font-size: 0.77rem; font-weight: 600; color: var(--navy); padding: 4px 11px; border: 1px solid var(--border); border-radius: 4px; transition: all var(--transition); }
 .proj-link:hover { background: var(--navy); color: var(--white); border-color: var(--navy); }
 
