@@ -686,7 +686,7 @@ const DATA = {
     {
       "icon": "🎓",
       "title": "Fellow of the Higher Education Academy",
-      "desc": "FHEA — PR336175 — Advance HE, May 2026",
+      "desc": "FHEA — PR336175 — Advance HE, May 2026 &nbsp;·&nbsp; <a href=\"cert-fhea-fellowship-2026.pdf\" target=\"_blank\">📜 View Certificate</a>",
       "highlight": true
     },
     {
