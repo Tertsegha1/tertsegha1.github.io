@@ -669,13 +669,13 @@ const DATA = {
     {
       "icon": "🏆",
       "title": "We Make a Difference Award",
-      "desc": "QA Group — Presented by Simon Nelson, CEO — 2026",
+      "desc": "QA Group — Presented by Simon Nelson, CEO — 2026 &nbsp;·&nbsp; <a href=\"cert-we-make-a-difference-2026.pdf\" target=\"_blank\">📜 View Certificate</a>",
       "highlight": true
     },
     {
       "icon": "🎤",
       "title": "Invited Keynote Speaker — 11th ICRIEMS & 8th ICE-ELINVO",
-      "desc": "International Conference on Research, Implementation & Education of Mathematics and Sciences — Universitas Negeri Yogyakarta, Indonesia, June 2–4, 2026 &nbsp;·&nbsp; <a href=\"icriems2026-keynote-paper.docx\" target=\"_blank\">📄 Paper</a> &nbsp;·&nbsp; <a href=\"icriems2026-keynote-slides.pptx\" target=\"_blank\">📊 Slides</a>",
+      "desc": "International Conference on Research, Implementation & Education of Mathematics and Sciences — Universitas Negeri Yogyakarta, Indonesia, June 2–4, 2026 &nbsp;·&nbsp; <a href=\"cert-icriems2026.pdf\" target=\"_blank\">📜 View Certificate</a> &nbsp;·&nbsp; <a href=\"icriems2026-keynote-paper.docx\" target=\"_blank\">📄 Paper</a> &nbsp;·&nbsp; <a href=\"icriems2026-keynote-slides.pptx\" target=\"_blank\">📊 Slides</a>",
       "highlight": true
     },
     {
