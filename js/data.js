@@ -660,6 +660,12 @@ const DATA = {
   },
   "certifications": [
     {
+      "icon": "🏆",
+      "title": "We Make a Difference Award",
+      "desc": "QA Group — Presented by Simon Nelson, CEO — 2026",
+      "highlight": true
+    },
+    {
       "icon": "⚡",
       "title": "Open Charge Point Protocol (OCPP)",
       "desc": "v1.6, v1.6 Advanced Features & v2.0+ Certified — EV Charging Infrastructure"
