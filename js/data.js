@@ -666,6 +666,12 @@ const DATA = {
       "highlight": true
     },
     {
+      "icon": "🎤",
+      "title": "Invited Speaker — 11th ICRIEMS & 8th ICE-ELINVO",
+      "desc": "International Conference on Research, Implementation & Education of Mathematics and Sciences — Universitas Negeri Yogyakarta, Indonesia, June 2–4, 2026",
+      "highlight": true
+    },
+    {
       "icon": "⚡",
       "title": "Open Charge Point Protocol (OCPP)",
       "desc": "v1.6, v1.6 Advanced Features & v2.0+ Certified — EV Charging Infrastructure"
