@@ -498,6 +498,13 @@ const DATA = {
     ],
     "conference": [
       {
+        "year": "2026 — 11th ICRIEMS & 8th ICE-ELINVO, Universitas Negeri Yogyakarta, Indonesia",
+        "title": "Democratizing Sustainable Innovation: Integrating AutoML and AI-Driven Learning Ecosystems to Bridge STEM in Applied and Vocational Education",
+        "authors": "Anande, T. J. (2026) — Invited Keynote",
+        "venue": "<a href=\"icriems2026-keynote-paper.docx\" target=\"_blank\">📄 Paper</a> &nbsp;·&nbsp; <a href=\"icriems2026-keynote-slides.pptx\" target=\"_blank\">📊 Slides</a>",
+        "cls": "conf"
+      },
+      {
         "year": "2024 — EIDWT, Springer, pp. 480–491",
         "title": "Comparative Analysis of 1D-CNN and 2D-CNN for Network Intrusion Detection in Software Defined Networks",
         "authors": "Alsaadi, S., Anande, T. J., & Leeson, M. S. (2024)",
@@ -667,8 +674,8 @@ const DATA = {
     },
     {
       "icon": "🎤",
-      "title": "Invited Speaker — 11th ICRIEMS & 8th ICE-ELINVO",
-      "desc": "International Conference on Research, Implementation & Education of Mathematics and Sciences — Universitas Negeri Yogyakarta, Indonesia, June 2–4, 2026",
+      "title": "Invited Keynote Speaker — 11th ICRIEMS & 8th ICE-ELINVO",
+      "desc": "International Conference on Research, Implementation & Education of Mathematics and Sciences — Universitas Negeri Yogyakarta, Indonesia, June 2–4, 2026 &nbsp;·&nbsp; <a href=\"icriems2026-keynote-paper.docx\" target=\"_blank\">📄 Paper</a> &nbsp;·&nbsp; <a href=\"icriems2026-keynote-slides.pptx\" target=\"_blank\">📊 Slides</a>",
       "highlight": true
     },
     {
