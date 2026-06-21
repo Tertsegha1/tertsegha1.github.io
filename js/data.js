@@ -276,6 +276,7 @@ const DATA = {
         "Enterprise Data Systems"
       ],
       "links": [
+        { "label": "🚀 Interactive Workshop Platform", "url": "postgresql-workshop.html" },
         { "label": "📋 Full Lesson Plan", "url": "postgresql-training.html" },
         { "label": "📘 Participant Workbook", "url": "auktie-participant-workbook.pdf" },
         { "label": "📊 Attendance System", "url": "auktie-attendance.html" },
@@ -581,6 +582,11 @@ const DATA = {
   ],
   "teaching": {
     "postgraduate": [
+      {
+        "label": "PostgreSQL Database Fundamentals with Performance & Tuning — AUKTIE Executive Programme, Coventry (Jun–Jul 2026)",
+        "leader": true,
+        "link": "postgresql-workshop.html"
+      },
       {
         "label": "Digital Transformation (MSc)",
         "leader": true

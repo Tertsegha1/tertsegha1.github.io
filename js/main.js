@@ -143,7 +143,8 @@ function renderTeaching () {
     const ul = el(listId);
     items.forEach(m => {
       const d = h('div','mod-item');
-      d.innerHTML = m.leader ? `${m.label} — <strong>Module Leader</strong>` : m.label;
+      const labelHtml = m.link ? `<a href="${m.link}" style="color:inherit;text-decoration:underline;text-underline-offset:2px;">${m.label}</a>` : m.label;
+      d.innerHTML = m.leader ? `${labelHtml} — <strong>Module Leader</strong>` : labelHtml;
       ul.appendChild(d);
     });
   }

@@ -1,0 +1,3181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AUKTIE PostgreSQL Programme – Workshop Platform</title>
+<style>
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --brand: #1a3c6b;
+  --brand-light: #2457a0;
+  --accent: #e85d04;
+  --accent2: #0ea5e9;
+  --success: #16a34a;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --surface2: #f1f5f9;
+  --border: #e2e8f0;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --code-bg: #0f172a;
+  --code-text: #e2e8f0;
+  --sidebar-w: 280px;
+  --header-h: 64px;
+}
+html { font-size: 16px; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ===== HEADER ===== */
+#header {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: var(--header-h);
+  background: var(--brand);
+  color: white;
+  display: flex; align-items: center; gap: 16px;
+  padding: 0 20px;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+#header .logo { font-size: 1.1rem; font-weight: 700; letter-spacing: .5px; }
+#header .subtitle { font-size: 0.78rem; opacity: 0.75; }
+#header .spacer { flex: 1; }
+#mode-toggle {
+  display: flex; gap: 4px; background: rgba(255,255,255,0.15); border-radius: 8px; padding: 4px;
+}
+.mode-btn {
+  padding: 4px 14px; border-radius: 6px; border: none; cursor: pointer;
+  font-size: 0.8rem; font-weight: 600; transition: all .2s;
+  color: rgba(255,255,255,0.7); background: transparent;
+}
+.mode-btn.active { background: white; color: var(--brand); }
+#progress-header {
+  display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: rgba(255,255,255,0.85);
+}
+#progress-bar-wrap { width: 120px; height: 6px; background: rgba(255,255,255,0.2); border-radius: 4px; }
+#progress-bar { height: 100%; background: var(--accent); border-radius: 4px; transition: width .3s; }
+#hamburger {
+  display: none; background: none; border: none; cursor: pointer; padding: 6px;
+}
+#hamburger span { display: block; width: 22px; height: 2px; background: white; margin: 4px 0; border-radius: 2px; }
+
+/* ===== SIDEBAR ===== */
+#sidebar {
+  position: fixed; top: var(--header-h); left: 0; bottom: 0;
+  width: var(--sidebar-w);
+  background: var(--brand);
+  overflow-y: auto;
+  z-index: 900;
+  transition: transform .3s;
+}
+#sidebar::-webkit-scrollbar { width: 4px; }
+#sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+.nav-section { padding: 12px 0; }
+.nav-section-title {
+  padding: 6px 20px 4px;
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 1.2px;
+  color: rgba(255,255,255,0.45); text-transform: uppercase;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 20px;
+  cursor: pointer; transition: background .15s;
+  color: rgba(255,255,255,0.75); font-size: 0.85rem;
+  border-left: 3px solid transparent;
+  text-decoration: none;
+}
+.nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+.nav-item.active { background: rgba(255,255,255,0.12); color: white; border-left-color: var(--accent); }
+.nav-item .day-badge {
+  min-width: 32px; height: 22px; border-radius: 5px;
+  background: rgba(255,255,255,0.15); font-size: 0.72rem;
+  display: flex; align-items: center; justify-content: center; font-weight: 700;
+}
+.nav-item .nav-check { margin-left: auto; color: var(--success); font-size: 0.9rem; opacity: 0; }
+.nav-item.done .nav-check { opacity: 1; }
+.nav-item.done .day-badge { background: rgba(22,163,74,0.3); }
+
+/* ===== MAIN CONTENT ===== */
+#main {
+  margin-left: var(--sidebar-w);
+  padding-top: var(--header-h);
+  min-height: 100vh;
+}
+.page { display: none; padding: 32px; max-width: 900px; }
+.page.active { display: block; }
+
+/* ===== HERO ===== */
+.hero {
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-light) 100%);
+  color: white; border-radius: 16px; padding: 48px 40px; margin-bottom: 32px;
+  position: relative; overflow: hidden;
+}
+.hero::after {
+  content: 'PostgreSQL'; position: absolute; right: -20px; bottom: -30px;
+  font-size: 8rem; font-weight: 900; opacity: 0.06; white-space: nowrap;
+}
+.hero h1 { font-size: 1.9rem; font-weight: 800; line-height: 1.2; margin-bottom: 8px; }
+.hero .meta { opacity: 0.8; font-size: 0.9rem; margin-bottom: 24px; line-height: 1.8; }
+.hero .badges { display: flex; flex-wrap: wrap; gap: 10px; }
+.badge {
+  padding: 5px 14px; border-radius: 20px; font-size: 0.78rem; font-weight: 600;
+  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+}
+
+/* ===== SCHEDULE GRID ===== */
+.schedule-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 32px; }
+.day-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 18px; cursor: pointer; transition: all .2s; position: relative; overflow: hidden;
+}
+.day-card:hover { border-color: var(--brand-light); box-shadow: 0 4px 12px rgba(36,87,160,0.12); transform: translateY(-2px); }
+.day-card.done { border-left: 4px solid var(--success); }
+.day-card.today { border-left: 4px solid var(--accent); }
+.day-card .dc-label { font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .8px; }
+.day-card .dc-title { font-weight: 700; font-size: 0.95rem; color: var(--brand); margin: 4px 0; }
+.day-card .dc-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+.tag {
+  padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 600;
+  background: var(--surface2); color: var(--text-muted);
+}
+.tag.obj { background: #dbeafe; color: #1e40af; }
+
+/* ===== CONTENT SECTIONS ===== */
+.section { margin-bottom: 32px; }
+.section-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 16px; padding-bottom: 10px;
+  border-bottom: 2px solid var(--border);
+}
+.section-icon {
+  width: 36px; height: 36px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem;
+}
+.si-blue { background: #dbeafe; }
+.si-green { background: #dcfce7; }
+.si-amber { background: #fef3c7; }
+.si-purple { background: #ede9fe; }
+.si-red { background: #fee2e2; }
+.si-teal { background: #ccfbf1; }
+.section-header h2 { font-size: 1.1rem; font-weight: 700; color: var(--brand); }
+.section-header .section-meta { font-size: 0.78rem; color: var(--text-muted); margin-left: auto; }
+
+h3 { font-size: 0.95rem; font-weight: 700; color: var(--brand); margin: 16px 0 8px; }
+p { color: var(--text); margin-bottom: 10px; font-size: 0.9rem; }
+
+/* ===== OBJECTIVE CHIPS ===== */
+.objectives { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.obj-chip {
+  padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;
+  background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe;
+}
+
+/* ===== CODE BLOCKS ===== */
+.code-block {
+  background: var(--code-bg); border-radius: 10px; overflow: hidden; margin: 14px 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.code-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(255,255,255,0.06); border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.code-lang { font-size: 0.72rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; }
+.copy-btn {
+  padding: 3px 10px; border: 1px solid rgba(255,255,255,0.15); border-radius: 5px;
+  background: rgba(255,255,255,0.05); color: #94a3b8; cursor: pointer; font-size: 0.72rem;
+  transition: all .15s;
+}
+.copy-btn:hover { background: rgba(255,255,255,0.12); color: white; }
+.copy-btn.copied { border-color: #16a34a; color: #4ade80; }
+pre {
+  padding: 16px; overflow-x: auto; color: var(--code-text);
+  font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', Consolas, monospace;
+  font-size: 0.82rem; line-height: 1.65;
+}
+.kw { color: #7dd3fc; }
+.str { color: #86efac; }
+.cmt { color: #64748b; }
+.fn { color: #fbbf24; }
+.num { color: #fb923c; }
+.typ { color: #c084fc; }
+
+/* ===== CALLOUTS ===== */
+.callout {
+  border-radius: 10px; padding: 14px 18px; margin: 14px 0;
+  font-size: 0.88rem; border-left: 4px solid;
+}
+.callout-title { font-weight: 700; margin-bottom: 4px; font-size: 0.82rem; text-transform: uppercase; letter-spacing: .5px; }
+.callout.tip { background: #f0fdf4; border-color: var(--success); color: #15803d; }
+.callout.warning { background: #fffbeb; border-color: var(--warning); color: #92400e; }
+.callout.important { background: #fef2f2; border-color: var(--danger); color: #991b1b; }
+.callout.info { background: #eff6ff; border-color: var(--accent2); color: #1e40af; }
+.callout.instructor-only { background: #fdf4ff; border-color: #a855f7; color: #6b21a8; }
+
+/* ===== EXERCISES ===== */
+.exercise-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden; margin-bottom: 20px;
+}
+.exercise-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 18px; background: var(--surface2); border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+.ex-num {
+  width: 30px; height: 30px; border-radius: 50%; background: var(--brand);
+  color: white; display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem; font-weight: 700; flex-shrink: 0;
+}
+.ex-title { font-weight: 700; font-size: 0.9rem; flex: 1; }
+.ex-difficulty {
+  font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 10px;
+}
+.diff-basic { background: #dcfce7; color: #15803d; }
+.diff-intermediate { background: #fef3c7; color: #92400e; }
+.diff-advanced { background: #fee2e2; color: #991b1b; }
+.ex-toggle { color: var(--text-muted); font-size: 0.8rem; transition: transform .2s; }
+.ex-toggle.open { transform: rotate(180deg); }
+.exercise-body { padding: 18px; }
+.ex-complete-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 18px; border-radius: 8px; border: none; cursor: pointer;
+  font-size: 0.85rem; font-weight: 600; margin-top: 12px; transition: all .2s;
+  background: var(--success); color: white;
+}
+.ex-complete-btn:hover { background: #15803d; }
+.ex-complete-btn.done { background: #dcfce7; color: #15803d; cursor: default; }
+.answer-area {
+  margin-top: 12px; padding: 12px;
+  border: 2px dashed var(--border); border-radius: 8px;
+  min-height: 80px; font-size: 0.85rem; color: var(--text-muted);
+  font-style: italic;
+}
+.answer-reveal { display: none; }
+.answer-reveal.visible { display: block; }
+.btn-toggle-answer { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 8px; border: 2px solid var(--brand); background: transparent; color: var(--brand); cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: all .2s; }
+.btn-toggle-answer:hover { background: var(--brand); color: white; }
+.btn-toggle-answer.showing { background: var(--brand); color: white; }
+
+/* ===== QUIZ ===== */
+.quiz-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 20px; margin-bottom: 16px;
+}
+.quiz-q { font-weight: 700; font-size: 0.9rem; margin-bottom: 14px; }
+.quiz-q span { color: var(--brand); }
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-opt {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border);
+  cursor: pointer; transition: all .15s; font-size: 0.87rem; background: var(--surface);
+}
+.quiz-opt:hover { border-color: var(--brand-light); background: #eff6ff; }
+.quiz-opt.correct { background: #dcfce7; border-color: var(--success); color: #15803d; font-weight: 600; }
+.quiz-opt.wrong { background: #fee2e2; border-color: var(--danger); color: #991b1b; }
+.quiz-opt.disabled { pointer-events: none; opacity: 0.6; }
+.quiz-opt.disabled.correct { opacity: 1; }
+.quiz-feedback { margin-top: 12px; padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; display: none; }
+.quiz-feedback.show { display: block; }
+.quiz-feedback.ok { background: #dcfce7; color: #15803d; }
+.quiz-feedback.bad { background: #fee2e2; color: #991b1b; }
+
+/* ===== PROGRESS ===== */
+.progress-section {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px;
+}
+.prog-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin: 16px 0; }
+.prog-stat { text-align: center; padding: 14px; background: var(--surface2); border-radius: 10px; }
+.prog-num { font-size: 2rem; font-weight: 800; color: var(--brand); }
+.prog-label { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+.prog-day-list { display: flex; flex-direction: column; gap: 6px; }
+.prog-day {
+  display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+  background: var(--surface2); border-radius: 8px; font-size: 0.85rem;
+}
+.prog-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
+.prog-dot.done { background: var(--success); }
+.prog-dot.active { background: var(--accent); }
+
+/* ===== TABLE ===== */
+table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin: 12px 0; }
+th { background: var(--brand); color: white; padding: 10px 12px; text-align: left; font-size: 0.82rem; }
+td { padding: 9px 12px; border-bottom: 1px solid var(--border); }
+tr:hover td { background: var(--surface2); }
+tr:last-child td { border-bottom: none; }
+
+/* ===== CHECKLIST ===== */
+.checklist { list-style: none; }
+.checklist li {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.88rem;
+}
+.checklist li:last-child { border-bottom: none; }
+.check-box {
+  width: 20px; height: 20px; border: 2px solid var(--border); border-radius: 4px;
+  flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all .15s; margin-top: 1px;
+}
+.check-box.checked { background: var(--success); border-color: var(--success); color: white; }
+
+/* ===== CERTIFICATE PREVIEW ===== */
+.certificate-preview {
+  border: 3px solid var(--brand); border-radius: 16px; padding: 40px;
+  text-align: center; background: white; max-width: 600px; margin: 0 auto;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+}
+.cert-header { font-size: 0.8rem; font-weight: 700; letter-spacing: 2px; color: var(--text-muted); text-transform: uppercase; }
+.cert-title { font-size: 1.5rem; font-weight: 900; color: var(--brand); margin: 12px 0; }
+.cert-subtitle { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px; }
+.cert-name-field {
+  font-size: 1.4rem; font-weight: 700; color: var(--brand);
+  border: none; border-bottom: 2px solid var(--brand); text-align: center;
+  padding: 4px 8px; margin-bottom: 20px; background: transparent; width: 100%;
+}
+.cert-desc { font-size: 0.82rem; color: var(--text); margin-bottom: 20px; }
+.cert-meta { font-size: 0.78rem; color: var(--text-muted); }
+
+/* ===== BUTTONS ===== */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer;
+  font-size: 0.88rem; font-weight: 600; transition: all .2s; text-decoration: none;
+}
+.btn-primary { background: var(--brand); color: white; }
+.btn-primary:hover { background: var(--brand-light); }
+.btn-accent { background: var(--accent); color: white; }
+.btn-accent:hover { background: #c2410c; }
+.btn-outline {
+  background: transparent; color: var(--brand);
+  border: 2px solid var(--brand);
+}
+.btn-outline:hover { background: var(--brand); color: white; }
+.btn-sm { padding: 6px 14px; font-size: 0.8rem; }
+
+/* ===== INSTRUCTOR ONLY ===== */
+.instructor-block { display: none; }
+body.instructor-mode .instructor-block { display: block; }
+
+/* ===== PAGE HEADER ===== */
+.page-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 28px; gap: 16px; flex-wrap: wrap;
+}
+.page-title-area {}
+.page-title-area .day-label {
+  font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--text-muted); margin-bottom: 4px;
+}
+.page-title-area h1 { font-size: 1.6rem; font-weight: 800; color: var(--brand); line-height: 1.2; }
+.page-title-area .page-subtitle { font-size: 0.88rem; color: var(--text-muted); margin-top: 6px; }
+.mark-done-btn {
+  padding: 8px 18px; border-radius: 8px; border: 2px solid var(--success);
+  background: transparent; color: var(--success); cursor: pointer;
+  font-size: 0.85rem; font-weight: 600; white-space: nowrap; transition: all .2s;
+}
+.mark-done-btn:hover, .mark-done-btn.done { background: var(--success); color: white; }
+
+/* ===== TIMING BANNER ===== */
+.timing-banner {
+  display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px;
+}
+.timing-chip {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 14px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; font-size: 0.8rem; color: var(--text-muted);
+}
+.timing-chip strong { color: var(--text); }
+
+/* ===== TABS ===== */
+.tabs { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 20px; }
+.tab-btn {
+  padding: 10px 20px; border: none; background: none; cursor: pointer;
+  font-size: 0.88rem; font-weight: 600; color: var(--text-muted);
+  border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all .15s;
+}
+.tab-btn.active { color: var(--brand); border-bottom-color: var(--brand); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ===== ROLE TABLE ===== */
+.role-cell-yes { color: var(--success); font-weight: 700; }
+.role-cell-no { color: var(--danger); }
+.role-cell-masked { color: var(--warning); font-style: italic; }
+
+/* ===== STUDY VISIT ===== */
+.obs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.obs-card {
+  background: var(--surface2); border-radius: 10px; padding: 14px;
+  border: 1px solid var(--border);
+}
+.obs-card .obs-title { font-weight: 700; font-size: 0.85rem; color: var(--brand); margin-bottom: 6px; }
+.obs-card p { font-size: 0.82rem; color: var(--text-muted); }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  #sidebar { transform: translateX(-100%); }
+  #sidebar.open { transform: translateX(0); }
+  #main { margin-left: 0; }
+  #hamburger { display: block; }
+  .schedule-grid { grid-template-columns: 1fr; }
+  .prog-grid { grid-template-columns: 1fr 1fr; }
+  .obs-grid { grid-template-columns: 1fr; }
+  .page { padding: 20px 16px; }
+}
+
+/* ===== PRINT ===== */
+@media print {
+  #header, #sidebar { display: none; }
+  #main { margin-left: 0; }
+  .page { display: block !important; page-break-after: always; }
+}
+
+/* ===== OVERLAY ===== */
+#overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 850;
+}
+#overlay.show { display: block; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header id="header">
+  <button id="hamburger" onclick="toggleSidebar()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+  <div>
+    <div class="logo">AUKTIE PostgreSQL Programme</div>
+    <div class="subtitle">Workshop Delivery Platform</div>
+  </div>
+  <div class="spacer"></div>
+  <div id="progress-header">
+    <span id="progress-label">0% complete</span>
+    <div id="progress-bar-wrap"><div id="progress-bar" style="width:0%"></div></div>
+  </div>
+  <div id="mode-toggle">
+    <button class="mode-btn active" onclick="setMode('participant')" id="btn-participant">Participant</button>
+    <button class="mode-btn" onclick="setMode('instructor')" id="btn-instructor">Instructor</button>
+  </div>
+</header>
+
+<!-- SIDEBAR OVERLAY -->
+<div id="overlay" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="nav-section">
+    <div class="nav-section-title">Overview</div>
+    <a class="nav-item active" onclick="showPage('home')">
+      <span class="day-badge">🏠</span> Programme Home
+      <span class="nav-check">✓</span>
+    </a>
+    <a class="nav-item" onclick="showPage('progress')" id="nav-progress">
+      <span class="day-badge">📊</span> My Progress
+      <span class="nav-check">✓</span>
+    </a>
+    <a class="nav-item" onclick="showPage('setup')" id="nav-setup">
+      <span class="day-badge">⚙️</span> Pre-Session Setup
+      <span class="nav-check">✓</span>
+    </a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Week 1 · June</div>
+    <a class="nav-item" onclick="showPage('day1')" id="nav-day1">
+      <span class="day-badge">D1</span> Tue 23 · Foundations & Architecture
+      <span class="nav-check">✓</span>
+    </a>
+    <a class="nav-item" onclick="showPage('day2')" id="nav-day2">
+      <span class="day-badge">D2</span> Wed 24 · SQL Fundamentals
+      <span class="nav-check">✓</span>
+    </a>
+    <a class="nav-item" onclick="showPage('day3')" id="nav-day3">
+      <span class="day-badge">D3</span> Thu 25 · Admin, Security & Backup
+      <span class="nav-check">✓</span>
+    </a>
+    <a class="nav-item" onclick="showPage('day4')" id="nav-day4">
+      <span class="day-badge">D4</span> Fri 26 · Study Visit: Coventry
+      <span class="nav-check">✓</span>
+    </a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Week 2 · July</div>
+    <a class="nav-item" onclick="showPage('day5')" id="nav-day5">
+      <span class="day-badge">D5</span> Mon 29 · Assessment Day
+      <span class="nav-check">✓</span>
+    </a>
+    <a class="nav-item" onclick="showPage('day6')" id="nav-day6">
+      <span class="day-badge">D6</span> Tue 30 · Performance Tuning
+      <span class="nav-check">✓</span>
+    </a>
+    <a class="nav-item" onclick="showPage('day7')" id="nav-day7">
+      <span class="day-badge">D7</span> Wed 1 Jul · ETL/ELT & Governance
+      <span class="nav-check">✓</span>
+    </a>
+    <a class="nav-item" onclick="showPage('day8')" id="nav-day8">
+      <span class="day-badge">D8</span> Fri 3 Jul · Programme Closure
+      <span class="nav-check">✓</span>
+    </a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Resources</div>
+    <a class="nav-item" onclick="showPage('reference')" id="nav-reference">
+      <span class="day-badge">📚</span> Quick Reference
+      <span class="nav-check">✓</span>
+    </a>
+    <a class="nav-item" onclick="showPage('certificate')" id="nav-certificate">
+      <span class="day-badge">🎓</span> Certificate
+      <span class="nav-check">✓</span>
+    </a>
+  </div>
+</nav>
+
+<!-- ================================================================ -->
+<!-- MAIN -->
+<!-- ================================================================ -->
+<main id="main">
+
+<!-- ===== HOME PAGE ===== -->
+<div class="page active" id="page-home">
+  <div class="hero">
+    <h1>PostgreSQL Database Fundamentals<br>with Performance &amp; Tuning</h1>
+    <div class="meta">
+      Organised by <strong>AUKTIE</strong> · Coventry Conferences, The Techno Centre, Coventry University Technology Park<br>
+      Puma Way, Coventry CV1 2TT, United Kingdom · <strong>22 June – 3 July 2026</strong><br>
+      Lead Instructor: <strong>Dr Tertsegha Joseph Anande</strong> · PhD, MSc, MBCS, FHEA
+    </div>
+    <div class="badges">
+      <span class="badge">8 Learning Days</span>
+      <span class="badge">PostgreSQL 15–18</span>
+      <span class="badge">NSR Focus</span>
+      <span class="badge">Coventry, UK</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon si-blue">📅</div>
+      <h2>Programme Schedule</h2>
+    </div>
+    <div class="schedule-grid">
+      <div class="day-card" onclick="showPage('day1')">
+        <div class="dc-label">Week 1 · Tue 23 Jun</div>
+        <div class="dc-title">Foundations & Database Architecture</div>
+        <div class="dc-tags">
+          <span class="tag obj">DB Admin</span>
+          <span class="tag obj">Architecture</span>
+          <span class="tag obj">NSR Design</span>
+        </div>
+      </div>
+      <div class="day-card" onclick="showPage('day2')">
+        <div class="dc-label">Week 1 · Wed 24 Jun</div>
+        <div class="dc-title">SQL Fundamentals & Advanced Querying</div>
+        <div class="dc-tags">
+          <span class="tag obj">SQL Dev</span>
+          <span class="tag obj">Window Functions</span>
+          <span class="tag obj">Analytics</span>
+        </div>
+      </div>
+      <div class="day-card" onclick="showPage('day3')">
+        <div class="dc-label">Week 1 · Thu 25 Jun</div>
+        <div class="dc-title">PostgreSQL Administration, Security & Backup</div>
+        <div class="dc-tags">
+          <span class="tag obj">RBAC</span>
+          <span class="tag obj">RLS</span>
+          <span class="tag obj">Backup/DR</span>
+        </div>
+      </div>
+      <div class="day-card" onclick="showPage('day4')">
+        <div class="dc-label">Week 1 · Fri 26 Jun</div>
+        <div class="dc-title">Study Visit – Coventry City Council</div>
+        <div class="dc-tags">
+          <span class="tag obj">Digital Welfare</span>
+          <span class="tag obj">Gov. IT</span>
+        </div>
+      </div>
+      <div class="day-card" onclick="showPage('day5')">
+        <div class="dc-label">Week 2 · Mon 29 Jun</div>
+        <div class="dc-title">Mid-Training Assessment Day</div>
+        <div class="dc-tags">
+          <span class="tag obj">Assessment</span>
+          <span class="tag obj">Self-directed</span>
+        </div>
+      </div>
+      <div class="day-card" onclick="showPage('day6')">
+        <div class="dc-label">Week 2 · Tue 30 Jun</div>
+        <div class="dc-title">Performance Tuning & Optimisation</div>
+        <div class="dc-tags">
+          <span class="tag obj">EXPLAIN ANALYZE</span>
+          <span class="tag obj">Indexing</span>
+          <span class="tag obj">Partitioning</span>
+        </div>
+      </div>
+      <div class="day-card" onclick="showPage('day7')">
+        <div class="dc-label">Week 2 · Wed 1 Jul</div>
+        <div class="dc-title">ETL/ELT & Data Governance</div>
+        <div class="dc-tags">
+          <span class="tag obj">ETL/ELT</span>
+          <span class="tag obj">NDP Act 2023</span>
+          <span class="tag obj">MDM</span>
+        </div>
+      </div>
+      <div class="day-card" onclick="showPage('day8')">
+        <div class="dc-label">Week 2 · Fri 3 Jul</div>
+        <div class="dc-title">Programme Closure</div>
+        <div class="dc-tags">
+          <span class="tag obj">Presentations</span>
+          <span class="tag obj">Certificates</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon si-green">🎯</div>
+      <h2>Programme Objectives</h2>
+    </div>
+    <table>
+      <tr><th>#</th><th>Objective</th></tr>
+      <tr><td>1</td><td>PostgreSQL Database Administration</td></tr>
+      <tr><td>2</td><td>SQL Development &amp; Query Optimisation</td></tr>
+      <tr><td>3</td><td>Enterprise Database Architecture</td></tr>
+      <tr><td>4</td><td>Performance Tuning &amp; Monitoring</td></tr>
+      <tr><td>5</td><td>ETL/ELT &amp; Data Migration</td></tr>
+      <tr><td>6</td><td>Data Governance</td></tr>
+      <tr><td>7</td><td>Database Security</td></tr>
+      <tr><td>8</td><td>Digital Welfare Administration</td></tr>
+      <tr><td>9</td><td>Social Protection Systems</td></tr>
+      <tr><td>10</td><td>Data-Driven Decision Making</td></tr>
+      <tr><td>11</td><td>NSR Modernisation</td></tr>
+      <tr><td>12</td><td>Public Sector Digital Transformation</td></tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon si-amber">⚡</div>
+      <h2>Quick Start</h2>
+    </div>
+    <div class="callout info">
+      <div class="callout-title">Before You Begin</div>
+      Complete the <a href="#" onclick="showPage('setup')" style="color:var(--brand-light)">Pre-Session Setup Guide</a> on your own laptop before Tuesday 23 June. It takes 30–45 minutes. PostgreSQL 18 is recommended; versions 15–17 also work fully.
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;">
+      <button class="btn btn-primary" onclick="showPage('setup')">⚙ Setup Guide</button>
+      <button class="btn btn-outline" onclick="showPage('day1')">Start Day 1 →</button>
+      <button class="btn btn-outline" onclick="showPage('progress')">📊 My Progress</button>
+    </div>
+  </div>
+</div><!-- end home -->
+
+
+<!-- ===== PRE-SESSION SETUP ===== -->
+<div class="page" id="page-setup">
+  <div class="page-header">
+    <div class="page-title-area">
+      <div class="day-label">Pre-Session · Complete before Tue 23 Jun</div>
+      <h1>Environment Setup Guide</h1>
+      <div class="page-subtitle">Install PostgreSQL and create your lab database</div>
+    </div>
+    <button class="mark-done-btn" id="done-setup" onclick="markDone('setup')">Mark Complete ✓</button>
+  </div>
+
+  <div class="callout warning">
+    <div class="callout-title">Time Required</div>
+    Approximately 30–45 minutes depending on internet speed. All exercises across the programme assume: database <code>lab_nsr</code>, superuser <code>postgres</code>, password <code>postgres</code>.
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(this,'setup-tabs','setup-win')">Windows 10/11</button>
+    <button class="tab-btn" onclick="switchTab(this,'setup-tabs','setup-mac')">macOS</button>
+    <button class="tab-btn" onclick="switchTab(this,'setup-tabs','setup-linux')">Ubuntu/Debian</button>
+    <button class="tab-btn" onclick="switchTab(this,'setup-tabs','setup-first')">First Connection</button>
+  </div>
+
+  <div id="setup-tabs">
+    <div class="tab-panel active" id="tab-setup-win">
+      <h3>Step 1 – Download PostgreSQL 18</h3>
+      <p>Open your browser and go to: <strong>https://www.postgresql.org/download/windows/</strong></p>
+      <p>Click <em>Download the installer</em> → EDB download page → PostgreSQL 18.x for Windows x86-64 (~300 MB).</p>
+      <div class="callout tip"><div class="callout-title">Already have PG 15–17?</div>Skip this download — your existing installation works for every exercise. Go straight to Step 5.</div>
+
+      <h3>Step 2 – Run the Installer</h3>
+      <p>Double-click the <code>.exe</code>. Click Next → leave Installation Directory as default → Next.</p>
+
+      <h3>Step 3 – Set Password</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">password</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre>postgres</pre>
+      </div>
+      <div class="callout important"><div class="callout-title">Write this down</div>Use exactly <strong>postgres</strong> (all lowercase). Every exercise assumes this password.</div>
+
+      <h3>Step 4 – Port</h3>
+      <p>Leave port as default <strong>5432</strong>. Click Next through remaining screens and Finish.</p>
+
+      <h3>Step 5 – Verify Installation</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">cmd / powershell</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre>psql --version</pre>
+      </div>
+      <p>Expected: <code>psql (PostgreSQL) 18.x</code></p>
+    </div>
+
+    <div class="tab-panel" id="tab-setup-mac">
+      <h3>Method A – Postgres.app (Recommended)</h3>
+      <p>Works for both Intel and Apple Silicon (M1/M2/M3) Macs.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">steps</span></div>
+        <pre>1. Go to https://postgresapp.com → Download (~200 MB .dmg)
+2. Drag Postgres.app into Applications
+3. Open it → Click Initialise or +
+4. Add psql to PATH (follow app instructions)
+5. Open Terminal and run: psql --version</pre>
+      </div>
+
+      <h3>Method B – Homebrew</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre>brew install postgresql@18
+brew services start postgresql@18
+echo 'export PATH="/opt/homebrew/opt/postgresql@18/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc</pre>
+      </div>
+      <h3>Create postgres superuser (macOS)</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre>psql -U $(whoami) -d postgres
+CREATE ROLE postgres WITH SUPERUSER LOGIN PASSWORD 'postgres';
+\q</pre>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-setup-linux">
+      <h3>Step 1 – Add PostgreSQL Apt Repository</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre>sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | \
+  sudo gpg --dearmour -o /usr/share/keyrings/postgresql.gpg
+sudo apt update</pre>
+      </div>
+      <h3>Step 2 – Install PostgreSQL 18</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre>sudo apt install postgresql-18 pgadmin4 -y
+sudo systemctl start postgresql
+sudo systemctl enable postgresql</pre>
+      </div>
+      <h3>Step 3 – Set postgres Password</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre>sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'postgres';"</pre>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-setup-first">
+      <h3>Connect for the First Time</h3>
+      <table>
+        <tr><th>OS</th><th>How to open terminal</th></tr>
+        <tr><td>Windows</td><td>Press Windows key → type <em>Command Prompt</em> or search for <em>SQL Shell (psql)</em></td></tr>
+        <tr><td>macOS</td><td>Cmd+Space → Terminal → Enter</td></tr>
+        <tr><td>Linux</td><td>Ctrl+Alt+T</td></tr>
+      </table>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">psql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Step 1: Connect</span>
+psql -U postgres
+
+<span class="cmt">-- Step 2: Check version</span>
+<span class="kw">SELECT</span> version();
+
+<span class="cmt">-- Step 3: Create lab database</span>
+<span class="kw">CREATE DATABASE</span> lab_nsr;
+
+<span class="cmt">-- Step 4: Connect to it</span>
+\c lab_nsr
+
+<span class="cmt">-- Step 5: Create NSR schema</span>
+<span class="kw">CREATE SCHEMA</span> nsr;
+
+<span class="cmt">-- Step 6: Install extensions</span>
+<span class="kw">CREATE EXTENSION IF NOT EXISTS</span> pgcrypto;
+<span class="kw">CREATE EXTENSION IF NOT EXISTS</span> pg_stat_statements;
+<span class="kw">CREATE EXTENSION IF NOT EXISTS</span> uuid-ossp;
+
+<span class="cmt">-- Step 7: Verify</span>
+<span class="kw">SELECT</span> extname, extversion <span class="kw">FROM</span> pg_extension <span class="kw">ORDER BY</span> extname;
+
+<span class="cmt">-- Step 8: Exit</span>
+\q</pre>
+      </div>
+
+      <h3>Final Checklist</h3>
+      <ul class="checklist" id="setup-checklist">
+        <li><div class="check-box" onclick="toggleCheck(this)"></div><span>PostgreSQL installed (v18 recommended; 15–17 also supported)</span></li>
+        <li><div class="check-box" onclick="toggleCheck(this)"></div><span>Can run <code>psql -U postgres</code> with password <code>postgres</code></span></li>
+        <li><div class="check-box" onclick="toggleCheck(this)"></div><span><code>SELECT version();</code> returns PostgreSQL 15.x–18.x</span></li>
+        <li><div class="check-box" onclick="toggleCheck(this)"></div><span>Database <code>lab_nsr</code> created</span></li>
+        <li><div class="check-box" onclick="toggleCheck(this)"></div><span>Schema <code>nsr</code> created inside <code>lab_nsr</code></span></li>
+        <li><div class="check-box" onclick="toggleCheck(this)"></div><span>Extensions installed and verified</span></li>
+      </ul>
+    </div>
+  </div>
+</div><!-- end setup -->
+
+
+<!-- ===== DAY 1 ===== -->
+<div class="page" id="page-day1">
+  <div class="page-header">
+    <div class="page-title-area">
+      <div class="day-label">Week 1 · Tuesday 23 June 2026</div>
+      <h1>Foundations &amp; Database Architecture</h1>
+      <div class="page-subtitle">Enterprise Data Transformation, PostgreSQL Architecture, WAL, MVCC &amp; Database Design</div>
+    </div>
+    <button class="mark-done-btn" id="done-day1" onclick="markDone('day1')">Mark Complete ✓</button>
+  </div>
+
+  <div class="timing-banner">
+    <div class="timing-chip">⏰ <strong>09:30</strong> Registration &amp; setup verification</div>
+    <div class="timing-chip">⏰ <strong>10:00</strong> Training starts</div>
+    <div class="timing-chip">📚 <strong>Objectives:</strong> #1, #3, #9, #11, #12</div>
+  </div>
+
+  <div class="objectives">
+    <span class="obj-chip">#1 Database Administration</span>
+    <span class="obj-chip">#3 Enterprise Architecture</span>
+    <span class="obj-chip">#9 Social Protection Systems</span>
+    <span class="obj-chip">#11 NSR Modernisation</span>
+    <span class="obj-chip">#12 Public Sector Digital Transformation</span>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(this,'d1tabs','d1-theory')">Theory</button>
+    <button class="tab-btn" onclick="switchTab(this,'d1tabs','d1-demos')">Demos &amp; SQL</button>
+    <button class="tab-btn" onclick="switchTab(this,'d1tabs','d1-exercises')">Exercises</button>
+    <button class="tab-btn" onclick="switchTab(this,'d1tabs','d1-quiz')">Knowledge Check</button>
+  </div>
+
+  <div id="d1tabs">
+    <!-- THEORY -->
+    <div class="tab-panel active" id="tab-d1-theory">
+      <div class="section">
+        <div class="section-header">
+          <div class="section-icon si-blue">🏗</div>
+          <h2>PostgreSQL Process/Memory/Storage Model</h2>
+          <div class="section-meta">~60 mins</div>
+        </div>
+        <h3>The Postmaster and Backend Processes</h3>
+        <p>When PostgreSQL starts, a single <strong>postmaster</strong> process spawns one <strong>backend</strong> process per client connection. Each backend handles SQL parsing, planning, and execution for its connection.</p>
+        <h3>Memory Architecture</h3>
+        <table>
+          <tr><th>Component</th><th>Purpose</th><th>Config parameter</th></tr>
+          <tr><td>shared_buffers</td><td>Shared page cache (all backends)</td><td>shared_buffers</td></tr>
+          <tr><td>work_mem</td><td>Per-sort/hash operation memory</td><td>work_mem</td></tr>
+          <tr><td>wal_buffers</td><td>WAL write buffer</td><td>wal_buffers</td></tr>
+          <tr><td>maintenance_work_mem</td><td>VACUUM, CREATE INDEX</td><td>maintenance_work_mem</td></tr>
+        </table>
+        <h3>Storage Layout</h3>
+        <p>Each table stored in 8KB pages. Each page contains tuples. Dead tuples from UPDATE/DELETE are left in place and reclaimed by <strong>VACUUM</strong>.</p>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <div class="section-icon si-purple">📝</div>
+          <h2>Write-Ahead Logging (WAL)</h2>
+          <div class="section-meta">~40 mins</div>
+        </div>
+        <p>WAL is the mechanism that delivers the <strong>Durability</strong> guarantee in ACID. Before any data page is written to disk, the change is recorded in the WAL log. On crash, PostgreSQL replays WAL to reach a consistent state.</p>
+        <div class="callout info">
+          <div class="callout-title">Key insight</div>
+          Sequential WAL writes are much faster than random data-page writes. This is why WAL enables high throughput even on spinning disks.
+        </div>
+        <h3>Key WAL Settings</h3>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">sql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="kw">SELECT</span> name, setting, unit
+<span class="kw">FROM</span> pg_settings
+<span class="kw">WHERE</span> name <span class="kw">IN</span> (<span class="str">'wal_level'</span>,<span class="str">'synchronous_commit'</span>,<span class="str">'max_wal_size'</span>,
+             <span class="str">'checkpoint_completion_target'</span>,<span class="str">'wal_compression'</span>)
+<span class="kw">ORDER BY</span> name;</pre>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <div class="section-icon si-teal">🔄</div>
+          <h2>Multi-Version Concurrency Control (MVCC)</h2>
+          <div class="section-meta">~40 mins</div>
+        </div>
+        <p>MVCC solves the readers-writers problem without locks. When a row is updated, PostgreSQL creates a new version with a higher transaction ID (xid). Old versions remain visible to older transactions; newer versions are visible only after commit.</p>
+        <table>
+          <tr><th>MVCC concept</th><th>What it means</th></tr>
+          <tr><td>xmin</td><td>Transaction that inserted this row version</td></tr>
+          <tr><td>xmax</td><td>Transaction that deleted/updated (0 = live)</td></tr>
+          <tr><td>Snapshot isolation</td><td>Readers see a consistent point-in-time view</td></tr>
+          <tr><td>Dead tuple</td><td>Row version no longer visible to any transaction</td></tr>
+          <tr><td>VACUUM</td><td>Reclaims space from dead tuples</td></tr>
+        </table>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <div class="section-icon si-green">📐</div>
+          <h2>Normalisation &amp; NSR Schema Design</h2>
+          <div class="section-meta">~50 mins</div>
+        </div>
+        <p>The NSR (National Social Registry) requires a normalised schema to avoid redundancy, enforce integrity, and support audit. The target is <strong>Third Normal Form (3NF)</strong>.</p>
+        <h3>3NF Rule</h3>
+        <p>Every non-key column must depend ONLY on the primary key — not on another non-key column (no transitive dependency).</p>
+        <h3>Core NSR Tables</h3>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">sql – NSR schema</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="kw">CREATE TABLE</span> nsr.states (
+  state_code  <span class="typ">CHAR(2)</span>    <span class="kw">PRIMARY KEY</span>,
+  state_name  <span class="typ">TEXT</span>       <span class="kw">NOT NULL UNIQUE</span>
+);
+
+<span class="kw">CREATE TABLE</span> nsr.lgas (
+  lga_id      <span class="typ">SERIAL</span>     <span class="kw">PRIMARY KEY</span>,
+  state_code  <span class="typ">CHAR(2)</span>    <span class="kw">NOT NULL REFERENCES</span> nsr.states(state_code),
+  lga_name    <span class="typ">TEXT</span>       <span class="kw">NOT NULL</span>
+);
+
+<span class="kw">CREATE TABLE</span> nsr.households (
+  household_id      <span class="typ">BIGSERIAL</span>  <span class="kw">PRIMARY KEY</span>,
+  household_code    <span class="typ">TEXT</span>       <span class="kw">NOT NULL UNIQUE</span>,
+  lga_id            <span class="typ">INT</span>        <span class="kw">NOT NULL REFERENCES</span> nsr.lgas(lga_id),
+  head_name         <span class="typ">TEXT</span>       <span class="kw">NOT NULL</span>,
+  pmt_score         <span class="typ">NUMERIC(8,3)</span>,
+  enumeration_round <span class="typ">SMALLINT</span>,
+  is_active         <span class="typ">BOOLEAN</span>    <span class="kw">NOT NULL DEFAULT</span> <span class="kw">TRUE</span>
+);
+
+<span class="kw">CREATE TABLE</span> nsr.individuals (
+  individual_id  <span class="typ">BIGSERIAL</span>  <span class="kw">PRIMARY KEY</span>,
+  household_id   <span class="typ">BIGINT</span>     <span class="kw">NOT NULL REFERENCES</span> nsr.households(household_id)
+                            <span class="kw">ON DELETE CASCADE</span>,
+  nin            <span class="typ">CHAR(11)</span>   <span class="kw">UNIQUE</span>
+                 <span class="kw">CHECK</span> (nin <span class="kw">IS NULL OR</span> nin ~ <span class="str">'^[A-Z]{2}[0-9]{7}[A-Z]{2}$'</span>),
+  full_name      <span class="typ">TEXT</span>       <span class="kw">NOT NULL</span>,
+  dob            <span class="typ">DATE</span>       <span class="kw">CHECK</span> (dob > <span class="str">'1900-01-01'</span> <span class="kw">AND</span> dob <= <span class="kw">CURRENT_DATE</span>),
+  gender         <span class="typ">CHAR(1)</span>    <span class="kw">CHECK</span> (gender <span class="kw">IN</span> (<span class="str">'M'</span>,<span class="str">'F'</span>,<span class="str">'O'</span>))
+);</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- DEMOS -->
+    <div class="tab-panel" id="tab-d1-demos">
+      <div class="callout instructor-only instructor-block">
+        <div class="callout-title">Instructor Note</div>
+        Open two psql terminals on projector for Demo 1.5 (MVCC). Narrate: "Terminal A is a caseworker in Lagos. Terminal B is a caseworker in Kano updating the same household."
+      </div>
+
+      <h3>Demo 1.1 – Query PostgreSQL Settings</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- View process/memory architecture</span>
+<span class="kw">SELECT</span> pid, usename, application_name, state
+<span class="kw">FROM</span> pg_stat_activity
+<span class="kw">ORDER BY</span> pid;</pre>
+      </div>
+
+      <h3>Demo 1.5 – MVCC Two-Terminal Visibility</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – Terminal A (Lagos caseworker)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">BEGIN</span>;
+<span class="kw">SELECT</span> household_id, head_name, pmt_score
+<span class="kw">FROM</span> nsr.households
+<span class="kw">WHERE</span> household_code = <span class="str">'HH-LA-001'</span>;
+<span class="cmt">-- Keep this transaction open! Don't COMMIT yet.</span></pre>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – Terminal B (Kano caseworker)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">BEGIN</span>;
+<span class="kw">UPDATE</span> nsr.households
+<span class="kw">SET</span> pmt_score = <span class="num">42.5</span>
+<span class="kw">WHERE</span> household_code = <span class="str">'HH-LA-001'</span>;
+<span class="kw">COMMIT</span>;
+<span class="cmt">-- Terminal A still sees the old value — that's MVCC snapshot isolation.</span></pre>
+      </div>
+
+      <h3>Demo 1.7 – Live Normalisation</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Insert sample states</span>
+<span class="kw">INSERT INTO</span> nsr.states VALUES (<span class="str">'LA'</span>,<span class="str">'Lagos'</span>),(<span class="str">'KN'</span>,<span class="str">'Kano'</span>),(<span class="str">'AB'</span>,<span class="str">'Abuja'</span>);
+
+<span class="cmt">-- Insert sample LGAs</span>
+<span class="kw">INSERT INTO</span> nsr.lgas (state_code, lga_name)
+<span class="kw">VALUES</span> (<span class="str">'LA'</span>,<span class="str">'Ikeja'</span>),(<span class="str">'LA'</span>,<span class="str">'Eti-Osa'</span>),(<span class="str">'KN'</span>,<span class="str">'Kano Municipal'</span>);
+
+<span class="cmt">-- Verify referential integrity works</span>
+<span class="kw">INSERT INTO</span> nsr.lgas (state_code, lga_name)
+<span class="kw">VALUES</span> (<span class="str">'XX'</span>,<span class="str">'Invalid State'</span>);
+<span class="cmt">-- Expected: ERROR: insert or update on table "lgas" violates foreign key constraint</span></pre>
+      </div>
+    </div>
+
+    <!-- EXERCISES -->
+    <div class="tab-panel" id="tab-d1-exercises">
+      <div class="exercise-card">
+        <div class="exercise-header" onclick="toggleExercise(this)">
+          <div class="ex-num">1</div>
+          <div class="ex-title">Identify normalisation problems in a flat NSR dataset</div>
+          <span class="ex-difficulty diff-basic">Basic</span>
+          <span class="ex-toggle">▼</span>
+        </div>
+        <div class="exercise-body" style="display:none">
+          <p>Given the following flat table, identify ALL normalisation problems before reading the solution:</p>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">flat table</span></div>
+            <pre>household_id | household_code | state_name | lga_name | head_name | nin | pmt_score | state_name2
+-------------|----------------|------------|----------|-----------|-----|-----------|------------
+1            | HH-001         | Lagos      | Ikeja    | Amina     | ... | 30.5      | Lagos State
+1            | HH-001         | Lagos      | Ikeja    | Amina     | ... | 30.5      | Lagos State</pre>
+          </div>
+          <p><strong>List all problems you can identify:</strong></p>
+          <div class="answer-area">Write your answer here (for discussion)</div>
+          <div class="answer-reveal" id="ans-d1-ex1">
+            <div class="callout tip">
+              <div class="callout-title">Solution</div>
+              1. No PK uniqueness (duplicate household_code rows)<br>
+              2. Inconsistent state names (state_name vs state_name2)<br>
+              3. Transitive dependency: household_id → lga_id → state_code → state_name<br>
+              4. NIN repeated across households<br>
+              5. TEXT for numbers prevents calculation (use NUMERIC)<br>
+              6. Columns grow over time (not extensible)
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            <button class="btn-toggle-answer" onclick="toggleAnswer('d1-ex1',this)">▼ Show Answer</button>
+            <button class="ex-complete-btn" onclick="markExDone(this)">✓ Mark done</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="exercise-card">
+        <div class="exercise-header" onclick="toggleExercise(this)">
+          <div class="ex-num">2</div>
+          <div class="ex-title">Create the NSR schema with full constraints</div>
+          <span class="ex-difficulty diff-intermediate">Intermediate</span>
+          <span class="ex-toggle">▼</span>
+        </div>
+        <div class="exercise-body" style="display:none">
+          <p>Using the schema shown in the Theory tab, create the full NSR schema in your <code>lab_nsr</code> database. Then verify with:</p>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">sql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+            <pre>\dt nsr.*
+<span class="cmt">-- Expected: states, lgas, households, individuals</span></pre>
+          </div>
+          <p>Add the payment programme table:</p>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">sql – challenge</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+            <pre><span class="kw">CREATE TABLE</span> nsr.payments (
+  payment_id    <span class="typ">BIGSERIAL</span>  <span class="kw">PRIMARY KEY</span>,
+  household_id  <span class="typ">BIGINT</span>     <span class="kw">NOT NULL REFERENCES</span> nsr.households(household_id),
+  payment_date  <span class="typ">DATE</span>       <span class="kw">NOT NULL DEFAULT</span> <span class="kw">CURRENT_DATE</span>,
+  amount_ngn    <span class="typ">NUMERIC(12,2)</span> <span class="kw">NOT NULL CHECK</span> (amount_ngn > <span class="num">0</span>),
+  status        <span class="typ">TEXT</span>       <span class="kw">NOT NULL DEFAULT</span> <span class="str">'pending'</span>
+               <span class="kw">CHECK</span> (status <span class="kw">IN</span> (<span class="str">'pending'</span>,<span class="str">'processed'</span>,<span class="str">'failed'</span>,<span class="str">'reversed'</span>))
+);</pre>
+          </div>
+          <div class="answer-reveal" id="ans-d1-ex2">
+            <div class="callout tip">
+              <div class="callout-title">Full Solution – Instructor Reference</div>
+              <p style="margin-bottom:8px">Run the schema creation in order (states → lgas → households → individuals → payments) so foreign keys resolve. Verify with <code>\dt nsr.*</code> — you should see all 5 tables. Then run these checks:</p>
+            </div>
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">sql – verification</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre><span class="cmt">-- Check all tables exist</span>
+\dt nsr.*
+
+<span class="cmt">-- Confirm foreign keys are wired up</span>
+<span class="kw">SELECT</span> tc.table_name, kcu.column_name, ccu.table_name <span class="kw">AS</span> references
+<span class="kw">FROM</span> information_schema.table_constraints tc
+<span class="kw">JOIN</span> information_schema.key_column_usage kcu
+  <span class="kw">ON</span> tc.constraint_name = kcu.constraint_name
+<span class="kw">JOIN</span> information_schema.constraint_column_usage ccu
+  <span class="kw">ON</span> ccu.constraint_name = tc.constraint_name
+<span class="kw">WHERE</span> tc.constraint_type = <span class="str">'FOREIGN KEY'</span>
+  <span class="kw">AND</span> tc.table_schema = <span class="str">'nsr'</span>;
+
+<span class="cmt">-- Test CHECK constraint on payments</span>
+<span class="kw">INSERT INTO</span> nsr.payments (household_id, amount_ngn, status)
+<span class="kw">VALUES</span> (<span class="num">1</span>, <span class="num">-100</span>, <span class="str">'pending'</span>);
+<span class="cmt">-- Expected: ERROR: new row violates check constraint "payments_amount_ngn_check"</span>
+
+<span class="cmt">-- Test invalid status</span>
+<span class="kw">INSERT INTO</span> nsr.payments (household_id, amount_ngn, status)
+<span class="kw">VALUES</span> (<span class="num">1</span>, <span class="num">5000</span>, <span class="str">'approved'</span>);
+<span class="cmt">-- Expected: ERROR: new row violates check constraint "payments_status_check"</span></pre>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            <button class="btn-toggle-answer" onclick="toggleAnswer('d1-ex2',this)">▼ Show Answer</button>
+            <button class="ex-complete-btn" onclick="markExDone(this)">✓ Mark done</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="exercise-card">
+        <div class="exercise-header" onclick="toggleExercise(this)">
+          <div class="ex-num">3</div>
+          <div class="ex-title">Explain WAL and MVCC to a colleague (advanced)</div>
+          <span class="ex-difficulty diff-advanced">Advanced</span>
+          <span class="ex-toggle">▼</span>
+        </div>
+        <div class="exercise-body" style="display:none">
+          <p>Write a 3–4 sentence explanation of WHY WAL makes PostgreSQL durable, and WHY MVCC means readers never block writers. Use the NSR context (payments, caseworkers) in your example.</p>
+          <div class="answer-area">Write your explanation here</div>
+          <p style="margin-top:8px;font-size:0.82rem;color:var(--text-muted)">Share with the instructor or a partner for feedback.</p>
+          <div class="answer-reveal" id="ans-d1-ex3">
+            <div class="callout instructor-only instructor-block">
+              <div class="callout-title">Model Answer – Instructor Reference</div>
+              <p><strong>WAL and Durability:</strong> Before PostgreSQL writes any modified data page to disk, it first appends the change to the Write-Ahead Log — a sequential append-only file. Because the WAL write is flushed to disk before the transaction is confirmed to the client, a crash at any point after commit can be recovered by replaying WAL from the last checkpoint. This delivers the 'D' in ACID: committed transactions survive any failure.</p>
+              <p style="margin-top:8px"><strong>MVCC and readers never blocking writers:</strong> When a Kano caseworker updates a household's pmt_score, PostgreSQL does not overwrite the row — it creates a new row version stamped with the current transaction ID (xmin). The old version retains its xmin and its xmax is set to the updating transaction. A Lagos caseworker running a SELECT at the same moment sees only versions committed before their snapshot — they read the old value with zero lock contention. Writers create new versions; readers read old ones. Neither blocks the other.</p>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            <button class="btn-toggle-answer instructor-block instructor-only" onclick="toggleAnswer('d1-ex3',this)">▼ Show Model Answer</button>
+            <button class="ex-complete-btn" onclick="markExDone(this)">✓ Mark done</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUIZ -->
+    <div class="tab-panel" id="tab-d1-quiz">
+      <div id="quiz-d1"></div>
+    </div>
+  </div>
+</div><!-- end day1 -->
+
+
+<!-- ===== DAY 2 ===== -->
+<div class="page" id="page-day2">
+  <div class="page-header">
+    <div class="page-title-area">
+      <div class="day-label">Week 1 · Wednesday 24 June 2026</div>
+      <h1>SQL Fundamentals &amp; Advanced Querying</h1>
+      <div class="page-subtitle">DML, DDL, JOINs, subqueries, window functions &amp; analytics reporting</div>
+    </div>
+    <button class="mark-done-btn" id="done-day2" onclick="markDone('day2')">Mark Complete ✓</button>
+  </div>
+
+  <div class="objectives">
+    <span class="obj-chip">#2 SQL Development &amp; Query Optimisation</span>
+    <span class="obj-chip">#10 Data-Driven Decision Making</span>
+  </div>
+
+  <div class="callout info"><div class="callout-title">Day Focus</div>Day 2 is the most visible skills day. Participants will send these queries to colleagues. Progress through the SQL teaching sequence in order — never jump ahead.</div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(this,'d2tabs','d2-dml')">DML / DDL</button>
+    <button class="tab-btn" onclick="switchTab(this,'d2tabs','d2-joins')">JOINs</button>
+    <button class="tab-btn" onclick="switchTab(this,'d2tabs','d2-window')">Window Functions</button>
+    <button class="tab-btn" onclick="switchTab(this,'d2tabs','d2-exercises')">Exercises</button>
+    <button class="tab-btn" onclick="switchTab(this,'d2tabs','d2-quiz')">Knowledge Check</button>
+  </div>
+
+  <div id="d2tabs">
+    <div class="tab-panel active" id="tab-d2-dml">
+      <h3>INSERT / UPDATE / DELETE / TRUNCATE</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – DML</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- INSERT with RETURNING</span>
+<span class="kw">INSERT INTO</span> nsr.households (household_code, lga_id, head_name, pmt_score)
+<span class="kw">VALUES</span> (<span class="str">'HH-TEST-001'</span>, <span class="num">1</span>, <span class="str">'Fatima Yusuf'</span>, <span class="num">28.5</span>)
+<span class="kw">RETURNING</span> household_id, household_code;
+
+<span class="cmt">-- UPDATE with RETURNING</span>
+<span class="kw">UPDATE</span> nsr.households
+<span class="kw">SET</span> pmt_score = <span class="num">30.250</span>, enumeration_round = <span class="num">2</span>
+<span class="kw">WHERE</span> household_code = <span class="str">'HH-TEST-001'</span>
+<span class="kw">RETURNING</span> household_id, household_code, pmt_score;
+
+<span class="cmt">-- DELETE: confirm first (best practice)</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> nsr.households <span class="kw">WHERE</span> household_code = <span class="str">'HH-TEST-001'</span>;
+<span class="kw">DELETE FROM</span> nsr.households <span class="kw">WHERE</span> household_code = <span class="str">'HH-TEST-001'</span>;
+
+<span class="cmt">-- TRUNCATE resets sequence too</span>
+<span class="cmt">-- TRUNCATE nsr.households RESTART IDENTITY CASCADE;</span></pre>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-d2-joins">
+      <h3>JOIN Types</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – household report with JOINs</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- INNER JOIN: households with their state and LGA</span>
+<span class="kw">SELECT</span>
+  h.household_code,
+  h.head_name,
+  s.state_name,
+  l.lga_name,
+  h.pmt_score
+<span class="kw">FROM</span> nsr.households h
+<span class="kw">JOIN</span>  nsr.lgas l     <span class="kw">ON</span> h.lga_id     = l.lga_id
+<span class="kw">JOIN</span>  nsr.states s   <span class="kw">ON</span> l.state_code = s.state_code
+<span class="kw">WHERE</span> h.is_active = <span class="kw">TRUE</span>
+<span class="kw">ORDER BY</span> s.state_name, h.pmt_score;
+
+<span class="cmt">-- LEFT JOIN: all households including those without payments</span>
+<span class="kw">SELECT</span>
+  h.household_code,
+  h.head_name,
+  COUNT(p.payment_id) <span class="kw">AS</span> payment_count,
+  SUM(p.amount_ngn)   <span class="kw">AS</span> total_paid
+<span class="kw">FROM</span> nsr.households h
+<span class="kw">LEFT JOIN</span> nsr.payments p
+  <span class="kw">ON</span> h.household_id = p.household_id <span class="kw">AND</span> p.status = <span class="str">'processed'</span>
+<span class="kw">WHERE</span> h.is_active = <span class="kw">TRUE</span>
+<span class="kw">GROUP BY</span> h.household_id, h.household_code, h.head_name
+<span class="kw">ORDER BY</span> payment_count <span class="kw">DESC</span>;</pre>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-d2-window">
+      <h3>Window Functions</h3>
+      <p>Window functions compute values across a set of rows related to the current row — without collapsing them like GROUP BY does.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – window functions</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Rank households by pmt_score within their state</span>
+<span class="kw">SELECT</span>
+  h.household_code,
+  h.head_name,
+  s.state_name,
+  h.pmt_score,
+  <span class="fn">RANK</span>() <span class="kw">OVER</span> (
+    <span class="kw">PARTITION BY</span> l.state_code
+    <span class="kw">ORDER BY</span> h.pmt_score <span class="kw">ASC</span>
+  ) <span class="kw">AS</span> poverty_rank,
+  <span class="fn">ROUND</span>(
+    <span class="num">100.0</span> * <span class="fn">PERCENT_RANK</span>() <span class="kw">OVER</span> (
+      <span class="kw">PARTITION BY</span> l.state_code <span class="kw">ORDER BY</span> h.pmt_score
+    ), <span class="num">1</span>
+  ) <span class="kw">AS</span> percentile
+<span class="kw">FROM</span> nsr.households h
+<span class="kw">JOIN</span>  nsr.lgas   l <span class="kw">ON</span> h.lga_id     = l.lga_id
+<span class="kw">JOIN</span>  nsr.states s <span class="kw">ON</span> l.state_code = s.state_code
+<span class="kw">WHERE</span> h.is_active = <span class="kw">TRUE</span>
+<span class="kw">ORDER BY</span> s.state_name, poverty_rank;
+
+<span class="cmt">-- Running total of payments per household</span>
+<span class="kw">SELECT</span>
+  household_id,
+  payment_date,
+  amount_ngn,
+  <span class="fn">SUM</span>(amount_ngn) <span class="kw">OVER</span> (
+    <span class="kw">PARTITION BY</span> household_id
+    <span class="kw">ORDER BY</span> payment_date
+    <span class="kw">ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</span>
+  ) <span class="kw">AS</span> cumulative_paid
+<span class="kw">FROM</span> nsr.payments
+<span class="kw">WHERE</span> status = <span class="str">'processed'</span>
+<span class="kw">ORDER BY</span> household_id, payment_date;</pre>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-d2-exercises">
+      <div class="exercise-card">
+        <div class="exercise-header" onclick="toggleExercise(this)">
+          <div class="ex-num">1</div>
+          <div class="ex-title">B1 – JOIN-based household report</div>
+          <span class="ex-difficulty diff-basic">Basic</span>
+          <span class="ex-toggle">▼</span>
+        </div>
+        <div class="exercise-body" style="display:none">
+          <p>Write a query that lists, for each <strong>active</strong> household: <code>household_code</code>, <code>head_name</code>, <code>state_name</code>, <code>lga_name</code>, <code>pmt_score</code>. Order by state then pmt_score ascending.</p>
+          <div class="answer-area">Write your SQL here</div>
+          <div class="answer-reveal" id="ans-d2-ex1">
+            <div class="callout tip"><div class="callout-title">Solution</div></div>
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">sql – solution</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre><span class="kw">SELECT</span>
+  h.household_code,
+  h.head_name,
+  s.state_name,
+  l.lga_name,
+  h.pmt_score
+<span class="kw">FROM</span> nsr.households h
+<span class="kw">JOIN</span> nsr.lgas   l <span class="kw">ON</span> h.lga_id     = l.lga_id
+<span class="kw">JOIN</span> nsr.states s <span class="kw">ON</span> l.state_code = s.state_code
+<span class="kw">WHERE</span> h.is_active = <span class="kw">TRUE</span>
+<span class="kw">ORDER BY</span> s.state_name, h.pmt_score <span class="kw">ASC</span>;</pre>
+            </div>
+            <div class="callout info" style="margin-top:8px">
+              <div class="callout-title">Why two JOINs?</div>
+              households → lgas gives us lga_name; lgas → states gives us state_name. state_name is not stored on households (3NF rule — no transitive dependency).
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            <button class="btn-toggle-answer" onclick="toggleAnswer('d2-ex1',this)">▼ Show Answer</button>
+            <button class="ex-complete-btn" onclick="markExDone(this)">✓ Mark done</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="exercise-card">
+        <div class="exercise-header" onclick="toggleExercise(this)">
+          <div class="ex-num">2</div>
+          <div class="ex-title">B2 – Window function ranking</div>
+          <span class="ex-difficulty diff-intermediate">Intermediate</span>
+          <span class="ex-toggle">▼</span>
+        </div>
+        <div class="exercise-body" style="display:none">
+          <p>Write a query that ranks households by <code>pmt_score</code> within their own state using RANK(). Show: <code>household_code</code>, <code>state_name</code>, <code>pmt_score</code>, and the rank column.</p>
+          <div class="answer-area">Write your SQL here</div>
+          <div class="answer-reveal" id="ans-d2-ex2">
+            <div class="callout tip"><div class="callout-title">Solution</div></div>
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">sql – solution</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre><span class="kw">SELECT</span>
+  h.household_code,
+  s.state_name,
+  h.pmt_score,
+  <span class="fn">RANK</span>() <span class="kw">OVER</span> (
+    <span class="kw">PARTITION BY</span> l.state_code
+    <span class="kw">ORDER BY</span> h.pmt_score <span class="kw">ASC</span>
+  ) <span class="kw">AS</span> poverty_rank
+<span class="kw">FROM</span> nsr.households h
+<span class="kw">JOIN</span> nsr.lgas   l <span class="kw">ON</span> h.lga_id     = l.lga_id
+<span class="kw">JOIN</span> nsr.states s <span class="kw">ON</span> l.state_code = s.state_code
+<span class="kw">WHERE</span> h.is_active = <span class="kw">TRUE</span>
+<span class="kw">ORDER BY</span> s.state_name, poverty_rank;</pre>
+            </div>
+            <div class="callout info" style="margin-top:8px">
+              <div class="callout-title">Key points</div>
+              <strong>PARTITION BY l.state_code</strong> resets the rank counter for each state. <strong>ORDER BY pmt_score ASC</strong> means the lowest score (most vulnerable household) gets rank 1. Ties receive the same rank, with a gap before the next rank — use DENSE_RANK() if you want no gaps.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            <button class="btn-toggle-answer" onclick="toggleAnswer('d2-ex2',this)">▼ Show Answer</button>
+            <button class="ex-complete-btn" onclick="markExDone(this)">✓ Mark done</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="exercise-card">
+        <div class="exercise-header" onclick="toggleExercise(this)">
+          <div class="ex-num">3</div>
+          <div class="ex-title">B3 – Households never paid (using JOIN)</div>
+          <span class="ex-difficulty diff-intermediate">Intermediate</span>
+          <span class="ex-toggle">▼</span>
+        </div>
+        <div class="exercise-body" style="display:none">
+          <p>Find all <strong>active</strong> households that have never received a <em>processed</em> payment. Use a LEFT JOIN — do not use a subquery.</p>
+          <div class="answer-area">Write your SQL here</div>
+          <div class="answer-reveal" id="ans-d2-ex3">
+            <div class="callout tip"><div class="callout-title">Solution</div></div>
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">sql – solution</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre><span class="kw">SELECT</span>
+  h.household_code,
+  h.head_name,
+  s.state_name
+<span class="kw">FROM</span> nsr.households h
+<span class="kw">JOIN</span>  nsr.lgas   l <span class="kw">ON</span> h.lga_id     = l.lga_id
+<span class="kw">JOIN</span>  nsr.states s <span class="kw">ON</span> l.state_code = s.state_code
+<span class="kw">LEFT JOIN</span> nsr.payments p
+  <span class="kw">ON</span> p.household_id = h.household_id
+ <span class="kw">AND</span> p.status = <span class="str">'processed'</span>
+<span class="kw">WHERE</span> h.is_active = <span class="kw">TRUE</span>
+  <span class="kw">AND</span> p.payment_id <span class="kw">IS NULL</span>
+<span class="kw">ORDER BY</span> s.state_name, h.household_code;</pre>
+            </div>
+            <div class="callout info" style="margin-top:8px">
+              <div class="callout-title">Why filter in the JOIN, not the WHERE?</div>
+              Putting <code>p.status = 'processed'</code> in the ON clause means we only try to match processed payments. The WHERE clause <code>p.payment_id IS NULL</code> then catches households where no such match was found — i.e., never paid. If you moved the status filter to WHERE it would silently convert the LEFT JOIN into an INNER JOIN, excluding households that have only pending/failed payments.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            <button class="btn-toggle-answer" onclick="toggleAnswer('d2-ex3',this)">▼ Show Answer</button>
+            <button class="ex-complete-btn" onclick="markExDone(this)">✓ Mark done</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-d2-quiz">
+      <div id="quiz-d2"></div>
+    </div>
+  </div>
+</div><!-- end day2 -->
+
+
+<!-- ===== DAY 3 ===== -->
+<div class="page" id="page-day3">
+  <div class="page-header">
+    <div class="page-title-area">
+      <div class="day-label">Week 1 · Thursday 25 June 2026</div>
+      <h1>PostgreSQL Administration, Security &amp; Backup</h1>
+      <div class="page-subtitle">RBAC, Row-Level Security, pgAudit, pg_dump, disaster recovery</div>
+    </div>
+    <button class="mark-done-btn" id="done-day3" onclick="markDone('day3')">Mark Complete ✓</button>
+  </div>
+
+  <div class="objectives">
+    <span class="obj-chip">#1 DB Administration</span>
+    <span class="obj-chip">#6 Data Governance</span>
+    <span class="obj-chip">#7 Database Security</span>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(this,'d3tabs','d3-rbac')">RBAC</button>
+    <button class="tab-btn" onclick="switchTab(this,'d3tabs','d3-rls')">Row-Level Security</button>
+    <button class="tab-btn" onclick="switchTab(this,'d3tabs','d3-audit')">Audit Logging</button>
+    <button class="tab-btn" onclick="switchTab(this,'d3tabs','d3-backup')">Backup &amp; DR</button>
+    <button class="tab-btn" onclick="switchTab(this,'d3tabs','d3-exercises')">Exercises</button>
+  </div>
+
+  <div id="d3tabs">
+    <div class="tab-panel active" id="tab-d3-rbac">
+      <h3>NSR Role Model</h3>
+      <table>
+        <tr><th>Role</th><th>Access</th><th>State restriction</th><th>NIN visible?</th><th>Payment write?</th><th>Logged?</th></tr>
+        <tr>
+          <td><code>nsr_dba</code></td>
+          <td>Full (all tables)</td>
+          <td class="role-cell-no">None (BYPASSRLS)</td>
+          <td class="role-cell-yes">Yes</td>
+          <td class="role-cell-yes">Yes</td>
+          <td class="role-cell-yes">Yes – pgAudit</td>
+        </tr>
+        <tr>
+          <td><code>nsr_supervisor</code></td>
+          <td>All data in assigned states</td>
+          <td class="role-cell-no">BYPASSRLS</td>
+          <td class="role-cell-yes">Yes</td>
+          <td>UPDATE only</td>
+          <td class="role-cell-yes">Yes – session audit</td>
+        </tr>
+        <tr>
+          <td><code>nsr_caseworker</code></td>
+          <td>Household + individual read</td>
+          <td>Own state only (RLS)</td>
+          <td class="role-cell-masked">Masked</td>
+          <td class="role-cell-no">No</td>
+          <td>Object audit only</td>
+        </tr>
+      </table>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – create NSR roles</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Create roles</span>
+<span class="kw">CREATE ROLE</span> nsr_dba        <span class="kw">WITH LOGIN</span> PASSWORD <span class="str">'dba_pw'</span>   BYPASSRLS;
+<span class="kw">CREATE ROLE</span> nsr_supervisor <span class="kw">WITH LOGIN</span> PASSWORD <span class="str">'sup_pw'</span>   BYPASSRLS;
+<span class="kw">CREATE ROLE</span> nsr_caseworker <span class="kw">WITH LOGIN</span> PASSWORD <span class="str">'cw_pw'</span>;
+
+<span class="cmt">-- Grant schema usage</span>
+<span class="kw">GRANT USAGE ON SCHEMA</span> nsr <span class="kw">TO</span> nsr_dba, nsr_supervisor, nsr_caseworker;
+
+<span class="cmt">-- DBA: full access</span>
+<span class="kw">GRANT ALL ON ALL TABLES IN SCHEMA</span> nsr <span class="kw">TO</span> nsr_dba;
+
+<span class="cmt">-- Caseworker: read only (NIN masked via view)</span>
+<span class="kw">GRANT SELECT ON</span> nsr.households, nsr.lgas, nsr.states <span class="kw">TO</span> nsr_caseworker;
+
+<span class="cmt">-- Verify</span>
+\du+</pre>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-d3-rls">
+      <h3>Row-Level Security</h3>
+      <p>RLS restricts which rows a role can see. Caseworkers should only see households in their assigned state. This is implemented using a session variable <code>app.state_code</code>.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – RLS policy</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Enable RLS on households</span>
+<span class="kw">ALTER TABLE</span> nsr.households <span class="kw">ENABLE ROW LEVEL SECURITY</span>;
+
+<span class="cmt">-- Policy: caseworkers see only their state</span>
+<span class="kw">CREATE POLICY</span> caseworker_state_policy
+<span class="kw">ON</span> nsr.households
+<span class="kw">FOR SELECT</span>
+<span class="kw">TO</span> nsr_caseworker
+<span class="kw">USING</span> (
+  lga_id <span class="kw">IN</span> (
+    <span class="kw">SELECT</span> lga_id <span class="kw">FROM</span> nsr.lgas
+    <span class="kw">WHERE</span> state_code = <span class="fn">current_setting</span>(<span class="str">'app.state_code'</span>, <span class="kw">TRUE</span>)
+  )
+);
+
+<span class="cmt">-- Test as Kano caseworker</span>
+<span class="kw">SET ROLE</span> nsr_caseworker;
+<span class="kw">SET</span> app.state_code = <span class="str">'KN'</span>;
+<span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.households;
+<span class="cmt">-- Returns only Kano households</span>
+
+<span class="kw">SET</span> app.state_code = <span class="str">'LA'</span>;
+<span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.households;
+<span class="cmt">-- Returns only Lagos households</span>
+
+<span class="kw">RESET ROLE</span>;</pre>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-d3-audit">
+      <h3>Audit Logging with pgAudit</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – audit log table</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">CREATE TABLE</span> nsr.audit_log (
+  log_id       <span class="typ">BIGSERIAL</span>   <span class="kw">PRIMARY KEY</span>,
+  log_time     <span class="typ">TIMESTAMPTZ</span> <span class="kw">NOT NULL DEFAULT now()</span>,
+  role_name    <span class="typ">TEXT</span>        <span class="kw">NOT NULL DEFAULT</span> <span class="fn">current_user</span>,
+  table_name   <span class="typ">TEXT</span>        <span class="kw">NOT NULL</span>,
+  action       <span class="typ">TEXT</span>        <span class="kw">NOT NULL</span>,
+  row_data     <span class="typ">JSONB</span>,
+  query_text   <span class="typ">TEXT</span>
+);
+
+<span class="cmt">-- Make it append-only (even owner cannot delete)</span>
+<span class="kw">REVOKE DELETE ON</span> nsr.audit_log <span class="kw">FROM</span> PUBLIC;
+<span class="kw">REVOKE DELETE ON</span> nsr.audit_log <span class="kw">FROM</span> nsr_dba;
+
+<span class="cmt">-- Test: try to delete an audit record</span>
+<span class="kw">DELETE FROM</span> nsr.audit_log <span class="kw">WHERE</span> log_id = <span class="num">1</span>;
+<span class="cmt">-- Expected: ERROR: permission denied</span></pre>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-d3-backup">
+      <h3>Logical Backup with pg_dump</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt"># Step 1: Create logical backup of nsr schema</span>
+pg_dump -U postgres -d lab_nsr -n nsr -F c -f /tmp/nsr_backup.dump
+
+<span class="cmt"># Step 2: List backup contents</span>
+pg_restore -l /tmp/nsr_backup.dump | head -30
+
+<span class="cmt"># Step 3: Create restore test database</span>
+createdb -U postgres lab_nsr_test
+
+<span class="cmt"># Step 4: Restore to test database</span>
+pg_restore -U postgres -d lab_nsr_test -F c /tmp/nsr_backup.dump
+
+<span class="cmt"># Step 5: Verify row counts match</span>
+psql -U postgres -d lab_nsr      -c "SELECT COUNT(*) FROM nsr.households;"
+psql -U postgres -d lab_nsr_test -c "SELECT COUNT(*) FROM nsr.households;"</pre>
+      </div>
+
+      <div class="callout tip">
+        <div class="callout-title">Backup strategy tip</div>
+        Use <code>-F c</code> (custom format) for production — it supports parallel restore. Use <code>-F p</code> (plain SQL) only for inspection or partial restores.
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-d3-exercises">
+      <div class="exercise-card">
+        <div class="exercise-header" onclick="toggleExercise(this)">
+          <div class="ex-num">H1.1</div>
+          <div class="ex-title">Create NSR roles and grant permissions</div>
+          <span class="ex-difficulty diff-intermediate">Intermediate</span>
+          <span class="ex-toggle">▼</span>
+        </div>
+        <div class="exercise-body" style="display:none">
+          <p>Create all three NSR roles with appropriate permissions. Paste the <code>\du+</code> output showing all NSR roles and their membership.</p>
+          <div class="answer-area">Paste \du+ output here</div>
+          <div class="answer-reveal" id="ans-d3-ex1">
+            <div class="callout tip"><div class="callout-title">Full Solution</div></div>
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">sql – complete RBAC setup</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre><span class="cmt">-- 1. Create roles</span>
+<span class="kw">CREATE ROLE</span> nsr_dba        <span class="kw">WITH LOGIN</span> PASSWORD <span class="str">'dba_secure_pw'</span>   BYPASSRLS;
+<span class="kw">CREATE ROLE</span> nsr_supervisor <span class="kw">WITH LOGIN</span> PASSWORD <span class="str">'sup_secure_pw'</span>   BYPASSRLS;
+<span class="kw">CREATE ROLE</span> nsr_caseworker <span class="kw">WITH LOGIN</span> PASSWORD <span class="str">'cw_secure_pw'</span>;
+
+<span class="cmt">-- 2. Grant schema access to all roles</span>
+<span class="kw">GRANT USAGE ON SCHEMA</span> nsr <span class="kw">TO</span> nsr_dba, nsr_supervisor, nsr_caseworker;
+
+<span class="cmt">-- 3. DBA: full access to all tables</span>
+<span class="kw">GRANT ALL ON ALL TABLES IN SCHEMA</span> nsr <span class="kw">TO</span> nsr_dba;
+<span class="kw">GRANT ALL ON ALL SEQUENCES IN SCHEMA</span> nsr <span class="kw">TO</span> nsr_dba;
+
+<span class="cmt">-- 4. Supervisor: read all + update payments</span>
+<span class="kw">GRANT SELECT ON ALL TABLES IN SCHEMA</span> nsr <span class="kw">TO</span> nsr_supervisor;
+<span class="kw">GRANT UPDATE ON</span> nsr.payments <span class="kw">TO</span> nsr_supervisor;
+
+<span class="cmt">-- 5. Caseworker: read households, lgas, states only (NIN masked via view)</span>
+<span class="kw">GRANT SELECT ON</span> nsr.households, nsr.lgas, nsr.states <span class="kw">TO</span> nsr_caseworker;
+
+<span class="cmt">-- 6. NIN masking view for caseworkers</span>
+<span class="kw">CREATE OR REPLACE VIEW</span> nsr.v_households_masked <span class="kw">AS</span>
+<span class="kw">SELECT</span>
+  household_id, household_code, lga_id, head_name,
+  pmt_score, enumeration_round, is_active
+<span class="kw">FROM</span> nsr.households;  <span class="cmt">-- NIN lives on individuals; mask it there:</span>
+
+<span class="kw">CREATE OR REPLACE VIEW</span> nsr.v_individuals_masked <span class="kw">AS</span>
+<span class="kw">SELECT</span>
+  individual_id, household_id,
+  <span class="fn">overlay</span>(nin <span class="kw">placing</span> <span class="str">'*******'</span> <span class="kw">from</span> <span class="num">3</span> <span class="kw">for</span> <span class="num">7</span>) <span class="kw">AS</span> nin_masked,
+  full_name, dob, gender
+<span class="kw">FROM</span> nsr.individuals;
+
+<span class="kw">GRANT SELECT ON</span> nsr.v_individuals_masked <span class="kw">TO</span> nsr_caseworker;
+<span class="kw">REVOKE SELECT ON</span> nsr.individuals <span class="kw">FROM</span> nsr_caseworker;
+
+<span class="cmt">-- 7. Verify</span>
+\du+</pre>
+            </div>
+            <div class="callout info" style="margin-top:8px">
+              <div class="callout-title">Expected \du+ output (key columns)</div>
+              <code>nsr_dba</code> — Superuser: No | BypassRLS: Yes | Login: Yes<br>
+              <code>nsr_supervisor</code> — Superuser: No | BypassRLS: Yes | Login: Yes<br>
+              <code>nsr_caseworker</code> — Superuser: No | BypassRLS: No | Login: Yes
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            <button class="btn-toggle-answer" onclick="toggleAnswer('d3-ex1',this)">▼ Show Answer</button>
+            <button class="ex-complete-btn" onclick="markExDone(this)">✓ Mark done</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="exercise-card">
+        <div class="exercise-header" onclick="toggleExercise(this)">
+          <div class="ex-num">H1.2</div>
+          <div class="ex-title">Enable and test Row-Level Security</div>
+          <span class="ex-difficulty diff-intermediate">Intermediate</span>
+          <span class="ex-toggle">▼</span>
+        </div>
+        <div class="exercise-body" style="display:none">
+          <p>Enable RLS on <code>nsr.households</code>, create the caseworker state policy, and test with Kano (KN), Lagos (LA), and with NO state set.</p>
+          <p>What happens when no <code>app.state_code</code> is set?</p>
+          <div class="answer-area">Write your observations here</div>
+          <div class="answer-reveal" id="ans-d3-ex2">
+            <div class="callout tip"><div class="callout-title">Full Solution</div></div>
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">sql – RLS setup and tests</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre><span class="cmt">-- Step 1: Enable RLS</span>
+<span class="kw">ALTER TABLE</span> nsr.households <span class="kw">ENABLE ROW LEVEL SECURITY</span>;
+
+<span class="cmt">-- Step 2: Create policy</span>
+<span class="kw">CREATE POLICY</span> caseworker_state_policy
+<span class="kw">ON</span> nsr.households
+<span class="kw">FOR SELECT</span>
+<span class="kw">TO</span> nsr_caseworker
+<span class="kw">USING</span> (
+  lga_id <span class="kw">IN</span> (
+    <span class="kw">SELECT</span> lga_id <span class="kw">FROM</span> nsr.lgas
+    <span class="kw">WHERE</span> state_code = <span class="fn">current_setting</span>(<span class="str">'app.state_code'</span>, <span class="kw">TRUE</span>)
+  )
+);
+
+<span class="cmt">-- Step 3: Test as Kano caseworker</span>
+<span class="kw">SET ROLE</span> nsr_caseworker;
+<span class="kw">SET</span> app.state_code = <span class="str">'KN'</span>;
+<span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.households;
+<span class="cmt">-- Returns only Kano households</span>
+
+<span class="cmt">-- Step 4: Switch to Lagos</span>
+<span class="kw">SET</span> app.state_code = <span class="str">'LA'</span>;
+<span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.households;
+<span class="cmt">-- Returns only Lagos households</span>
+
+<span class="cmt">-- Step 5: No state set (the TRUE arg to current_setting returns NULL not error)</span>
+<span class="kw">RESET</span> app.state_code;
+<span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.households;
+<span class="cmt">-- Returns 0 rows — NULL matches nothing in the lgas subquery</span>
+
+<span class="cmt">-- Return to superuser</span>
+<span class="kw">RESET ROLE</span>;
+
+<span class="cmt">-- Verify policy exists</span>
+<span class="kw">SELECT</span> policyname, roles, cmd, qual
+<span class="kw">FROM</span> pg_policies
+<span class="kw">WHERE</span> tablename = <span class="str">'households'</span>;</pre>
+            </div>
+            <div class="callout info" style="margin-top:8px">
+              <div class="callout-title">When no state is set — expected answer</div>
+              <code>current_setting('app.state_code', TRUE)</code> returns NULL when the variable is not set (the <code>TRUE</code> flag suppresses the "unrecognised configuration parameter" error). NULL in the WHERE clause means the lgas subquery returns no rows, so the household is invisible. This is the <strong>secure default</strong>: no state set → no data visible. Never use <code>current_setting('app.state_code')</code> without the TRUE flag — it raises an error on the first unset connection.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            <button class="btn-toggle-answer" onclick="toggleAnswer('d3-ex2',this)">▼ Show Answer</button>
+            <button class="ex-complete-btn" onclick="markExDone(this)">✓ Mark done</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="exercise-card">
+        <div class="exercise-header" onclick="toggleExercise(this)">
+          <div class="ex-num">H1.4</div>
+          <div class="ex-title">Perform and verify a backup</div>
+          <span class="ex-difficulty diff-basic">Basic</span>
+          <span class="ex-toggle">▼</span>
+        </div>
+        <div class="exercise-body" style="display:none">
+          <p>Run the backup commands from the Backup tab. Verify that row counts in <code>lab_nsr_test</code> match <code>lab_nsr</code>.</p>
+          <div class="answer-area">Paste your verification output here</div>
+          <div class="answer-reveal" id="ans-d3-ex3">
+            <div class="callout tip"><div class="callout-title">Full Solution</div></div>
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">bash – complete backup and verify</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre><span class="cmt"># Step 1: Backup only the nsr schema (custom format = parallel restore capable)</span>
+pg_dump -U postgres -d lab_nsr -n nsr -F c -f /tmp/nsr_backup.dump
+
+<span class="cmt"># Step 2: Inspect backup contents</span>
+pg_restore -l /tmp/nsr_backup.dump | head -30
+
+<span class="cmt"># Step 3: Create restore target database</span>
+createdb -U postgres lab_nsr_test
+
+<span class="cmt"># Step 4: Restore</span>
+pg_restore -U postgres -d lab_nsr_test -F c /tmp/nsr_backup.dump
+
+<span class="cmt"># Step 5: Verify row counts match across all key tables</span>
+for tbl in states lgas households individuals payments audit_log; do
+  echo "=== $tbl ==="
+  echo -n "  lab_nsr:      "
+  psql -U postgres -d lab_nsr      -tAc "SELECT COUNT(*) FROM nsr.$tbl"
+  echo -n "  lab_nsr_test: "
+  psql -U postgres -d lab_nsr_test -tAc "SELECT COUNT(*) FROM nsr.$tbl"
+done</pre>
+            </div>
+            <div class="callout info" style="margin-top:8px">
+              <div class="callout-title">Expected output</div>
+              All row counts should match exactly between <code>lab_nsr</code> and <code>lab_nsr_test</code>. If a count differs, the most likely cause is a sequence reset issue — check with <code>pg_restore -v</code> for errors during restore. Note: RLS policies and role grants are <strong>not</strong> backed up by schema-only dump unless you include <code>--no-acl</code> off and restore with superuser.
+            </div>
+            <div class="callout warning" style="margin-top:8px">
+              <div class="callout-title">Windows path note</div>
+              On Windows use a local path: <code>-f C:\tmp\nsr_backup.dump</code>. Create the folder first with <code>mkdir C:\tmp</code>.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            <button class="btn-toggle-answer" onclick="toggleAnswer('d3-ex3',this)">▼ Show Answer</button>
+            <button class="ex-complete-btn" onclick="markExDone(this)">✓ Mark done</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- end day3 -->
+
+
+<!-- ===== DAY 4 – STUDY VISIT ===== -->
+<div class="page" id="page-day4">
+  <div class="page-header">
+    <div class="page-title-area">
+      <div class="day-label">Week 1 · Friday 26 June 2026</div>
+      <h1>Study Visit – Coventry City Council</h1>
+      <div class="page-subtitle">Local Government Digital Transformation &amp; Citizen Services</div>
+    </div>
+    <button class="mark-done-btn" id="done-day4" onclick="markDone('day4')">Mark Complete ✓</button>
+  </div>
+
+  <div class="objectives">
+    <span class="obj-chip">#8 Digital Welfare Administration</span>
+    <span class="obj-chip">#9 Social Protection Systems</span>
+    <span class="obj-chip">#12 Public Sector Digital Transformation</span>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><div class="section-icon si-blue">📋</div><h2>Before You Go – Preparation</h2></div>
+    <div class="callout info"><div class="callout-title">Key principle</div>Write at least two specific questions you want answered today. Generic questions get generic answers.</div>
+    <div class="answer-area" style="min-height:100px">My two specific questions for Coventry City Council:<br><br>1.<br>2.</div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><div class="section-icon si-green">🔍</div><h2>Observation Matrix</h2></div>
+    <div class="obs-grid">
+      <div class="obs-card">
+        <div class="obs-title">Technology</div>
+        <p>What database systems are in use? How is citizen identity managed and verified? What data integration challenges do they face?</p>
+      </div>
+      <div class="obs-card">
+        <div class="obs-title">Process</div>
+        <p>How are caseworker decisions made and recorded? What approval workflows exist? How are errors corrected?</p>
+      </div>
+      <div class="obs-card">
+        <div class="obs-title">Governance</div>
+        <p>How is data quality maintained? Who has access to sensitive records? How are changes audited?</p>
+      </div>
+      <div class="obs-card">
+        <div class="obs-title">NSR Parallels</div>
+        <p>What lessons translate directly to the NSR context? What challenges are universal vs. UK-specific?</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><div class="section-icon si-amber">💡</div><h2>Evening Debrief – What / So What / Now What</h2></div>
+    <div style="display:grid;gap:12px;">
+      <div>
+        <h3>WHAT – What did you observe that surprised you?</h3>
+        <div class="answer-area"></div>
+      </div>
+      <div>
+        <h3>SO WHAT – What does it mean for how the NSR could work?</h3>
+        <div class="answer-area"></div>
+      </div>
+      <div>
+        <h3>NOW WHAT – Three lessons I will apply to my own organisation:</h3>
+        <div class="answer-area">1.<br>2.<br>3.</div>
+      </div>
+    </div>
+  </div>
+</div><!-- end day4 -->
+
+
+<!-- ===== DAY 5 – ASSESSMENT ===== -->
+<div class="page" id="page-day5">
+  <div class="page-header">
+    <div class="page-title-area">
+      <div class="day-label">Week 2 · Monday 29 June 2026</div>
+      <h1>Mid-Training Assessment Day</h1>
+      <div class="page-subtitle">Self-directed practical assessment – Parts A, B, and C</div>
+    </div>
+    <button class="mark-done-btn" id="done-day5" onclick="markDone('day5')">Mark Complete ✓</button>
+  </div>
+
+  <div class="callout important">
+    <div class="callout-title">Rules</div>
+    This is a self-directed practical assessment. Dr Anande is not in the room this morning and joins at 14:00. A proctor is present from 10:00 but cannot answer technical questions. Work individually — do not work with a neighbour. Partial and incomplete answers are valuable — they show the instructor exactly where to focus the remaining days.
+  </div>
+
+  <div class="section">
+    <div class="section-header"><div class="section-icon si-blue">A</div><h2>Part A – Foundations &amp; Architecture (Day 1)</h2></div>
+
+    <h3>A1 – WAL Explain</h3>
+    <p>Without running any SQL, explain in your own words: (a) what WAL does and why it is necessary, (b) what happens at a checkpoint.</p>
+    <div class="answer-area">Write your explanation here</div>
+    <div class="answer-reveal" id="ans-d5-a1">
+      <div class="callout tip"><div class="callout-title">Model Answer</div></div>
+      <div class="callout info">
+        <p><strong>(a) WAL:</strong> Write-Ahead Logging records every data change to a sequential log file before the corresponding data page is written to disk. This is necessary because random data-page writes are slow and a crash mid-write would leave pages in an inconsistent state. By replaying the WAL from the last checkpoint after a crash, PostgreSQL can reconstruct the exact committed state with no data loss — delivering the Durability guarantee of ACID.</p>
+        <p style="margin-top:8px"><strong>(b) Checkpoint:</strong> At a checkpoint PostgreSQL flushes all dirty shared_buffers pages to their data files on disk and records the checkpoint location in the WAL. On recovery after a crash, PostgreSQL only needs to replay WAL from the most recent checkpoint rather than from the beginning of WAL history — making recovery fast and bounded in time. The checkpoint_completion_target parameter spreads the I/O of a checkpoint over time to avoid a spike.</p>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+      <button class="btn-toggle-answer instructor-block instructor-only" onclick="toggleAnswer('d5-a1',this)">▼ Show Model Answer</button>
+    </div>
+
+    <h3>A2 – Schema Design</h3>
+    <p>Write the DDL to create a table <code>nsr.programme_eligibility</code> that tracks which programmes each household is enrolled in, with appropriate constraints, foreign keys, and a status check.</p>
+    <div class="answer-area">Write your DDL here</div>
+    <div class="answer-reveal" id="ans-d5-a2">
+      <div class="callout tip"><div class="callout-title">Model Answer</div></div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – model solution</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">CREATE TABLE</span> nsr.programme_eligibility (
+  eligibility_id   <span class="typ">BIGSERIAL</span>    <span class="kw">PRIMARY KEY</span>,
+  household_id     <span class="typ">BIGINT</span>       <span class="kw">NOT NULL</span>
+                   <span class="kw">REFERENCES</span> nsr.households(household_id)
+                   <span class="kw">ON DELETE CASCADE</span>,
+  programme_name   <span class="typ">TEXT</span>         <span class="kw">NOT NULL</span>,
+  enrolment_date   <span class="typ">DATE</span>         <span class="kw">NOT NULL DEFAULT CURRENT_DATE</span>,
+  status           <span class="typ">TEXT</span>         <span class="kw">NOT NULL DEFAULT</span> <span class="str">'pending'</span>
+                   <span class="kw">CHECK</span> (status <span class="kw">IN</span> (<span class="str">'pending'</span>,<span class="str">'eligible'</span>,<span class="str">'enrolled'</span>,<span class="str">'suspended'</span>,<span class="str">'exited'</span>)),
+  created_by       <span class="typ">TEXT</span>         <span class="kw">NOT NULL DEFAULT</span> <span class="fn">current_user</span>,
+  created_at       <span class="typ">TIMESTAMPTZ</span>  <span class="kw">NOT NULL DEFAULT</span> <span class="fn">now</span>(),
+  <span class="kw">UNIQUE</span> (household_id, programme_name)
+  <span class="cmt">-- one row per household per programme</span>
+);</pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Marking guidance</div>
+        Award full marks for: FK to households, a status CHECK constraint with sensible values, UNIQUE on (household_id, programme_name) to prevent duplicates, and audit columns (created_by/created_at). Partial marks if FK or CHECK is missing.
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+      <button class="btn-toggle-answer instructor-block instructor-only" onclick="toggleAnswer('d5-a2',this)">▼ Show Model Answer</button>
+    </div>
+
+    <h3>A3 – Process Model</h3>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">sql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="kw">SELECT</span> pid, usename, application_name, state
+<span class="kw">FROM</span> pg_stat_activity
+<span class="kw">ORDER BY</span> pid;</pre>
+    </div>
+    <p>What does each row represent? What is the difference between a backend process and the postmaster?</p>
+    <div class="answer-area">Write your answer here</div>
+    <div class="answer-reveal" id="ans-d5-a3">
+      <div class="callout tip"><div class="callout-title">Model Answer</div></div>
+      <div class="callout info">
+        <p><strong>Each row</strong> in pg_stat_activity represents one <strong>backend process</strong> — a separate OS process that PostgreSQL spawned to handle exactly one client connection. The <code>pid</code> is its OS process ID; <code>usename</code> is the database role it authenticated as; <code>application_name</code> is what the client reported itself as (e.g. "psql"); <code>state</code> is <em>active</em> (executing a query) or <em>idle</em> (waiting for the next command).</p>
+        <p style="margin-top:8px"><strong>Postmaster vs backend:</strong> The <em>postmaster</em> is the parent process that starts when PostgreSQL server starts. It listens on port 5432 and forks a new <em>backend</em> process for every incoming client connection. The postmaster itself never executes SQL — it manages child lifecycle (fork, monitor, reap). Each backend is an independent process that handles query parsing, planning, and execution for its own connection, and shares memory via shared_buffers.</p>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+      <button class="btn-toggle-answer instructor-block instructor-only" onclick="toggleAnswer('d5-a3',this)">▼ Show Model Answer</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><div class="section-icon si-green">B</div><h2>Part B – SQL Fundamentals (Day 2)</h2></div>
+
+    <h3>B1 – JOIN Report</h3>
+    <p>Write a query listing for each active household: household_code, head_name, state_name, lga_name, pmt_score. Order by state then pmt_score ascending.</p>
+    <div class="answer-area">Write your SQL here</div>
+    <div class="answer-reveal" id="ans-d5-b1">
+      <div class="callout tip"><div class="callout-title">Model Answer</div></div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">SELECT</span>
+  h.household_code,
+  h.head_name,
+  s.state_name,
+  l.lga_name,
+  h.pmt_score
+<span class="kw">FROM</span> nsr.households h
+<span class="kw">JOIN</span> nsr.lgas   l <span class="kw">ON</span> h.lga_id     = l.lga_id
+<span class="kw">JOIN</span> nsr.states s <span class="kw">ON</span> l.state_code = s.state_code
+<span class="kw">WHERE</span> h.is_active = <span class="kw">TRUE</span>
+<span class="kw">ORDER BY</span> s.state_name, h.pmt_score <span class="kw">ASC</span>;</pre>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+      <button class="btn-toggle-answer instructor-block instructor-only" onclick="toggleAnswer('d5-b1',this)">▼ Show Model Answer</button>
+    </div>
+
+    <h3>B2 – Window Function</h3>
+    <p>Rank households by pmt_score within their state. Show household_code, state_name, pmt_score, and rank.</p>
+    <div class="answer-area">Write your SQL here</div>
+    <div class="answer-reveal" id="ans-d5-b2">
+      <div class="callout tip"><div class="callout-title">Model Answer</div></div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">SELECT</span>
+  h.household_code,
+  s.state_name,
+  h.pmt_score,
+  <span class="fn">RANK</span>() <span class="kw">OVER</span> (
+    <span class="kw">PARTITION BY</span> l.state_code
+    <span class="kw">ORDER BY</span> h.pmt_score <span class="kw">ASC</span>
+  ) <span class="kw">AS</span> poverty_rank
+<span class="kw">FROM</span> nsr.households h
+<span class="kw">JOIN</span> nsr.lgas   l <span class="kw">ON</span> h.lga_id     = l.lga_id
+<span class="kw">JOIN</span> nsr.states s <span class="kw">ON</span> l.state_code = s.state_code
+<span class="kw">WHERE</span> h.is_active = <span class="kw">TRUE</span>
+<span class="kw">ORDER BY</span> s.state_name, poverty_rank;</pre>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+      <button class="btn-toggle-answer instructor-block instructor-only" onclick="toggleAnswer('d5-b2',this)">▼ Show Model Answer</button>
+    </div>
+
+    <h3>B3 – Never Paid</h3>
+    <p>Find all active households that have never received a processed payment. Use a JOIN — do not use a subquery.</p>
+    <div class="answer-area">Write your SQL here</div>
+    <div class="answer-reveal" id="ans-d5-b3">
+      <div class="callout tip"><div class="callout-title">Model Answer</div></div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">SELECT</span>
+  h.household_code,
+  h.head_name,
+  s.state_name
+<span class="kw">FROM</span> nsr.households h
+<span class="kw">JOIN</span>  nsr.lgas   l <span class="kw">ON</span> h.lga_id     = l.lga_id
+<span class="kw">JOIN</span>  nsr.states s <span class="kw">ON</span> l.state_code = s.state_code
+<span class="kw">LEFT JOIN</span> nsr.payments p
+  <span class="kw">ON</span>  p.household_id = h.household_id
+ <span class="kw">AND</span>  p.status = <span class="str">'processed'</span>
+<span class="kw">WHERE</span> h.is_active = <span class="kw">TRUE</span>
+  <span class="kw">AND</span> p.payment_id <span class="kw">IS NULL</span>
+<span class="kw">ORDER BY</span> s.state_name, h.household_code;</pre>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+      <button class="btn-toggle-answer instructor-block instructor-only" onclick="toggleAnswer('d5-b3',this)">▼ Show Model Answer</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><div class="section-icon si-amber">C</div><h2>Part C – Administration &amp; Security (Day 3)</h2></div>
+
+    <h3>C1 – RLS Policy</h3>
+    <p>Write the full RLS policy for caseworkers (as implemented on Day 3). Test it and record your results.</p>
+    <div class="answer-area">Write your SQL and results here</div>
+    <div class="answer-reveal" id="ans-d5-c1">
+      <div class="callout tip"><div class="callout-title">Model Answer</div></div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Enable RLS</span>
+<span class="kw">ALTER TABLE</span> nsr.households <span class="kw">ENABLE ROW LEVEL SECURITY</span>;
+
+<span class="cmt">-- Policy: caseworkers see only households in their assigned state</span>
+<span class="kw">CREATE POLICY</span> caseworker_state_policy
+<span class="kw">ON</span> nsr.households
+<span class="kw">FOR SELECT</span>
+<span class="kw">TO</span> nsr_caseworker
+<span class="kw">USING</span> (
+  lga_id <span class="kw">IN</span> (
+    <span class="kw">SELECT</span> lga_id <span class="kw">FROM</span> nsr.lgas
+    <span class="kw">WHERE</span> state_code = <span class="fn">current_setting</span>(<span class="str">'app.state_code'</span>, <span class="kw">TRUE</span>)
+  )
+);
+
+<span class="cmt">-- Tests (run as nsr_caseworker)</span>
+<span class="kw">SET ROLE</span> nsr_caseworker;
+<span class="kw">SET</span> app.state_code = <span class="str">'KN'</span>; <span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.households; <span class="cmt">-- Kano only</span>
+<span class="kw">SET</span> app.state_code = <span class="str">'LA'</span>; <span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.households; <span class="cmt">-- Lagos only</span>
+<span class="kw">RESET</span> app.state_code;       <span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.households; <span class="cmt">-- 0 rows</span>
+<span class="kw">RESET ROLE</span>;</pre>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+      <button class="btn-toggle-answer instructor-block instructor-only" onclick="toggleAnswer('d5-c1',this)">▼ Show Model Answer</button>
+    </div>
+
+    <h3>C2 – Audit Log</h3>
+    <p>Write a trigger that logs INSERT, UPDATE, DELETE operations on nsr.households into nsr.audit_log.</p>
+    <div class="answer-area">Write your trigger function and CREATE TRIGGER statement here</div>
+    <div class="answer-reveal" id="ans-d5-c2">
+      <div class="callout tip"><div class="callout-title">Model Answer</div></div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – trigger function + trigger</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Trigger function</span>
+<span class="kw">CREATE OR REPLACE FUNCTION</span> nsr.fn_audit_households()
+<span class="kw">RETURNS TRIGGER</span>
+<span class="kw">LANGUAGE</span> plpgsql
+<span class="kw">SECURITY DEFINER</span>
+<span class="kw">AS</span> $$
+<span class="kw">BEGIN</span>
+  <span class="kw">INSERT INTO</span> nsr.audit_log
+    (role_name, table_name, action, row_data, query_text)
+  <span class="kw">VALUES</span> (
+    <span class="fn">current_user</span>,
+    <span class="str">'nsr.households'</span>,
+    TG_OP,                          <span class="cmt">-- 'INSERT', 'UPDATE', or 'DELETE'</span>
+    <span class="kw">CASE</span>
+      <span class="kw">WHEN</span> TG_OP = <span class="str">'DELETE'</span> <span class="kw">THEN</span> <span class="fn">to_jsonb</span>(OLD)
+      <span class="kw">ELSE</span>                       <span class="fn">to_jsonb</span>(NEW)
+    <span class="kw">END</span>,
+    <span class="fn">current_query</span>()
+  );
+  <span class="kw">RETURN</span> <span class="kw">COALESCE</span>(NEW, OLD);
+<span class="kw">END</span>;
+$$;
+
+<span class="cmt">-- Attach trigger (fires after each row change)</span>
+<span class="kw">CREATE TRIGGER</span> trg_audit_households
+<span class="kw">AFTER INSERT OR UPDATE OR DELETE</span>
+<span class="kw">ON</span> nsr.households
+<span class="kw">FOR EACH ROW EXECUTE FUNCTION</span> nsr.fn_audit_households();
+
+<span class="cmt">-- Test</span>
+<span class="kw">INSERT INTO</span> nsr.households (household_code, lga_id, head_name)
+<span class="kw">VALUES</span> (<span class="str">'HH-AUDIT-TEST'</span>, <span class="num">1</span>, <span class="str">'Test Person'</span>);
+
+<span class="kw">SELECT</span> log_time, role_name, action, row_data-><span class="str">'household_code'</span> <span class="kw">AS</span> code
+<span class="kw">FROM</span> nsr.audit_log
+<span class="kw">ORDER BY</span> log_id <span class="kw">DESC LIMIT</span> <span class="num">5</span>;</pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Marking guidance</div>
+        Must include: AFTER trigger (not BEFORE), FOR EACH ROW, all three operations (INSERT OR UPDATE OR DELETE), row capture using NEW/OLD, and insertion into audit_log. SECURITY DEFINER ensures the audit write succeeds even when nsr_caseworker has no INSERT on audit_log. Award partial marks for correct function body without SECURITY DEFINER.
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+      <button class="btn-toggle-answer instructor-block instructor-only" onclick="toggleAnswer('d5-c2',this)">▼ Show Model Answer</button>
+    </div>
+  </div>
+</div><!-- end day5 -->
+
+
+<!-- ===== DAY 6 – PERFORMANCE ===== -->
+<div class="page" id="page-day6">
+  <div class="page-header">
+    <div class="page-title-area">
+      <div class="day-label">Week 2 · Tuesday 30 June 2026</div>
+      <h1>Performance Tuning &amp; Database Optimisation</h1>
+      <div class="page-subtitle">EXPLAIN ANALYZE, indexing, partitioning, monitoring, capacity planning</div>
+    </div>
+    <button class="mark-done-btn" id="done-day6" onclick="markDone('day6')">Mark Complete ✓</button>
+  </div>
+
+  <div class="objectives">
+    <span class="obj-chip">#4 Performance Tuning &amp; Monitoring</span>
+    <span class="obj-chip">#2 SQL Development &amp; Optimisation</span>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(this,'d6tabs','d6-explain')">EXPLAIN ANALYZE</button>
+    <button class="tab-btn" onclick="switchTab(this,'d6tabs','d6-index')">Indexing</button>
+    <button class="tab-btn" onclick="switchTab(this,'d6tabs','d6-partition')">Partitioning</button>
+    <button class="tab-btn" onclick="switchTab(this,'d6tabs','d6-monitor')">Monitoring</button>
+    <button class="tab-btn" onclick="switchTab(this,'d6tabs','d6-exercises')">Exercises</button>
+  </div>
+
+  <div id="d6tabs">
+    <div class="tab-panel active" id="tab-d6-explain">
+      <h3>Reading an Execution Plan</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Always use ANALYZE to get real timings</span>
+<span class="kw">EXPLAIN</span> (<span class="kw">ANALYZE</span>, <span class="kw">BUFFERS</span>, <span class="kw">FORMAT</span> TEXT)
+<span class="kw">SELECT</span> h.household_code, h.pmt_score, s.state_name
+<span class="kw">FROM</span> nsr.households h
+<span class="kw">JOIN</span> nsr.lgas   l <span class="kw">ON</span> h.lga_id     = l.lga_id
+<span class="kw">JOIN</span> nsr.states s <span class="kw">ON</span> l.state_code = s.state_code
+<span class="kw">WHERE</span> h.pmt_score < <span class="num">25.0</span>
+<span class="kw">ORDER BY</span> h.pmt_score;</pre>
+      </div>
+      <table>
+        <tr><th>Plan node</th><th>Means</th><th>Watch for</th></tr>
+        <tr><td>Seq Scan</td><td>Full table scan</td><td>On large tables without WHERE selectivity</td></tr>
+        <tr><td>Index Scan</td><td>B-tree traversal</td><td>Good — check index is being used</td></tr>
+        <tr><td>Bitmap Heap Scan</td><td>Index → heap fetch</td><td>Good for range queries</td></tr>
+        <tr><td>Hash Join</td><td>Build hash table, probe</td><td>Normal for large set joins</td></tr>
+        <tr><td>Nested Loop</td><td>For each outer row, scan inner</td><td>Slow when inner table is large</td></tr>
+        <tr><td>actual rows ≫ rows</td><td>Stale statistics</td><td>Run ANALYZE to fix</td></tr>
+      </table>
+    </div>
+
+    <div class="tab-panel" id="tab-d6-index">
+      <h3>Index Types and When to Use Them</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – index creation</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- B-tree (default): equality and range queries</span>
+<span class="kw">CREATE INDEX</span> idx_households_pmt_score
+<span class="kw">ON</span> nsr.households (pmt_score);
+
+<span class="cmt">-- Partial index: only index active households (much smaller)</span>
+<span class="kw">CREATE INDEX</span> idx_households_active_pmt
+<span class="kw">ON</span> nsr.households (pmt_score)
+<span class="kw">WHERE</span> is_active = <span class="kw">TRUE</span>;
+
+<span class="cmt">-- Composite index: state + score (covers the ORDER BY in common queries)</span>
+<span class="kw">CREATE INDEX</span> idx_lgas_state_lga
+<span class="kw">ON</span> nsr.lgas (state_code, lga_name);
+
+<span class="cmt">-- GIN index: JSONB columns</span>
+<span class="kw">CREATE INDEX</span> idx_audit_row_data
+<span class="kw">ON</span> nsr.audit_log <span class="kw">USING</span> GIN (row_data);
+
+<span class="cmt">-- Check index usage</span>
+<span class="kw">SELECT</span> indexname, idx_scan, idx_tup_read
+<span class="kw">FROM</span> pg_stat_user_indexes
+<span class="kw">WHERE</span> schemaname = <span class="str">'nsr'</span>
+<span class="kw">ORDER BY</span> idx_scan <span class="kw">DESC</span>;</pre>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-d6-partition">
+      <h3>Table Partitioning</h3>
+      <p>Partition large tables by a column that is commonly used in WHERE clauses — for the NSR, payments by year or households by state.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – range partitioning by year</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Create partitioned parent</span>
+<span class="kw">CREATE TABLE</span> nsr.payments_partitioned (
+  payment_id    <span class="typ">BIGSERIAL</span>,
+  household_id  <span class="typ">BIGINT</span>        <span class="kw">NOT NULL</span>,
+  payment_date  <span class="typ">DATE</span>          <span class="kw">NOT NULL</span>,
+  amount_ngn    <span class="typ">NUMERIC(12,2)</span>,
+  status        <span class="typ">TEXT</span>
+) <span class="kw">PARTITION BY RANGE</span> (payment_date);
+
+<span class="cmt">-- Create partitions</span>
+<span class="kw">CREATE TABLE</span> nsr.payments_2024
+  <span class="kw">PARTITION OF</span> nsr.payments_partitioned
+  <span class="kw">FOR VALUES FROM</span> (<span class="str">'2024-01-01'</span>) <span class="kw">TO</span> (<span class="str">'2025-01-01'</span>);
+
+<span class="kw">CREATE TABLE</span> nsr.payments_2025
+  <span class="kw">PARTITION OF</span> nsr.payments_partitioned
+  <span class="kw">FOR VALUES FROM</span> (<span class="str">'2025-01-01'</span>) <span class="kw">TO</span> (<span class="str">'2026-01-01'</span>);
+
+<span class="cmt">-- PostgreSQL prunes irrelevant partitions automatically</span>
+<span class="kw">EXPLAIN SELECT</span> * <span class="kw">FROM</span> nsr.payments_partitioned
+<span class="kw">WHERE</span> payment_date <span class="kw">BETWEEN</span> <span class="str">'2024-03-01'</span> <span class="kw">AND</span> <span class="str">'2024-06-30'</span>;
+<span class="cmt">-- Only payments_2024 appears in the plan</span></pre>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-d6-monitor">
+      <h3>Key Monitoring Queries</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – monitoring dashboard</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Table bloat (dead tuple ratio)</span>
+<span class="kw">SELECT</span> schemaname, relname,
+  n_dead_tup, n_live_tup,
+  <span class="fn">ROUND</span>(n_dead_tup::numeric / <span class="fn">NULLIF</span>(n_live_tup+n_dead_tup,<span class="num">0</span>)*<span class="num">100</span>,<span class="num">1</span>) <span class="kw">AS</span> dead_pct,
+  last_vacuum, last_autovacuum
+<span class="kw">FROM</span> pg_stat_user_tables
+<span class="kw">ORDER BY</span> dead_pct <span class="kw">DESC NULLS LAST</span>
+<span class="kw">LIMIT</span> <span class="num">10</span>;
+
+<span class="cmt">-- Long-running queries</span>
+<span class="kw">SELECT</span> pid, now() - query_start <span class="kw">AS</span> duration, query
+<span class="kw">FROM</span> pg_stat_activity
+<span class="kw">WHERE</span> state = <span class="str">'active'</span>
+  <span class="kw">AND</span> query_start < now() - INTERVAL <span class="str">'30 seconds'</span>
+<span class="kw">ORDER BY</span> duration <span class="kw">DESC</span>;
+
+<span class="cmt">-- Cache hit rate (aim for > 99%)</span>
+<span class="kw">SELECT</span>
+  <span class="fn">ROUND</span>(blks_hit::numeric / <span class="fn">NULLIF</span>(blks_hit+blks_read,<span class="num">0</span>)*<span class="num">100</span>,<span class="num">2</span>) <span class="kw">AS</span> cache_hit_pct
+<span class="kw">FROM</span> pg_stat_database
+<span class="kw">WHERE</span> datname = <span class="str">'lab_nsr'</span>;</pre>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-d6-exercises">
+      <div class="exercise-card">
+        <div class="exercise-header" onclick="toggleExercise(this)">
+          <div class="ex-num">P1</div>
+          <div class="ex-title">Diagnose and fix a slow query</div>
+          <span class="ex-difficulty diff-intermediate">Intermediate</span>
+          <span class="ex-toggle">▼</span>
+        </div>
+        <div class="exercise-body" style="display:none">
+          <p>Run <code>EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM nsr.households WHERE pmt_score &lt; 25;</code> before adding an index. Record the plan. Then create a partial index on active households with low pmt_score and re-run. How has the plan changed?</p>
+          <div class="answer-area">Paste before/after plans here and explain the difference</div>
+          <div class="answer-reveal" id="ans-d6-p1">
+            <div class="callout tip"><div class="callout-title">Full Solution</div></div>
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">sql – step by step</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre><span class="cmt">-- Step 1: Baseline plan (expect Seq Scan on small dataset)</span>
+<span class="kw">EXPLAIN</span> (<span class="kw">ANALYZE</span>, <span class="kw">BUFFERS</span>)
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> nsr.households <span class="kw">WHERE</span> pmt_score &lt; <span class="num">25</span>;
+
+<span class="cmt">-- Step 2: Create a partial index covering only active households</span>
+<span class="kw">CREATE INDEX</span> idx_households_active_low_pmt
+<span class="kw">ON</span> nsr.households (pmt_score)
+<span class="kw">WHERE</span> is_active = <span class="kw">TRUE</span>;
+
+<span class="cmt">-- Step 3: Re-run the same query</span>
+<span class="kw">EXPLAIN</span> (<span class="kw">ANALYZE</span>, <span class="kw">BUFFERS</span>)
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> nsr.households
+<span class="kw">WHERE</span> pmt_score &lt; <span class="num">25</span> <span class="kw">AND</span> is_active = <span class="kw">TRUE</span>;
+<span class="cmt">-- PostgreSQL can now use idx_households_active_low_pmt</span>
+
+<span class="cmt">-- Step 4: Check index size vs full index</span>
+<span class="kw">SELECT</span>
+  indexname,
+  <span class="fn">pg_size_pretty</span>(<span class="fn">pg_relation_size</span>(indexname::regclass)) <span class="kw">AS</span> index_size
+<span class="kw">FROM</span> pg_indexes
+<span class="kw">WHERE</span> tablename = <span class="str">'households'</span>
+  <span class="kw">AND</span> schemaname = <span class="str">'nsr'</span>;</pre>
+            </div>
+            <div class="callout info" style="margin-top:8px">
+              <div class="callout-title">Expected plan change</div>
+              <strong>Before:</strong> <code>Seq Scan on households</code> — reads every page.<br>
+              <strong>After:</strong> <code>Index Scan using idx_households_active_low_pmt</code> — only traverses the B-tree for matching entries.<br><br>
+              <strong>Why partial index?</strong> If 80% of households are active, a partial index on active rows only is ~80% of the full index size, but for the typical caseworker query (only ever queries active households) it is equally effective. For low-pmt-score benefit dashboards this makes a measurable difference at scale.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            <button class="btn-toggle-answer" onclick="toggleAnswer('d6-p1',this)">▼ Show Answer</button>
+            <button class="ex-complete-btn" onclick="markExDone(this)">✓ Mark done</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="exercise-card">
+        <div class="exercise-header" onclick="toggleExercise(this)">
+          <div class="ex-num">P2</div>
+          <div class="ex-title">Set up payments partitioning</div>
+          <span class="ex-difficulty diff-advanced">Advanced</span>
+          <span class="ex-toggle">▼</span>
+        </div>
+        <div class="exercise-body" style="display:none">
+          <p>Create the partitioned payments table and add partitions for 2024, 2025, and 2026. Insert sample rows spanning all three years. Then run EXPLAIN and verify partition pruning is working.</p>
+          <div class="answer-area">Paste your EXPLAIN output here</div>
+          <div class="answer-reveal" id="ans-d6-p2">
+            <div class="callout tip"><div class="callout-title">Full Solution</div></div>
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">sql – partitioning solution</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre><span class="cmt">-- Step 1: Create partitioned parent table</span>
+<span class="kw">CREATE TABLE</span> nsr.payments_part (
+  payment_id    <span class="typ">BIGSERIAL</span>,
+  household_id  <span class="typ">BIGINT</span>        <span class="kw">NOT NULL</span>,
+  payment_date  <span class="typ">DATE</span>          <span class="kw">NOT NULL</span>,
+  amount_ngn    <span class="typ">NUMERIC(12,2)</span> <span class="kw">NOT NULL CHECK</span> (amount_ngn > <span class="num">0</span>),
+  status        <span class="typ">TEXT</span>          <span class="kw">NOT NULL DEFAULT</span> <span class="str">'pending'</span>
+) <span class="kw">PARTITION BY RANGE</span> (payment_date);
+
+<span class="cmt">-- Step 2: Create yearly partitions</span>
+<span class="kw">CREATE TABLE</span> nsr.payments_part_2024
+  <span class="kw">PARTITION OF</span> nsr.payments_part
+  <span class="kw">FOR VALUES FROM</span> (<span class="str">'2024-01-01'</span>) <span class="kw">TO</span> (<span class="str">'2025-01-01'</span>);
+
+<span class="kw">CREATE TABLE</span> nsr.payments_part_2025
+  <span class="kw">PARTITION OF</span> nsr.payments_part
+  <span class="kw">FOR VALUES FROM</span> (<span class="str">'2025-01-01'</span>) <span class="kw">TO</span> (<span class="str">'2026-01-01'</span>);
+
+<span class="kw">CREATE TABLE</span> nsr.payments_part_2026
+  <span class="kw">PARTITION OF</span> nsr.payments_part
+  <span class="kw">FOR VALUES FROM</span> (<span class="str">'2026-01-01'</span>) <span class="kw">TO</span> (<span class="str">'2027-01-01'</span>);
+
+<span class="cmt">-- Step 3: Insert sample rows across all three years</span>
+<span class="kw">INSERT INTO</span> nsr.payments_part (household_id, payment_date, amount_ngn, status)
+<span class="kw">VALUES</span>
+  (<span class="num">1</span>, <span class="str">'2024-03-15'</span>, <span class="num">25000</span>, <span class="str">'processed'</span>),
+  (<span class="num">2</span>, <span class="str">'2025-07-01'</span>, <span class="num">25000</span>, <span class="str">'processed'</span>),
+  (<span class="num">3</span>, <span class="str">'2026-01-10'</span>, <span class="num">25000</span>, <span class="str">'processed'</span>);
+
+<span class="cmt">-- Step 4: Verify rows landed in correct partitions</span>
+<span class="kw">SELECT</span> tableoid::regclass <span class="kw">AS</span> partition, payment_date, amount_ngn
+<span class="kw">FROM</span> nsr.payments_part
+<span class="kw">ORDER BY</span> payment_date;
+
+<span class="cmt">-- Step 5: Check partition pruning (should show only payments_part_2024)</span>
+<span class="kw">EXPLAIN SELECT</span> * <span class="kw">FROM</span> nsr.payments_part
+<span class="kw">WHERE</span> payment_date <span class="kw">BETWEEN</span> <span class="str">'2024-01-01'</span> <span class="kw">AND</span> <span class="str">'2024-12-31'</span>;</pre>
+            </div>
+            <div class="callout info" style="margin-top:8px">
+              <div class="callout-title">Expected EXPLAIN output</div>
+              The plan should show <code>Append</code> with only <strong>one</strong> child node: <code>Seq Scan on payments_part_2024</code>. The 2025 and 2026 partitions are pruned entirely — PostgreSQL's constraint exclusion eliminates them before execution. This is the core benefit of partitioning for time-series payment data: annual reporting queries never touch old partitions.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            <button class="btn-toggle-answer" onclick="toggleAnswer('d6-p2',this)">▼ Show Answer</button>
+            <button class="ex-complete-btn" onclick="markExDone(this)">✓ Mark done</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- end day6 -->
+
+
+<!-- ===== DAY 7 – ETL/ELT ===== -->
+<div class="page" id="page-day7">
+  <div class="page-header">
+    <div class="page-title-area">
+      <div class="day-label">Week 2 · Wednesday 1 July 2026</div>
+      <h1>ETL/ELT &amp; Data Governance</h1>
+      <div class="page-subtitle">Migration, validation, deduplication, NDP Act 2023, MDM, interoperability, NSR workshop</div>
+    </div>
+    <button class="mark-done-btn" id="done-day7" onclick="markDone('day7')">Mark Complete ✓</button>
+  </div>
+
+  <div class="objectives">
+    <span class="obj-chip">#5 ETL/ELT &amp; Data Migration</span>
+    <span class="obj-chip">#6 Data Governance</span>
+    <span class="obj-chip">#11 NSR Modernisation</span>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(this,'d7tabs','d7-etl')">ETL vs ELT</button>
+    <button class="tab-btn" onclick="switchTab(this,'d7tabs','d7-dedup')">Deduplication</button>
+    <button class="tab-btn" onclick="switchTab(this,'d7tabs','d7-gov')">NDP Act &amp; Governance</button>
+    <button class="tab-btn" onclick="switchTab(this,'d7tabs','d7-exercises')">Exercises</button>
+  </div>
+
+  <div id="d7tabs">
+    <div class="tab-panel active" id="tab-d7-etl">
+      <h3>ETL vs ELT</h3>
+      <table>
+        <tr><th>Approach</th><th>Where transformation happens</th><th>NSR use case</th></tr>
+        <tr><td>ETL</td><td>Before loading into target DB</td><td>Legacy flat-file migration, census data ingestion</td></tr>
+        <tr><td>ELT</td><td>After loading — inside PostgreSQL</td><td>Real-time interoperability with LIMS/IFMIS/BVN</td></tr>
+      </table>
+
+      <h3>PostgreSQL-Native ETL Pattern</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – staging → target with validation</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Step 1: Create staging table (no constraints)</span>
+<span class="kw">CREATE TABLE</span> nsr.stg_households (
+  household_code  <span class="typ">TEXT</span>,
+  state_name      <span class="typ">TEXT</span>,
+  lga_name        <span class="typ">TEXT</span>,
+  head_name       <span class="typ">TEXT</span>,
+  pmt_score       <span class="typ">TEXT</span>,
+  import_batch    <span class="typ">TEXT</span>
+);
+
+<span class="cmt">-- Step 2: Load from CSV</span>
+<span class="cmt">-- \COPY nsr.stg_households FROM '/tmp/nsr_raw.csv' CSV HEADER</span>
+
+<span class="cmt">-- Step 3: Validate</span>
+<span class="kw">SELECT</span> <span class="str">'missing_code'</span> <span class="kw">AS</span> issue, <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> nsr.stg_households <span class="kw">WHERE</span> household_code <span class="kw">IS NULL</span>
+<span class="kw">UNION ALL</span>
+<span class="kw">SELECT</span> <span class="str">'invalid_pmt'</span>,   <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> nsr.stg_households <span class="kw">WHERE</span> pmt_score !~ <span class="str">'^[0-9]+\.?[0-9]*$'</span>
+<span class="kw">UNION ALL</span>
+<span class="kw">SELECT</span> <span class="str">'duplicate_code'</span>, <span class="fn">COUNT</span>(*) - <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> household_code)
+                          <span class="kw">FROM</span> nsr.stg_households;
+
+<span class="cmt">-- Step 4: Load valid rows (with type cast)</span>
+<span class="kw">INSERT INTO</span> nsr.households (household_code, lga_id, head_name, pmt_score)
+<span class="kw">SELECT</span>
+  s.household_code,
+  l.lga_id,
+  s.head_name,
+  s.pmt_score::<span class="typ">NUMERIC</span>
+<span class="kw">FROM</span> nsr.stg_households s
+<span class="kw">JOIN</span> nsr.lgas l <span class="kw">ON</span> l.lga_name = s.lga_name
+<span class="kw">WHERE</span> s.household_code <span class="kw">IS NOT NULL</span>
+  <span class="kw">AND</span> s.pmt_score ~ <span class="str">'^[0-9]+\.?[0-9]*$'</span>
+<span class="kw">ON CONFLICT</span> (household_code) <span class="kw">DO NOTHING</span>;</pre>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-d7-dedup">
+      <h3>Deduplication Strategies</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – find duplicates</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Find duplicate household codes</span>
+<span class="kw">SELECT</span> household_code, <span class="fn">COUNT</span>(*) <span class="kw">AS</span> cnt
+<span class="kw">FROM</span> nsr.stg_households
+<span class="kw">GROUP BY</span> household_code
+<span class="kw">HAVING COUNT</span>(*) > <span class="num">1</span>
+<span class="kw">ORDER BY</span> cnt <span class="kw">DESC</span>;
+
+<span class="cmt">-- Keep only the most recently imported row</span>
+<span class="kw">DELETE FROM</span> nsr.stg_households
+<span class="kw">WHERE</span> ctid <span class="kw">NOT IN</span> (
+  <span class="kw">SELECT MIN</span>(ctid)
+  <span class="kw">FROM</span> nsr.stg_households
+  <span class="kw">GROUP BY</span> household_code
+);
+
+<span class="cmt">-- NIN deduplication (same NIN, different household)</span>
+<span class="kw">SELECT</span> nin, <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> household_id) <span class="kw">AS</span> household_count
+<span class="kw">FROM</span> nsr.individuals
+<span class="kw">WHERE</span> nin <span class="kw">IS NOT NULL</span>
+<span class="kw">GROUP BY</span> nin
+<span class="kw">HAVING COUNT</span>(<span class="kw">DISTINCT</span> household_id) > <span class="num">1</span>;</pre>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-d7-gov">
+      <h3>Nigeria Data Protection Act 2023 – Key Requirements</h3>
+      <table>
+        <tr><th>Requirement</th><th>PostgreSQL implementation</th></tr>
+        <tr><td>Lawful basis for processing</td><td>Document in data lineage metadata table</td></tr>
+        <tr><td>Data minimisation</td><td>Only collect columns needed — avoid SELECT *</td></tr>
+        <tr><td>Purpose limitation</td><td>Schema-level access grants; RLS by programme</td></tr>
+        <tr><td>Accuracy</td><td>CHECK constraints, validation on load</td></tr>
+        <tr><td>Storage limitation</td><td>Table partitioning + retention policy</td></tr>
+        <tr><td>Audit &amp; accountability</td><td>audit_log, pgAudit, row-level change tracking</td></tr>
+        <tr><td>Data subject rights</td><td>Erasure procedures; pseudonymisation via pgcrypto</td></tr>
+      </table>
+
+      <h3>Data Lineage Tracking</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">CREATE TABLE</span> nsr.data_lineage (
+  lineage_id    <span class="typ">BIGSERIAL</span>   <span class="kw">PRIMARY KEY</span>,
+  table_name    <span class="typ">TEXT</span>        <span class="kw">NOT NULL</span>,
+  source_system <span class="typ">TEXT</span>        <span class="kw">NOT NULL</span>,
+  import_date   <span class="typ">TIMESTAMPTZ</span> <span class="kw">NOT NULL DEFAULT now()</span>,
+  record_count  <span class="typ">INT</span>,
+  batch_ref     <span class="typ">TEXT</span>,
+  lawful_basis  <span class="typ">TEXT</span>        <span class="kw">NOT NULL</span>,
+  data_owner    <span class="typ">TEXT</span>        <span class="kw">NOT NULL</span>
+);</pre>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-d7-exercises">
+      <div class="exercise-card">
+        <div class="exercise-header" onclick="toggleExercise(this)">
+          <div class="ex-num">G1</div>
+          <div class="ex-title">Load, validate and migrate a flat file</div>
+          <span class="ex-difficulty diff-intermediate">Intermediate</span>
+          <span class="ex-toggle">▼</span>
+        </div>
+        <div class="exercise-body" style="display:none">
+          <p>Create the staging table. Write a validation query that returns a summary of errors (missing codes, invalid pmt values, duplicates). Then write the INSERT that loads only valid rows.</p>
+          <div class="answer-area">Write your SQL here</div>
+          <div class="answer-reveal" id="ans-d7-g1">
+            <div class="callout tip"><div class="callout-title">Full Solution</div></div>
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">sql – complete ETL pipeline</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre><span class="cmt">-- Step 1: Create staging table (no constraints — accept anything)</span>
+<span class="kw">CREATE TABLE IF NOT EXISTS</span> nsr.stg_households (
+  household_code  <span class="typ">TEXT</span>,
+  state_name      <span class="typ">TEXT</span>,
+  lga_name        <span class="typ">TEXT</span>,
+  head_name       <span class="typ">TEXT</span>,
+  pmt_score       <span class="typ">TEXT</span>,
+  import_batch    <span class="typ">TEXT</span>,
+  loaded_at       <span class="typ">TIMESTAMPTZ</span> <span class="kw">DEFAULT now</span>()
+);
+
+<span class="cmt">-- Step 2: Load from CSV (run in psql, adjust path)</span>
+<span class="cmt">-- \COPY nsr.stg_households(household_code,state_name,lga_name,head_name,pmt_score,import_batch)</span>
+<span class="cmt">-- FROM '/tmp/nsr_raw.csv' CSV HEADER;</span>
+
+<span class="cmt">-- Step 3: Comprehensive validation report</span>
+<span class="kw">SELECT</span> issue, <span class="fn">COUNT</span>(*) <span class="kw">AS</span> row_count
+<span class="kw">FROM</span> (
+  <span class="kw">SELECT</span> <span class="str">'missing_household_code'</span> <span class="kw">AS</span> issue
+  <span class="kw">FROM</span> nsr.stg_households <span class="kw">WHERE</span> household_code <span class="kw">IS NULL OR</span> <span class="fn">trim</span>(household_code) = <span class="str">''</span>
+  <span class="kw">UNION ALL</span>
+  <span class="kw">SELECT</span> <span class="str">'invalid_pmt_score'</span>
+  <span class="kw">FROM</span> nsr.stg_households <span class="kw">WHERE</span> pmt_score !~ <span class="str">'^[0-9]+(\.[0-9]+)?$'</span>
+  <span class="kw">UNION ALL</span>
+  <span class="kw">SELECT</span> <span class="str">'missing_head_name'</span>
+  <span class="kw">FROM</span> nsr.stg_households <span class="kw">WHERE</span> head_name <span class="kw">IS NULL OR</span> <span class="fn">trim</span>(head_name) = <span class="str">''</span>
+  <span class="kw">UNION ALL</span>
+  <span class="kw">SELECT</span> <span class="str">'unresolvable_lga'</span>
+  <span class="kw">FROM</span> nsr.stg_households s
+  <span class="kw">LEFT JOIN</span> nsr.lgas l <span class="kw">ON</span> l.lga_name = s.lga_name
+  <span class="kw">WHERE</span> l.lga_id <span class="kw">IS NULL</span>
+  <span class="kw">UNION ALL</span>
+  <span class="kw">SELECT</span> <span class="str">'duplicate_in_staging'</span>
+  <span class="kw">FROM</span> (
+    <span class="kw">SELECT</span> household_code
+    <span class="kw">FROM</span> nsr.stg_households
+    <span class="kw">GROUP BY</span> household_code
+    <span class="kw">HAVING COUNT</span>(*) > <span class="num">1</span>
+  ) d
+) errors
+<span class="kw">GROUP BY</span> issue
+<span class="kw">ORDER BY</span> row_count <span class="kw">DESC</span>;
+
+<span class="cmt">-- Step 4: Load only valid, non-duplicate rows</span>
+<span class="kw">INSERT INTO</span> nsr.households (household_code, lga_id, head_name, pmt_score)
+<span class="kw">SELECT DISTINCT ON</span> (s.household_code)
+  s.household_code,
+  l.lga_id,
+  s.head_name,
+  s.pmt_score::<span class="typ">NUMERIC</span>
+<span class="kw">FROM</span> nsr.stg_households s
+<span class="kw">JOIN</span> nsr.lgas l <span class="kw">ON</span> l.lga_name = s.lga_name
+<span class="kw">WHERE</span> s.household_code <span class="kw">IS NOT NULL</span>
+  <span class="kw">AND</span> <span class="fn">trim</span>(s.household_code) &lt;> <span class="str">''</span>
+  <span class="kw">AND</span> s.pmt_score ~ <span class="str">'^[0-9]+(\.[0-9]+)?$'</span>
+  <span class="kw">AND</span> s.head_name <span class="kw">IS NOT NULL</span>
+<span class="kw">ORDER BY</span> s.household_code, s.loaded_at <span class="kw">DESC</span>
+<span class="kw">ON CONFLICT</span> (household_code) <span class="kw">DO NOTHING</span>;
+
+<span class="cmt">-- Step 5: Record lineage</span>
+<span class="kw">INSERT INTO</span> nsr.data_lineage
+  (table_name, source_system, record_count, batch_ref, lawful_basis, data_owner)
+<span class="kw">SELECT</span>
+  <span class="str">'nsr.households'</span>,
+  <span class="str">'CSV Import'</span>,
+  <span class="fn">COUNT</span>(*),
+  <span class="fn">MAX</span>(import_batch),
+  <span class="str">'NDP Act 2023 s.25 – Social Protection Mandate'</span>,
+  <span class="str">'NSR Programme Team'</span>
+<span class="kw">FROM</span> nsr.stg_households;</pre>
+            </div>
+            <div class="callout info" style="margin-top:8px">
+              <div class="callout-title">Key teaching points</div>
+              <strong>DISTINCT ON + ORDER BY loaded_at DESC</strong> keeps the most recent staging row when duplicates exist. <strong>ON CONFLICT DO NOTHING</strong> silently skips codes already in production — use <code>ON CONFLICT DO UPDATE</code> if you want to upsert. Always record lineage immediately after load so the audit trail is never lost.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            <button class="btn-toggle-answer" onclick="toggleAnswer('d7-g1',this)">▼ Show Answer</button>
+            <button class="ex-complete-btn" onclick="markExDone(this)">✓ Mark done</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="exercise-card">
+        <div class="exercise-header" onclick="toggleExercise(this)">
+          <div class="ex-num">G2</div>
+          <div class="ex-title">NDP Act compliance audit</div>
+          <span class="ex-difficulty diff-advanced">Advanced</span>
+          <span class="ex-toggle">▼</span>
+        </div>
+        <div class="exercise-body" style="display:none">
+          <p>For each of the 7 NDP Act requirements in the table above, write one sentence describing how the NSR PostgreSQL schema currently satisfies (or falls short of) that requirement.</p>
+          <div class="answer-area">Write your compliance assessment here</div>
+          <div class="answer-reveal" id="ans-d7-g2">
+            <div class="callout tip"><div class="callout-title">Model Answer – Instructor Reference</div></div>
+            <table>
+              <tr><th>Requirement</th><th>Current NSR schema status</th><th>Gap / action needed</th></tr>
+              <tr>
+                <td><strong>Lawful basis</strong></td>
+                <td>✓ <code>data_lineage</code> table captures <code>lawful_basis</code> per import batch</td>
+                <td>Ensure every load populates this column; add NOT NULL constraint</td>
+              </tr>
+              <tr>
+                <td><strong>Data minimisation</strong></td>
+                <td>⚠ Schema has appropriate columns but caseworker queries often use SELECT *</td>
+                <td>Enforce column-level grants and create views that expose only required fields</td>
+              </tr>
+              <tr>
+                <td><strong>Purpose limitation</strong></td>
+                <td>✓ RBAC and RLS restrict access by role and state; programme-level views separate concerns</td>
+                <td>Document each role's purpose in a data register; review annually</td>
+              </tr>
+              <tr>
+                <td><strong>Accuracy</strong></td>
+                <td>✓ CHECK constraints on NIN format, pmt_score range, gender values, dob range</td>
+                <td>Add validation triggers for cross-table consistency (e.g. dob vs. programme eligibility age)</td>
+              </tr>
+              <tr>
+                <td><strong>Storage limitation</strong></td>
+                <td>⚠ Partitioned payments table supports retention by year, but no automated drop policy exists</td>
+                <td>Implement pg_cron job to detach and drop partitions older than the retention period</td>
+              </tr>
+              <tr>
+                <td><strong>Audit &amp; accountability</strong></td>
+                <td>✓ <code>audit_log</code> table is append-only; trigger captures INSERT/UPDATE/DELETE with role and timestamp</td>
+                <td>Enable pgAudit extension for session-level DDL logging; define log retention policy</td>
+              </tr>
+              <tr>
+                <td><strong>Data subject rights</strong></td>
+                <td>⚠ No erasure procedure exists; NIN is masked for caseworkers via view but stored in plain text</td>
+                <td>Implement pseudonymisation using pgcrypto (<code>pgp_sym_encrypt</code>); document erasure workflow for right-to-erasure requests</td>
+              </tr>
+            </table>
+            <div class="callout info" style="margin-top:8px">
+              <div class="callout-title">Marking guidance</div>
+              Award full marks for correctly identifying both the ✓ satisfied requirements (lawful basis, purpose limitation, accuracy, audit) and the ⚠ gaps (data minimisation, storage limitation, data subject rights). Bonus: any student who identifies that plain-text NIN storage is a gap without being prompted demonstrates advanced understanding.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            <button class="btn-toggle-answer instructor-block instructor-only" onclick="toggleAnswer('d7-g2',this)">▼ Show Model Answer</button>
+            <button class="ex-complete-btn" onclick="markExDone(this)">✓ Mark done</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- end day7 -->
+
+
+<!-- ===== DAY 8 – CLOSURE ===== -->
+<div class="page" id="page-day8">
+  <div class="page-header">
+    <div class="page-title-area">
+      <div class="day-label">Week 2 · Friday 3 July 2026</div>
+      <h1>Programme Closure</h1>
+      <div class="page-subtitle">Final presentations, reflections, certificates &amp; next steps</div>
+    </div>
+    <button class="mark-done-btn" id="done-day8" onclick="markDone('day8')">Mark Complete ✓</button>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><div class="section-icon si-blue">🎤</div><h2>Final Presentations</h2></div>
+    <div class="callout info"><div class="callout-title">Format</div>Each participant presents a 5-minute summary of the most valuable thing they learned and one specific change they will implement in their organisation's data systems.</div>
+    <h3>My Presentation Notes</h3>
+    <div class="answer-area" style="min-height:120px">Key learning:<br><br>One change I will implement:<br><br>How I will measure success:</div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><div class="section-icon si-green">📊</div><h2>Programme Reflection</h2></div>
+    <table>
+      <tr><th>Day</th><th>Topic</th><th>Confidence before (1–5)</th><th>Confidence after (1–5)</th><th>Key takeaway</th></tr>
+      <tr><td>D1</td><td>Foundations &amp; Architecture</td><td></td><td></td><td></td></tr>
+      <tr><td>D2</td><td>SQL Fundamentals</td><td></td><td></td><td></td></tr>
+      <tr><td>D3</td><td>Admin, Security &amp; Backup</td><td></td><td></td><td></td></tr>
+      <tr><td>D4</td><td>Study Visit</td><td></td><td></td><td></td></tr>
+      <tr><td>D5</td><td>Assessment Day</td><td></td><td></td><td></td></tr>
+      <tr><td>D6</td><td>Performance Tuning</td><td></td><td></td><td></td></tr>
+      <tr><td>D7</td><td>ETL/ELT &amp; Governance</td><td></td><td></td><td></td></tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><div class="section-icon si-amber">🎓</div><h2>Your Certificate</h2></div>
+    <p>Complete all days and claim your certificate of participation below.</p>
+    <div style="margin-top:16px;">
+      <button class="btn btn-primary" onclick="showPage('certificate')">Go to Certificate →</button>
+    </div>
+  </div>
+</div><!-- end day8 -->
+
+
+<!-- ===== PROGRESS PAGE ===== -->
+<div class="page" id="page-progress">
+  <div class="page-header">
+    <div class="page-title-area">
+      <div class="day-label">Tracking</div>
+      <h1>My Progress</h1>
+    </div>
+  </div>
+
+  <div class="progress-section">
+    <div class="prog-grid">
+      <div class="prog-stat">
+        <div class="prog-num" id="stat-days">0</div>
+        <div class="prog-label">Days completed</div>
+      </div>
+      <div class="prog-stat">
+        <div class="prog-num" id="stat-ex">0</div>
+        <div class="prog-label">Exercises done</div>
+      </div>
+      <div class="prog-stat">
+        <div class="prog-num" id="stat-pct">0%</div>
+        <div class="prog-label">Overall progress</div>
+      </div>
+    </div>
+
+    <div class="prog-day-list" id="prog-day-list">
+      <!-- filled by JS -->
+    </div>
+  </div>
+</div><!-- end progress -->
+
+
+<!-- ===== QUICK REFERENCE ===== -->
+<div class="page" id="page-reference">
+  <div class="page-header">
+    <div class="page-title-area">
+      <div class="day-label">Resources</div>
+      <h1>Quick Reference</h1>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><div class="section-icon si-blue">⌨</div><h2>psql Meta-Commands</h2></div>
+    <table>
+      <tr><th>Command</th><th>What it does</th></tr>
+      <tr><td><code>\c dbname</code></td><td>Connect to database</td></tr>
+      <tr><td><code>\dt schema.*</code></td><td>List tables in schema</td></tr>
+      <tr><td><code>\d tablename</code></td><td>Describe table structure</td></tr>
+      <tr><td><code>\di</code></td><td>List indexes</td></tr>
+      <tr><td><code>\du+</code></td><td>List roles with attributes</td></tr>
+      <tr><td><code>\x</code></td><td>Toggle expanded display</td></tr>
+      <tr><td><code>\e</code></td><td>Open query in editor</td></tr>
+      <tr><td><code>\timing</code></td><td>Toggle query timing</td></tr>
+      <tr><td><code>\q</code></td><td>Quit psql</td></tr>
+      <tr><td><code>\!</code></td><td>Run shell command</td></tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><div class="section-icon si-green">🔑</div><h2>Key System Views</h2></div>
+    <table>
+      <tr><th>View</th><th>What it shows</th></tr>
+      <tr><td><code>pg_stat_activity</code></td><td>Active connections and queries</td></tr>
+      <tr><td><code>pg_stat_user_tables</code></td><td>Table stats (dead tuples, vacuums)</td></tr>
+      <tr><td><code>pg_stat_user_indexes</code></td><td>Index usage statistics</td></tr>
+      <tr><td><code>pg_settings</code></td><td>All configuration parameters</td></tr>
+      <tr><td><code>pg_locks</code></td><td>Current locks</td></tr>
+      <tr><td><code>pg_extension</code></td><td>Installed extensions</td></tr>
+      <tr><td><code>pg_policies</code></td><td>RLS policies</td></tr>
+      <tr><td><code>information_schema.tables</code></td><td>Standard SQL table catalog</td></tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><div class="section-icon si-amber">📏</div><h2>Window Function Syntax</h2></div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">sql – template</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="fn">FUNCTION_NAME</span>() <span class="kw">OVER</span> (
+  [<span class="kw">PARTITION BY</span> column]
+  [<span class="kw">ORDER BY</span> column]
+  [<span class="kw">ROWS/RANGE BETWEEN</span> ... <span class="kw">AND</span> ...]
+)
+
+<span class="cmt">-- Common functions</span>
+<span class="fn">ROW_NUMBER</span>()   <span class="cmt">-- unique sequential number</span>
+<span class="fn">RANK</span>()         <span class="cmt">-- rank with gaps on ties</span>
+<span class="fn">DENSE_RANK</span>()   <span class="cmt">-- rank without gaps</span>
+<span class="fn">LAG</span>(col, n)    <span class="cmt">-- value n rows behind</span>
+<span class="fn">LEAD</span>(col, n)   <span class="cmt">-- value n rows ahead</span>
+<span class="fn">SUM</span>(col)       <span class="cmt">-- running total</span>
+<span class="fn">PERCENT_RANK</span>() <span class="cmt">-- 0.0 to 1.0 percentile</span></pre>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><div class="section-icon si-purple">🗄</div><h2>Backup Quick Reference</h2></div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cmt"># Full database backup (custom format)</span>
+pg_dump -U postgres -d lab_nsr -F c -f backup.dump
+
+<span class="cmt"># Schema only</span>
+pg_dump -U postgres -d lab_nsr -n nsr -F c -f nsr_schema.dump
+
+<span class="cmt"># Restore</span>
+pg_restore -U postgres -d lab_nsr_restore -F c backup.dump
+
+<span class="cmt"># List backup contents</span>
+pg_restore -l backup.dump
+
+<span class="cmt"># Parallel restore (faster on multi-core)</span>
+pg_restore -U postgres -d lab_nsr_restore -j 4 -F c backup.dump</pre>
+    </div>
+  </div>
+</div><!-- end reference -->
+
+
+<!-- ===== CERTIFICATE ===== -->
+<div class="page" id="page-certificate">
+  <div class="page-header">
+    <div class="page-title-area">
+      <div class="day-label">Programme Completion</div>
+      <h1>Certificate of Participation</h1>
+    </div>
+  </div>
+
+  <div class="certificate-preview">
+    <div class="cert-header">A UK Trade and Infrastructure Enterprise Limited</div>
+    <div class="cert-title">Certificate of Participation</div>
+    <div class="cert-subtitle">This is to certify that</div>
+    <input class="cert-name-field" type="text" id="cert-name" placeholder="Your Full Name" />
+    <div class="cert-desc">
+      has successfully participated in the<br>
+      <strong>PostgreSQL Database Fundamentals with Performance &amp; Tuning</strong><br>
+      training programme held at<br>
+      Coventry Conferences, The Techno Centre, Coventry University Technology Park<br>
+      Puma Way, Coventry, UK
+    </div>
+    <div class="cert-meta">
+      22 June – 3 July 2026<br><br>
+      <strong>Lead Instructor:</strong> Dr Tertsegha Joseph Anande · PhD, MSc, MBCS, FHEA<br>
+      Lecturer in Computing &amp; Deputy Programme Leader, QAHE Limited / Ulster University
+    </div>
+    <div style="margin-top:24px;display:flex;justify-content:space-around;padding-top:20px;border-top:1px solid var(--border);">
+      <div style="text-align:center;">
+        <div style="border-bottom:1px solid var(--text);width:160px;margin-bottom:4px;height:24px;"></div>
+        <div style="font-size:0.75rem;color:var(--text-muted)">Participant Signature</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="border-bottom:1px solid var(--text);width:160px;margin-bottom:4px;height:24px;"></div>
+        <div style="font-size:0.75rem;color:var(--text-muted)">Lead Instructor</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:24px;">
+    <button class="btn btn-primary" onclick="window.print()">🖨 Print Certificate</button>
+  </div>
+</div><!-- end certificate -->
+
+</main><!-- end main -->
+
+<!-- ================================================================ -->
+<!-- JAVASCRIPT -->
+<!-- ================================================================ -->
+<script>
+// ===== STATE =====
+const PAGES = ['home','progress','setup','day1','day2','day3','day4','day5','day6','day7','day8','reference','certificate'];
+const DAYS = ['setup','day1','day2','day3','day4','day5','day6','day7','day8'];
+const DAY_NAMES = {
+  setup: 'Pre-Session Setup',
+  day1: 'Day 1 · Foundations',
+  day2: 'Day 2 · SQL Fundamentals',
+  day3: 'Day 3 · Admin & Security',
+  day4: 'Day 4 · Study Visit',
+  day5: 'Day 5 · Assessment',
+  day6: 'Day 6 · Performance Tuning',
+  day7: 'Day 7 · ETL/ELT & Governance',
+  day8: 'Day 8 · Programme Closure',
+};
+
+let state = JSON.parse(localStorage.getItem('auktie_workshop') || '{}');
+state.done = state.done || {};
+state.exercises = state.exercises || 0;
+state.mode = state.mode || 'participant';
+
+// ===== INIT =====
+window.addEventListener('DOMContentLoaded', () => {
+  applyMode(state.mode);
+  updateProgress();
+  renderProgress();
+
+  // restore done states
+  DAYS.forEach(d => {
+    if (state.done[d]) {
+      const btn = document.getElementById('done-' + d);
+      const nav = document.getElementById('nav-' + d);
+      if (btn) { btn.classList.add('done'); btn.textContent = '✓ Completed'; }
+      if (nav) nav.classList.add('done');
+    }
+  });
+
+  showPage('home');
+});
+
+// ===== PAGE NAVIGATION =====
+function showPage(id) {
+  PAGES.forEach(p => {
+    const el = document.getElementById('page-' + p);
+    const nav = document.querySelector(`[onclick="showPage('${p}')"]`);
+    if (el) el.classList.remove('active');
+    if (nav) nav.classList.remove('active');
+  });
+  const page = document.getElementById('page-' + id);
+  const nav = document.querySelector(`[onclick="showPage('${id}')"]`);
+  if (page) page.classList.add('active');
+  if (nav) nav.classList.add('active');
+  if (id === 'progress') renderProgress();
+  closeSidebar();
+  window.scrollTo(0,0);
+}
+
+// ===== SIDEBAR =====
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('show');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
+
+// ===== MODE =====
+function setMode(m) {
+  state.mode = m;
+  applyMode(m);
+  saveState();
+}
+function applyMode(m) {
+  document.getElementById('btn-participant').classList.toggle('active', m === 'participant');
+  document.getElementById('btn-instructor').classList.toggle('active', m === 'instructor');
+  document.body.classList.toggle('instructor-mode', m === 'instructor');
+}
+
+// ===== TABS =====
+function switchTab(btn, containerId, tabId) {
+  const container = document.getElementById(containerId);
+  container.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  const tabEl = document.getElementById('tab-' + tabId);
+  if (tabEl) tabEl.classList.add('active');
+  btn.closest('.tabs').querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ===== MARK DAY DONE =====
+function markDone(id) {
+  state.done[id] = true;
+  saveState();
+  const btn = document.getElementById('done-' + id);
+  const nav = document.getElementById('nav-' + id);
+  if (btn) { btn.classList.add('done'); btn.textContent = '✓ Completed'; }
+  if (nav) nav.classList.add('done');
+  updateProgress();
+}
+
+// ===== EXERCISES =====
+function toggleExercise(header) {
+  const body = header.nextElementSibling;
+  const toggle = header.querySelector('.ex-toggle');
+  const isOpen = body.style.display === 'block';
+  body.style.display = isOpen ? 'none' : 'block';
+  if (toggle) toggle.classList.toggle('open', !isOpen);
+}
+
+function markExDone(btn) {
+  btn.classList.add('done');
+  btn.textContent = '✓ Done';
+  btn.disabled = true;
+  state.exercises = (state.exercises || 0) + 1;
+  saveState();
+  updateProgress();
+}
+
+function toggleAnswer(id, btn) {
+  const el = document.getElementById('ans-' + id);
+  if (!el) return;
+  const showing = el.classList.toggle('visible');
+  if (btn) {
+    btn.classList.toggle('showing', showing);
+    btn.textContent = showing ? '▲ Hide Answer' : '▼ Show Answer';
+  }
+}
+
+// ===== CHECKLIST =====
+function toggleCheck(box) {
+  box.classList.toggle('checked');
+  box.textContent = box.classList.contains('checked') ? '✓' : '';
+}
+
+// ===== COPY CODE =====
+function copyCode(btn) {
+  const pre = btn.closest('.code-block').querySelector('pre');
+  const text = pre.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1800);
+  });
+}
+
+// ===== PROGRESS =====
+function updateProgress() {
+  const done = Object.keys(state.done).filter(k => state.done[k]).length;
+  const total = DAYS.length;
+  const pct = Math.round((done / total) * 100);
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('progress-label').textContent = pct + '% complete';
+}
+
+function renderProgress() {
+  const done = Object.keys(state.done).filter(k => state.done[k]).length;
+  document.getElementById('stat-days').textContent = done;
+  document.getElementById('stat-ex').textContent = state.exercises || 0;
+  document.getElementById('stat-pct').textContent = Math.round((done / DAYS.length) * 100) + '%';
+
+  const list = document.getElementById('prog-day-list');
+  list.innerHTML = DAYS.map(d => {
+    const isDone = state.done[d];
+    return `<div class="prog-day">
+      <div class="prog-dot ${isDone ? 'done' : ''}"></div>
+      <span style="flex:1">${DAY_NAMES[d]}</span>
+      <span style="font-size:0.8rem;color:${isDone ? 'var(--success)' : 'var(--text-muted)'}">${isDone ? '✓ Complete' : 'In progress'}</span>
+    </div>`;
+  }).join('');
+}
+
+// ===== SAVE STATE =====
+function saveState() {
+  localStorage.setItem('auktie_workshop', JSON.stringify(state));
+}
+
+// ===== QUIZ DATA & RENDERER =====
+const QUIZZES = {
+  'd1': [
+    {
+      q: 'What does WAL stand for and what ACID property does it primarily deliver?',
+      opts: ['Write-Ahead Logging → Durability','Write-After Log → Consistency','Write-Append Lock → Atomicity','Write-Ahead Lock → Isolation'],
+      correct: 0,
+      explanation: 'WAL = Write-Ahead Logging. By recording changes to a log before writing data pages, PostgreSQL can replay those changes on crash, delivering the Durability guarantee.'
+    },
+    {
+      q: 'In MVCC, what happens to a row when it is UPDATEd?',
+      opts: [
+        'The old row is overwritten immediately',
+        'A new row version is created with a higher xid; the old version remains until VACUUM',
+        'The row is locked until the transaction commits',
+        'The row is moved to a temporary table'
+      ],
+      correct: 1,
+      explanation: 'MVCC creates a new version rather than overwriting. Old versions are retained for any in-progress transactions that need to see the pre-update state, and are reclaimed by VACUUM.'
+    },
+    {
+      q: 'Which Normal Form is the practical target for OLTP schemas like the NSR?',
+      opts: ['1NF','2NF','3NF','BCNF'],
+      correct: 2,
+      explanation: '3NF (Third Normal Form) requires every non-key column to depend ONLY on the primary key — no transitive dependencies. This is the standard target for OLTP schemas.'
+    },
+    {
+      q: 'What does the postmaster process do in PostgreSQL?',
+      opts: [
+        'Executes SQL queries directly',
+        'Manages WAL segment files',
+        'Listens for connections and spawns one backend process per client',
+        'Handles VACUUM operations'
+      ],
+      correct: 2,
+      explanation: 'The postmaster is the primary PostgreSQL process. It listens for incoming connections and forks a new backend process for each client. Backends handle query execution independently.'
+    }
+  ],
+  'd2': [
+    {
+      q: 'What is the key difference between RANK() and DENSE_RANK() window functions?',
+      opts: [
+        'RANK() partitions by column, DENSE_RANK() does not',
+        'RANK() leaves gaps in numbering after ties; DENSE_RANK() does not',
+        'DENSE_RANK() can only be used with ORDER BY; RANK() cannot',
+        'There is no difference'
+      ],
+      correct: 1,
+      explanation: 'If rows 3 and 4 tie for rank 3, RANK() assigns both rank 3 then skips to rank 5. DENSE_RANK() assigns both rank 3 then continues with rank 4 — no gaps.'
+    },
+    {
+      q: 'Which JOIN type returns all rows from the left table even when there is no match on the right?',
+      opts: ['INNER JOIN','CROSS JOIN','LEFT JOIN','FULL OUTER JOIN'],
+      correct: 2,
+      explanation: 'LEFT JOIN (also written LEFT OUTER JOIN) returns all rows from the left table and NULL values for columns from the right table when there is no match.'
+    },
+    {
+      q: 'What does RETURNING do in an UPDATE statement?',
+      opts: [
+        'Rolls back the UPDATE',
+        'Returns the affected rows after the change without requiring a separate SELECT',
+        'Confirms the number of rows updated',
+        'Locks the rows for a subsequent query'
+      ],
+      correct: 1,
+      explanation: 'RETURNING is a PostgreSQL extension that returns the modified rows as part of the DML statement itself — very useful for auditing and confirming what was changed.'
+    }
+  ]
+};
+
+function renderQuizzes() {
+  Object.entries(QUIZZES).forEach(([day, questions]) => {
+    const container = document.getElementById('quiz-' + day);
+    if (!container) return;
+    container.innerHTML = questions.map((q, qi) => `
+      <div class="quiz-card">
+        <div class="quiz-q"><span>Q${qi+1}.</span> ${q.q}</div>
+        <div class="quiz-options">
+          ${q.opts.map((o, oi) => `
+            <div class="quiz-opt" onclick="answerQuiz(this, ${oi === q.correct}, '${day}-${qi}', '${q.explanation.replace(/'/g,"\\'")}')">
+              <span>${String.fromCharCode(65+oi)}.</span> ${o}
+            </div>
+          `).join('')}
+        </div>
+        <div class="quiz-feedback" id="qf-${day}-${qi}"></div>
+      </div>
+    `).join('');
+  });
+}
+
+function answerQuiz(opt, isCorrect, id, explanation) {
+  const card = opt.closest('.quiz-card');
+  card.querySelectorAll('.quiz-opt').forEach(o => o.classList.add('disabled'));
+  opt.classList.add(isCorrect ? 'correct' : 'wrong');
+  if (!isCorrect) {
+    card.querySelectorAll('.quiz-opt')[
+      parseInt(explanation) // find correct by index — workaround: mark correct
+    ];
+    // Mark the correct answer
+    const opts = card.querySelectorAll('.quiz-opt');
+    opts.forEach(o => {
+      if (o !== opt && !o.classList.contains('wrong')) o.classList.add('correct');
+    });
+  }
+  const fb = document.getElementById('qf-' + id);
+  if (fb) {
+    fb.className = 'quiz-feedback show ' + (isCorrect ? 'ok' : 'bad');
+    fb.innerHTML = (isCorrect ? '✓ Correct! ' : '✗ Incorrect. ') + explanation;
+  }
+}
+
+renderQuizzes();
+
+// ===== FIX QUIZ CORRECT MARKING =====
+// Re-render with correct index properly embedded
+(function() {
+  Object.entries(QUIZZES).forEach(([day, questions]) => {
+    const container = document.getElementById('quiz-' + day);
+    if (!container) return;
+    container.innerHTML = questions.map((q, qi) => `
+      <div class="quiz-card">
+        <div class="quiz-q"><span>Q${qi+1}.</span> ${q.q}</div>
+        <div class="quiz-options">
+          ${q.opts.map((o, oi) => `
+            <div class="quiz-opt" data-correct="${oi === q.correct}" data-qid="${day}-${qi}" data-exp="${q.explanation.replace(/"/g,'&quot;')}" onclick="handleQuiz(this)">
+              <span>${String.fromCharCode(65+oi)}.</span> ${o}
+            </div>
+          `).join('')}
+        </div>
+        <div class="quiz-feedback" id="qf-${day}-${qi}"></div>
+      </div>
+    `).join('');
+  });
+})();
+
+function handleQuiz(opt) {
+  const card = opt.closest('.quiz-card');
+  if (card.querySelector('.quiz-opt.correct, .quiz-opt.wrong')) return;
+  const isCorrect = opt.dataset.correct === 'true';
+  const explanation = opt.dataset.exp;
+  const id = opt.dataset.qid;
+  card.querySelectorAll('.quiz-opt').forEach(o => {
+    o.classList.add('disabled');
+    if (o.dataset.correct === 'true') o.classList.add('correct');
+  });
+  if (!isCorrect) opt.classList.add('wrong');
+  const fb = document.getElementById('qf-' + id);
+  if (fb) {
+    fb.className = 'quiz-feedback show ' + (isCorrect ? 'ok' : 'bad');
+    fb.innerHTML = (isCorrect ? '✓ Correct! ' : '✗ Incorrect. ') + explanation;
+  }
+}
+</script>
+</body>
+</html>
