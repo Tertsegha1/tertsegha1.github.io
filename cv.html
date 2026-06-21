@@ -160,7 +160,7 @@
   </div>
 </div>
 
-<script src="js/data.js"></script>
+<script src="js/data.js?v=20260621d"></script>
 <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 <script>
@@ -403,8 +403,14 @@ function makeEducationContent(){
 /* ── Memberships ── */
 function makeMembershipsContent(){
   const wrap = el('div');
-  wrap.appendChild(el('div','cv-sr','<strong>Memberships:</strong> Fellow of the Higher Education Academy (FHEA, PR336175)  ·  Member of the BCS (MBCS)  ·  IET Member  ·  IEEE & ComSoc  ·  INSTICC'));
-  wrap.appendChild(el('div','cv-sr','<strong>Certifications:</strong> OCPP v1.6, v1.6 Advanced & v2.0+ (EV Charging)  ·  Build Basic GANs — DeepLearning.AI / Coursera  ·  Preparing to Teach in Higher Education  ·  Project Management & Science Communication  ·  Business, Innovation & Commercialisation for Researchers (Warwick Doctoral College)'));
+  // Memberships — from DATA.personal.memberships
+  const memLine = (DATA.personal.memberships || []).join('  ·  ');
+  wrap.appendChild(el('div','cv-sr','<strong>Memberships:</strong> ' + memLine));
+  // Certifications & Awards — from DATA.certifications (strip HTML tags from desc)
+  const certLine = (DATA.certifications || [])
+    .map(c => c.title + (c.desc ? ' — ' + c.desc.replace(/<[^>]+>/g,'').replace(/&nbsp;/g,' ').replace(/·/g,'·').trim() : ''))
+    .join('  ·  ');
+  wrap.appendChild(el('div','cv-sr','<strong>Certifications & Awards:</strong> ' + certLine));
   return wrap;
 }
 
@@ -677,8 +683,8 @@ async function downloadDocx(){
 
     allChildren.push(
       dsh('Professional Memberships & Certifications'),
-      new Paragraph({...sp(50,30),children:[bold('Memberships: ',{size:18}),run('Fellow of the Higher Education Academy (FHEA, PR336175) · Member of the BCS (MBCS) · IET Member · IEEE & ComSoc · INSTICC',{size:18})]}),
-      new Paragraph({...sp(0,0),children:[bold('Certifications: ',{size:18}),run('OCPP v1.6, v1.6 Advanced & v2.0+ (EV Charging) · Build Basic GANs — DeepLearning.AI / Coursera · Preparing to Teach in Higher Education · Project Management & Science Communication · Business, Innovation & Commercialisation (Warwick Doctoral College)',{size:18})]}),
+      new Paragraph({...sp(50,30),children:[bold('Memberships: ',{size:18}),run((DATA.personal.memberships||[]).join(' · '),{size:18})]}),
+      new Paragraph({...sp(0,0),children:[bold('Certifications & Awards: ',{size:18}),run((DATA.certifications||[]).map(c=>c.title+(c.desc?' — '+c.desc.replace(/<[^>]+>/g,'').replace(/&nbsp;/g,' ').trim():'')).join(' · '),{size:18})]}),
       new Paragraph({...sp(140,0),border:{bottom:{style:BorderStyle.SINGLE,size:4,color:'E1E8F0',space:1}},children:[]}),
       new Paragraph({...sp(70,0),alignment:AlignmentType.CENTER,children:[run('www.drtertseghaanande.com   |   tertseghaanande@gmail.com   |   github.com/Tertsegha1',{size:16,color:MGRAY})]})
     );
