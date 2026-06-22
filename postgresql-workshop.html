@@ -1145,8 +1145,21 @@ psql -U postgres
           <tr><td>wal_buffers</td><td>WAL write buffer</td><td>wal_buffers</td></tr>
           <tr><td>maintenance_work_mem</td><td>VACUUM, CREATE INDEX</td><td>maintenance_work_mem</td></tr>
         </table>
+        <div class="callout info" style="margin-top:8px">
+          <div class="callout-title">What each memory area actually does</div>
+          <strong>shared_buffers</strong> is a pool shared by every connection. When PostgreSQL reads data from disk it stores a copy here, so the next query gets it from RAM instead of reading disk again — think of it as a shared filing cabinet the whole office can reach into. It is the most important parameter to tune: the more data you keep in this cache, the fewer slow disk reads happen. Target <strong>25% of total RAM</strong> (e.g. 4 GB on a 16 GB server).<br><br>
+          <strong>work_mem</strong> is the memory budget for a single sort or hash operation — ORDER BY, JOIN, DISTINCT each get their own slice. The catch: with 14 participants connected and each running complex queries, work_mem is multiplied across all concurrent operations. Set it too high and you exhaust RAM. The default (4 MB) is conservative; raise it only when slow sorts are confirmed.<br><br>
+          <strong>wal_buffers</strong> is a small staging area where WAL entries are assembled in memory before being flushed to the WAL log file on disk — like a notepad you scribble on before writing the final record. PostgreSQL tunes this automatically so it rarely needs manual adjustment.<br><br>
+          <strong>maintenance_work_mem</strong> is a separate budget reserved for maintenance operations — VACUUM cleaning up dead tuples and CREATE INDEX building a new index from scratch. Giving maintenance its own allocation keeps it from competing with live queries for memory.
+        </div>
         <h3>Storage Layout</h3>
         <p>Each table stored in 8KB pages. Each page contains tuples. Dead tuples from UPDATE/DELETE are left in place and reclaimed by <strong>VACUUM</strong>.</p>
+        <div class="callout info" style="margin-top:8px">
+          <div class="callout-title">Pages, tuples, and dead tuples explained</div>
+          <strong>8KB pages</strong>: PostgreSQL never reads individual rows from disk — it reads entire 8-kilobyte blocks called pages. Each page is a fixed-size chunk of a table's file on disk. When you query one row, PostgreSQL loads the whole page that contains it into shared_buffers. This is why shared_buffers size matters so much: if the page is already cached, the query is fast; if it is not, PostgreSQL must go to disk.<br><br>
+          <strong>Tuples</strong>: a tuple is one row in a table. Each page holds as many tuples as fit within 8 KB. Every tuple carries two hidden system columns — <code>xmin</code> (the transaction that created it) and <code>xmax</code> (the transaction that deleted or replaced it). These are the numbers MVCC uses to decide whether a row is visible to a given query.<br><br>
+          <strong>Dead tuples</strong>: when you UPDATE a row, PostgreSQL does not overwrite it — it writes a new version and marks the old version expired by setting <code>xmax</code>. The old version is now a dead tuple: invisible to new queries but still sitting on disk taking up space. PostgreSQL leaves it there deliberately because a transaction that started before the update may still need to see it. Once no active transaction can possibly need the old version, <strong>VACUUM</strong> marks that space as reusable. A table that is updated heavily without regular VACUUM grows larger on disk even if the row count stays the same — this is called <strong>table bloat</strong>, and Day 6 covers how to detect and fix it.
+        </div>
       </div>
 
       <div class="section">
