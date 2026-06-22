@@ -103,6 +103,8 @@ body {
 .nav-item .nav-check { margin-left: auto; color: var(--success); font-size: 0.9rem; opacity: 0; }
 .nav-item.done .nav-check { opacity: 1; }
 .nav-item.done .day-badge { background: rgba(22,163,74,0.3); }
+.nav-item.locked { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
+.nav-item.locked .day-badge::after { content: '🔒'; font-size: 0.65rem; }
 
 /* ===== MAIN CONTENT ===== */
 #main {
@@ -137,6 +139,8 @@ body {
   background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
   padding: 18px; cursor: pointer; transition: all .2s; position: relative; overflow: hidden;
 }
+.day-card.locked { opacity: 0.45; cursor: not-allowed; filter: grayscale(0.4); }
+.day-card.locked::after { content: '🔒'; position: absolute; top: 12px; right: 14px; font-size: 1.1rem; }
 .day-card:hover { border-color: var(--brand-light); box-shadow: 0 4px 12px rgba(36,87,160,0.12); transform: translateY(-2px); }
 .day-card.done { border-left: 4px solid var(--success); }
 .day-card.today { border-left: 4px solid var(--accent); }
@@ -444,9 +448,212 @@ body.instructor-mode .instructor-block { display: block; }
   display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 850;
 }
 #overlay.show { display: block; }
+
+/* ===== WELCOME SCREEN ===== */
+.welcome-header { display:flex; flex-direction:column; align-items:flex-start; gap:6px; margin-bottom:18px; }
+.welcome-logos { display:flex; align-items:center; gap:10px; }
+.wl-badge { font-size:0.75rem; font-weight:800; letter-spacing:1.5px; padding:4px 12px; border-radius:20px; }
+.wl-auktie { background:#1a3c6b; color:white; }
+.wl-nassco { background:#e85d04; color:white; }
+.wl-sep { color:#bbb; font-size:1rem; }
+.welcome-prog-label { font-size:0.78rem; color:#888; }
+.welcome-title { font-size:1.55rem; font-weight:800; color:#111; line-height:1.25; margin:0 0 6px; }
+.welcome-dates { font-size:0.9rem; color:var(--brand); font-weight:600; margin:0 0 24px; }
+.welcome-link-box {
+  background: linear-gradient(135deg, #f0f5ff 0%, #e8f0ff 100%);
+  border: 2px solid #c7d7f5; border-radius: 14px; padding: 20px 22px; margin-bottom: 24px;
+}
+.wlb-label { font-size:0.72rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#888; margin-bottom:8px; }
+.wlb-url {
+  display:block; font-size:1.05rem; font-weight:700; color:#1a3c6b;
+  text-decoration:none; word-break:break-all; line-height:1.4;
+  border-bottom:2px solid #1a3c6b; padding-bottom:4px; margin-bottom:10px;
+  transition: color .15s;
+}
+.wlb-url:hover { color:#e85d04; border-color:#e85d04; }
+.wlb-hint { font-size:0.78rem; color:#888; }
+.welcome-actions { text-align:center; margin-bottom:20px; }
+.welcome-enter-btn {
+  background: linear-gradient(135deg, #1a3c6b, #2a5298);
+  color:white; border:none; border-radius:12px; padding:14px 32px;
+  font-size:1rem; font-weight:700; cursor:pointer; letter-spacing:0.3px;
+  box-shadow: 0 4px 16px rgba(26,60,107,0.35); transition: all .2s;
+}
+.welcome-enter-btn:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(26,60,107,0.45); }
+.welcome-footer { font-size:0.75rem; color:#bbb; text-align:center; border-top:1px solid #eee; padding-top:14px; }
+.back-btn {
+  background:none; border:none; color:#888; cursor:pointer; font-size:0.85rem;
+  padding:0 0 12px; display:block; transition: color .15s;
+}
+.back-btn:hover { color:var(--brand); }
+
+/* ===== LOGIN OVERLAY ===== */
+#login-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: linear-gradient(135deg, #0d1f3c 0%, #1a3c6b 60%, #e85d04 100%);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px; overflow-y: auto;
+}
+#login-overlay.hidden { display: none; }
+.login-card {
+  background: white; border-radius: 20px; padding: 40px 36px 36px;
+  max-width: 680px; width: 100%; box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+}
+.login-logo { font-size: 1.1rem; font-weight: 800; color: var(--brand); letter-spacing: 1px; margin-bottom: 6px; }
+.login-card h1 { font-size: 1.45rem; color: #111; margin: 0 0 6px; line-height: 1.3; }
+.login-card p { color: #666; font-size: 0.9rem; margin-bottom: 22px; }
+.login-section-label {
+  font-size: 0.75rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+  color: #888; margin: 20px 0 10px;
+}
+.participant-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 4px;
+}
+.p-btn {
+  padding: 10px 4px; border: 2px solid var(--border); border-radius: 10px;
+  background: #f8fafc; cursor: pointer; font-weight: 700; font-size: 0.9rem;
+  color: var(--brand); transition: all .15s; text-align: center;
+}
+.p-btn:hover { background: var(--brand); color: white; border-color: var(--brand); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(26,60,107,0.25); }
+.p-btn:hover .p-name, .p-btn:hover .p-code { color: white; }
+.name-grid { grid-template-columns: repeat(2, 1fr); gap: 9px; }
+.p-btn.name-grid-item, .name-grid .p-btn {
+  display: flex; flex-direction: column; align-items: flex-start;
+  padding: 10px 14px; text-align: left;
+}
+.p-name { font-size: 0.85rem; font-weight: 700; color: #222; line-height: 1.3; }
+.p-code { font-size: 0.72rem; color: #888; margin-top: 3px; font-weight: 600; letter-spacing: 0.5px; }
+.spare-btn { opacity: 0.45; }
+.spare-btn:hover { opacity: 1; }
+.inst-btn {
+  width: 100%; margin-top: 16px; padding: 12px;
+  background: var(--brand); color: white; border: none; border-radius: 10px;
+  cursor: pointer; font-size: 0.95rem; font-weight: 700; letter-spacing: 0.5px;
+  transition: background .15s;
+}
+.inst-btn:hover { background: #0d2347; }
+.inst-pin-row {
+  display: none; gap: 8px; margin-top: 10px; align-items: center;
+}
+.inst-pin-row.show { display: flex; }
+.inst-pin-row input {
+  flex: 1; padding: 10px 14px; border: 2px solid var(--border); border-radius: 8px;
+  font-size: 0.95rem; outline: none;
+}
+.inst-pin-row input:focus { border-color: var(--brand); }
+.inst-pin-row button {
+  padding: 10px 20px; background: var(--accent); color: white; border: none;
+  border-radius: 8px; font-weight: 700; cursor: pointer;
+}
+#login-error { color: #dc2626; font-size: 0.85rem; margin-top: 8px; display: none; }
+
+/* ===== USER BADGE IN HEADER ===== */
+#user-badge {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(255,255,255,0.12); border-radius: 20px;
+  padding: 4px 14px 4px 10px; font-size: 0.8rem; color: white;
+}
+#user-badge strong { font-size: 0.9rem; }
+#user-badge .logout-btn {
+  background: rgba(255,255,255,0.2); border: none; color: white;
+  border-radius: 12px; padding: 2px 10px; cursor: pointer; font-size: 0.78rem;
+  transition: background .15s;
+}
+#user-badge .logout-btn:hover { background: rgba(255,255,255,0.35); }
+
+/* ===== COHORT TABLE (instructor) ===== */
+.cohort-section { margin-top: 28px; display: none; }
+body.instructor-mode .cohort-section { display: block; }
+.cohort-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.cohort-table th {
+  background: var(--brand); color: white; padding: 8px 12px; text-align: left;
+  font-size: 0.78rem; font-weight: 700; letter-spacing: 0.5px;
+}
+.cohort-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+.cohort-table tr:last-child td { border-bottom: none; }
+.cohort-table tr:hover td { background: var(--surface2); }
+.ct-bar-wrap { width: 100px; height: 6px; background: var(--border); border-radius: 3px; display: inline-block; vertical-align: middle; margin-right: 6px; }
+.ct-bar { height: 6px; background: var(--brand); border-radius: 3px; transition: width .3s; }
+.ct-inactive { color: #bbb; font-style: italic; font-size: 0.8rem; }
 </style>
 </head>
 <body>
+
+<!-- ================================================================ -->
+<!-- LOGIN OVERLAY (two screens) -->
+<!-- ================================================================ -->
+<div id="login-overlay">
+
+  <!-- ── SCREEN 1: WELCOME ── -->
+  <div id="screen-welcome" class="login-card">
+    <div class="welcome-header">
+      <div class="welcome-logos">
+        <span class="wl-badge wl-auktie">AUKTIE</span>
+        <span class="wl-sep">×</span>
+        <span class="wl-badge wl-nassco">NASSCO</span>
+      </div>
+      <div class="welcome-prog-label">Executive Training Programme · Coventry, UK</div>
+    </div>
+
+    <h1 class="welcome-title">Welcome to the PostgreSQL Database Fundamentals<br>with Performance &amp; Tuning</h1>
+    <p class="welcome-dates">22 June – 3 July 2026</p>
+
+    <div class="welcome-link-box">
+      <div class="wlb-label">Platform URL — click or share this link</div>
+      <a class="wlb-url" href="https://drtertseghaanande.com/postgresql-workshop.html" target="_blank">
+        drtertseghaanande.com/postgresql-workshop.html
+      </a>
+      <div class="wlb-hint">Bookmark this address on your laptop for easy daily access.</div>
+    </div>
+
+    <div class="welcome-actions">
+      <button class="welcome-enter-btn" onclick="showLoginScreen()">
+        Select Your Name to Sign In &nbsp;→
+      </button>
+    </div>
+
+    <div class="welcome-footer">
+      Created and delivered by Dr. Tertsegha Joseph Anande &nbsp;|&nbsp; A UK Trade &amp; Infrastructure Enterprise Limited (AUKTIE)
+    </div>
+  </div>
+
+  <!-- ── SCREEN 2: LOGIN ── -->
+  <div id="screen-login" class="login-card" style="display:none;">
+    <button class="back-btn" onclick="showWelcomeScreen()">← Back</button>
+    <div class="login-logo">AUKTIE · NASSCO &nbsp;|&nbsp; PostgreSQL Training</div>
+    <h2 style="margin:6px 0 4px;font-size:1.2rem;color:#111;">Select your name to sign in</h2>
+    <p style="color:#888;font-size:0.82rem;margin-bottom:18px;">Your participant code is pre-assigned. Click your name to access the platform.</p>
+
+    <div class="login-section-label">Participants</div>
+    <div class="participant-grid name-grid">
+      <button class="p-btn" onclick="loginAs('P-01')"><span class="p-name">Dr. Funmi Olotu</span><span class="p-code">P-01</span></button>
+      <button class="p-btn" onclick="loginAs('P-02')"><span class="p-name">Mr. Olubunmi Olusanya</span><span class="p-code">P-02</span></button>
+      <button class="p-btn" onclick="loginAs('P-03')"><span class="p-name">Bello Mustapha Alikali</span><span class="p-code">P-03</span></button>
+      <button class="p-btn" onclick="loginAs('P-04')"><span class="p-name">Dikko Bala Mohammed</span><span class="p-code">P-04</span></button>
+      <button class="p-btn" onclick="loginAs('P-05')"><span class="p-name">Murtala Mohammed</span><span class="p-code">P-05</span></button>
+      <button class="p-btn" onclick="loginAs('P-06')"><span class="p-name">Sesugh Nongo</span><span class="p-code">P-06</span></button>
+      <button class="p-btn" onclick="loginAs('P-07')"><span class="p-name">Adam Adam Muhammed</span><span class="p-code">P-07</span></button>
+      <button class="p-btn" onclick="loginAs('P-08')"><span class="p-name">Shambe Orduen</span><span class="p-code">P-08</span></button>
+      <button class="p-btn" onclick="loginAs('P-09')"><span class="p-name">Auwalu Ibrahim</span><span class="p-code">P-09</span></button>
+      <button class="p-btn" onclick="loginAs('P-10')"><span class="p-name">Dasbang Joseph F</span><span class="p-code">P-10</span></button>
+      <button class="p-btn" onclick="loginAs('P-11')"><span class="p-name">Mohammed Nasiru Hamma</span><span class="p-code">P-11</span></button>
+      <button class="p-btn" onclick="loginAs('P-12')"><span class="p-name">Ogunsanya Rasaq Olukorede</span><span class="p-code">P-12</span></button>
+      <button class="p-btn" onclick="loginAs('P-13')"><span class="p-name">Ismail Adisa Adeyinka</span><span class="p-code">P-13</span></button>
+      <button class="p-btn" onclick="loginAs('P-14')"><span class="p-name">Sadiya Abubakar Abdullahi</span><span class="p-code">P-14</span></button>
+      <button class="p-btn spare-btn" onclick="loginAs('P-15')"><span class="p-name" style="color:#bbb;font-style:italic;">Spare Slot</span><span class="p-code">P-15</span></button>
+      <button class="p-btn spare-btn" onclick="loginAs('P-16')"><span class="p-name" style="color:#bbb;font-style:italic;">Spare Slot</span><span class="p-code">P-16</span></button>
+    </div>
+
+    <div class="login-section-label" style="margin-top:22px;">Facilitator</div>
+    <button class="inst-btn" onclick="toggleInstPin()">🔐 Instructor / Facilitator Login</button>
+    <div class="inst-pin-row" id="inst-pin-row">
+      <input type="password" id="inst-pin" placeholder="Enter facilitator PIN" onkeydown="if(event.key==='Enter')checkPin()">
+      <button onclick="checkPin()">Enter →</button>
+    </div>
+    <div id="login-error">Incorrect PIN. Please try again.</div>
+  </div>
+
+</div>
 
 <!-- HEADER -->
 <header id="header">
@@ -462,9 +669,13 @@ body.instructor-mode .instructor-block { display: block; }
     <span id="progress-label">0% complete</span>
     <div id="progress-bar-wrap"><div id="progress-bar" style="width:0%"></div></div>
   </div>
-  <div id="mode-toggle">
-    <button class="mode-btn active" onclick="setMode('participant')" id="btn-participant">Participant</button>
-    <button class="mode-btn" onclick="setMode('instructor')" id="btn-instructor">Instructor</button>
+  <div id="user-badge">
+    <span>👤 <strong id="user-label">—</strong></span>
+    <button class="logout-btn" onclick="logout()">Sign out</button>
+  </div>
+  <div id="mode-toggle" style="display:none;">
+    <button class="mode-btn active" onclick="setMode('participant')" id="btn-participant">Participant View</button>
+    <button class="mode-btn" onclick="setMode('instructor')" id="btn-instructor">Instructor View</button>
   </div>
 </header>
 
@@ -504,7 +715,7 @@ body.instructor-mode .instructor-block { display: block; }
       <span class="nav-check">✓</span>
     </a>
     <a class="nav-item" onclick="showPage('day4')" id="nav-day4">
-      <span class="day-badge">D4</span> Fri 26 · Study Visit: Coventry
+      <span class="day-badge">D4</span> Fri 26 · Study Visit: Birmingham
       <span class="nav-check">✓</span>
     </a>
   </div>
@@ -599,7 +810,7 @@ body.instructor-mode .instructor-block { display: block; }
       </div>
       <div class="day-card" onclick="showPage('day4')">
         <div class="dc-label">Week 1 · Fri 26 Jun</div>
-        <div class="dc-title">Study Visit – Coventry City Council</div>
+        <div class="dc-title">Study Visit – Innovation Hub, Birmingham</div>
         <div class="dc-tags">
           <span class="tag obj">Digital Welfare</span>
           <span class="tag obj">Gov. IT</span>
@@ -1774,7 +1985,7 @@ done</pre>
   <div class="page-header">
     <div class="page-title-area">
       <div class="day-label">Week 1 · Friday 26 June 2026</div>
-      <h1>Study Visit – Coventry City Council</h1>
+      <h1>Study Visit – Innovation Hub, Birmingham</h1>
       <div class="page-subtitle">Local Government Digital Transformation &amp; Citizen Services</div>
     </div>
     <button class="mark-done-btn" id="done-day4" onclick="markDone('day4')">Mark Complete ✓</button>
@@ -1789,7 +2000,7 @@ done</pre>
   <div class="section">
     <div class="section-header"><div class="section-icon si-blue">📋</div><h2>Before You Go – Preparation</h2></div>
     <div class="callout info"><div class="callout-title">Key principle</div>Write at least two specific questions you want answered today. Generic questions get generic answers.</div>
-    <div class="answer-area" style="min-height:100px">My two specific questions for Coventry City Council:<br><br>1.<br>2.</div>
+    <div class="answer-area" style="min-height:100px">My two specific questions for the Innovation Hub, Birmingham:<br><br>1.<br>2.</div>
   </div>
 
   <div class="section">
@@ -2712,6 +2923,30 @@ $$;
       <!-- filled by JS -->
     </div>
   </div>
+
+  <!-- Cohort overview — instructor only -->
+  <div class="cohort-section">
+    <div class="section-header" style="margin-top:0;">
+      <div class="section-icon si-blue">👥</div>
+      <h2>Cohort Overview — All Participants</h2>
+    </div>
+    <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:16px;">
+      Progress is captured per device. Data appears here once a participant has logged in on this machine, or when viewing from the instructor device after participants have synced.
+    </p>
+    <table class="cohort-table" id="cohort-table">
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Participant</th>
+          <th>Days Done</th>
+          <th>Progress</th>
+          <th>Exercises</th>
+          <th>Last Active</th>
+        </tr>
+      </thead>
+      <tbody id="cohort-body"><!-- filled by JS --></tbody>
+    </table>
+  </div>
 </div><!-- end progress -->
 
 
@@ -2843,6 +3078,21 @@ pg_restore -U postgres -d lab_nsr_restore -j 4 -F c backup.dump</pre>
   </div>
 </div><!-- end certificate -->
 
+<!-- LOCKED PAGE -->
+<div class="page" id="page-locked">
+  <div style="text-align:center;padding:100px 24px 60px;">
+    <div style="font-size:4rem;margin-bottom:20px;">🔒</div>
+    <h2 id="locked-title" style="color:var(--brand);margin-bottom:12px;">Content Not Yet Available</h2>
+    <p id="locked-msg" style="font-size:1.05rem;color:#555;max-width:500px;margin:0 auto 12px;">
+      This training material will be accessible from <strong id="locked-date"></strong>.
+    </p>
+    <p style="font-size:0.9rem;color:#888;max-width:500px;margin:0 auto 32px;">
+      Please return on the morning of the session. If you believe this is an error, speak to the programme facilitator.
+    </p>
+    <button class="btn btn-outline" onclick="showPage('home')">← Back to Programme Home</button>
+  </div>
+</div>
+
 </main><!-- end main -->
 
 <!-- ================================================================ -->
@@ -2850,7 +3100,7 @@ pg_restore -U postgres -d lab_nsr_restore -j 4 -F c backup.dump</pre>
 <!-- ================================================================ -->
 <script>
 // ===== STATE =====
-const PAGES = ['home','progress','setup','day1','day2','day3','day4','day5','day6','day7','day8','reference','certificate'];
+const PAGES = ['home','progress','setup','day1','day2','day3','day4','day5','day6','day7','day8','reference','certificate','locked'];
 const DAYS = ['setup','day1','day2','day3','day4','day5','day6','day7','day8'];
 const DAY_NAMES = {
   setup: 'Pre-Session Setup',
@@ -2864,18 +3114,155 @@ const DAY_NAMES = {
   day8: 'Day 8 · Programme Closure',
 };
 
-let state = JSON.parse(localStorage.getItem('auktie_workshop') || '{}');
-state.done = state.done || {};
-state.exercises = state.exercises || 0;
-state.mode = state.mode || 'participant';
+// ===== TIME-LOCK SCHEDULE =====
+// Training days only (non-training days: Fri 26 Jun / Thu 2 Jul are excluded)
+const DAY_SCHEDULE = {
+  day1: new Date('2026-06-23T06:00:00'),
+  day2: new Date('2026-06-24T06:00:00'),
+  day3: new Date('2026-06-25T06:00:00'),
+  // day4 = Study Visit (non-training) — always accessible
+  day5: new Date('2026-06-29T06:00:00'),
+  day6: new Date('2026-06-30T06:00:00'),
+  day7: new Date('2026-07-01T06:00:00'),
+  day8: new Date('2026-07-03T06:00:00'),
+};
+
+function isLocked(id) {
+  if (state && state.mode === 'instructor') return false;
+  if (!DAY_SCHEDULE[id]) return false;
+  return new Date() < DAY_SCHEDULE[id];
+}
+
+function unlockLabel(id) {
+  const d = DAY_SCHEDULE[id];
+  if (!d) return '';
+  return d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) + ' from 06:00';
+}
+
+function applyLockUI() {
+  Object.keys(DAY_SCHEDULE).forEach(id => {
+    const nav = document.getElementById('nav-' + id);
+    const card = document.querySelector(`.day-card[onclick="showPage('${id}')"]`);
+    const locked = isLocked(id);
+    if (nav) nav.classList.toggle('locked', locked);
+    if (card) {
+      card.classList.toggle('locked', locked);
+      if (locked) card.onclick = () => showPage(id);
+    }
+  });
+}
+
+// ===== USER / STATE =====
+const PARTICIPANTS = [
+  { code:'P-01', name:'Dr. Funmi Olotu' },
+  { code:'P-02', name:'Mr. Olubunmi Olusanya' },
+  { code:'P-03', name:'Bello Mustapha Alikali' },
+  { code:'P-04', name:'Dikko Bala Mohammed' },
+  { code:'P-05', name:'Murtala Mohammed' },
+  { code:'P-06', name:'Sesugh Nongo' },
+  { code:'P-07', name:'Adam Adam Muhammed' },
+  { code:'P-08', name:'Shambe Orduen' },
+  { code:'P-09', name:'Auwalu Ibrahim' },
+  { code:'P-10', name:'Dasbang Joseph F' },
+  { code:'P-11', name:'Mohammed Nasiru Hamma' },
+  { code:'P-12', name:'Ogunsanya Rasaq Olukorede' },
+  { code:'P-13', name:'Ismail Adisa Adeyinka' },
+  { code:'P-14', name:'Sadiya Abubakar Abdullahi' },
+  { code:'P-15', name:'Spare Slot 15' },
+  { code:'P-16', name:'Spare Slot 16' },
+];
+
+function participantByCode(code) {
+  return PARTICIPANTS.find(p => p.code === code);
+}
+
+// ===== WELCOME / LOGIN SCREEN SWITCHING =====
+function showLoginScreen() {
+  document.getElementById('screen-welcome').style.display = 'none';
+  document.getElementById('screen-login').style.display = '';
+}
+function showWelcomeScreen() {
+  document.getElementById('screen-login').style.display = 'none';
+  document.getElementById('screen-welcome').style.display = '';
+}
+const INST_PIN = 'AUKTIE2026';
+
+let currentUser = null;
+let state = {};
+
+function stateKey(user) { return 'auktie_state_' + user; }
+
+function loadState(user) {
+  const s = JSON.parse(localStorage.getItem(stateKey(user)) || '{}');
+  s.done = s.done || {};
+  s.exercises = s.exercises || 0;
+  s.mode = (user === 'INST') ? 'instructor' : 'participant';
+  s.lastSeen = new Date().toISOString();
+  return s;
+}
+
+// ===== LOGIN =====
+function loginAs(code) {
+  try {
+    currentUser = code;
+    localStorage.setItem('auktie_current_user', code);
+    state = loadState(code);
+    saveState();
+  } catch(e) {
+    currentUser = code;
+    state = { done:{}, exercises:0, mode:(code==='INST'?'instructor':'participant'), lastSeen:new Date().toISOString() };
+  }
+  // Hide overlay immediately — do this before anything else
+  const overlay = document.getElementById('login-overlay');
+  if (overlay) overlay.classList.add('hidden');
+  // Update header badge
+  const p = participantByCode(code);
+  const lbl = document.getElementById('user-label');
+  if (lbl) lbl.textContent = (code === 'INST') ? 'Instructor' : (p ? p.name + ' (' + code + ')' : code);
+  const mt = document.getElementById('mode-toggle');
+  if (mt) mt.style.display = (code === 'INST') ? '' : 'none';
+  // Initialise platform
+  try { initPlatform(); } catch(e) { showPage('home'); }
+}
+
+function toggleInstPin() {
+  const row = document.getElementById('inst-pin-row');
+  row.classList.toggle('show');
+  if (row.classList.contains('show')) document.getElementById('inst-pin').focus();
+}
+
+function checkPin() {
+  const pin = document.getElementById('inst-pin').value;
+  const err = document.getElementById('login-error');
+  if (pin === INST_PIN) {
+    err.style.display = 'none';
+    loginAs('INST');
+  } else {
+    err.style.display = 'block';
+    document.getElementById('inst-pin').value = '';
+    document.getElementById('inst-pin').focus();
+  }
+}
+
+function logout() {
+  try { localStorage.removeItem('auktie_current_user'); } catch(e) {}
+  currentUser = null;
+  state = {};
+  const el = (id) => document.getElementById(id);
+  if (el('screen-welcome'))  el('screen-welcome').style.display  = '';
+  if (el('screen-login'))    el('screen-login').style.display    = 'none';
+  if (el('login-overlay'))   el('login-overlay').classList.remove('hidden');
+  if (el('inst-pin'))        el('inst-pin').value                = '';
+  if (el('inst-pin-row'))    el('inst-pin-row').classList.remove('show');
+  if (el('login-error'))     el('login-error').style.display     = 'none';
+  if (el('user-label'))      el('user-label').textContent        = '—';
+}
 
 // ===== INIT =====
-window.addEventListener('DOMContentLoaded', () => {
+function initPlatform() {
   applyMode(state.mode);
   updateProgress();
   renderProgress();
-
-  // restore done states
   DAYS.forEach(d => {
     if (state.done[d]) {
       const btn = document.getElementById('done-' + d);
@@ -2884,12 +3271,34 @@ window.addEventListener('DOMContentLoaded', () => {
       if (nav) nav.classList.add('done');
     }
   });
-
+  applyLockUI();
   showPage('home');
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('auktie_current_user');
+  if (saved) {
+    // Resume session — skip both screens
+    currentUser = saved;
+    state = loadState(saved);
+    const p = participantByCode(saved);
+    document.getElementById('user-label').textContent =
+      (saved === 'INST') ? 'Instructor' : (p ? p.name + ' (' + saved + ')' : saved);
+    document.getElementById('mode-toggle').style.display = (saved === 'INST') ? '' : 'none';
+    document.getElementById('login-overlay').classList.add('hidden');
+    initPlatform();
+  }
+  // else: welcome screen stays visible
 });
 
 // ===== PAGE NAVIGATION =====
 function showPage(id) {
+  // Intercept locked training days (participant mode only)
+  if (isLocked(id)) {
+    document.getElementById('locked-date').textContent = unlockLabel(id);
+    document.getElementById('locked-title').textContent = DAY_NAMES[id] + ' — Not Yet Available';
+    id = 'locked';
+  }
   PAGES.forEach(p => {
     const el = document.getElementById('page-' + p);
     const nav = document.querySelector(`[onclick="showPage('${p}')"]`);
@@ -2922,9 +3331,12 @@ function setMode(m) {
   saveState();
 }
 function applyMode(m) {
-  document.getElementById('btn-participant').classList.toggle('active', m === 'participant');
-  document.getElementById('btn-instructor').classList.toggle('active', m === 'instructor');
+  const bp = document.getElementById('btn-participant');
+  const bi = document.getElementById('btn-instructor');
+  if (bp) bp.classList.toggle('active', m === 'participant');
+  if (bi) bi.classList.toggle('active', m === 'instructor');
   document.body.classList.toggle('instructor-mode', m === 'instructor');
+  applyLockUI();
 }
 
 // ===== TABS =====
@@ -3017,11 +3429,47 @@ function renderProgress() {
       <span style="font-size:0.8rem;color:${isDone ? 'var(--success)' : 'var(--text-muted)'}">${isDone ? '✓ Complete' : 'In progress'}</span>
     </div>`;
   }).join('');
+
+  if (currentUser === 'INST') renderCohort();
+}
+
+function renderCohort() {
+  const tbody = document.getElementById('cohort-body');
+  if (!tbody) return;
+  const total = DAYS.length;
+  tbody.innerHTML = PARTICIPANTS.map(p => {
+    const raw = localStorage.getItem(stateKey(p.code));
+    const isSpare = p.name.startsWith('Spare');
+    if (!raw) {
+      return `<tr>
+        <td><strong>${p.code}</strong></td>
+        <td style="color:#aaa;font-size:0.82rem">${isSpare ? '—' : p.name}</td>
+        <td class="ct-inactive" colspan="3">${isSpare ? 'Spare slot' : 'Not yet logged in'}</td>
+      </tr>`;
+    }
+    const s = JSON.parse(raw);
+    const done = Object.keys(s.done || {}).filter(k => s.done[k]).length;
+    const pct  = Math.round((done / total) * 100);
+    const ex   = s.exercises || 0;
+    const last = s.lastSeen ? new Date(s.lastSeen).toLocaleString('en-GB', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '—';
+    return `<tr>
+      <td><strong>${p.code}</strong></td>
+      <td style="font-size:0.82rem">${p.name}</td>
+      <td>${done} / ${total}</td>
+      <td>
+        <span class="ct-bar-wrap"><span class="ct-bar" style="width:${pct}%"></span></span>
+        ${pct}%
+      </td>
+      <td>${ex}</td>
+      <td style="font-size:0.8rem;color:var(--text-muted)">${last}</td>
+    </tr>`;
+  }).join('');
 }
 
 // ===== SAVE STATE =====
 function saveState() {
-  localStorage.setItem('auktie_workshop', JSON.stringify(state));
+  if (!currentUser) return;
+  localStorage.setItem(stateKey(currentUser), JSON.stringify(state));
 }
 
 // ===== QUIZ DATA & RENDERER =====
