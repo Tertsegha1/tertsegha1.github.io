@@ -1484,6 +1484,10 @@ psql -U postgres
 <span class="cmt">-- TRUNCATE resets sequence too</span>
 <span class="cmt">-- TRUNCATE nsr.households RESTART IDENTITY CASCADE;</span></pre>
       </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Key points for each operation</div>
+        <strong>RETURNING</strong>: unique to PostgreSQL — the INSERT or UPDATE returns columns from the affected row immediately, without a second SELECT. Invaluable in NSR workflows where you need the generated <code>household_id</code> (a BIGSERIAL) to insert related individuals in the same script. <strong>DELETE — always SELECT first</strong>: the pattern of running a SELECT with the same WHERE clause before deleting is not just a habit — it is the standard safeguard against an accidental mass delete. In the NSR, a wrong WHERE clause on the households table could cascade-delete thousands of individual records. <strong>TRUNCATE vs DELETE</strong>: TRUNCATE removes all rows instantly by deallocating storage pages — it cannot be rolled back outside a transaction, and <code>RESTART IDENTITY</code> resets sequences back to 1. It is appropriate for clearing staging tables between import batches, never for production data. <code>CASCADE</code> extends the truncate to child tables that reference this one via FK.
+      </div>
     </div>
 
     <div class="tab-panel" id="tab-d2-joins">
@@ -1515,6 +1519,10 @@ psql -U postgres
 <span class="kw">WHERE</span> h.is_active = <span class="kw">TRUE</span>
 <span class="kw">GROUP BY</span> h.household_id, h.household_code, h.head_name
 <span class="kw">ORDER BY</span> payment_count <span class="kw">DESC</span>;</pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">INNER JOIN vs LEFT JOIN — when to use each</div>
+        <strong>INNER JOIN</strong> (the first query): returns only households that have a matching LGA and state. This is correct here because every household must belong to a valid LGA — if a row had no match it would indicate a data integrity problem, and silently hiding it in the results would be wrong. <strong>LEFT JOIN</strong> (the second query): returns every active household regardless of whether they have any payments. Households with zero payments appear with <code>payment_count = 0</code> and <code>total_paid = NULL</code> — which is exactly the policy insight needed: who hasn't been paid yet? <strong>The AND in the LEFT JOIN ON clause</strong>: filtering on <code>p.status = 'processed'</code> inside the ON (not the WHERE) means "join only to processed payments." This preserves households with only pending/failed payments as non-matched rows, keeping them in the result with NULL values. Moving this condition to WHERE would silently drop those households from the output.
       </div>
     </div>
 
@@ -1557,6 +1565,10 @@ psql -U postgres
 <span class="kw">FROM</span> nsr.payments
 <span class="kw">WHERE</span> status = <span class="str">'processed'</span>
 <span class="kw">ORDER BY</span> household_id, payment_date;</pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">How window functions differ from GROUP BY</div>
+        <strong>GROUP BY collapses rows</strong> — one output row per group, detail lost. <strong>Window functions keep every row</strong> and attach a computed value alongside it. The <code>OVER ()</code> clause defines the window: <code>PARTITION BY</code> divides rows into independent groups (here, per state) and <code>ORDER BY</code> controls ranking or accumulation order within each group. <strong>RANK() vs DENSE_RANK()</strong>: if two households tie at rank 3, RANK() produces 3, 3, 5 (skips 4); DENSE_RANK() produces 3, 3, 4 (no gap). For poverty targeting, RANK() is more conservative — tied households are treated equally and the next distinct score gets a lower priority number. <strong>PERCENT_RANK()</strong>: returns a value from 0 to 1 representing where the row falls relative to all rows in the partition — multiplied by 100 it gives the percentile. A household at the 10th percentile is among the most vulnerable 10% in its state. <strong>ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</strong>: the explicit frame clause for the running total — includes all rows from the start of the partition up to and including the current row, ordered by payment_date, giving a cumulative disbursement total per household.
       </div>
     </div>
 
