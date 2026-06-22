@@ -1103,6 +1103,8 @@ psql -U postgres
     <button class="mark-done-btn" id="done-day1" onclick="markDone('day1')">Mark Complete ✓</button>
   </div>
 
+  <div class="callout info"><div class="callout-title">Day Focus</div>Day 1 establishes the mental model that underpins the entire programme. Participants must leave understanding <em>why</em> PostgreSQL behaves the way it does under concurrent load — not just how to run commands. Spend the most time on WAL and MVCC: every performance, security, and ETL topic in later days assumes this foundation.</div>
+
   <div class="timing-banner">
     <div class="timing-chip">⏰ <strong>09:30</strong> Registration &amp; setup verification</div>
     <div class="timing-chip">⏰ <strong>10:00</strong> Training starts</div>
@@ -1167,6 +1169,10 @@ psql -U postgres
              <span class="str">'checkpoint_completion_target'</span>,<span class="str">'wal_compression'</span>)
 <span class="kw">ORDER BY</span> name;</pre>
         </div>
+        <div class="callout info" style="margin-top:8px">
+          <div class="callout-title">What these settings control</div>
+          <strong>wal_level</strong>: minimum is <code>replica</code> for streaming replication; <code>logical</code> adds logical decoding. <strong>synchronous_commit</strong>: <code>on</code> = fsync WAL before confirming commit (safe); <code>off</code> = async commit, up to ~600ms data loss on crash but ~3× write throughput — only use for non-critical bulk loads. <strong>max_wal_size</strong>: how large WAL can grow between checkpoints; increasing this reduces checkpoint frequency and I/O spikes at the cost of longer crash recovery. <strong>checkpoint_completion_target</strong>: spreads dirty-page writes over this fraction of the checkpoint interval — 0.9 means spread over 90% to avoid a sudden I/O spike. <strong>wal_compression</strong>: compresses full-page writes in WAL — free CPU↔I/O trade that almost always wins on modern hardware.
+        </div>
       </div>
 
       <div class="section">
@@ -1184,6 +1190,10 @@ psql -U postgres
           <tr><td>Dead tuple</td><td>Row version no longer visible to any transaction</td></tr>
           <tr><td>VACUUM</td><td>Reclaims space from dead tuples</td></tr>
         </table>
+        <div class="callout info" style="margin-top:8px">
+          <div class="callout-title">Why MVCC matters for NSR</div>
+          In a social registry, caseworkers in Kano and Lagos may read and update the same household record simultaneously. Without MVCC, you would need table or row locks, meaning Reader A's <code>SELECT</code> would block Writer B's <code>UPDATE</code> or vice versa. MVCC eliminates that: readers always get a consistent snapshot of the data as it existed at the start of their transaction, while writers create new row versions in parallel. The practical result — no read/write deadlocks, predictable query latency, and audit-safe reads even during bulk data corrections. The cost is dead tuples that VACUUM must reclaim; that's the WAL → MVCC → VACUUM triad every participant should be able to explain by end of Day 1.
+        </div>
       </div>
 
       <div class="section">
@@ -1229,6 +1239,10 @@ psql -U postgres
   dob            <span class="typ">DATE</span>       <span class="kw">CHECK</span> (dob > <span class="str">'1900-01-01'</span> <span class="kw">AND</span> dob <= <span class="kw">CURRENT_DATE</span>),
   gender         <span class="typ">CHAR(1)</span>    <span class="kw">CHECK</span> (gender <span class="kw">IN</span> (<span class="str">'M'</span>,<span class="str">'F'</span>,<span class="str">'O'</span>))
 );</pre>
+        </div>
+        <div class="callout info" style="margin-top:8px">
+          <div class="callout-title">Design decisions worth calling out</div>
+          <strong>BIGSERIAL vs SERIAL</strong>: the NSR can grow to tens of millions of individuals; <code>BIGSERIAL</code> (64-bit) avoids integer overflow at ~2.1 billion rows that <code>SERIAL</code> would hit. <strong>ON DELETE CASCADE on individuals</strong>: if a household is removed (e.g. duplicate detected), all members cascade — prevents orphaned rows without a manual DELETE. <strong>NIN regex CHECK</strong>: <code>'^[A-Z]{2}[0-9]{7}[A-Z]{2}$'</code> enforces NIMC format at the database level, not just the application layer — the registry is the authoritative source so data quality is enforced here, not in code that may be bypassed. <strong>dob range CHECK</strong>: rejects dates before 1900 and future dates — catches common data-entry errors in field enumeration. <strong>NULLABLE nin</strong>: many enumerated individuals, especially children, may not yet have a NIN; <code>UNIQUE</code> with <code>NULL</code> allowed means multiple rows can have <code>NULL</code> without conflicting (PostgreSQL treats NULLs as distinct in UNIQUE indexes).
         </div>
       </div>
     </div>
@@ -1690,6 +1704,8 @@ psql -U postgres
     <span class="obj-chip">#7 Database Security</span>
   </div>
 
+  <div class="callout info"><div class="callout-title">Day Focus</div>Day 3 is the security day. The three pillars — RBAC, RLS, and audit logging — are interdependent: RBAC controls what a role can do, RLS controls which rows they can touch, and the audit log records what they actually did. Participants must understand why all three are required together; any one alone is insufficient for a system handling PII and payment data. Spend extra time on RLS — the <code>current_setting('app.state_code')</code> pattern is the part most likely to confuse.</div>
+
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab(this,'d3tabs','d3-rbac')">RBAC</button>
     <button class="tab-btn" onclick="switchTab(this,'d3tabs','d3-rls')">Row-Level Security</button>
@@ -1748,6 +1764,10 @@ psql -U postgres
 <span class="cmt">-- Verify</span>
 \du+</pre>
       </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Why three separate roles?</div>
+        The principle of least privilege: each role receives only the permissions it needs and nothing more. <strong>nsr_caseworker</strong> has no write access and no direct NIN visibility — it reads through a view that masks sensitive columns. <strong>nsr_supervisor</strong> can UPDATE payments but cannot delete audit records. <strong>nsr_dba</strong> has BYPASSRLS (needed for maintenance) but even DBA cannot delete from <code>audit_log</code>. The <code>\du+</code> output lets you verify the privilege matrix before handing the terminal to a participant to test — always do this check on live systems before closing a migration.
+      </div>
     </div>
 
     <div class="tab-panel" id="tab-d3-rls">
@@ -1782,6 +1802,10 @@ psql -U postgres
 
 <span class="kw">RESET ROLE</span>;</pre>
       </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">How the RLS policy works</div>
+        <code>current_setting('app.state_code', TRUE)</code> reads a session-level GUC (Grand Unified Configuration variable) set by the application or the caseworker's login script. The second argument <code>TRUE</code> means "return NULL if not set" rather than throwing an error — without it, a connection that hasn't set the variable would error on every SELECT. The policy sub-selects LGA IDs belonging to that state, so a Kano caseworker (<code>app.state_code = 'KN'</code>) only ever sees rows where <code>lga_id</code> falls within Kano. <strong>BYPASSRLS on nsr_dba and nsr_supervisor</strong> is intentional — they need cross-state visibility for reports and corrections; the audit log compensates by recording every action they take. Demonstrate the COUNT(*) query change between <code>'KN'</code> and <code>'LA'</code> — the visible row count is the most concrete proof that RLS is working.
+      </div>
     </div>
 
     <div class="tab-panel" id="tab-d3-audit">
@@ -1805,6 +1829,10 @@ psql -U postgres
 <span class="cmt">-- Test: try to delete an audit record</span>
 <span class="kw">DELETE FROM</span> nsr.audit_log <span class="kw">WHERE</span> log_id = <span class="num">1</span>;
 <span class="cmt">-- Expected: ERROR: permission denied</span></pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Why the audit log is append-only</div>
+        <strong>REVOKE DELETE … FROM nsr_dba</strong> is the key line — it makes the audit log tamper-resistant even to the database administrator. This satisfies the requirement that audit trails in government systems must not be alterable by insiders. <code>row_data JSONB</code> stores the full NEW or OLD row as JSON, giving forensic detail without needing a separate shadow table per entity. <code>DEFAULT current_user</code> on <code>role_name</code> captures the actual database role, not a session variable that could be spoofed. In production you would pair this table with a trigger function (see the Exercise) that fires on INSERT, UPDATE, and DELETE on every NSR table — the trigger uses <code>SECURITY DEFINER</code> so it can write to <code>audit_log</code> even when the calling role has no INSERT privilege on it.
       </div>
     </div>
 
@@ -2196,6 +2224,10 @@ done</pre>
 <span class="kw">WHERE</span> h.is_active = <span class="kw">TRUE</span>
 <span class="kw">ORDER BY</span> s.state_name, h.pmt_score <span class="kw">ASC</span>;</pre>
       </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Why two JOINs?</div>
+        The NSR schema is normalised: <code>households</code> stores only <code>lga_id</code>; the LGA name and state name live in separate tables. To produce a human-readable report we must traverse the chain: households → lgas → states. This is the reward for normalisation — no state_name duplication across millions of household rows, and a single UPDATE to <code>nsr.states</code> propagates everywhere. Common participant mistake: JOINing directly from households to states, which is impossible because there is no direct FK; the LGA is the bridge.
+      </div>
     </div>
     <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
       <button class="btn-toggle-answer instructor-block instructor-only" onclick="toggleAnswer('d5-b1',this)">▼ Show Model Answer</button>
@@ -2222,6 +2254,10 @@ done</pre>
 <span class="kw">WHERE</span> h.is_active = <span class="kw">TRUE</span>
 <span class="kw">ORDER BY</span> s.state_name, poverty_rank;</pre>
       </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Why PARTITION BY, not GROUP BY?</div>
+        <code>RANK() OVER (PARTITION BY l.state_code ORDER BY h.pmt_score ASC)</code> is a window function — it computes the rank for each row without collapsing rows the way GROUP BY would. The result keeps every household visible with its own rank alongside it. <code>PARTITION BY l.state_code</code> resets the rank counter for each state, so each state independently produces ranks 1, 2, 3 … The lowest pmt_score gets rank 1 — identifying the most economically vulnerable households first, which is the policy use case. Common mistake: using <code>ORDER BY pmt_score DESC</code>, which would rank the wealthiest household as #1.
+      </div>
     </div>
     <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
       <button class="btn-toggle-answer instructor-block instructor-only" onclick="toggleAnswer('d5-b2',this)">▼ Show Model Answer</button>
@@ -2247,6 +2283,10 @@ done</pre>
 <span class="kw">WHERE</span> h.is_active = <span class="kw">TRUE</span>
   <span class="kw">AND</span> p.payment_id <span class="kw">IS NULL</span>
 <span class="kw">ORDER BY</span> s.state_name, h.household_code;</pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Why filter in the JOIN, not the WHERE?</div>
+        <code>AND p.status = 'processed'</code> appears in the <code>LEFT JOIN … ON</code> clause, not in the <code>WHERE</code>. This is the critical distinction: filtering in the JOIN condition means "join only to processed payments; leave households with no such match with NULL on the payments side." Filtering <code>WHERE p.status = 'processed'</code> after the join would silently convert the LEFT JOIN to an INNER JOIN — excluding households with unprocessed or no payments. The <code>WHERE p.payment_id IS NULL</code> then isolates households where the left join found no match, i.e. never-paid households. This LEFT JOIN anti-join pattern is one of the most frequently misunderstood patterns in the programme — worth re-demonstrating live.
       </div>
     </div>
     <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
@@ -2363,6 +2403,8 @@ $$;
     <span class="obj-chip">#2 SQL Development &amp; Optimisation</span>
   </div>
 
+  <div class="callout info"><div class="callout-title">Day Focus</div>Day 6 teaches participants to read the database's own diagnostic output. The theme is: never guess at performance problems — measure with EXPLAIN ANALYZE, find the bottleneck, apply the right fix (index, partition, or query rewrite), then measure again. Emphasise the BUFFERS option — seeing cache hits vs disk reads is often the fastest way to diagnose why a query is slow in production. Connect every concept back to scale: the NSR will grow, queries that run in milliseconds on 10,000 rows may scan millions of rows next enumeration round.</div>
+
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab(this,'d6tabs','d6-explain')">EXPLAIN ANALYZE</button>
     <button class="tab-btn" onclick="switchTab(this,'d6tabs','d6-index')">Indexing</button>
@@ -2394,6 +2436,10 @@ $$;
         <tr><td>Nested Loop</td><td>For each outer row, scan inner</td><td>Slow when inner table is large</td></tr>
         <tr><td>actual rows ≫ rows</td><td>Stale statistics</td><td>Run ANALYZE to fix</td></tr>
       </table>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">How to read the output</div>
+        The plan is read bottom-up: the innermost (most indented) node executes first. Key numbers to compare: <strong>rows</strong> (planner estimate) vs <strong>actual rows</strong> (real execution) — a large gap means stale statistics; run <code>ANALYZE nsr.households;</code> to fix. <strong>cost</strong> is an arbitrary planner unit (not milliseconds); only compare costs within the same plan. <strong>actual time</strong> is real milliseconds for that node. <strong>Buffers: shared hit</strong> = pages served from shared_buffers (fast); <strong>shared read</strong> = pages fetched from disk (slow). A query with high shared reads on a table that should be cached is a sign either <code>shared_buffers</code> is too small or the table has severe bloat from dead tuples.
+      </div>
     </div>
 
     <div class="tab-panel" id="tab-d6-index">
@@ -2422,6 +2468,10 @@ $$;
 <span class="kw">FROM</span> pg_stat_user_indexes
 <span class="kw">WHERE</span> schemaname = <span class="str">'nsr'</span>
 <span class="kw">ORDER BY</span> idx_scan <span class="kw">DESC</span>;</pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Choosing the right index type</div>
+        <strong>B-tree</strong> (default): handles equality, range, BETWEEN, ORDER BY. Right for pmt_score, payment_date, household_code. <strong>Partial index</strong>: adds a WHERE clause to the index definition — only rows satisfying the condition are indexed. Smaller, faster, used when the common query always filters on the same condition (e.g. <code>is_active = TRUE</code>). <strong>Composite index</strong>: covers multi-column WHERE and ORDER BY; column order matters — leading column must appear in the query for the index to be used. <strong>GIN</strong>: required for JSONB containment (<code>@&gt;</code>) and full-text search — cannot be used for range queries. The <code>pg_stat_user_indexes</code> query at the end is the index audit: any index with <code>idx_scan = 0</code> after weeks of production use is unused overhead on every INSERT/UPDATE and should be dropped.
       </div>
     </div>
 
@@ -2453,6 +2503,10 @@ $$;
 <span class="kw">WHERE</span> payment_date <span class="kw">BETWEEN</span> <span class="str">'2024-03-01'</span> <span class="kw">AND</span> <span class="str">'2024-06-30'</span>;
 <span class="cmt">-- Only payments_2024 appears in the plan</span></pre>
       </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Why partition payments by year?</div>
+        The NSR payments table will accumulate millions of rows across multiple disbursement cycles. A caseworker reporting on 2024 payments should never need to scan 2025 or 2026 data. Partition pruning lets PostgreSQL eliminate irrelevant child tables entirely — the EXPLAIN output shows only <code>payments_2024</code> in the plan when filtering by a 2024 date range, regardless of how large the other partitions grow. Each partition can also have its own index, vacuum schedule, and tablespace — enabling hot/cold storage separation: recent partitions on fast NVMe, archived partitions on cheaper storage. The key constraint: the partition key column (<code>payment_date</code>) must always appear in queries for pruning to work; queries without a date filter scan all partitions and may be slower than a non-partitioned table.
+      </div>
     </div>
 
     <div class="tab-panel" id="tab-d6-monitor">
@@ -2480,6 +2534,10 @@ $$;
   <span class="fn">ROUND</span>(blks_hit::numeric / <span class="fn">NULLIF</span>(blks_hit+blks_read,<span class="num">0</span>)*<span class="num">100</span>,<span class="num">2</span>) <span class="kw">AS</span> cache_hit_pct
 <span class="kw">FROM</span> pg_stat_database
 <span class="kw">WHERE</span> datname = <span class="str">'lab_nsr'</span>;</pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">What each monitoring query reveals</div>
+        <strong>Table bloat query</strong>: <code>n_dead_tup / (n_live_tup + n_dead_tup)</code> is the dead-tuple ratio — above 20% on a frequently updated table means autovacuum is not keeping up, and sequential scans will degrade because dead tuples still occupy pages. <code>last_autovacuum</code> being NULL or very old on a busy table is a red flag. <strong>Long-running queries</strong>: any query active for more than 30 seconds on the NSR database warrants investigation — it may be holding locks that block caseworker inserts. The <code>pid</code> can be fed to <code>pg_terminate_backend(pid)</code> to cancel it if necessary. <strong>Cache hit rate</strong>: below 99% means your workload is reading from disk more than necessary — either increase <code>shared_buffers</code> (typically 25% of RAM) or investigate which queries trigger the most disk reads with <code>EXPLAIN (BUFFERS)</code>.
       </div>
     </div>
 
@@ -2620,6 +2678,8 @@ $$;
     <span class="obj-chip">#11 NSR Modernisation</span>
   </div>
 
+  <div class="callout info"><div class="callout-title">Day Focus</div>Day 7 connects everything: schema design (Day 1), SQL (Day 2), security (Day 3), and performance (Day 6) all come together in a real ETL pipeline. The key message is that ETL is not a one-off script — it is a repeatable, audited, validated process. Every step must be idempotent (safe to re-run), every load must record its lineage, and every failure must be traceable to a specific row. Connect the NDP Act table to the technical controls participants have already built; governance is not paperwork, it is the audit_log and the data_lineage table working together.</div>
+
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab(this,'d7tabs','d7-etl')">ETL vs ELT</button>
     <button class="tab-btn" onclick="switchTab(this,'d7tabs','d7-dedup')">Deduplication</button>
@@ -2673,6 +2733,10 @@ $$;
   <span class="kw">AND</span> s.pmt_score ~ <span class="str">'^[0-9]+\.?[0-9]*$'</span>
 <span class="kw">ON CONFLICT</span> (household_code) <span class="kw">DO NOTHING</span>;</pre>
       </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Why staging tables have no constraints</div>
+        The staging table accepts <em>everything</em> — nulls, bad formats, duplicates — because field enumeration data from Nigeria's LGAs will contain all of these. Rejecting bad data at load time means losing context about what arrived. Instead: load everything, validate in SQL, quarantine or fix bad rows, then promote clean rows into the target. <strong>pmt_score as TEXT</strong> in staging is deliberate — the regex <code>'^[0-9]+\.?[0-9]*$'</code> in the validation step catches values like "N/A" or "–" that would silently convert to NULL or cause a type error if the column were NUMERIC. <strong>ON CONFLICT DO NOTHING</strong> makes the INSERT idempotent — re-running after a failure does not create duplicates. In a re-enumeration scenario, use <code>ON CONFLICT DO UPDATE</code> instead to refresh existing records from the new batch.
+      </div>
     </div>
 
     <div class="tab-panel" id="tab-d7-dedup">
@@ -2700,6 +2764,10 @@ $$;
 <span class="kw">WHERE</span> nin <span class="kw">IS NOT NULL</span>
 <span class="kw">GROUP BY</span> nin
 <span class="kw">HAVING COUNT</span>(<span class="kw">DISTINCT</span> household_id) > <span class="num">1</span>;</pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Two kinds of duplicates — different fixes</div>
+        <strong>Duplicate household codes in staging</strong>: multiple rows arrived in the CSV with the same code — keep the one with the latest <code>loaded_at</code> and discard the rest before promoting to production. The <code>ctid</code> technique (physical row address) is a PostgreSQL-specific shortcut for this; in a production pipeline, use a proper <code>DISTINCT ON (household_code) ORDER BY loaded_at DESC</code> CTE. <strong>Duplicate NINs across households</strong>: the same individual appears enrolled in two households — a real data quality problem meaning either a data-entry error (person was enumerated twice) or a fraud signal (NIN cloned). The query surfaces the conflict; resolution requires a manual review workflow, not an automatic DELETE. Emphasise to participants: never auto-delete on a suspicion of duplicate — mark for review, log in audit_log, escalate to a supervisor.
       </div>
     </div>
 
@@ -2729,6 +2797,10 @@ $$;
   lawful_basis  <span class="typ">TEXT</span>        <span class="kw">NOT NULL</span>,
   data_owner    <span class="typ">TEXT</span>        <span class="kw">NOT NULL</span>
 );</pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">What each lineage column records and why</div>
+        <strong>source_system</strong>: where the data came from — "NASSCO_CSV_Q1_2024", "BVN_API", "LIMS_EXPORT" — making it possible to trace any production row back to its origin file or system. <strong>lawful_basis</strong>: the NDP Act 2023 requires every processing activity to have a documented lawful basis (e.g. "Public task – Conditional Cash Transfer Programme"); this column is the database-level proof. <strong>batch_ref</strong>: links every promoted row to an import batch, enabling surgical rollback — if batch "NSR_20240315" is found to contain corrupt data, all rows with that batch_ref can be identified and reviewed. <strong>record_count</strong>: cross-check at the end of ETL — if the source file had 4,823 rows and record_count is 4,712, the delta of 111 needs an explanation (validation failures, duplicates, or a truncated file). In production, INSERT to this table immediately after every load step, not at the end — a mid-job crash would otherwise leave no lineage record for partial loads.
       </div>
     </div>
 
