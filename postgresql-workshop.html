@@ -369,6 +369,46 @@ tr:last-child td { border-bottom: none; }
 .instructor-block { display: none; }
 body.instructor-mode .instructor-block { display: block; }
 
+/* ===== GLOSSARY PAGE ===== */
+.gloss-search-wrap { position:sticky; top:0; z-index:10; background:var(--bg); padding:12px 0 16px; }
+.gloss-search {
+  width:100%; padding:10px 16px; border:2px solid var(--border);
+  border-radius:10px; font-size:1rem; color:var(--text);
+  background:var(--surface); outline:none; transition:border-color .2s;
+}
+.gloss-search:focus { border-color:var(--brand); }
+.gloss-group { margin-bottom:32px; }
+.gloss-group-title {
+  font-size:0.72rem; font-weight:700; letter-spacing:1.2px; text-transform:uppercase;
+  color:var(--brand); border-bottom:2px solid var(--brand); padding-bottom:6px;
+  margin-bottom:16px;
+}
+.gloss-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:12px; }
+.gloss-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:10px; padding:14px 16px;
+  border-left:4px solid var(--brand-light);
+  transition:box-shadow .15s;
+}
+.gloss-card:hover { box-shadow:0 4px 16px rgba(0,0,0,0.08); }
+.gloss-card.hidden { display:none; }
+.gloss-term {
+  font-weight:700; font-size:0.95rem; color:var(--brand);
+  margin-bottom:4px; font-family:monospace;
+}
+.gloss-abbr { font-weight:400; font-size:0.82rem; color:var(--text-muted); margin-left:6px; font-family:sans-serif; }
+.gloss-def { font-size:0.87rem; color:var(--text); line-height:1.55; }
+.gloss-example {
+  font-size:0.8rem; color:var(--text-muted); margin-top:6px;
+  font-style:italic; border-top:1px solid var(--border); padding-top:6px;
+}
+.gloss-tag {
+  display:inline-block; font-size:0.68rem; font-weight:700; letter-spacing:.5px;
+  padding:1px 7px; border-radius:20px; margin-top:6px;
+  background:var(--surface2); color:var(--text-muted);
+}
+.gloss-no-results { color:var(--text-muted); font-style:italic; padding:20px 0; }
+
 /* ===== PAGE HEADER ===== */
 .page-header {
   display: flex; align-items: flex-start; justify-content: space-between;
@@ -749,6 +789,9 @@ body.instructor-mode .cohort-section { display: block; }
     <a class="nav-item" onclick="showPage('certificate')" id="nav-certificate">
       <span class="day-badge">🎓</span> Certificate
       <span class="nav-check">✓</span>
+    </a>
+    <a class="nav-item instructor-block" onclick="showPage('glossary')" id="nav-glossary">
+      <span class="day-badge">📖</span> Definitions
     </a>
   </div>
 </nav>
@@ -3078,6 +3121,614 @@ pg_restore -U postgres -d lab_nsr_restore -j 4 -F c backup.dump</pre>
   </div>
 </div><!-- end certificate -->
 
+<!-- ===== GLOSSARY PAGE (INSTRUCTOR ONLY) ===== -->
+<div class="page" id="page-glossary">
+  <div class="page-header">
+    <div class="page-title-area">
+      <div class="day-label">Instructor View · All Days</div>
+      <h1>Definitions &amp; Key Terms</h1>
+      <div class="page-subtitle">Complete glossary of concepts, terms, and acronyms used across the programme</div>
+    </div>
+  </div>
+
+  <div class="gloss-search-wrap">
+    <input class="gloss-search" id="glossSearch" type="search" placeholder="Search terms, acronyms or definitions…" oninput="filterGlossary(this.value)">
+  </div>
+
+  <div id="glossary-body">
+
+    <!-- ── GROUP: Core Database Concepts ── -->
+    <div class="gloss-group" data-group="core">
+      <div class="gloss-group-title">Core Database Concepts</div>
+      <div class="gloss-grid">
+
+        <div class="gloss-card">
+          <div class="gloss-term">ACID</div>
+          <div class="gloss-def">The four guarantees every PostgreSQL transaction provides: <strong>Atomicity</strong> (all-or-nothing), <strong>Consistency</strong> (rules never violated), <strong>Isolation</strong> (transactions don't interfere), <strong>Durability</strong> (committed data survives crashes). WAL delivers Durability; MVCC delivers Isolation.</div>
+          <div class="gloss-example">Ask participants: "Which ACID property would break if PostgreSQL crashed mid-INSERT without WAL?"</div>
+          <span class="gloss-tag">Day 1</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">Relation</div>
+          <div class="gloss-def">The formal term for a table in relational theory. A relation has a fixed set of named attributes (columns) and an unordered set of tuples (rows). PostgreSQL is a relational database management system (RDBMS).</div>
+          <span class="gloss-tag">Day 1</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">Tuple</div>
+          <div class="gloss-def">A single row in a table. In PostgreSQL, a tuple includes system columns (xmin, xmax, ctid) in addition to user columns. MVCC stores multiple versions of the same logical row as separate physical tuples.</div>
+          <span class="gloss-tag">Day 1</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">Primary Key</div>
+          <div class="gloss-def">A column or combination of columns whose values uniquely identify every row in a table. PostgreSQL automatically creates a unique B-tree index for every PRIMARY KEY constraint. A table may have at most one primary key.</div>
+          <div class="gloss-example">In the NSR schema: household_id BIGSERIAL PRIMARY KEY — system-generated, never reused.</div>
+          <span class="gloss-tag">Day 1</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">Foreign Key</div>
+          <div class="gloss-def">A constraint that ensures a column's value matches a value in another table's primary key, enforcing referential integrity. INSERT or UPDATE that violates the constraint is rejected with an error. ON DELETE CASCADE propagates deletions automatically.</div>
+          <div class="gloss-example">nsr.individuals(household_id) REFERENCES nsr.households(household_id) ON DELETE CASCADE</div>
+          <span class="gloss-tag">Day 1</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">Referential Integrity</div>
+          <div class="gloss-def">The guarantee that every foreign key value corresponds to an existing primary key value. Prevents orphan rows — e.g. an individual record that references a household that no longer exists.</div>
+          <span class="gloss-tag">Day 1</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">Normalisation<span class="gloss-abbr">1NF / 2NF / 3NF</span></div>
+          <div class="gloss-def">The process of structuring tables to reduce redundancy and avoid update anomalies. <strong>1NF</strong>: atomic values, no repeating groups. <strong>2NF</strong>: no partial dependency on composite key. <strong>3NF</strong>: no transitive dependency — every non-key column depends only on the primary key.</div>
+          <div class="gloss-example">NSR target is 3NF: lga_name lives in nsr.lgas, not repeated in every household row.</div>
+          <span class="gloss-tag">Day 1</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">Schema</div>
+          <div class="gloss-def">A named namespace inside a database that groups related tables, views, functions, and sequences. Used to separate concerns and apply permissions. PostgreSQL databases typically have a public schema by default; the NSR uses a dedicated nsr schema.</div>
+          <div class="gloss-example">CREATE SCHEMA nsr; SET search_path = nsr, public;</div>
+          <span class="gloss-tag">Day 1</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">Constraint</div>
+          <div class="gloss-def">A rule enforced by the database engine on column values or row relationships. Types: PRIMARY KEY, FOREIGN KEY, UNIQUE, NOT NULL, CHECK. Constraints are verified on every INSERT and UPDATE, rejecting violating rows at the database level regardless of the application.</div>
+          <span class="gloss-tag">Day 1</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">Sequence</div>
+          <div class="gloss-def">A database object that generates monotonically increasing integers. SERIAL and BIGSERIAL column types automatically create a sequence and set the column default to nextval(). Sequences are crash-safe and gap-tolerant — rolled-back transactions consume sequence values permanently.</div>
+          <span class="gloss-tag">Day 1</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── GROUP: PostgreSQL Architecture ── -->
+    <div class="gloss-group" data-group="arch">
+      <div class="gloss-group-title">PostgreSQL Architecture</div>
+      <div class="gloss-grid">
+
+        <div class="gloss-card">
+          <div class="gloss-term">Postmaster</div>
+          <div class="gloss-def">The parent process that starts when PostgreSQL initialises. It listens for incoming connections, spawns one backend process per client, and manages background worker processes (autovacuum, WAL writer, checkpointer, etc.).</div>
+          <span class="gloss-tag">Day 1</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">Backend Process</div>
+          <div class="gloss-def">A dedicated OS process forked by the postmaster for each client connection. Handles SQL parsing, query planning, and execution exclusively for that connection. All backends share the shared_buffers pool. Connection pooling (PgBouncer) reduces the cost of spawning backends.</div>
+          <span class="gloss-tag">Day 1</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">shared_buffers</div>
+          <div class="gloss-def">PostgreSQL's in-memory page cache shared by all backends. Pages read from disk are placed here; writes go here first. Recommended: 25% of RAM. Increasing this reduces disk I/O for frequently accessed data (hot pages).</div>
+          <div class="gloss-example">SET shared_buffers = '4GB'; — requires restart.</div>
+          <span class="gloss-tag">Day 1 · Day 6</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">work_mem</div>
+          <div class="gloss-def">Memory allocated per sort operation or hash table within a single query. A complex query with multiple sorts can use work_mem several times simultaneously. Setting too high causes OOM; too low spills to disk. Tune per session for heavy analytic queries.</div>
+          <div class="gloss-example">SET work_mem = '256MB'; — session-level, safe to raise temporarily.</div>
+          <span class="gloss-tag">Day 1 · Day 6</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">maintenance_work_mem</div>
+          <div class="gloss-def">Memory for maintenance operations: VACUUM, CREATE INDEX, ALTER TABLE ADD FOREIGN KEY. Should be significantly higher than work_mem since only one maintenance operation runs per process. Typical: 512 MB–2 GB.</div>
+          <span class="gloss-tag">Day 1 · Day 6</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">effective_cache_size</div>
+          <div class="gloss-def">A planner hint — not actual allocated memory — telling the query planner how much total memory (shared_buffers + OS page cache) is available for caching. Affects whether the planner favours index scans (assume data cached) or sequential scans. Set to ~75% of total RAM.</div>
+          <span class="gloss-tag">Day 6</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">Tablespace</div>
+          <div class="gloss-def">A named location on disk where PostgreSQL stores database objects. Allows large tables or indexes to be placed on faster storage (e.g. SSD) while keeping smaller tables on standard disk. Default tablespace: pg_default.</div>
+          <div class="gloss-example">CREATE TABLESPACE fast LOCATION '/ssd/pg_data'; CREATE INDEX … TABLESPACE fast;</div>
+          <span class="gloss-tag">Day 3</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">pg_hba.conf</div>
+          <div class="gloss-def">PostgreSQL's host-based authentication configuration file. Controls which hosts can connect, which databases and users they can reach, and what authentication method is required (md5, scram-sha-256, trust, reject, cert). Processed top-to-bottom; first matching rule wins.</div>
+          <div class="gloss-example">host nsr_db nsr_readonly 10.0.0.0/8 scram-sha-256</div>
+          <span class="gloss-tag">Day 3</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── GROUP: WAL & MVCC ── -->
+    <div class="gloss-group" data-group="wal">
+      <div class="gloss-group-title">WAL, MVCC &amp; Transactions</div>
+      <div class="gloss-grid">
+
+        <div class="gloss-card">
+          <div class="gloss-term">WAL<span class="gloss-abbr">Write-Ahead Logging</span></div>
+          <div class="gloss-def">The mechanism that delivers Durability. Before any data page is modified on disk, the change is written sequentially to the WAL log. On crash, PostgreSQL replays WAL from the last checkpoint to recover. Sequential WAL writes are faster than random data-page writes — this is why WAL enables high write throughput.</div>
+          <div class="gloss-example">Analogy: WAL is the transaction journal in a bank — the record comes before the vault changes.</div>
+          <span class="gloss-tag">Day 1</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">Checkpoint</div>
+          <div class="gloss-def">A point at which all dirty pages in shared_buffers are flushed to disk. After a checkpoint, WAL replay only needs to start from that point — not the beginning of the log. Frequent checkpoints reduce crash-recovery time but increase I/O. Controlled by checkpoint_completion_target and max_wal_size.</div>
+          <span class="gloss-tag">Day 1 · Day 6</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">MVCC<span class="gloss-abbr">Multi-Version Concurrency Control</span></div>
+          <div class="gloss-def">PostgreSQL's mechanism for allowing readers and writers to operate concurrently without blocking each other. Every UPDATE creates a new tuple version rather than overwriting; readers see the version visible at their transaction's snapshot time. This eliminates read-write lock contention.</div>
+          <div class="gloss-example">Analogy: Git branches — old commits remain accessible even after new ones are added.</div>
+          <span class="gloss-tag">Day 1</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">xmin / xmax</div>
+          <div class="gloss-def">Hidden system columns on every PostgreSQL tuple. <strong>xmin</strong>: transaction ID (xid) that inserted this row version — visible from this xid onwards. <strong>xmax</strong>: xid that deleted or replaced it — 0 means the row is still live. The visibility rules engine uses these to determine what each transaction can see.</div>
+          <span class="gloss-tag">Day 1</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">Snapshot Isolation</div>
+          <div class="gloss-def">PostgreSQL's default isolation level (READ COMMITTED sees the latest committed row per statement; REPEATABLE READ sees a snapshot taken at transaction start). Readers never block writers and writers never block readers — each sees a consistent point-in-time view of the database.</div>
+          <span class="gloss-tag">Day 1</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">Dead Tuple</div>
+          <div class="gloss-def">A row version that is no longer visible to any active transaction — produced by UPDATE or DELETE under MVCC. Dead tuples occupy disk space and must be reclaimed by VACUUM. Accumulation of dead tuples causes table bloat and degrades sequential scan performance.</div>
+          <span class="gloss-tag">Day 1 · Day 6</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">VACUUM</div>
+          <div class="gloss-def">The PostgreSQL process that reclaims storage from dead tuples and advances the transaction ID horizon to prevent XID wraparound. VACUUM does not return space to the OS by default — VACUUM FULL rewrites the table and does. autovacuum runs VACUUM automatically in the background.</div>
+          <div class="gloss-example">SELECT relname, n_dead_tup FROM pg_stat_user_tables ORDER BY n_dead_tup DESC;</div>
+          <span class="gloss-tag">Day 1 · Day 6</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">autovacuum</div>
+          <div class="gloss-def">A background daemon that automatically triggers VACUUM and ANALYZE on tables that exceed a configurable dead-tuple threshold. Essential for long-running production systems. Can be tuned per-table with storage parameters. Disabling it is almost never the right answer.</div>
+          <div class="gloss-example">ALTER TABLE nsr.households SET (autovacuum_vacuum_scale_factor = 0.01);</div>
+          <span class="gloss-tag">Day 6</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">XID Wraparound</div>
+          <div class="gloss-def">PostgreSQL uses 32-bit transaction IDs. After ~2 billion transactions, IDs would wrap around, making old rows appear to be in the future. VACUUM prevents this by freezing old tuples. If wraparound is imminent, PostgreSQL enters a protective read-only shutdown mode.</div>
+          <span class="gloss-tag">Day 6</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">Bloat</div>
+          <div class="gloss-def">The accumulation of dead tuples and free space within a table or index that has not yet been reclaimed by VACUUM. Causes sequential scans to read more pages than necessary and indexes to become larger than optimal. Monitored via pgstattuple extension.</div>
+          <span class="gloss-tag">Day 6</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── GROUP: SQL & Query Language ── -->
+    <div class="gloss-group" data-group="sql">
+      <div class="gloss-group-title">SQL &amp; Query Language</div>
+      <div class="gloss-grid">
+
+        <div class="gloss-card">
+          <div class="gloss-term">DDL<span class="gloss-abbr">Data Definition Language</span></div>
+          <div class="gloss-def">SQL statements that define or alter database structure: CREATE, ALTER, DROP, TRUNCATE, RENAME. DDL statements in PostgreSQL are transactional — they can be rolled back within a BEGIN/COMMIT block, unlike many other databases.</div>
+          <span class="gloss-tag">Day 2</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">DML<span class="gloss-abbr">Data Manipulation Language</span></div>
+          <div class="gloss-def">SQL statements that read or modify data: SELECT, INSERT, UPDATE, DELETE, MERGE. DML operations are always transactional and subject to MVCC visibility rules.</div>
+          <span class="gloss-tag">Day 2</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">DCL<span class="gloss-abbr">Data Control Language</span></div>
+          <div class="gloss-def">SQL statements that control access: GRANT and REVOKE. Used to assign or remove privileges on tables, schemas, sequences, and functions to roles. Works in conjunction with Row-Level Security for fine-grained access control.</div>
+          <span class="gloss-tag">Day 2 · Day 3</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">JOIN</div>
+          <div class="gloss-def">Combines rows from two tables based on a related column. <strong>INNER JOIN</strong>: only matching rows. <strong>LEFT JOIN</strong>: all left rows, NULLs where no match on right. <strong>RIGHT JOIN</strong>: inverse. <strong>FULL OUTER JOIN</strong>: all rows from both sides. <strong>CROSS JOIN</strong>: cartesian product.</div>
+          <div class="gloss-example">Common trap: LEFT JOIN returning unexpected NULLs because the ON clause filters on the right-hand table — move such filters to WHERE only if you intend an inner join.</div>
+          <span class="gloss-tag">Day 2</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">CTE<span class="gloss-abbr">Common Table Expression</span></div>
+          <div class="gloss-def">A named subquery defined with the WITH clause, referenced one or more times in the main query. Improves readability for complex logic. In PostgreSQL 12+, non-recursive CTEs are inlined (optimised) by default; MATERIALIZED keyword forces separate execution.</div>
+          <div class="gloss-example">WITH eligible AS (SELECT … FROM nsr.households WHERE pmt_score &lt; 40) SELECT …</div>
+          <span class="gloss-tag">Day 2</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">Window Function</div>
+          <div class="gloss-def">An aggregate-like function that computes a value for each row using a set of related rows (the "window"), without collapsing the result to one row per group. Defined with OVER (PARTITION BY … ORDER BY …). Examples: ROW_NUMBER(), RANK(), LAG(), LEAD(), SUM() OVER.</div>
+          <div class="gloss-example">ROW_NUMBER() OVER (PARTITION BY state_code ORDER BY pmt_score) — rank households within each state.</div>
+          <span class="gloss-tag">Day 2</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">Correlated Subquery</div>
+          <div class="gloss-def">A subquery that references a column from the outer query, causing it to be re-evaluated for each outer row. Often replaceable with a JOIN or window function for better performance. EXISTS with a correlated subquery is a common and efficient pattern.</div>
+          <span class="gloss-tag">Day 2</span>
+        </div>
+
+        <div class="gloss-tag-card gloss-card">
+          <div class="gloss-term">UPSERT<span class="gloss-abbr">INSERT … ON CONFLICT</span></div>
+          <div class="gloss-def">A PostgreSQL extension to INSERT that handles duplicate-key conflicts gracefully. ON CONFLICT DO NOTHING ignores duplicates; ON CONFLICT DO UPDATE (MERGE) updates the existing row. Essential for idempotent ETL pipelines loading the NSR.</div>
+          <div class="gloss-example">INSERT INTO nsr.households … ON CONFLICT (household_code) DO UPDATE SET pmt_score = EXCLUDED.pmt_score;</div>
+          <span class="gloss-tag">Day 2 · Day 7</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">EXPLAIN / EXPLAIN ANALYZE</div>
+          <div class="gloss-def"><strong>EXPLAIN</strong> shows the query plan the planner chose without executing the query. <strong>EXPLAIN ANALYZE</strong> executes the query and shows actual timing and row counts alongside estimates. Key columns: cost, rows, width, actual time, loops. Use BUFFERS option to see cache hit/miss.</div>
+          <div class="gloss-example">EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT) SELECT …</div>
+          <span class="gloss-tag">Day 2 · Day 6</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── GROUP: Indexes & Query Planning ── -->
+    <div class="gloss-group" data-group="index">
+      <div class="gloss-group-title">Indexes &amp; Query Planning</div>
+      <div class="gloss-grid">
+
+        <div class="gloss-card">
+          <div class="gloss-term">B-tree Index</div>
+          <div class="gloss-def">The default and most general PostgreSQL index type. Supports equality and range comparisons (&lt;, &lt;=, =, &gt;=, &gt;) and ORDER BY. Automatically maintained on INSERT/UPDATE/DELETE. Best for columns used in WHERE clauses and JOIN conditions with high or moderate selectivity.</div>
+          <span class="gloss-tag">Day 6</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">GIN Index<span class="gloss-abbr">Generalised Inverted Index</span></div>
+          <div class="gloss-def">Index type for multi-valued columns: arrays, JSONB, full-text tsvector. Stores a posting list of which rows contain each element. Faster for containment searches (@&gt;, &lt;@) and full-text @@ queries. Write-slower than B-tree; suitable for columns that are read far more than written.</div>
+          <div class="gloss-example">CREATE INDEX ON nsr.individuals USING GIN (to_tsvector('english', full_name));</div>
+          <span class="gloss-tag">Day 6</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">BRIN Index<span class="gloss-abbr">Block Range INdex</span></div>
+          <div class="gloss-def">An extremely compact index that stores min/max values for ranges of physical blocks. Effective only on naturally ordered columns such as insertion timestamps or sequential IDs. Very low storage overhead; can replace a B-tree on append-only time-series tables with millions of rows.</div>
+          <span class="gloss-tag">Day 6</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">Partial Index</div>
+          <div class="gloss-def">An index built over a subset of rows, defined by a WHERE clause. Smaller and faster than a full index when queries consistently filter to the same subset. Ideal for NSR active-household queries where 95% of lookups target is_active = TRUE.</div>
+          <div class="gloss-example">CREATE INDEX idx_active ON nsr.households (lga_id) WHERE is_active = TRUE;</div>
+          <span class="gloss-tag">Day 6</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">Covering Index<span class="gloss-abbr">INCLUDE clause</span></div>
+          <div class="gloss-def">A B-tree index that includes additional non-key columns in its leaf pages, allowing index-only scans that never touch the heap. Added with INCLUDE in PostgreSQL 11+. Eliminates heap fetches for queries that only need the indexed and included columns.</div>
+          <div class="gloss-example">CREATE INDEX ON nsr.households (lga_id) INCLUDE (head_name, pmt_score);</div>
+          <span class="gloss-tag">Day 6</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">Sequential Scan</div>
+          <div class="gloss-def">The planner reads every page of the table from start to finish. Preferred when the query returns a large fraction of rows (low selectivity) or the table is small enough to fit in shared_buffers. Not inherently bad — for full-table reads it is faster than random index lookups.</div>
+          <span class="gloss-tag">Day 2 · Day 6</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">Index Scan vs Index-Only Scan</div>
+          <div class="gloss-def">An <strong>index scan</strong> uses the index to find row locations, then fetches each row from the heap (table). An <strong>index-only scan</strong> satisfies the query entirely from the index leaf pages without heap access — possible only if all needed columns are in the index (covering index) and the visibility map shows the page is all-visible.</div>
+          <span class="gloss-tag">Day 6</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">Selectivity</div>
+          <div class="gloss-def">The fraction of rows an index condition is expected to match. High selectivity = few matching rows (e.g. WHERE nin = 'AB1234567CD') — index scan is efficient. Low selectivity = many rows match (e.g. WHERE gender = 'M') — sequential scan may be cheaper. The planner uses column statistics (pg_stats) to estimate selectivity.</div>
+          <span class="gloss-tag">Day 6</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">pg_stats / ANALYZE</div>
+          <div class="gloss-def">ANALYZE collects statistical histograms on column value distributions and stores them in pg_stats. The query planner uses these to estimate row counts and choose join/scan strategies. Stale statistics (after a bulk load without ANALYZE) cause poor query plans. autovacuum triggers ANALYZE automatically.</div>
+          <div class="gloss-example">ANALYZE nsr.households; — run after bulk ETL loads.</div>
+          <span class="gloss-tag">Day 6</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">Hash Join / Nested Loop / Merge Join</div>
+          <div class="gloss-def">The three join algorithms PostgreSQL's planner chooses between. <strong>Hash join</strong>: hashes the smaller table, probes with the larger — good for large unsorted joins. <strong>Nested loop</strong>: for each outer row, scans inner — good when inner side is small or index-accessible. <strong>Merge join</strong>: both sides sorted — good for large sorted inputs or when results need to be ordered.</div>
+          <span class="gloss-tag">Day 6</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── GROUP: Admin, Security & Backup ── -->
+    <div class="gloss-group" data-group="admin">
+      <div class="gloss-group-title">Administration, Security &amp; Backup</div>
+      <div class="gloss-grid">
+
+        <div class="gloss-card">
+          <div class="gloss-term">Role</div>
+          <div class="gloss-def">PostgreSQL's unified concept for both users and groups. A role with LOGIN privilege is a user; one without is a group. Roles can own database objects, be granted privileges, and be members of other roles. Best practice: create a group role with privileges, then grant users membership.</div>
+          <div class="gloss-example">CREATE ROLE nsr_readonly; GRANT SELECT ON ALL TABLES IN SCHEMA nsr TO nsr_readonly; GRANT nsr_readonly TO caseworker_john;</div>
+          <span class="gloss-tag">Day 3</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">RLS<span class="gloss-abbr">Row-Level Security</span></div>
+          <div class="gloss-def">A PostgreSQL feature that restricts which rows a user can see or modify, enforced at the storage engine level — not the application. Policies are defined per table per command (SELECT, INSERT, UPDATE, DELETE). Once enabled, even superusers must use BYPASSRLS to bypass.</div>
+          <div class="gloss-example">Policy: caseworkers in Lagos can only SELECT households WHERE state_code = current_setting('app.state_code').</div>
+          <span class="gloss-tag">Day 3</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">pg_dump / pg_restore</div>
+          <div class="gloss-def"><strong>pg_dump</strong> creates a logical backup of a database or specific objects in SQL script or custom/directory/tar format. <strong>pg_restore</strong> loads custom-format backups, allowing selective table or schema restore. Not a substitute for physical backup for large databases — use pg_basebackup for that.</div>
+          <div class="gloss-example">pg_dump -Fc -d nsr_db -f nsr_backup.dump — custom format, compressed.</div>
+          <span class="gloss-tag">Day 3</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">pg_basebackup</div>
+          <div class="gloss-def">A physical backup tool that copies the entire PostgreSQL data directory while the server is running, using the streaming replication protocol. Produces a backup that can be restored to any point in time when combined with WAL archives. Required for PITR setups.</div>
+          <span class="gloss-tag">Day 3</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">PITR<span class="gloss-abbr">Point-In-Time Recovery</span></div>
+          <div class="gloss-def">The ability to restore a database to any specific moment in the past by replaying WAL changes from a base backup up to the target time. Requires continuous WAL archiving (archive_mode = on). Essential for disaster recovery in production social-protection databases.</div>
+          <div class="gloss-example">restore_command = 'cp /archive/%f %p' — copies archived WAL segments during recovery.</div>
+          <span class="gloss-tag">Day 3</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">WAL Archiving</div>
+          <div class="gloss-def">Copying completed WAL segment files to a durable external location (object storage, NFS, S3) as they are produced. Enables PITR and standby servers that may fall behind the primary. Configured via archive_mode = on and archive_command in postgresql.conf.</div>
+          <span class="gloss-tag">Day 3</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">Streaming Replication</div>
+          <div class="gloss-def">A high-availability mechanism where a standby server continuously receives and replays WAL records from the primary in near real-time. Standby can be used for read queries (hot standby). Synchronous replication guarantees zero data loss at the cost of write latency.</div>
+          <span class="gloss-tag">Day 3</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">SSL / TLS</div>
+          <div class="gloss-def">Transport-layer encryption for PostgreSQL connections. Configured with ssl = on in postgresql.conf and certificate/key files. pg_hba.conf hostssl lines require SSL from specific hosts. Mandatory for production systems handling PII such as the NSR. Client certificates can provide mutual authentication.</div>
+          <span class="gloss-tag">Day 3</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">pgAudit</div>
+          <div class="gloss-def">A PostgreSQL extension that provides detailed session and object-level audit logging. Logs which user, from which host, executed which statement on which object, and when. Required for compliance with GDPR, NDPA (Nigeria), and government data governance frameworks. Output goes to PostgreSQL's standard log.</div>
+          <span class="gloss-tag">Day 3 · Day 7</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── GROUP: Performance & Partitioning ── -->
+    <div class="gloss-group" data-group="perf">
+      <div class="gloss-group-title">Performance Tuning &amp; Partitioning</div>
+      <div class="gloss-grid">
+
+        <div class="gloss-card">
+          <div class="gloss-term">Table Partitioning</div>
+          <div class="gloss-def">Dividing a large table into smaller physical sub-tables (partitions) while presenting a single logical table to queries. PostgreSQL supports <strong>Range</strong> (e.g. by year), <strong>List</strong> (e.g. by state_code), and <strong>Hash</strong> (even distribution). The planner prunes irrelevant partitions — a query for Lagos never scans Kano's partition.</div>
+          <div class="gloss-example">PARTITION BY LIST (state_code) — each Nigerian state gets its own partition.</div>
+          <span class="gloss-tag">Day 6</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">Partition Pruning</div>
+          <div class="gloss-def">The planner's ability to skip partitions that cannot contain rows matching the query's WHERE clause. Dramatically reduces I/O on partitioned tables. Requires the partition key to appear in the query predicate. Enable with enable_partition_pruning = on (default).</div>
+          <span class="gloss-tag">Day 6</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">Connection Pooling<span class="gloss-abbr">PgBouncer</span></div>
+          <div class="gloss-def">A proxy layer that maintains a pool of long-lived database connections and multiplexes many short-lived client connections on top. Eliminates the overhead of spawning a new backend process per request. PgBouncer is the most common tool; operates in session, transaction, or statement mode.</div>
+          <div class="gloss-example">Without pooling: 1,000 app threads = 1,000 backend processes. With pooling: 1,000 threads sharing 20 backends.</div>
+          <span class="gloss-tag">Day 6</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">random_page_cost</div>
+          <div class="gloss-def">A planner cost constant representing the relative cost of fetching a non-sequentially accessed disk page. Default: 4.0 (spinning disk assumption). Lower it to 1.1–1.5 for SSDs to encourage the planner to use index scans more aggressively, since random reads are cheap on SSDs.</div>
+          <div class="gloss-example">SET random_page_cost = 1.2; — appropriate for SSD-backed storage.</div>
+          <span class="gloss-tag">Day 6</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">checkpoint_completion_target</div>
+          <div class="gloss-def">Fraction of the checkpoint interval over which PostgreSQL spreads dirty page writes to disk. Default: 0.9 — spread writes over 90% of the interval to avoid I/O spikes. Lowering it causes faster but more I/O-intensive checkpoints.</div>
+          <span class="gloss-tag">Day 6</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">pg_stat_statements</div>
+          <div class="gloss-def">A PostgreSQL extension that records execution statistics for every query: total calls, total time, mean time, rows returned, cache hit ratio. The primary tool for identifying slow or frequently-called queries in production. Essential for performance baseline comparisons.</div>
+          <div class="gloss-example">SELECT query, mean_exec_time, calls FROM pg_stat_statements ORDER BY mean_exec_time DESC LIMIT 10;</div>
+          <span class="gloss-tag">Day 6</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── GROUP: ETL/ELT & Data Governance ── -->
+    <div class="gloss-group" data-group="etl">
+      <div class="gloss-group-title">ETL/ELT &amp; Data Governance</div>
+      <div class="gloss-grid">
+
+        <div class="gloss-card">
+          <div class="gloss-term">ETL<span class="gloss-abbr">Extract, Transform, Load</span></div>
+          <div class="gloss-def">Data integration pattern where data is extracted from source systems, transformed in an intermediate layer (cleaning, deduplication, mapping), then loaded into the target database. Transformation happens before loading — the database receives clean data.</div>
+          <div class="gloss-example">Field enumeration data (CSV) → Python pandas cleaning → pg COPY into nsr.households staging table → INSERT INTO final tables.</div>
+          <span class="gloss-tag">Day 7</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">ELT<span class="gloss-abbr">Extract, Load, Transform</span></div>
+          <div class="gloss-def">Data integration pattern where raw data is loaded into the database first, then transformed using SQL. Leverages the database engine's processing power. Preferred for modern cloud data warehouses and when the target system (PostgreSQL) is powerful enough to transform data efficiently.</div>
+          <span class="gloss-tag">Day 7</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">COPY</div>
+          <div class="gloss-def">PostgreSQL's high-speed bulk data import/export command. COPY FROM reads a file or STDIN into a table; COPY TO writes a table or query result to a file. Far faster than individual INSERTs — bypasses statement parsing overhead. \copy in psql runs client-side (no superuser needed).</div>
+          <div class="gloss-example">COPY nsr.households FROM '/data/enumeration_round3.csv' CSV HEADER;</div>
+          <span class="gloss-tag">Day 7</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">Staging Table</div>
+          <div class="gloss-def">A temporary or permanent table that receives raw imported data before it is validated, deduplicated, and merged into production tables. Common pattern: COPY raw CSV into staging → SQL transformation → UPSERT into final tables. Allows re-running failed loads without corrupting production data.</div>
+          <span class="gloss-tag">Day 7</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">FDW<span class="gloss-abbr">Foreign Data Wrapper</span></div>
+          <div class="gloss-def">A PostgreSQL extension mechanism for querying external data sources as if they were local tables. postgres_fdw connects to another PostgreSQL instance; file_fdw reads CSV files; oracle_fdw connects to Oracle. Pushes WHERE clauses to the remote server where possible.</div>
+          <div class="gloss-example">CREATE SERVER cbms_server FOREIGN DATA WRAPPER postgres_fdw OPTIONS (host 'cbms-db', dbname 'cbms');</div>
+          <span class="gloss-tag">Day 7</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">Data Lineage</div>
+          <div class="gloss-def">The documented trail of where data originated, how it was transformed, and where it flows. Essential for social-protection systems to verify that a household's eligibility score (PMT) can be traced back to raw enumeration data. Enables audit, debugging, and compliance reporting.</div>
+          <span class="gloss-tag">Day 7</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">GDPR / UK GDPR</div>
+          <div class="gloss-def">General Data Protection Regulation — EU law (and its UK equivalent post-Brexit) governing personal data handling. Key obligations: lawful basis for processing, data minimisation, subject access rights, right to erasure, breach notification (72 hours). Nigerian equivalent: NDPA 2023.</div>
+          <div class="gloss-example">Deleting a beneficiary on erasure request: logical deletion (is_active = FALSE) + audit log, not physical DELETE — preserves referential integrity.</div>
+          <span class="gloss-tag">Day 7</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">NDPA<span class="gloss-abbr">Nigeria Data Protection Act 2023</span></div>
+          <div class="gloss-def">Nigeria's primary data protection legislation, establishing the Nigeria Data Protection Commission (NDPC). Aligns broadly with GDPR principles: consent, purpose limitation, data minimisation, security. Directly applicable to the NSR, CBMS, and any government system processing citizens' personal data.</div>
+          <span class="gloss-tag">Day 7</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">Data Retention Policy</div>
+          <div class="gloss-def">A documented rule specifying how long each category of data is kept, in what form, and when it must be deleted or anonymised. Balances legal obligations (retain for audit) against privacy rights (erase when no longer needed). Implemented in PostgreSQL using scheduled jobs, partitioning, or logical soft-delete patterns.</div>
+          <span class="gloss-tag">Day 7</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">Idempotency</div>
+          <div class="gloss-def">A property of an operation where running it multiple times produces the same result as running it once. ETL pipelines should be idempotent: re-running a failed load must not create duplicate records or corrupt data. Achieved using UPSERT (INSERT … ON CONFLICT DO UPDATE) and staging tables.</div>
+          <span class="gloss-tag">Day 7</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── GROUP: NSR Domain Terms ── -->
+    <div class="gloss-group" data-group="nsr">
+      <div class="gloss-group-title">NSR &amp; Social Protection Domain</div>
+      <div class="gloss-grid">
+
+        <div class="gloss-card">
+          <div class="gloss-term">NSR<span class="gloss-abbr">National Social Registry</span></div>
+          <div class="gloss-def">Nigeria's centralised household data platform managed by the National Social Safety Net Coordinating Office (NASSCO). Aggregates enumeration data from all states to determine household eligibility for social protection programmes. The core use case for this entire training programme.</div>
+          <span class="gloss-tag">All Days</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">PMT Score<span class="gloss-abbr">Proxy Means Test</span></div>
+          <div class="gloss-def">A statistical score computed from observable household characteristics (housing type, assets, demographics) as a proxy for income, which is hard to verify in low-documentation contexts. Households below a PMT threshold qualify for programmes such as the Conditional Cash Transfer (CCT). Stored as NUMERIC(8,3) in nsr.households.</div>
+          <span class="gloss-tag">All Days</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">NIN<span class="gloss-abbr">National Identification Number</span></div>
+          <div class="gloss-def">An 11-character alphanumeric identifier assigned to Nigerian citizens by NIMC (National Identity Management Commission). Format: 2 uppercase letters + 7 digits + 2 uppercase letters. Used in the NSR to deduplicate individuals across enumeration rounds and link beneficiary records.</div>
+          <div class="gloss-example">CHECK constraint: nin ~ '^[A-Z]{2}[0-9]{7}[A-Z]{2}$'</div>
+          <span class="gloss-tag">Day 1</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">NASSCO</div>
+          <div class="gloss-def">National Social Safety Net Coordinating Office — the Nigerian federal body responsible for coordinating the NSR, the Conditional Cash Transfer programme, and social protection delivery. Partner organisation for this training programme.</div>
+          <span class="gloss-tag">All Days</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">LGA<span class="gloss-abbr">Local Government Area</span></div>
+          <div class="gloss-def">Nigeria's third tier of government (below state, above ward). The primary geographic unit for NSR enumeration and data aggregation. 774 LGAs across 36 states + FCT. Represented in the nsr.lgas table; household records reference LGA for geographic filtering and partitioning.</div>
+          <span class="gloss-tag">Day 1</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">CBMS<span class="gloss-abbr">Community-Based Monitoring System</span></div>
+          <div class="gloss-def">A data collection and monitoring system used alongside the NSR to track community-level indicators. In the training context, a source system whose data feeds into the NSR database via ETL/ELT pipelines. Accessed via postgres_fdw as a foreign data source.</div>
+          <span class="gloss-tag">Day 7</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">Enumeration Round</div>
+          <div class="gloss-def">A scheduled nationwide or state-level household survey exercise that captures or updates PMT data. The NSR stores the enumeration_round column on household records to track data vintage. Subsequent rounds update existing records (UPSERT) rather than inserting duplicates.</div>
+          <span class="gloss-tag">Day 1 · Day 7</span>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term">Conditional Cash Transfer<span class="gloss-abbr">CCT</span></div>
+          <div class="gloss-def">A social protection programme that provides direct cash payments to eligible households on condition of compliance with defined behaviours (e.g. school attendance, health check-ups). Beneficiary lists are derived from NSR data filtered by PMT score. Database query performance directly affects payment cycle timeliness.</div>
+          <span class="gloss-tag">All Days</span>
+        </div>
+
+      </div>
+    </div>
+
+    <p class="gloss-no-results" id="gloss-no-results" style="display:none;">No terms match your search. Try a shorter or different keyword.</p>
+
+  </div><!-- end glossary-body -->
+</div><!-- end page-glossary -->
+
 <!-- LOCKED PAGE -->
 <div class="page" id="page-locked">
   <div style="text-align:center;padding:100px 24px 60px;">
@@ -3100,7 +3751,7 @@ pg_restore -U postgres -d lab_nsr_restore -j 4 -F c backup.dump</pre>
 <!-- ================================================================ -->
 <script>
 // ===== STATE =====
-const PAGES = ['home','progress','setup','day1','day2','day3','day4','day5','day6','day7','day8','reference','certificate','locked'];
+const PAGES = ['home','progress','setup','day1','day2','day3','day4','day5','day6','day7','day8','reference','certificate','glossary','locked'];
 const DAYS = ['setup','day1','day2','day3','day4','day5','day6','day7','day8'];
 const DAY_NAMES = {
   setup: 'Pre-Session Setup',
@@ -3403,6 +4054,30 @@ function copyCode(btn) {
     btn.classList.add('copied');
     setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1800);
   });
+}
+
+// ===== GLOSSARY SEARCH =====
+function filterGlossary(query) {
+  const q = query.trim().toLowerCase();
+  const cards = document.querySelectorAll('#page-glossary .gloss-card');
+  const groups = document.querySelectorAll('#page-glossary .gloss-group');
+  let totalVisible = 0;
+
+  cards.forEach(card => {
+    const text = card.textContent.toLowerCase();
+    const show = !q || text.includes(q);
+    card.classList.toggle('hidden', !show);
+    if (show) totalVisible++;
+  });
+
+  // Hide group headings when all their cards are hidden
+  groups.forEach(group => {
+    const visible = group.querySelectorAll('.gloss-card:not(.hidden)').length;
+    group.style.display = visible ? '' : 'none';
+  });
+
+  const noResults = document.getElementById('gloss-no-results');
+  if (noResults) noResults.style.display = totalVisible === 0 ? '' : 'none';
 }
 
 // ===== PROGRESS =====
