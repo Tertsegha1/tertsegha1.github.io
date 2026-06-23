@@ -1705,6 +1705,10 @@ psql -U postgres
 <span class="kw">DELETE FROM</span> nsr.households <span class="kw">WHERE</span> household_code = <span class="str">'HH-XX-999'</span>;
 
 <span class="cmt">-- TRUNCATE: remove ALL rows fast (no row-by-row WAL, resets sequences)</span>
+<span class="cmt">-- Create the staging table first if it doesn't exist yet</span>
+<span class="kw">CREATE TABLE IF NOT EXISTS</span> nsr.stg_households (
+  household_code <span class="typ">TEXT</span>, state_name <span class="typ">TEXT</span>, head_name <span class="typ">TEXT</span>, pmt_score <span class="typ">TEXT</span>
+);
 <span class="kw">TRUNCATE</span> nsr.stg_households <span class="kw">RESTART IDENTITY</span>;
 
 <span class="cmt">-- Always verify what you changed — COMMIT only when output looks right</span>
