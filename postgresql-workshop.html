@@ -1277,22 +1277,76 @@ psql -U postgres
       </div>
 
       <h3>Demo 1.5 – MVCC Two-Terminal Visibility</h3>
+      <div class="callout info" style="margin-bottom:10px">
+        <div class="callout-title">What you will observe</div>
+        This demo requires two separate psql terminal windows open simultaneously. You will see that Terminal A (Lagos) holds a snapshot of the data taken at BEGIN — and that snapshot does not change even after Terminal B (Kano) commits an update. This is MVCC snapshot isolation. Follow each step in order; do not rush ahead.
+      </div>
+
+      <p><strong>Step 1 — Terminal A (Lagos caseworker): open a REPEATABLE READ transaction and read the row</strong></p>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">sql – Terminal A (Lagos caseworker)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-        <pre><span class="kw">BEGIN</span>;
+        <pre><span class="cmt">-- IMPORTANT: use REPEATABLE READ so the snapshot is fixed for the whole transaction</span>
+<span class="kw">BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ</span>;
 <span class="kw">SELECT</span> household_id, head_name, pmt_score
-<span class="kw">FROM</span> nsr.households
-<span class="kw">WHERE</span> household_code = <span class="str">'HH-LA-001'</span>;
-<span class="cmt">-- Keep this transaction open! Don't COMMIT yet.</span></pre>
+<span class="kw">FROM</span>  nsr.households
+<span class="kw">WHERE</span> household_code = <span class="str">'HH-LA-001'</span>;</pre>
       </div>
+      <div class="callout tip" style="margin-bottom:10px">
+        <div class="callout-title">Expected output — Terminal A</div>
+        <code>household_id | head_name    | pmt_score<br>
+        &nbsp;1           | Fatima Yusuf | 28.500</code><br><br>
+        Leave this transaction open. Do not type anything else in Terminal A yet.
+      </div>
+
+      <p><strong>Step 2 — Terminal B (Kano caseworker): commit an update to the same row</strong></p>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">sql – Terminal B (Kano caseworker)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
         <pre><span class="kw">BEGIN</span>;
 <span class="kw">UPDATE</span> nsr.households
-<span class="kw">SET</span> pmt_score = <span class="num">42.5</span>
+<span class="kw">SET</span>   pmt_score = <span class="num">42.5</span>
 <span class="kw">WHERE</span> household_code = <span class="str">'HH-LA-001'</span>;
-<span class="kw">COMMIT</span>;
-<span class="cmt">-- Terminal A still sees the old value — that's MVCC snapshot isolation.</span></pre>
+<span class="kw">COMMIT</span>;</pre>
+      </div>
+      <div class="callout tip" style="margin-bottom:10px">
+        <div class="callout-title">Expected output — Terminal B</div>
+        <code>UPDATE 1</code><br><br>
+        Terminal B has committed. The value 42.5 is now in the database.
+        <strong>Before reading on — predict what Terminal A will show if you run the SELECT again now.</strong>
+      </div>
+
+      <p><strong>Step 3 — Back to Terminal A: re-run the same SELECT</strong></p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – Terminal A (Lagos caseworker)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Re-run the same SELECT while Terminal A's transaction is still open</span>
+<span class="kw">SELECT</span> household_id, head_name, pmt_score
+<span class="kw">FROM</span>  nsr.households
+<span class="kw">WHERE</span> household_code = <span class="str">'HH-LA-001'</span>;</pre>
+      </div>
+      <div class="callout tip" style="margin-bottom:10px">
+        <div class="callout-title">Expected output — Terminal A still shows 28.5</div>
+        <code>household_id | head_name    | pmt_score<br>
+        &nbsp;1           | Fatima Yusuf | 28.500</code><br><br>
+        Even though Terminal B committed 42.5, Terminal A's snapshot was taken at BEGIN — it sees the world as it was at that moment. This is exactly what MVCC guarantees.
+      </div>
+
+      <p><strong>Step 4 — Close Terminal A's transaction and re-read</strong></p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – Terminal A</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">COMMIT</span>;
+<span class="cmt">-- Now open a fresh transaction and re-read</span>
+<span class="kw">SELECT</span> household_id, head_name, pmt_score
+<span class="kw">FROM</span>  nsr.households
+<span class="kw">WHERE</span> household_code = <span class="str">'HH-LA-001'</span>;</pre>
+      </div>
+      <div class="callout tip">
+        <div class="callout-title">Expected output — Terminal A now sees 42.5</div>
+        <code>household_id | head_name    | pmt_score<br>
+        &nbsp;1           | Fatima Yusuf | 42.500</code><br><br>
+        The new transaction opens a fresh snapshot that sees the committed world. The MVCC isolation was transaction-scoped, not connection-scoped.
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Why this matters in NSR operations</div>
+        A batch reporting job that opens a single transaction at midnight and runs for 45 minutes will see a perfectly consistent snapshot of every household — even if caseworkers are updating records throughout. The report is not distorted by half-completed changes. This is the operational value of snapshot isolation: reproducible, audit-safe reads under concurrent write load.
       </div>
 
       <h3>Demo 1.7 – Live Normalisation</h3>
@@ -1317,30 +1371,60 @@ psql -U postgres
       <div class="exercise-card">
         <div class="exercise-header" onclick="toggleExercise(this)">
           <div class="ex-num">1</div>
-          <div class="ex-title">Identify normalisation problems in a flat NSR dataset</div>
-          <span class="ex-difficulty diff-basic">Basic</span>
+          <div class="ex-title">Design an audit log table for NSR data changes</div>
+          <span class="ex-difficulty diff-intermediate">Intermediate</span>
           <span class="ex-toggle">▼</span>
         </div>
         <div class="exercise-body" style="display:none">
-          <p>Given the following flat table, identify ALL normalisation problems before reading the solution:</p>
-          <div class="code-block">
-            <div class="code-header"><span class="code-lang">flat table</span></div>
-            <pre>household_id | household_code | state_name | lga_name | head_name | nin | pmt_score | state_name2
--------------|----------------|------------|----------|-----------|-----|-----------|------------
-1            | HH-001         | Lagos      | Ikeja    | Amina     | ... | 30.5      | Lagos State
-1            | HH-001         | Lagos      | Ikeja    | Amina     | ... | 30.5      | Lagos State</pre>
+          <p>The NSR compliance team requires a full audit trail of every change to <code>nsr.households.pmt_score</code>. For each change they need to know: which household changed, the old value, the new value, who made the change, and when.</p>
+          <p><strong>Your task:</strong></p>
+          <ol style="margin-left:18px;margin-bottom:10px">
+            <li>Design and create a table <code>nsr.pmt_score_audit</code> to hold this information. Choose appropriate data types and add a primary key.</li>
+            <li>Write a test INSERT into the audit table (simulate a score change for household_id = 1 from 28.5 to 42.5).</li>
+            <li>Query the audit table to retrieve the full history for household_id = 1, ordered by change time descending.</li>
+          </ol>
+          <div class="callout info" style="margin-bottom:8px">
+            <div class="callout-title">Guidance — think about these before writing SQL</div>
+            What data type stores a timestamp with time zone? How will you record who made the change — should it be a free-text name or the database username? Should old_score and new_score allow NULL (what if this is the first time a score is set)? Do you need a foreign key to households?
           </div>
-          <p><strong>List all problems you can identify:</strong></p>
-          <div class="answer-area">Write your answer here (for discussion)</div>
+          <div class="answer-area">Write your DDL and test queries here</div>
           <div class="answer-reveal" id="ans-d1-ex1">
-            <div class="callout tip">
-              <div class="callout-title">Solution</div>
-              1. No PK uniqueness (duplicate household_code rows)<br>
-              2. Inconsistent state names (state_name vs state_name2)<br>
-              3. Transitive dependency: household_id → lga_id → state_code → state_name<br>
-              4. NIN repeated across households<br>
-              5. TEXT for numbers prevents calculation (use NUMERIC)<br>
-              6. Columns grow over time (not extensible)
+            <div class="callout tip"><div class="callout-title">Reference Solution</div></div>
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">sql – solution</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre><span class="cmt">-- Step 1: create the audit table</span>
+<span class="kw">CREATE TABLE</span> nsr.pmt_score_audit (
+  audit_id      <span class="typ">BIGSERIAL</span>         <span class="kw">PRIMARY KEY</span>,
+  household_id  <span class="typ">BIGINT</span>            <span class="kw">NOT NULL REFERENCES</span> nsr.households(household_id),
+  old_score     <span class="typ">NUMERIC(8,3)</span>,
+  new_score     <span class="typ">NUMERIC(8,3)</span>      <span class="kw">NOT NULL</span>,
+  changed_by    <span class="typ">TEXT</span>             <span class="kw">NOT NULL DEFAULT</span> <span class="fn">current_user</span>,
+  changed_at    <span class="typ">TIMESTAMPTZ</span>      <span class="kw">NOT NULL DEFAULT</span> <span class="fn">now</span>()
+);
+
+<span class="cmt">-- Step 2: simulate a score change</span>
+<span class="kw">INSERT INTO</span> nsr.pmt_score_audit (household_id, old_score, new_score)
+<span class="kw">VALUES</span> (<span class="num">1</span>, <span class="num">28.5</span>, <span class="num">42.5</span>);
+
+<span class="cmt">-- Step 3: view full history for household 1</span>
+<span class="kw">SELECT</span>
+  a.audit_id,
+  h.household_code,
+  a.old_score,
+  a.new_score,
+  a.changed_by,
+  a.changed_at
+<span class="kw">FROM</span>  nsr.pmt_score_audit a
+<span class="kw">JOIN</span>  nsr.households h <span class="kw">ON</span> a.household_id = h.household_id
+<span class="kw">WHERE</span> a.household_id = <span class="num">1</span>
+<span class="kw">ORDER BY</span> a.changed_at <span class="kw">DESC</span>;</pre>
+            </div>
+            <div class="callout info" style="margin-top:8px">
+              <div class="callout-title">Key design decisions</div>
+              <strong>TIMESTAMPTZ not TIMESTAMP</strong>: always use TIMESTAMPTZ (timestamp with time zone) for audit columns — it stores the UTC offset so records remain unambiguous across time zone changes or server migrations.<br><br>
+              <strong>old_score is nullable</strong>: the first time a score is ever set, there is no previous value. NULL correctly represents "did not exist before."<br><br>
+              <strong>DEFAULT current_user</strong>: PostgreSQL's built-in function records the database login name automatically — no application code needed to populate it. This cannot be spoofed by a client that connects directly via psql.<br><br>
+              <strong>Extension</strong>: in production, this audit insert would be triggered automatically by a PostgreSQL trigger on nsr.households — Day 3 covers triggers and row-level security.
             </div>
           </div>
           <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
@@ -1417,23 +1501,76 @@ psql -U postgres
       <div class="exercise-card">
         <div class="exercise-header" onclick="toggleExercise(this)">
           <div class="ex-num">3</div>
-          <div class="ex-title">Explain WAL and MVCC to a colleague (advanced)</div>
+          <div class="ex-title">Investigate dead tuples and table bloat</div>
           <span class="ex-difficulty diff-advanced">Advanced</span>
           <span class="ex-toggle">▼</span>
         </div>
         <div class="exercise-body" style="display:none">
-          <p>Write a 3–4 sentence explanation of WHY WAL makes PostgreSQL durable, and WHY MVCC means readers never block writers. Use the NSR context (payments, caseworkers) in your example.</p>
-          <div class="answer-area">Write your explanation here</div>
-          <p style="margin-top:8px;font-size:0.82rem;color:var(--text-muted)">Share with the instructor or a partner for feedback.</p>
+          <p>This exercise runs SQL to observe MVCC dead tuples being created and reclaimed. Follow each step in order and record what you observe.</p>
+          <ol style="margin-left:18px;margin-bottom:10px">
+            <li>Check the current dead tuple count for the households table.</li>
+            <li>Run 10 updates to create dead tuples.</li>
+            <li>Re-check the count — it should have risen.</li>
+            <li>Run VACUUM and check again — dead tuples should drop to zero.</li>
+          </ol>
+          <p><strong>Step 1 — check current statistics</strong></p>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">sql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+            <pre><span class="kw">SELECT</span>
+  relname,
+  n_live_tup,
+  n_dead_tup,
+  last_autovacuum,
+  last_autoanalyze
+<span class="kw">FROM</span>  pg_stat_user_tables
+<span class="kw">WHERE</span> schemaname = <span class="str">'nsr'</span>
+  <span class="kw">AND</span> relname = <span class="str">'households'</span>;</pre>
+          </div>
+          <div class="answer-area">Record n_live_tup and n_dead_tup here before you run updates</div>
+          <p><strong>Step 2 — create dead tuples with repeated updates</strong></p>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">sql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+            <pre><span class="cmt">-- Each UPDATE writes a new row version and marks the old one dead</span>
+<span class="kw">UPDATE</span> nsr.households <span class="kw">SET</span> enumeration_round = <span class="num">1</span> <span class="kw">WHERE</span> household_code = <span class="str">'HH-LA-001'</span>;
+<span class="kw">UPDATE</span> nsr.households <span class="kw">SET</span> enumeration_round = <span class="num">2</span> <span class="kw">WHERE</span> household_code = <span class="str">'HH-LA-001'</span>;
+<span class="kw">UPDATE</span> nsr.households <span class="kw">SET</span> enumeration_round = <span class="num">3</span> <span class="kw">WHERE</span> household_code = <span class="str">'HH-LA-001'</span>;
+<span class="kw">UPDATE</span> nsr.households <span class="kw">SET</span> enumeration_round = <span class="num">4</span> <span class="kw">WHERE</span> household_code = <span class="str">'HH-LA-001'</span>;
+<span class="kw">UPDATE</span> nsr.households <span class="kw">SET</span> enumeration_round = <span class="num">5</span> <span class="kw">WHERE</span> household_code = <span class="str">'HH-LA-001'</span>;
+<span class="kw">UPDATE</span> nsr.households <span class="kw">SET</span> enumeration_round = <span class="num">6</span> <span class="kw">WHERE</span> household_code = <span class="str">'HH-LA-001'</span>;
+<span class="kw">UPDATE</span> nsr.households <span class="kw">SET</span> enumeration_round = <span class="num">7</span> <span class="kw">WHERE</span> household_code = <span class="str">'HH-LA-001'</span>;
+<span class="kw">UPDATE</span> nsr.households <span class="kw">SET</span> enumeration_round = <span class="num">8</span> <span class="kw">WHERE</span> household_code = <span class="str">'HH-LA-001'</span>;
+<span class="kw">UPDATE</span> nsr.households <span class="kw">SET</span> enumeration_round = <span class="num">9</span> <span class="kw">WHERE</span> household_code = <span class="str">'HH-LA-001'</span>;
+<span class="kw">UPDATE</span> nsr.households <span class="kw">SET</span> enumeration_round = <span class="num">10</span> <span class="kw">WHERE</span> household_code = <span class="str">'HH-LA-001'</span>;</pre>
+          </div>
+          <p><strong>Step 3 — re-check statistics</strong></p>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">sql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+            <pre><span class="kw">SELECT</span> relname, n_live_tup, n_dead_tup
+<span class="kw">FROM</span>  pg_stat_user_tables
+<span class="kw">WHERE</span> schemaname = <span class="str">'nsr'</span> <span class="kw">AND</span> relname = <span class="str">'households'</span>;</pre>
+          </div>
+          <div class="answer-area">Record n_dead_tup here — has it increased? By how much?</div>
+          <p><strong>Step 4 — run VACUUM and check again</strong></p>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">sql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+            <pre><span class="kw">VACUUM</span> nsr.households;
+
+<span class="kw">SELECT</span> relname, n_live_tup, n_dead_tup, last_vacuum
+<span class="kw">FROM</span>  pg_stat_user_tables
+<span class="kw">WHERE</span> schemaname = <span class="str">'nsr'</span> <span class="kw">AND</span> relname = <span class="str">'households'</span>;</pre>
+          </div>
+          <div class="answer-area">What happened to n_dead_tup after VACUUM? What does last_vacuum show?</div>
           <div class="answer-reveal" id="ans-d1-ex3">
-            <div class="callout instructor-only instructor-block">
-              <div class="callout-title">Model Answer – Instructor Reference</div>
-              <p><strong>WAL and Durability:</strong> Before PostgreSQL writes any modified data page to disk, it first appends the change to the Write-Ahead Log — a sequential append-only file. Because the WAL write is flushed to disk before the transaction is confirmed to the client, a crash at any point after commit can be recovered by replaying WAL from the last checkpoint. This delivers the 'D' in ACID: committed transactions survive any failure.</p>
-              <p style="margin-top:8px"><strong>MVCC and readers never blocking writers:</strong> When a Kano caseworker updates a household's pmt_score, PostgreSQL does not overwrite the row — it creates a new row version stamped with the current transaction ID (xmin). The old version retains its xmin and its xmax is set to the updating transaction. A Lagos caseworker running a SELECT at the same moment sees only versions committed before their snapshot — they read the old value with zero lock contention. Writers create new versions; readers read old ones. Neither blocks the other.</p>
+            <div class="callout tip"><div class="callout-title">What you should observe</div></div>
+            <div class="callout info">
+              <div class="callout-title">Expected behaviour and explanation</div>
+              After the 10 UPDATEs, <strong>n_dead_tup should be around 9–10</strong> (PostgreSQL's stats collector updates asynchronously so the exact number may lag slightly). Each UPDATE wrote a new live tuple and marked the previous version dead — 10 updates = 10 old versions left on disk.<br><br>
+              After VACUUM, <strong>n_dead_tup drops to 0</strong> and last_vacuum shows the current timestamp. VACUUM scanned the table, identified tuples where xmax was committed and no open transaction could still need them, and marked that space as reusable — without changing the physical file size (for that you need VACUUM FULL, covered in Day 6).<br><br>
+              <strong>The NSR implication:</strong> the real NSR households table will accumulate dead tuples continuously as pmt_scores are revised, household statuses updated, and enumeration rounds completed. autovacuum runs automatically in the background, but on a very busy table it can fall behind — causing table bloat. Day 6 covers how to detect this with pg_stat_user_tables and tune autovacuum thresholds.
             </div>
           </div>
           <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
-            <button class="btn-toggle-answer instructor-block instructor-only" onclick="toggleAnswer('d1-ex3',this)">▼ Show Model Answer</button>
+            <button class="btn-toggle-answer" onclick="toggleAnswer('d1-ex3',this)">▼ Show Expected Results</button>
             <button class="ex-complete-btn" onclick="markExDone(this)">✓ Mark done</button>
           </div>
         </div>
@@ -1501,6 +1638,83 @@ psql -U postgres
         <div class="callout-title">Key points for each operation</div>
         <strong>RETURNING</strong>: unique to PostgreSQL — the INSERT or UPDATE returns columns from the affected row immediately, without a second SELECT. Invaluable in NSR workflows where you need the generated <code>household_id</code> (a BIGSERIAL) to insert related individuals in the same script. <strong>DELETE — always SELECT first</strong>: the pattern of running a SELECT with the same WHERE clause before deleting is not just a habit — it is the standard safeguard against an accidental mass delete. In the NSR, a wrong WHERE clause on the households table could cascade-delete thousands of individual records. <strong>TRUNCATE vs DELETE</strong>: TRUNCATE removes all rows instantly by deallocating storage pages — it cannot be rolled back outside a transaction, and <code>RESTART IDENTITY</code> resets sequences back to 1. It is appropriate for clearing staging tables between import batches, never for production data. <code>CASCADE</code> extends the truncate to child tables that reference this one via FK.
       </div>
+
+      <h3 style="margin-top:18px">Guided Practical — Enrol a new household and its members atomically</h3>
+      <div class="callout info" style="margin-bottom:10px">
+        <div class="callout-title">Scenario</div>
+        A field enumeration team in Eti-Osa, Lagos has completed data collection for a new household. You must insert the household record, capture the auto-generated ID, and insert two family members — all inside a single transaction so that a failure at any step leaves the database completely unchanged. Work through each step below, checking the expected output before proceeding.
+      </div>
+
+      <p><strong>Step 1 — start a transaction and insert the household, capturing its ID</strong></p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">BEGIN</span>;
+
+<span class="kw">INSERT INTO</span> nsr.households
+  (household_code, lga_id, head_name, pmt_score, enumeration_round)
+<span class="kw">VALUES</span>
+  (<span class="str">'HH-LA-099'</span>, <span class="num">2</span>, <span class="str">'Chukwuemeka Obi'</span>, <span class="num">19.750</span>, <span class="num">3</span>)
+<span class="kw">RETURNING</span> household_id, household_code, pmt_score;</pre>
+      </div>
+      <div class="callout tip" style="margin-bottom:10px">
+        <div class="callout-title">Expected output</div>
+        <code>household_id | household_code | pmt_score<br>
+        &nbsp;3           | HH-LA-099      | 19.750</code><br><br>
+        Note the household_id value returned (it will be 3 if you have two households from Day 1 setup). Use that exact number in Step 2 — do not hard-code a guess.
+      </div>
+
+      <p><strong>Step 2 — insert two individuals referencing the new household_id</strong></p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Replace 3 with the household_id returned in Step 1</span>
+<span class="kw">INSERT INTO</span> nsr.individuals
+  (household_id, nin, full_name, dob, gender)
+<span class="kw">VALUES</span>
+  (<span class="num">3</span>, <span class="str">'AB1234567CD'</span>, <span class="str">'Chukwuemeka Obi'</span>,   <span class="str">'1978-03-12'</span>, <span class="str">'M'</span>),
+  (<span class="num">3</span>, <span class="kw">NULL</span>,          <span class="str">'Ngozi Obi'</span>,            <span class="str">'2014-07-05'</span>, <span class="str">'F'</span>)
+<span class="kw">RETURNING</span> individual_id, full_name, nin;</pre>
+      </div>
+      <div class="callout tip" style="margin-bottom:10px">
+        <div class="callout-title">Expected output</div>
+        <code>individual_id | full_name       | nin<br>
+        &nbsp;1            | Chukwuemeka Obi | AB1234567CD<br>
+        &nbsp;2            | Ngozi Obi       | null</code><br><br>
+        The child (Ngozi) has no NIN yet — NULL is valid here. The UNIQUE constraint allows multiple NULL values.
+      </div>
+
+      <p><strong>Step 3 — verify both records before committing</strong></p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">SELECT</span>
+  h.household_code,
+  h.head_name,
+  h.pmt_score,
+  i.full_name     <span class="kw">AS</span> member_name,
+  i.nin,
+  i.dob
+<span class="kw">FROM</span>  nsr.households  h
+<span class="kw">JOIN</span>  nsr.individuals i <span class="kw">ON</span> i.household_id = h.household_id
+<span class="kw">WHERE</span> h.household_code = <span class="str">'HH-LA-099'</span>;</pre>
+      </div>
+      <div class="callout tip" style="margin-bottom:10px">
+        <div class="callout-title">Expected output</div>
+        Two rows — one per individual, both showing the correct household_code and pmt_score.
+        If something looks wrong, run <code>ROLLBACK;</code> now — the entire enrolment disappears cleanly.
+      </div>
+
+      <p><strong>Step 4 — commit or rollback</strong></p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- If everything looks correct:</span>
+<span class="kw">COMMIT</span>;
+
+<span class="cmt">-- If anything was wrong, use this instead (removes all changes atomically):</span>
+<span class="cmt">-- ROLLBACK;</span></pre>
+      </div>
+      <div class="callout info">
+        <div class="callout-title">What atomicity gave you here</div>
+        If your terminal disconnected or an error occurred between Step 1 and Step 2, the household would not exist without its members — the ROLLBACK ensures no orphaned partial record. This is the correct pattern for every multi-table enrolment operation in the NSR: always wrap INSERT chains in a transaction.
+      </div>
     </div>
 
     <div class="tab-panel" id="tab-d2-joins">
@@ -1536,6 +1750,105 @@ psql -U postgres
       <div class="callout info" style="margin-top:8px">
         <div class="callout-title">INNER JOIN vs LEFT JOIN — when to use each</div>
         <strong>INNER JOIN</strong> (the first query): returns only households that have a matching LGA and state. This is correct here because every household must belong to a valid LGA — if a row had no match it would indicate a data integrity problem, and silently hiding it in the results would be wrong. <strong>LEFT JOIN</strong> (the second query): returns every active household regardless of whether they have any payments. Households with zero payments appear with <code>payment_count = 0</code> and <code>total_paid = NULL</code> — which is exactly the policy insight needed: who hasn't been paid yet? <strong>The AND in the LEFT JOIN ON clause</strong>: filtering on <code>p.status = 'processed'</code> inside the ON (not the WHERE) means "join only to processed payments." This preserves households with only pending/failed payments as non-matched rows, keeping them in the result with NULL values. Moving this condition to WHERE would silently drop those households from the output.
+      </div>
+
+      <h3 style="margin-top:18px">Guided Practical — State-level payment summary with failure rate</h3>
+      <div class="callout info" style="margin-bottom:10px">
+        <div class="callout-title">Scenario</div>
+        The NSR programme manager wants a state-by-state report showing: how many active households exist, how many have received at least one processed payment, total amount disbursed, and the payment failure rate. This requires combining three JOIN types and aggregate functions. Work through it step by step.
+      </div>
+
+      <p><strong>Step 1 — start with the household-to-state backbone (INNER JOIN)</strong></p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Confirm you can join households to states via lgas</span>
+<span class="kw">SELECT</span>
+  s.state_name,
+  <span class="fn">COUNT</span>(h.household_id) <span class="kw">AS</span> total_households
+<span class="kw">FROM</span>  nsr.households h
+<span class="kw">JOIN</span>  nsr.lgas   l <span class="kw">ON</span> h.lga_id     = l.lga_id
+<span class="kw">JOIN</span>  nsr.states s <span class="kw">ON</span> l.state_code = s.state_code
+<span class="kw">WHERE</span> h.is_active = <span class="kw">TRUE</span>
+<span class="kw">GROUP BY</span> s.state_name
+<span class="kw">ORDER BY</span> s.state_name;</pre>
+      </div>
+      <div class="callout tip" style="margin-bottom:10px">
+        <div class="callout-title">Expected output</div>
+        One row per state showing the count of active households. Verify this makes sense before adding payments.
+      </div>
+
+      <p><strong>Step 2 — add payment aggregates with LEFT JOIN (preserves states with no payments)</strong></p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">SELECT</span>
+  s.state_name,
+  <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> h.household_id)                         <span class="kw">AS</span> total_households,
+  <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> <span class="kw">CASE WHEN</span> p.status = <span class="str">'processed'</span>
+        <span class="kw">THEN</span> h.household_id <span class="kw">END</span>)                           <span class="kw">AS</span> households_paid,
+  <span class="fn">COALESCE</span>(<span class="fn">SUM</span>(<span class="kw">CASE WHEN</span> p.status = <span class="str">'processed'</span>
+        <span class="kw">THEN</span> p.amount_ngn <span class="kw">END</span>), <span class="num">0</span>)                        <span class="kw">AS</span> total_disbursed_ngn,
+  <span class="fn">COUNT</span>(<span class="kw">CASE WHEN</span> p.status = <span class="str">'failed'</span>
+        <span class="kw">THEN</span> <span class="num">1</span> <span class="kw">END</span>)                                        <span class="kw">AS</span> failed_payments,
+  <span class="fn">ROUND</span>(
+    <span class="num">100.0</span> * <span class="fn">COUNT</span>(<span class="kw">CASE WHEN</span> p.status = <span class="str">'failed'</span> <span class="kw">THEN</span> <span class="num">1</span> <span class="kw">END</span>)
+           / <span class="fn">NULLIF</span>(<span class="fn">COUNT</span>(p.payment_id), <span class="num">0</span>), <span class="num">1</span>
+  )                                                         <span class="kw">AS</span> failure_rate_pct
+<span class="kw">FROM</span>  nsr.households h
+<span class="kw">JOIN</span>  nsr.lgas   l <span class="kw">ON</span> h.lga_id     = l.lga_id
+<span class="kw">JOIN</span>  nsr.states s <span class="kw">ON</span> l.state_code = s.state_code
+<span class="kw">LEFT JOIN</span> nsr.payments p <span class="kw">ON</span> p.household_id = h.household_id
+<span class="kw">WHERE</span> h.is_active = <span class="kw">TRUE</span>
+<span class="kw">GROUP BY</span> s.state_name
+<span class="kw">ORDER BY</span> total_disbursed_ngn <span class="kw">DESC</span>;</pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">New patterns in this query — read before running</div>
+        <strong>COUNT(DISTINCT CASE WHEN … THEN household_id END)</strong>: counts unique household IDs only when the CASE condition is true — a standard pattern for "how many distinct X meet condition Y" without a subquery.<br><br>
+        <strong>COALESCE(SUM(…), 0)</strong>: SUM over an empty set returns NULL. COALESCE replaces NULL with 0 so the report shows a real number for states with no disbursements.<br><br>
+        <strong>NULLIF(COUNT(p.payment_id), 0)</strong>: dividing by zero causes an error. NULLIF returns NULL when the denominator is zero, making the division return NULL instead of crashing — then ROUND handles NULL safely by returning NULL.
+      </div>
+
+      <h3 style="margin-top:18px">Anti-join — find households enrolled but never paid (guided walkthrough)</h3>
+      <div class="callout info" style="margin-bottom:10px">
+        <div class="callout-title">Why this query matters</div>
+        This is a real operational query: identifying beneficiaries who are enrolled but have not received any disbursement. There are three ways to write it. Understanding why the LEFT JOIN approach is preferred over NOT IN is important.
+      </div>
+
+      <p><strong>Approach A — LEFT JOIN + IS NULL (recommended)</strong></p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">SELECT</span>
+  h.household_code,
+  h.head_name,
+  s.state_name
+<span class="kw">FROM</span>  nsr.households h
+<span class="kw">JOIN</span>  nsr.lgas   l <span class="kw">ON</span> h.lga_id     = l.lga_id
+<span class="kw">JOIN</span>  nsr.states s <span class="kw">ON</span> l.state_code = s.state_code
+<span class="kw">LEFT JOIN</span> nsr.payments p
+  <span class="kw">ON</span>  p.household_id = h.household_id
+  <span class="kw">AND</span> p.status = <span class="str">'processed'</span>
+<span class="kw">WHERE</span> h.is_active = <span class="kw">TRUE</span>
+  <span class="kw">AND</span> p.payment_id <span class="kw">IS NULL</span>
+<span class="kw">ORDER BY</span> s.state_name, h.household_code;</pre>
+      </div>
+
+      <p><strong>Approach B — NOT EXISTS (safe for NULLs, equally correct)</strong></p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">SELECT</span> h.household_code, h.head_name
+<span class="kw">FROM</span>  nsr.households h
+<span class="kw">WHERE</span> h.is_active = <span class="kw">TRUE</span>
+  <span class="kw">AND NOT EXISTS</span> (
+    <span class="kw">SELECT</span> <span class="num">1</span>
+    <span class="kw">FROM</span>  nsr.payments p
+    <span class="kw">WHERE</span> p.household_id = h.household_id
+      <span class="kw">AND</span> p.status = <span class="str">'processed'</span>
+  );</pre>
+      </div>
+
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Why NOT IN is dangerous — never use it here</div>
+        <code>WHERE household_id NOT IN (SELECT household_id FROM nsr.payments)</code> looks correct but has a silent bug: if <em>any</em> row in the subquery returns NULL for household_id, the entire NOT IN returns zero rows — not because there are no matches, but because NULL comparisons in SQL are three-valued logic (TRUE / FALSE / UNKNOWN). The household_id column has a NOT NULL constraint here, but in general always prefer NOT EXISTS or the LEFT JOIN pattern over NOT IN on subquery results.
       </div>
     </div>
 
@@ -1582,6 +1895,131 @@ psql -U postgres
       <div class="callout info" style="margin-top:8px">
         <div class="callout-title">How window functions differ from GROUP BY</div>
         <strong>GROUP BY collapses rows</strong> — one output row per group, detail lost. <strong>Window functions keep every row</strong> and attach a computed value alongside it. The <code>OVER ()</code> clause defines the window: <code>PARTITION BY</code> divides rows into independent groups (here, per state) and <code>ORDER BY</code> controls ranking or accumulation order within each group. <strong>RANK() vs DENSE_RANK()</strong>: if two households tie at rank 3, RANK() produces 3, 3, 5 (skips 4); DENSE_RANK() produces 3, 3, 4 (no gap). For poverty targeting, RANK() is more conservative — tied households are treated equally and the next distinct score gets a lower priority number. <strong>PERCENT_RANK()</strong>: returns a value from 0 to 1 representing where the row falls relative to all rows in the partition — multiplied by 100 it gives the percentile. A household at the 10th percentile is among the most vulnerable 10% in its state. <strong>ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</strong>: the explicit frame clause for the running total — includes all rows from the start of the partition up to and including the current row, ordered by payment_date, giving a cumulative disbursement total per household.
+      </div>
+
+      <h3 style="margin-top:18px">LAG and LEAD — payment trend analysis</h3>
+      <p>LAG() looks back at the previous row in the window; LEAD() looks forward. Both are essential for detecting changes between consecutive events — such as whether a household's payment amount increased, decreased, or stayed the same across cycles.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – payment trend per household</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">SELECT</span>
+  household_id,
+  payment_date,
+  amount_ngn,
+  <span class="fn">LAG</span>(amount_ngn) <span class="kw">OVER</span> (
+    <span class="kw">PARTITION BY</span> household_id
+    <span class="kw">ORDER BY</span> payment_date
+  )                                               <span class="kw">AS</span> prev_amount,
+  amount_ngn - <span class="fn">LAG</span>(amount_ngn) <span class="kw">OVER</span> (
+    <span class="kw">PARTITION BY</span> household_id
+    <span class="kw">ORDER BY</span> payment_date
+  )                                               <span class="kw">AS</span> change_ngn,
+  <span class="kw">CASE</span>
+    <span class="kw">WHEN</span> amount_ngn > <span class="fn">LAG</span>(amount_ngn) <span class="kw">OVER</span> (
+           <span class="kw">PARTITION BY</span> household_id <span class="kw">ORDER BY</span> payment_date)
+    <span class="kw">THEN</span> <span class="str">'increased'</span>
+    <span class="kw">WHEN</span> amount_ngn &lt; <span class="fn">LAG</span>(amount_ngn) <span class="kw">OVER</span> (
+           <span class="kw">PARTITION BY</span> household_id <span class="kw">ORDER BY</span> payment_date)
+    <span class="kw">THEN</span> <span class="str">'decreased'</span>
+    <span class="kw">WHEN</span> <span class="fn">LAG</span>(amount_ngn) <span class="kw">OVER</span> (
+           <span class="kw">PARTITION BY</span> household_id <span class="kw">ORDER BY</span> payment_date) <span class="kw">IS NULL</span>
+    <span class="kw">THEN</span> <span class="str">'first payment'</span>
+    <span class="kw">ELSE</span> <span class="str">'unchanged'</span>
+  <span class="kw">END</span>                                             <span class="kw">AS</span> trend
+<span class="kw">FROM</span>  nsr.payments
+<span class="kw">WHERE</span> status = <span class="str">'processed'</span>
+<span class="kw">ORDER BY</span> household_id, payment_date;</pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Reading the output — what each column means</div>
+        <strong>prev_amount</strong>: the amount from the previous processed payment for the same household — NULL on the first row because there is no prior payment.<br><br>
+        <strong>change_ngn</strong>: the difference between the current and previous payment. Positive = increase; negative = decrease; NULL = first payment. This is the kind of column a programme analyst uses to flag unusual payment adjustments for audit review.<br><br>
+        <strong>trend</strong>: a human-readable label built with CASE on top of LAG(). The IS NULL branch catches the first payment row correctly — without it, the ELSE 'unchanged' branch would fire for the first row and give a misleading label.
+      </div>
+
+      <h3 style="margin-top:18px">Guided Practical — Bottom 20% vulnerability targeting using CTE + window function</h3>
+      <div class="callout info" style="margin-bottom:10px">
+        <div class="callout-title">Scenario</div>
+        The social protection team wants to identify the most vulnerable households in each state — specifically those whose pmt_score falls in the bottom 20th percentile within their own state. This cannot be done in a single SELECT because you cannot filter on a window function result in the same query that computes it. You must use a CTE.
+      </div>
+
+      <p><strong>Step 1 — build the ranked CTE</strong></p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">WITH</span> ranked_households <span class="kw">AS</span> (
+  <span class="kw">SELECT</span>
+    h.household_id,
+    h.household_code,
+    h.head_name,
+    s.state_name,
+    h.pmt_score,
+    <span class="fn">PERCENT_RANK</span>() <span class="kw">OVER</span> (
+      <span class="kw">PARTITION BY</span> l.state_code
+      <span class="kw">ORDER BY</span> h.pmt_score <span class="kw">ASC</span>
+    )                        <span class="kw">AS</span> pct_rank,
+    <span class="fn">RANK</span>() <span class="kw">OVER</span> (
+      <span class="kw">PARTITION BY</span> l.state_code
+      <span class="kw">ORDER BY</span> h.pmt_score <span class="kw">ASC</span>
+    )                        <span class="kw">AS</span> poverty_rank
+  <span class="kw">FROM</span>  nsr.households h
+  <span class="kw">JOIN</span>  nsr.lgas   l <span class="kw">ON</span> h.lga_id     = l.lga_id
+  <span class="kw">JOIN</span>  nsr.states s <span class="kw">ON</span> l.state_code = s.state_code
+  <span class="kw">WHERE</span> h.is_active = <span class="kw">TRUE</span>
+)
+<span class="kw">SELECT</span>
+  household_code,
+  head_name,
+  state_name,
+  pmt_score,
+  poverty_rank,
+  <span class="fn">ROUND</span>(pct_rank * <span class="num">100</span>, <span class="num">1</span>) <span class="kw">AS</span> percentile
+<span class="kw">FROM</span>  ranked_households
+<span class="kw">WHERE</span> pct_rank &lt;= <span class="num">0.20</span>
+<span class="kw">ORDER BY</span> state_name, poverty_rank;</pre>
+      </div>
+      <div class="callout tip" style="margin-bottom:10px">
+        <div class="callout-title">Expected behaviour</div>
+        Only households whose pmt_score falls in the bottom 20% <em>within their own state</em> appear. The filter <code>WHERE pct_rank &lt;= 0.20</code> works because it is applied in the outer query against the CTE result — by that point PERCENT_RANK() has already been computed and is just a plain column.
+      </div>
+
+      <p><strong>Step 2 — extend: flag which of the bottom-20% households have never been paid</strong></p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – advanced extension</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">WITH</span> ranked_households <span class="kw">AS</span> (
+  <span class="kw">SELECT</span>
+    h.household_id,
+    h.household_code,
+    h.head_name,
+    s.state_name,
+    h.pmt_score,
+    <span class="fn">PERCENT_RANK</span>() <span class="kw">OVER</span> (
+      <span class="kw">PARTITION BY</span> l.state_code <span class="kw">ORDER BY</span> h.pmt_score <span class="kw">ASC</span>
+    ) <span class="kw">AS</span> pct_rank
+  <span class="kw">FROM</span>  nsr.households h
+  <span class="kw">JOIN</span>  nsr.lgas   l <span class="kw">ON</span> h.lga_id     = l.lga_id
+  <span class="kw">JOIN</span>  nsr.states s <span class="kw">ON</span> l.state_code = s.state_code
+  <span class="kw">WHERE</span> h.is_active = <span class="kw">TRUE</span>
+)
+<span class="kw">SELECT</span>
+  r.household_code,
+  r.head_name,
+  r.state_name,
+  r.pmt_score,
+  <span class="fn">ROUND</span>(r.pct_rank * <span class="num">100</span>, <span class="num">1</span>) <span class="kw">AS</span> percentile,
+  <span class="kw">CASE WHEN</span> p.household_id <span class="kw">IS NULL</span> <span class="kw">THEN</span> <span class="str">'NEVER PAID'</span>
+       <span class="kw">ELSE</span> <span class="str">'paid'</span>
+  <span class="kw">END</span>                         <span class="kw">AS</span> payment_status
+<span class="kw">FROM</span>  ranked_households r
+<span class="kw">LEFT JOIN</span> (
+  <span class="kw">SELECT DISTINCT</span> household_id
+  <span class="kw">FROM</span>  nsr.payments
+  <span class="kw">WHERE</span> status = <span class="str">'processed'</span>
+) p <span class="kw">ON</span> p.household_id = r.household_id
+<span class="kw">WHERE</span> r.pct_rank &lt;= <span class="num">0.20</span>
+<span class="kw">ORDER BY</span> r.state_name, r.pmt_score;</pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">What this produces — a priority intervention list</div>
+        Households labelled <strong>NEVER PAID</strong> in the bottom 20th percentile are the highest-priority cases: they are the most vulnerable <em>and</em> have not yet received any disbursement. This exact query type would be handed to a programme officer to initiate emergency payments. The combination of CTE + window function + LEFT JOIN anti-join is the standard pattern for this class of social protection analytics.
       </div>
     </div>
 
@@ -1699,6 +2137,85 @@ psql -U postgres
           </div>
           <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
             <button class="btn-toggle-answer" onclick="toggleAnswer('d2-ex3',this)">▼ Show Answer</button>
+            <button class="ex-complete-btn" onclick="markExDone(this)">✓ Mark done</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="exercise-card">
+        <div class="exercise-header" onclick="toggleExercise(this)">
+          <div class="ex-num">4</div>
+          <div class="ex-title">B4 – Programme director's dashboard query</div>
+          <span class="ex-difficulty diff-advanced">Advanced</span>
+          <span class="ex-toggle">▼</span>
+        </div>
+        <div class="exercise-body" style="display:none">
+          <p>The programme director needs a single query that produces a state-level dashboard. For each state, the result must show:</p>
+          <ol style="margin-left:18px;margin-bottom:10px">
+            <li>Total active households</li>
+            <li>Number of households in the bottom 20th percentile by pmt_score (most vulnerable)</li>
+            <li>Of those vulnerable households, how many have <strong>never</strong> received a processed payment</li>
+            <li>Total amount disbursed to date (processed payments only)</li>
+            <li>Payment failure rate as a percentage</li>
+          </ol>
+          <div class="callout info" style="margin-bottom:10px">
+            <div class="callout-title">Approach guidance — plan before you write</div>
+            You will need at least two CTEs. The first ranks households by pmt_score within their state using PERCENT_RANK(). The second identifies households that have received at least one processed payment. The outer query aggregates across states using conditional COUNT() and SUM(CASE WHEN …). Write the structure in plain English before writing SQL: which tables join to which, where LEFT JOINs go, and which aggregates use CASE conditions.
+          </div>
+          <div class="answer-area">Write your SQL here — aim to produce one row per state</div>
+          <div class="answer-reveal" id="ans-d2-ex4">
+            <div class="callout tip"><div class="callout-title">Reference Solution</div></div>
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">sql – solution</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre><span class="kw">WITH</span> ranked <span class="kw">AS</span> (
+  <span class="cmt">-- rank every active household within its state</span>
+  <span class="kw">SELECT</span>
+    h.household_id,
+    s.state_name,
+    h.pmt_score,
+    <span class="fn">PERCENT_RANK</span>() <span class="kw">OVER</span> (
+      <span class="kw">PARTITION BY</span> l.state_code
+      <span class="kw">ORDER BY</span>   h.pmt_score <span class="kw">ASC</span>
+    ) <span class="kw">AS</span> pct_rank
+  <span class="kw">FROM</span>  nsr.households h
+  <span class="kw">JOIN</span>  nsr.lgas   l <span class="kw">ON</span> h.lga_id     = l.lga_id
+  <span class="kw">JOIN</span>  nsr.states s <span class="kw">ON</span> l.state_code = s.state_code
+  <span class="kw">WHERE</span> h.is_active = <span class="kw">TRUE</span>
+),
+paid_households <span class="kw">AS</span> (
+  <span class="cmt">-- households that have at least one processed payment</span>
+  <span class="kw">SELECT DISTINCT</span> household_id
+  <span class="kw">FROM</span>  nsr.payments
+  <span class="kw">WHERE</span> status = <span class="str">'processed'</span>
+)
+<span class="kw">SELECT</span>
+  r.state_name,
+  <span class="fn">COUNT</span>(r.household_id)                                 <span class="kw">AS</span> total_households,
+  <span class="fn">COUNT</span>(<span class="kw">CASE WHEN</span> r.pct_rank &lt;= <span class="num">0.20</span> <span class="kw">THEN</span> <span class="num">1</span> <span class="kw">END</span>)        <span class="kw">AS</span> vulnerable_households,
+  <span class="fn">COUNT</span>(<span class="kw">CASE WHEN</span> r.pct_rank &lt;= <span class="num">0.20</span>
+             <span class="kw">AND</span> ph.household_id <span class="kw">IS NULL</span> <span class="kw">THEN</span> <span class="num">1</span> <span class="kw">END</span>)    <span class="kw">AS</span> vulnerable_never_paid,
+  <span class="fn">COALESCE</span>(<span class="fn">SUM</span>(<span class="kw">CASE WHEN</span> p.status = <span class="str">'processed'</span>
+               <span class="kw">THEN</span> p.amount_ngn <span class="kw">END</span>), <span class="num">0</span>)             <span class="kw">AS</span> total_disbursed_ngn,
+  <span class="fn">ROUND</span>(
+    <span class="num">100.0</span> * <span class="fn">COUNT</span>(<span class="kw">CASE WHEN</span> p.status = <span class="str">'failed'</span> <span class="kw">THEN</span> <span class="num">1</span> <span class="kw">END</span>)
+           / <span class="fn">NULLIF</span>(<span class="fn">COUNT</span>(p.payment_id), <span class="num">0</span>), <span class="num">1</span>
+  )                                                      <span class="kw">AS</span> failure_rate_pct
+<span class="kw">FROM</span>      ranked r
+<span class="kw">LEFT JOIN</span> paid_households ph <span class="kw">ON</span> ph.household_id = r.household_id
+<span class="kw">LEFT JOIN</span> nsr.payments     p  <span class="kw">ON</span> p.household_id  = r.household_id
+<span class="kw">GROUP BY</span>  r.state_name
+<span class="kw">ORDER BY</span>  vulnerable_never_paid <span class="kw">DESC</span>;</pre>
+            </div>
+            <div class="callout info" style="margin-top:8px">
+              <div class="callout-title">Key decisions in this solution</div>
+              <strong>Two CTEs with distinct responsibilities</strong>: <code>ranked</code> handles all window function computation; <code>paid_households</code> pre-aggregates payment eligibility. Run each as a standalone SELECT first to verify before combining.<br><br>
+              <strong>vulnerable_never_paid uses two CASE conditions</strong>: pct_rank &lt;= 0.20 AND ph.household_id IS NULL — both must be true simultaneously. The IS NULL comes from the LEFT JOIN to paid_households finding no match (never paid).<br><br>
+              <strong>NULLIF prevents division-by-zero</strong>: states with no payment records produce COUNT = 0; NULLIF converts that to NULL so the division returns NULL rather than an error.<br><br>
+              <strong>ORDER BY vulnerable_never_paid DESC</strong>: states with the most unserved vulnerable households appear first — this is the priority view for programme intervention.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            <button class="btn-toggle-answer" onclick="toggleAnswer('d2-ex4',this)">▼ Show Answer</button>
             <button class="ex-complete-btn" onclick="markExDone(this)">✓ Mark done</button>
           </div>
         </div>
