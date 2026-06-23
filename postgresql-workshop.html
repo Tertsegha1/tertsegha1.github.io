@@ -1825,9 +1825,12 @@ psql -U postgres
 <span class="kw">VALUES</span> (<span class="str">'BE'</span>, <span class="str">'Benue'</span>)
 <span class="kw">ON CONFLICT DO NOTHING</span>;
 
+<span class="cmt">-- lgas has no unique constraint on (state_code, lga_name), so use INSERT ... SELECT with NOT EXISTS</span>
 <span class="kw">INSERT INTO</span> nsr.lgas (state_code, lga_name)
-<span class="kw">VALUES</span> (<span class="str">'BE'</span>, <span class="str">'Makurdi'</span>)
-<span class="kw">ON CONFLICT DO NOTHING</span>;
+<span class="kw">SELECT</span> <span class="str">'BE'</span>, <span class="str">'Makurdi'</span>
+<span class="kw">WHERE NOT EXISTS</span> (
+  <span class="kw">SELECT</span> <span class="num">1</span> <span class="kw">FROM</span> nsr.lgas <span class="kw">WHERE</span> state_code = <span class="str">'BE'</span> <span class="kw">AND</span> lga_name = <span class="str">'Makurdi'</span>
+);
 
 <span class="cmt">-- Verify the LGA was inserted and note its lga_id</span>
 <span class="kw">SELECT</span> lga_id, lga_name, state_code <span class="kw">FROM</span> nsr.lgas <span class="kw">WHERE</span> lga_name = <span class="str">'Makurdi'</span>;</pre>
@@ -1854,7 +1857,8 @@ psql -U postgres
   <span class="num">22.500</span>,
   <span class="num">1</span>
 <span class="kw">FROM</span> nsr.lgas
-<span class="kw">WHERE</span> lga_name = <span class="str">'Makurdi'</span>
+<span class="kw">WHERE</span> lga_name = <span class="str">'Makurdi'</span> <span class="kw">AND</span> state_code = <span class="str">'BE'</span>
+<span class="kw">LIMIT</span> <span class="num">1</span>
 <span class="kw">RETURNING</span> household_id, household_code, pmt_score;</pre>
       </div>
       <div class="callout tip" style="margin-bottom:10px">
