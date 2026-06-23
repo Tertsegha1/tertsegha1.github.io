@@ -826,11 +826,22 @@ def body_content():
     )
 
     elems.append(Paragraph("Demo 1.7 — Live Normalisation &amp; FK Violation", S["h2"]))
+
+    elems += callout(
+        "What this demo shows",
+        "This demo makes two points simultaneously. First, it shows normalisation working: state names "
+        "are stored once in nsr.states and referenced by a two-letter code everywhere else — Lagos does "
+        "not appear on every row of nsr.lgas or nsr.households. Second, it shows the database actively "
+        "enforcing that structure through a foreign key constraint. You cannot insert an LGA that belongs "
+        "to a state that does not exist. The database rejects it outright — no application code needed.",
+        "info"
+    )
+
     elems += code_block([
         "-- Insert sample states",
         "INSERT INTO nsr.states VALUES ('LA','Lagos'),('KN','Kano'),('AB','Abuja');",
         "",
-        "-- Insert sample LGAs",
+        "-- Insert sample LGAs — each references a valid state_code",
         "INSERT INTO nsr.lgas (state_code, lga_name)",
         "VALUES ('LA','Ikeja'),('LA','Eti-Osa'),('KN','Kano Municipal');",
         "",
@@ -838,9 +849,41 @@ def body_content():
         "INSERT INTO nsr.lgas (state_code, lga_name) VALUES ('XX','Invalid State');",
         "-- Expected: ERROR: insert or update on table lgas violates foreign key constraint",
     ])
+
+    elems += callout(
+        "What the error means — explain this to the room",
+        "The error 'violates foreign key constraint' means PostgreSQL tried to look up state_code 'XX' "
+        "in nsr.states and found nothing there. It refuses to create an LGA that belongs to a state that "
+        "does not exist — that would be an orphaned row with no parent, breaking the referential integrity "
+        "of the entire schema.\n\n"
+        "This is the database protecting itself. If this check were left to application code instead, a bug, "
+        "a direct psql session, or a bulk import could silently create thousands of LGAs with invalid state "
+        "codes. At NSR scale — millions of households — that kind of corruption is extremely hard to detect "
+        "and very costly to fix.",
+        "warn"
+    )
+
+    elems += callout(
+        "The solution — always insert in parent-first order",
+        "Foreign key constraints enforce a strict insertion order: parent rows must exist before child rows "
+        "can reference them.\n\n"
+        "Correct order for the NSR schema:\n"
+        "1. nsr.states  (no dependencies — insert first)\n"
+        "2. nsr.lgas  (references nsr.states — insert second)\n"
+        "3. nsr.households  (references nsr.lgas — insert third)\n"
+        "4. nsr.individuals  (references nsr.households — insert last)\n\n"
+        "If you are loading data from a CSV or external system and get FK violations, check two things: "
+        "(1) the state_code or lga_id in the child table actually exists in the parent table, and "
+        "(2) you are inserting tables in the correct order. For bulk loads, you can temporarily disable "
+        "FK checks with SET session_replication_role = replica — but only do this when you are certain "
+        "the data is clean, and always re-enable it immediately after.",
+        "tip"
+    )
+
     elems.append(bold_body(
-        "Show the error to the room. The database itself is enforcing referential integrity — "
-        "not application code that can be bypassed or contain bugs."
+        "Show the error to the room. Ask: 'Where would this validation live if we did not have a FK — "
+        "in the application? What happens when someone bypasses the application and inserts directly?' "
+        "The answer is: nothing stops it. The constraint is the only reliable guarantee."
     ))
     elems.append(spacer(3))
 
