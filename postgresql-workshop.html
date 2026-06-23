@@ -2249,7 +2249,8 @@ paid_households <span class="kw">AS</span> (
   <div class="callout info"><div class="callout-title">Day Focus</div>Day 3 is the security day. The three pillars — RBAC, RLS, and audit logging — are interdependent: RBAC controls what a role can do, RLS controls which rows they can touch, and the audit log records what they actually did. Participants must understand why all three are required together; any one alone is insufficient for a system handling PII and payment data. Spend extra time on RLS — the <code>current_setting('app.state_code')</code> pattern is the part most likely to confuse.</div>
 
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab(this,'d3tabs','d3-rbac')">RBAC</button>
+    <button class="tab-btn active" onclick="switchTab(this,'d3tabs','d3-refresher')">Refresher Quiz</button>
+    <button class="tab-btn" onclick="switchTab(this,'d3tabs','d3-rbac')">RBAC</button>
     <button class="tab-btn" onclick="switchTab(this,'d3tabs','d3-rls')">Row-Level Security</button>
     <button class="tab-btn" onclick="switchTab(this,'d3tabs','d3-audit')">Audit Logging</button>
     <button class="tab-btn" onclick="switchTab(this,'d3tabs','d3-backup')">Backup &amp; DR</button>
@@ -2257,7 +2258,15 @@ paid_households <span class="kw">AS</span> (
   </div>
 
   <div id="d3tabs">
-    <div class="tab-panel active" id="tab-d3-rbac">
+    <div class="tab-panel active" id="tab-d3-refresher">
+      <div class="callout info" style="margin-bottom:12px">
+        <div class="callout-title">Day 2 Knowledge Refresher</div>
+        Complete all questions before starting today's content. These cover yesterday's SQL Fundamentals — DML, JOINs, and window functions. Aim for 100% before moving on.
+      </div>
+      <div id="quiz-d3"></div>
+    </div>
+
+    <div class="tab-panel" id="tab-d3-rbac">
       <h3>NSR Role Model</h3>
       <table>
         <tr><th>Role</th><th>Access</th><th>State restriction</th><th>NIN visible?</th><th>Payment write?</th><th>Logged?</th></tr>
@@ -2309,6 +2318,48 @@ paid_households <span class="kw">AS</span> (
       <div class="callout info" style="margin-top:8px">
         <div class="callout-title">Why three separate roles?</div>
         The principle of least privilege: each role receives only the permissions it needs and nothing more. <strong>nsr_caseworker</strong> has no write access and no direct NIN visibility — it reads through a view that masks sensitive columns. <strong>nsr_supervisor</strong> can UPDATE payments but cannot delete audit records. <strong>nsr_dba</strong> has BYPASSRLS (needed for maintenance) but even DBA cannot delete from <code>audit_log</code>. The <code>\du+</code> output lets you verify the privilege matrix before handing the terminal to a participant to test — always do this check on live systems before closing a migration.
+      </div>
+
+      <h3>Guided Practical — Role Permission Testing</h3>
+      <div class="callout info"><div class="callout-title">Work through each step in order — predict the result before you run</div>
+        This walkthrough builds the muscle memory of thinking like both a DBA and an attacker. Before each step, write down what you expect to happen.
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – step-by-step role testing</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- STEP 1: Connect as caseworker (open a new terminal session)</span>
+<span class="cmt">-- psql -U nsr_caseworker -d lab_nsr</span>
+
+<span class="cmt">-- STEP 2: Set state context</span>
+<span class="kw">SET</span> app.state_code = <span class="str">'KN'</span>;
+
+<span class="cmt">-- STEP 3: Read households (should succeed, Kano only)</span>
+<span class="kw">SELECT</span> household_id, household_code, pmt_score <span class="kw">FROM</span> nsr.households <span class="kw">LIMIT</span> <span class="num">5</span>;
+<span class="cmt">-- Expected: rows where state_code = 'KN' only</span>
+
+<span class="cmt">-- STEP 4: Try to read payments directly (should FAIL)</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> nsr.payments <span class="kw">LIMIT</span> <span class="num">5</span>;
+<span class="cmt">-- Expected: ERROR: permission denied for table payments</span>
+
+<span class="cmt">-- STEP 5: Try to UPDATE a household (should FAIL)</span>
+<span class="kw">UPDATE</span> nsr.households <span class="kw">SET</span> pmt_score = <span class="num">999</span> <span class="kw">WHERE</span> household_id = <span class="num">1</span>;
+<span class="cmt">-- Expected: ERROR: permission denied for table households</span>
+
+<span class="cmt">-- STEP 6: Try to query a different state (should return 0 rows)</span>
+<span class="kw">SET</span> app.state_code = <span class="str">'LA'</span>;
+<span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.households;
+<span class="cmt">-- Expected: 0 — RLS filters Lagos from a Kano worker's view</span>
+
+<span class="cmt">-- STEP 7: Switch to nsr_supervisor to compare</span>
+<span class="cmt">-- psql -U nsr_supervisor -d lab_nsr</span>
+<span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.households;
+<span class="cmt">-- Expected: total row count — supervisor BYPASSRLS sees everything</span>
+
+<span class="cmt">-- STEP 8: Try to delete an audit record (should FAIL for both roles)</span>
+<span class="kw">DELETE FROM</span> nsr.audit_log <span class="kw">WHERE</span> log_id = <span class="num">1</span>;
+<span class="cmt">-- Expected: ERROR: permission denied — REVOKE DELETE protects audit integrity</span></pre>
+      </div>
+      <div class="callout tip"><div class="callout-title">What to observe</div>
+        For each step, compare your prediction to the actual result. Steps 4 and 5 should fail — if they succeed, you have a misconfigured grant. Step 6 is the RLS test: switching state_code to 'LA' while logged in as a Kano caseworker should return 0 rows. If you see Lagos data, RLS is not enabled or the policy does not match the state_code column.
       </div>
     </div>
 
@@ -2541,13 +2592,104 @@ psql -U postgres -d lab_nsr_test -c "SELECT COUNT(*) FROM nsr.households;"</pre>
 
       <div class="exercise-card">
         <div class="exercise-header" onclick="toggleExercise(this)">
-          <div class="ex-num">H1.4</div>
-          <div class="ex-title">Perform and verify a backup</div>
-          <span class="ex-difficulty diff-basic">Basic</span>
+          <div class="ex-num">H1.3</div>
+          <div class="ex-title">Write a row-level audit trigger</div>
+          <span class="ex-difficulty diff-advanced">Advanced</span>
           <span class="ex-toggle">▼</span>
         </div>
         <div class="exercise-body" style="display:none">
-          <p>Run the backup commands from the Backup tab. Verify that row counts in <code>lab_nsr_test</code> match <code>lab_nsr</code>.</p>
+          <p>Write a PL/pgSQL trigger function and attach it to <code>nsr.payments</code> so that every INSERT, UPDATE, and DELETE is recorded in <code>nsr.audit_log</code> with the operation type, the affected <code>payment_id</code>, the old and new <code>amount</code>, and the current role. Test it by running an UPDATE and then querying audit_log.</p>
+          <div class="callout info"><div class="callout-title">Step-by-step guide</div>
+            <strong>Step 1</strong> — Write a trigger function (RETURNS TRIGGER) that uses TG_OP to detect INSERT/UPDATE/DELETE.<br>
+            <strong>Step 2</strong> — Use NEW.payment_id / OLD.payment_id for the row ID; OLD.amount and NEW.amount for change tracking.<br>
+            <strong>Step 3</strong> — INSERT into nsr.audit_log with: table_name, operation, row_id, old_value, new_value, changed_by (current_user), changed_at (now()).<br>
+            <strong>Step 4</strong> — Create the trigger: AFTER INSERT OR UPDATE OR DELETE ON nsr.payments FOR EACH ROW EXECUTE FUNCTION.<br>
+            <strong>Step 5</strong> — Test: UPDATE one payment amount, then SELECT from audit_log.
+          </div>
+          <div class="answer-area">Write your trigger function and CREATE TRIGGER statement here</div>
+          <div class="answer-reveal" id="ans-d3-h13">
+            <div class="callout tip"><div class="callout-title">Full Solution</div></div>
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">sql – audit trigger on nsr.payments</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre><span class="cmt">-- Step 1 & 2: Trigger function</span>
+<span class="kw">CREATE OR REPLACE FUNCTION</span> nsr.audit_payments()
+<span class="kw">RETURNS TRIGGER</span>
+<span class="kw">LANGUAGE plpgsql</span>
+<span class="kw">SECURITY DEFINER</span> <span class="cmt">-- runs as definer so caseworkers can write to audit_log</span>
+<span class="kw">AS</span> $$
+<span class="kw">DECLARE</span>
+  v_row_id    <span class="typ">BIGINT</span>;
+  v_old_val   <span class="typ">TEXT</span>;
+  v_new_val   <span class="typ">TEXT</span>;
+<span class="kw">BEGIN</span>
+  <span class="kw">IF</span> TG_OP = <span class="str">'DELETE'</span> <span class="kw">THEN</span>
+    v_row_id  := OLD.payment_id;
+    v_old_val := OLD.amount::TEXT;
+    v_new_val := <span class="kw">NULL</span>;
+  <span class="kw">ELSIF</span> TG_OP = <span class="str">'INSERT'</span> <span class="kw">THEN</span>
+    v_row_id  := NEW.payment_id;
+    v_old_val := <span class="kw">NULL</span>;
+    v_new_val := NEW.amount::TEXT;
+  <span class="kw">ELSE</span> <span class="cmt">-- UPDATE</span>
+    v_row_id  := NEW.payment_id;
+    v_old_val := OLD.amount::TEXT;
+    v_new_val := NEW.amount::TEXT;
+  <span class="kw">END IF</span>;
+
+  <span class="kw">INSERT INTO</span> nsr.audit_log
+    (table_name, operation, row_id, old_value, new_value, changed_by, changed_at)
+  <span class="kw">VALUES</span>
+    (<span class="str">'nsr.payments'</span>, TG_OP, v_row_id, v_old_val, v_new_val, current_user, now());
+
+  <span class="kw">RETURN NEW</span>; <span class="cmt">-- RETURN OLD for DELETE triggers, but AFTER triggers ignore the return value</span>
+<span class="kw">END</span>;
+$$;
+
+<span class="cmt">-- Step 3: Attach to payments table</span>
+<span class="kw">CREATE TRIGGER</span> trg_audit_payments
+<span class="kw">AFTER INSERT OR UPDATE OR DELETE ON</span> nsr.payments
+<span class="kw">FOR EACH ROW EXECUTE FUNCTION</span> nsr.audit_payments();
+
+<span class="cmt">-- Step 4: Test the trigger</span>
+<span class="kw">UPDATE</span> nsr.payments
+<span class="kw">SET</span> amount = amount * <span class="num">1.05</span>
+<span class="kw">WHERE</span> payment_id = <span class="num">1</span>;
+
+<span class="cmt">-- Step 5: Verify audit trail</span>
+<span class="kw">SELECT</span> table_name, operation, row_id, old_value, new_value, changed_by, changed_at
+<span class="kw">FROM</span> nsr.audit_log
+<span class="kw">ORDER BY</span> changed_at <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> <span class="num">5</span>;</pre>
+            </div>
+            <div class="callout info" style="margin-top:8px">
+              <div class="callout-title">Key teaching points</div>
+              <strong>SECURITY DEFINER</strong>: the function runs with the privileges of the owner (DBA), not the caller. This allows a restricted caseworker to write to audit_log even if they have no direct INSERT privilege on it. <strong>TG_OP</strong>: the trigger variable containing 'INSERT', 'UPDATE', or 'DELETE'. <strong>NEW/OLD</strong>: NEW is undefined for DELETE, OLD is undefined for INSERT. Always check TG_OP before referencing them. <strong>AFTER trigger</strong>: fires after the change is committed to the row — guarantees the audit record matches the actual final state.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            <button class="btn-toggle-answer" onclick="toggleAnswer('d3-h13',this)">▼ Show Answer</button>
+            <button class="ex-complete-btn" onclick="markExDone(this)">✓ Mark done</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="exercise-card">
+        <div class="exercise-header" onclick="toggleExercise(this)">
+          <div class="ex-num">H1.4</div>
+          <div class="ex-title">Backup, restore, and verify integrity</div>
+          <span class="ex-difficulty diff-intermediate">Intermediate</span>
+          <span class="ex-toggle">▼</span>
+        </div>
+        <div class="exercise-body" style="display:none">
+          <p>Perform a pg_dump of the NSR schema in directory format, restore it to a new database, verify row counts match, then confirm RLS policies are also present in the restored database. This tests whether your backup is truly complete.</p>
+          <div class="callout info"><div class="callout-title">Step-by-step guide</div>
+            <strong>Step 1</strong> — Dump: <code>pg_dump -U postgres -d lab_nsr -n nsr -F d -j 2 -f /tmp/nsr_dir_backup</code><br>
+            <strong>Step 2</strong> — Inspect: <code>pg_restore -l /tmp/nsr_dir_backup | grep -i policy</code> — do you see the RLS policies?<br>
+            <strong>Step 3</strong> — Restore: <code>createdb lab_nsr_test &amp;&amp; pg_restore -U postgres -d lab_nsr_test -F d /tmp/nsr_dir_backup</code><br>
+            <strong>Step 4</strong> — Verify row counts with a loop across all key tables.<br>
+            <strong>Step 5</strong> — Verify RLS: <code>SELECT tablename, policyname FROM pg_policies WHERE schemaname = 'nsr'</code> in lab_nsr_test.
+          </div>
+          <div class="answer-area">Paste your commands and verification output here</div>
           <div class="answer-area">Paste your verification output here</div>
           <div class="answer-reveal" id="ans-d3-ex3">
             <div class="callout tip"><div class="callout-title">Full Solution</div></div>
@@ -2612,6 +2754,15 @@ done</pre>
   </div>
 
   <div class="section">
+    <div class="section-header"><div class="section-icon si-purple">🧠</div><h2>Day 3 Refresher Quiz</h2></div>
+    <div class="callout info" style="margin-bottom:12px">
+      <div class="callout-title">Before you leave for the study visit</div>
+      Complete this short refresher on yesterday's security content. It takes about 5 minutes and ensures you can connect what you see today to the technical controls you've already built.
+    </div>
+    <div id="quiz-d4"></div>
+  </div>
+
+  <div class="section">
     <div class="section-header"><div class="section-icon si-blue">📋</div><h2>Before You Go – Preparation</h2></div>
     <div class="callout info"><div class="callout-title">Key principle</div>Write at least two specific questions you want answered today. Generic questions get generic answers.</div>
     <div class="answer-area" style="min-height:100px">My two specific questions for the Innovation Hub, Birmingham:<br><br>1.<br>2.</div>
@@ -2668,6 +2819,15 @@ done</pre>
       <div class="page-subtitle">Self-directed practical assessment – Parts A, B, and C</div>
     </div>
     <button class="mark-done-btn" id="done-day5" onclick="markDone('day5')">Mark Complete ✓</button>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><div class="section-icon si-purple">🧠</div><h2>Refresher Quiz – Days 1–4</h2></div>
+    <div class="callout info" style="margin-bottom:12px">
+      <div class="callout-title">Warm up before the assessment</div>
+      Complete this mixed refresher before starting Parts A–C. Questions cover WAL, MVCC, SQL, RBAC, and RLS. This is not marked — it is calibration so you know where to focus your effort.
+    </div>
+    <div id="quiz-d5"></div>
   </div>
 
   <div class="callout important">
@@ -2948,7 +3108,8 @@ $$;
   <div class="callout info"><div class="callout-title">Day Focus</div>Day 6 teaches participants to read the database's own diagnostic output. The theme is: never guess at performance problems — measure with EXPLAIN ANALYZE, find the bottleneck, apply the right fix (index, partition, or query rewrite), then measure again. Emphasise the BUFFERS option — seeing cache hits vs disk reads is often the fastest way to diagnose why a query is slow in production. Connect every concept back to scale: the NSR will grow, queries that run in milliseconds on 10,000 rows may scan millions of rows next enumeration round.</div>
 
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab(this,'d6tabs','d6-explain')">EXPLAIN ANALYZE</button>
+    <button class="tab-btn active" onclick="switchTab(this,'d6tabs','d6-refresher')">Refresher Quiz</button>
+    <button class="tab-btn" onclick="switchTab(this,'d6tabs','d6-explain')">EXPLAIN ANALYZE</button>
     <button class="tab-btn" onclick="switchTab(this,'d6tabs','d6-index')">Indexing</button>
     <button class="tab-btn" onclick="switchTab(this,'d6tabs','d6-partition')">Partitioning</button>
     <button class="tab-btn" onclick="switchTab(this,'d6tabs','d6-monitor')">Monitoring</button>
@@ -2956,7 +3117,15 @@ $$;
   </div>
 
   <div id="d6tabs">
-    <div class="tab-panel active" id="tab-d6-explain">
+    <div class="tab-panel active" id="tab-d6-refresher">
+      <div class="callout info" style="margin-bottom:12px">
+        <div class="callout-title">Day 3 Knowledge Refresher</div>
+        Complete all questions before starting today's content. These cover RBAC, Row-Level Security, audit logging, and backup from Day 3. Aim for 100% before moving on.
+      </div>
+      <div id="quiz-d6"></div>
+    </div>
+
+    <div class="tab-panel" id="tab-d6-explain">
       <h3>Reading an Execution Plan</h3>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">sql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
@@ -3198,6 +3367,77 @@ $$;
           </div>
         </div>
       </div>
+
+      <div class="exercise-card">
+        <div class="exercise-header" onclick="toggleExercise(this)">
+          <div class="ex-num">P3</div>
+          <div class="ex-title">Build a live monitoring dashboard query</div>
+          <span class="ex-difficulty diff-advanced">Advanced</span>
+          <span class="ex-toggle">▼</span>
+        </div>
+        <div class="exercise-body" style="display:none">
+          <p>Write a single SQL query that produces a monitoring summary for the NSR database. It should report: cache hit ratio (%), table bloat (live vs dead tuples) for the top 5 most bloated tables, index usage efficiency (index scans vs sequential scans), and connection count vs max connections. Present the results in a format suitable for a DBA dashboard.</p>
+          <div class="callout info"><div class="callout-title">System views to use</div>
+            <code>pg_stat_database</code> (blks_hit, blks_read), <code>pg_stat_user_tables</code> (n_live_tup, n_dead_tup, seq_scan, idx_scan), <code>pg_stat_user_indexes</code>, <code>pg_stat_activity</code>, <code>current_setting('max_connections')</code>
+          </div>
+          <div class="answer-area">Write your monitoring queries here</div>
+          <div class="answer-reveal" id="ans-d6-p3">
+            <div class="callout tip"><div class="callout-title">Full Solution</div></div>
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">sql – DBA monitoring dashboard</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre><span class="cmt">-- 1. Cache hit ratio (should be > 99%)</span>
+<span class="kw">SELECT</span>
+  <span class="fn">ROUND</span>(blks_hit * <span class="num">100.0</span> / <span class="fn">NULLIF</span>(blks_hit + blks_read, <span class="num">0</span>), <span class="num">2</span>) <span class="kw">AS</span> cache_hit_pct,
+  blks_hit,
+  blks_read
+<span class="kw">FROM</span> pg_stat_database
+<span class="kw">WHERE</span> datname = current_database();
+
+<span class="cmt">-- 2. Table bloat — top 5 tables with most dead tuples</span>
+<span class="kw">SELECT</span>
+  schemaname || <span class="str">'.'</span> || relname <span class="kw">AS</span> table_name,
+  n_live_tup,
+  n_dead_tup,
+  <span class="fn">ROUND</span>(n_dead_tup * <span class="num">100.0</span> / <span class="fn">NULLIF</span>(n_live_tup + n_dead_tup, <span class="num">0</span>), <span class="num">1</span>) <span class="kw">AS</span> dead_pct,
+  last_autovacuum::DATE <span class="kw">AS</span> last_vacuum
+<span class="kw">FROM</span> pg_stat_user_tables
+<span class="kw">WHERE</span> schemaname = <span class="str">'nsr'</span>
+<span class="kw">ORDER BY</span> n_dead_tup <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> <span class="num">5</span>;
+
+<span class="cmt">-- 3. Index efficiency — tables with high sequential scan ratio</span>
+<span class="kw">SELECT</span>
+  schemaname || <span class="str">'.'</span> || relname <span class="kw">AS</span> table_name,
+  seq_scan,
+  idx_scan,
+  <span class="kw">CASE</span> <span class="kw">WHEN</span> seq_scan + idx_scan = <span class="num">0</span> <span class="kw">THEN</span> <span class="kw">NULL</span>
+       <span class="kw">ELSE ROUND</span>(seq_scan * <span class="num">100.0</span> / (seq_scan + idx_scan), <span class="num">1</span>)
+  <span class="kw">END AS</span> seq_pct
+<span class="kw">FROM</span> pg_stat_user_tables
+<span class="kw">WHERE</span> schemaname = <span class="str">'nsr'</span>
+  <span class="kw">AND</span> seq_scan + idx_scan > <span class="num">10</span>
+<span class="kw">ORDER BY</span> seq_pct <span class="kw">DESC NULLS LAST</span>
+<span class="kw">LIMIT</span> <span class="num">5</span>;
+
+<span class="cmt">-- 4. Connection saturation</span>
+<span class="kw">SELECT</span>
+  <span class="fn">COUNT</span>(*) <span class="kw">AS</span> active_connections,
+  <span class="fn">current_setting</span>(<span class="str">'max_connections'</span>)::<span class="typ">INT</span> <span class="kw">AS</span> max_connections,
+  <span class="fn">ROUND</span>(<span class="fn">COUNT</span>(*) * <span class="num">100.0</span> / <span class="fn">current_setting</span>(<span class="str">'max_connections'</span>)::<span class="typ">INT</span>, <span class="num">1</span>) <span class="kw">AS</span> pct_used
+<span class="kw">FROM</span> pg_stat_activity
+<span class="kw">WHERE</span> state != <span class="str">'idle'</span>;</pre>
+            </div>
+            <div class="callout info" style="margin-top:8px">
+              <div class="callout-title">Interpreting results — alert thresholds</div>
+              <strong>Cache hit &lt; 99%</strong>: investigate shared_buffers and recent large seq scans. <strong>Dead pct &gt; 20%</strong> on any table: autovacuum is not keeping up — check autovacuum_vacuum_threshold and table write rate. <strong>Seq pct &gt; 50%</strong> on a large table: likely missing index or an analytical query polluting the stats. <strong>Connection pct &gt; 80%</strong>: consider PgBouncer connection pooling — PostgreSQL forks a backend per connection, which is expensive.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            <button class="btn-toggle-answer" onclick="toggleAnswer('d6-p3',this)">▼ Show Answer</button>
+            <button class="ex-complete-btn" onclick="markExDone(this)">✓ Mark done</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div><!-- end day6 -->
@@ -3223,14 +3463,23 @@ $$;
   <div class="callout info"><div class="callout-title">Day Focus</div>Day 7 connects everything: schema design (Day 1), SQL (Day 2), security (Day 3), and performance (Day 6) all come together in a real ETL pipeline. The key message is that ETL is not a one-off script — it is a repeatable, audited, validated process. Every step must be idempotent (safe to re-run), every load must record its lineage, and every failure must be traceable to a specific row. Connect the NDP Act table to the technical controls participants have already built; governance is not paperwork, it is the audit_log and the data_lineage table working together.</div>
 
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab(this,'d7tabs','d7-etl')">ETL vs ELT</button>
+    <button class="tab-btn active" onclick="switchTab(this,'d7tabs','d7-refresher')">Refresher Quiz</button>
+    <button class="tab-btn" onclick="switchTab(this,'d7tabs','d7-etl')">ETL vs ELT</button>
     <button class="tab-btn" onclick="switchTab(this,'d7tabs','d7-dedup')">Deduplication</button>
     <button class="tab-btn" onclick="switchTab(this,'d7tabs','d7-gov')">NDP Act &amp; Governance</button>
     <button class="tab-btn" onclick="switchTab(this,'d7tabs','d7-exercises')">Exercises</button>
   </div>
 
   <div id="d7tabs">
-    <div class="tab-panel active" id="tab-d7-etl">
+    <div class="tab-panel active" id="tab-d7-refresher">
+      <div class="callout info" style="margin-bottom:12px">
+        <div class="callout-title">Day 6 Knowledge Refresher</div>
+        Complete all questions before starting today's content. These cover EXPLAIN ANALYZE, indexing, partitioning, and monitoring from Day 6. Aim for 100% before moving on.
+      </div>
+      <div id="quiz-d7"></div>
+    </div>
+
+    <div class="tab-panel" id="tab-d7-etl">
       <h3>ETL vs ELT</h3>
       <table>
         <tr><th>Approach</th><th>Where transformation happens</th><th>NSR use case</th></tr>
@@ -3505,6 +3754,118 @@ $$;
           </div>
         </div>
       </div>
+
+      <div class="exercise-card">
+        <div class="exercise-header" onclick="toggleExercise(this)">
+          <div class="ex-num">G3</div>
+          <div class="ex-title">End-to-end pipeline: stage → validate → deduplicate → promote → audit</div>
+          <span class="ex-difficulty diff-advanced">Advanced</span>
+          <span class="ex-toggle">▼</span>
+        </div>
+        <div class="exercise-body" style="display:none">
+          <p>Build a complete, idempotent ETL pipeline that can be run multiple times without producing duplicates. The pipeline must: (1) stage raw data, (2) run a validation report, (3) deduplicate using DISTINCT ON, (4) promote clean rows with ON CONFLICT DO UPDATE (upsert, not ignore), and (5) record full lineage. Wrap steps 3–5 in a single transaction.</p>
+          <div class="callout info"><div class="callout-title">Step-by-step guide</div>
+            <strong>Step 1</strong> — Create the staging table (if not exists — idempotent DDL).<br>
+            <strong>Step 2</strong> — Insert 5 test rows including: one with a NULL household_code, one duplicate, one with a bad pmt_score ('N/A'), and two valid unique rows.<br>
+            <strong>Step 3</strong> — Run the validation report (UNION ALL of issue counts).<br>
+            <strong>Step 4</strong> — BEGIN a transaction. Inside it: INSERT with DISTINCT ON + ON CONFLICT DO UPDATE to upsert valid rows. Then INSERT into data_lineage. COMMIT.<br>
+            <strong>Step 5</strong> — Verify: SELECT from households for the two new codes; SELECT from data_lineage for the batch record.<br>
+            <strong>Step 6</strong> — Run the entire pipeline again without changing anything. Verify row counts did not change (idempotency test).
+          </div>
+          <div class="answer-area">Write the complete pipeline SQL here</div>
+          <div class="answer-reveal" id="ans-d7-g3">
+            <div class="callout tip"><div class="callout-title">Full Solution</div></div>
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">sql – complete idempotent ETL pipeline</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre><span class="cmt">-- Step 1: Create staging table (idempotent)</span>
+<span class="kw">CREATE TABLE IF NOT EXISTS</span> nsr.stg_households (
+  household_code  <span class="typ">TEXT</span>,
+  state_name      <span class="typ">TEXT</span>,
+  lga_name        <span class="typ">TEXT</span>,
+  head_name       <span class="typ">TEXT</span>,
+  pmt_score       <span class="typ">TEXT</span>,
+  import_batch    <span class="typ">TEXT</span>,
+  loaded_at       <span class="typ">TIMESTAMPTZ</span> <span class="kw">DEFAULT now</span>()
+);
+<span class="kw">TRUNCATE</span> nsr.stg_households; <span class="cmt">-- clear previous run</span>
+
+<span class="cmt">-- Step 2: Insert test data (simulating a CSV load)</span>
+<span class="kw">INSERT INTO</span> nsr.stg_households
+  (household_code, state_name, lga_name, head_name, pmt_score, import_batch)
+<span class="kw">VALUES</span>
+  (<span class="kw">NULL</span>,   <span class="str">'Kano'</span>, <span class="str">'Kano Municipal'</span>, <span class="str">'Garba Musa'</span>,    <span class="str">'32.5'</span>, <span class="str">'BATCH_20240315'</span>),  <span class="cmt">-- null code</span>
+  (<span class="str">'KN-001'</span>, <span class="str">'Kano'</span>, <span class="str">'Kano Municipal'</span>, <span class="str">'Aisha Sule'</span>,    <span class="str">'N/A'</span>,  <span class="str">'BATCH_20240315'</span>),  <span class="cmt">-- bad pmt</span>
+  (<span class="str">'KN-002'</span>, <span class="str">'Kano'</span>, <span class="str">'Kano Municipal'</span>, <span class="str">'Ibrahim Yusuf'</span>, <span class="str">'28.1'</span>, <span class="str">'BATCH_20240315'</span>),  <span class="cmt">-- valid</span>
+  (<span class="str">'KN-002'</span>, <span class="str">'Kano'</span>, <span class="str">'Kano Municipal'</span>, <span class="str">'Ibrahim Yusuf'</span>, <span class="str">'28.1'</span>, <span class="str">'BATCH_20240315'</span>),  <span class="cmt">-- duplicate</span>
+  (<span class="str">'KN-003'</span>, <span class="str">'Kano'</span>, <span class="str">'Tarauni'</span>,        <span class="str">'Fatima Danladi'</span>, <span class="str">'41.7'</span>, <span class="str">'BATCH_20240315'</span>); <span class="cmt">-- valid</span>
+
+<span class="cmt">-- Step 3: Validation report</span>
+<span class="kw">SELECT</span> issue, <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> (
+  <span class="kw">SELECT</span> <span class="str">'missing_household_code'</span> <span class="kw">AS</span> issue <span class="kw">FROM</span> nsr.stg_households <span class="kw">WHERE</span> household_code <span class="kw">IS NULL</span>
+  <span class="kw">UNION ALL</span>
+  <span class="kw">SELECT</span> <span class="str">'invalid_pmt_score'</span>       <span class="kw">FROM</span> nsr.stg_households <span class="kw">WHERE</span> pmt_score !~ <span class="str">'^[0-9]+(\.[0-9]+)?$'</span>
+  <span class="kw">UNION ALL</span>
+  <span class="kw">SELECT</span> <span class="str">'duplicate_code_in_batch'</span> <span class="kw">FROM</span> (
+    <span class="kw">SELECT</span> household_code <span class="kw">FROM</span> nsr.stg_households <span class="kw">GROUP BY</span> household_code <span class="kw">HAVING COUNT</span>(*) > <span class="num">1</span>
+  ) d
+) errors <span class="kw">GROUP BY</span> issue;
+<span class="cmt">-- Expected: missing_household_code=1, invalid_pmt_score=1, duplicate_code_in_batch=1</span>
+
+<span class="cmt">-- Step 4: Promote in a single transaction (idempotent upsert + lineage)</span>
+<span class="kw">BEGIN</span>;
+
+<span class="kw">INSERT INTO</span> nsr.households (household_code, lga_id, head_name, pmt_score)
+<span class="kw">SELECT DISTINCT ON</span> (s.household_code)
+  s.household_code,
+  l.lga_id,
+  s.head_name,
+  s.pmt_score::<span class="typ">NUMERIC</span>
+<span class="kw">FROM</span> nsr.stg_households s
+<span class="kw">JOIN</span> nsr.lgas l <span class="kw">ON</span> l.lga_name = s.lga_name
+<span class="kw">WHERE</span> s.household_code <span class="kw">IS NOT NULL</span>
+  <span class="kw">AND</span> s.pmt_score ~ <span class="str">'^[0-9]+(\.[0-9]+)?$'</span>
+<span class="kw">ORDER BY</span> s.household_code, s.loaded_at <span class="kw">DESC</span>
+<span class="kw">ON CONFLICT</span> (household_code) <span class="kw">DO UPDATE SET</span>
+  head_name = <span class="kw">EXCLUDED</span>.head_name,
+  pmt_score = <span class="kw">EXCLUDED</span>.pmt_score;
+<span class="cmt">-- Upsert: inserts KN-002 and KN-003; skips NULL and 'N/A' rows</span>
+
+<span class="kw">INSERT INTO</span> nsr.data_lineage
+  (table_name, source_system, record_count, batch_ref, lawful_basis, data_owner)
+<span class="kw">SELECT</span>
+  <span class="str">'nsr.households'</span>,
+  <span class="str">'BATCH_20240315'</span>,
+  <span class="fn">COUNT</span>(*),
+  <span class="fn">MAX</span>(import_batch),
+  <span class="str">'NDP Act 2023 s.25 – Social Protection Mandate'</span>,
+  <span class="str">'NSR Programme Team'</span>
+<span class="kw">FROM</span> nsr.stg_households
+<span class="kw">WHERE</span> household_code <span class="kw">IS NOT NULL</span>
+  <span class="kw">AND</span> pmt_score ~ <span class="str">'^[0-9]+(\.[0-9]+)?$'</span>;
+
+<span class="kw">COMMIT</span>;
+
+<span class="cmt">-- Step 5: Verify</span>
+<span class="kw">SELECT</span> household_code, head_name, pmt_score <span class="kw">FROM</span> nsr.households
+<span class="kw">WHERE</span> household_code <span class="kw">IN</span> (<span class="str">'KN-002'</span>, <span class="str">'KN-003'</span>);
+
+<span class="kw">SELECT</span> batch_ref, record_count, import_date <span class="kw">FROM</span> nsr.data_lineage <span class="kw">ORDER BY</span> import_date <span class="kw">DESC LIMIT</span> <span class="num">1</span>;
+
+<span class="cmt">-- Step 6: Idempotency test — re-run Step 4 and verify counts unchanged</span>
+<span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.households <span class="kw">WHERE</span> household_code <span class="kw">IN</span> (<span class="str">'KN-002'</span>, <span class="str">'KN-003'</span>);
+<span class="cmt">-- Must still be 2 — ON CONFLICT DO UPDATE refreshes, does not duplicate</span></pre>
+            </div>
+            <div class="callout info" style="margin-top:8px">
+              <div class="callout-title">Key teaching points</div>
+              <strong>TRUNCATE staging before re-run</strong>: clearing and re-loading staging is safer than trying to detect "new" rows — it keeps the pipeline stateless. <strong>DISTINCT ON vs GROUP BY</strong>: DISTINCT ON keeps one full row (the most recent by loaded_at) rather than just the key — needed because you want all columns, not just the duplicate key. <strong>ON CONFLICT DO UPDATE</strong>: upsert instead of DO NOTHING means a re-enumeration updates existing households with fresh data rather than silently skipping them. <strong>Transaction wrapping insert + lineage</strong>: if the lineage insert fails, the data insert rolls back too — you never have data without a lineage record.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            <button class="btn-toggle-answer" onclick="toggleAnswer('d7-g3',this)">▼ Show Answer</button>
+            <button class="ex-complete-btn" onclick="markExDone(this)">✓ Mark done</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div><!-- end day7 -->
@@ -3519,6 +3880,15 @@ $$;
       <div class="page-subtitle">Final presentations, reflections, certificates &amp; next steps</div>
     </div>
     <button class="mark-done-btn" id="done-day8" onclick="markDone('day8')">Mark Complete ✓</button>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><div class="section-icon si-purple">🧠</div><h2>Day 7 Refresher Quiz</h2></div>
+    <div class="callout info" style="margin-bottom:12px">
+      <div class="callout-title">Final reflection before programme closure</div>
+      Complete this short quiz on ETL, deduplication, and data governance from Day 7. Then move on to your final presentation notes.
+    </div>
+    <div id="quiz-d8"></div>
   </div>
 
   <div class="section">
@@ -4828,6 +5198,251 @@ const QUIZZES = {
       ],
       correct: 1,
       explanation: 'RETURNING is a PostgreSQL extension that returns the modified rows as part of the DML statement itself — very useful for auditing and confirming what was changed.'
+    }
+  ],
+  'd3': [
+    {
+      q: 'Why should a filter condition like <code>p.status = \'processed\'</code> be placed in the ON clause of a LEFT JOIN rather than the WHERE clause?',
+      opts: [
+        'Performance — ON clause filters run before the join, WHERE clause runs after',
+        'Moving it to WHERE turns the LEFT JOIN into an INNER JOIN, excluding rows with no matching payment',
+        'PostgreSQL syntax requires status filters in ON clauses',
+        'There is no difference — the query planner treats them identically'
+      ],
+      correct: 1,
+      explanation: 'A WHERE condition on the right-side table of a LEFT JOIN filters out NULLs — rows that had no match become excluded, effectively converting a LEFT JOIN to an INNER JOIN. Placing it in the ON clause keeps unmatched left-table rows.'
+    },
+    {
+      q: 'You write: <code>INSERT INTO nsr.households ... RETURNING household_id</code>. What does this give you?',
+      opts: [
+        'The number of rows inserted',
+        'The household_id generated for the newly inserted row, available in the same statement',
+        'A confirmation message from PostgreSQL',
+        'A lock on the inserted row for the next statement'
+      ],
+      correct: 1,
+      explanation: 'RETURNING gives you the column values from the inserted row — including any SERIAL/BIGSERIAL primary key generated by the sequence — without needing a follow-up SELECT. Useful for chaining IDs across related inserts in the same transaction.'
+    },
+    {
+      q: 'What does <code>PERCENT_RANK()</code> return for the lowest-scoring row in a partition?',
+      opts: ['0','0.5','1','NULL'],
+      correct: 0,
+      explanation: 'PERCENT_RANK() returns a value between 0 and 1. The lowest row gets 0, the highest gets 1. This makes it easy to identify bottom-X%: WHERE percent_rank < 0.20 gives the bottom 20%.'
+    },
+    {
+      q: 'Which of these correctly uses a CTE to find households with pmt_score below the state average?',
+      opts: [
+        'WITH avg AS (SELECT state_id, AVG(pmt_score) AS avg_score FROM nsr.households GROUP BY state_id) SELECT h.* FROM nsr.households h JOIN avg a ON a.state_id = h.state_id WHERE h.pmt_score < a.avg_score',
+        'SELECT * FROM nsr.households WHERE pmt_score < AVG(pmt_score)',
+        'WITH avg AS SELECT AVG(pmt_score) FROM nsr.households SELECT * FROM nsr.households WHERE pmt_score < avg',
+        'SELECT * FROM nsr.households GROUP BY state_id HAVING pmt_score < AVG(pmt_score)'
+      ],
+      correct: 0,
+      explanation: 'CTEs defined with WITH can be joined like tables. The CTE computes the per-state average once; the outer query joins households to it and filters rows below that average. Option B is invalid — you cannot use an aggregate function directly in a WHERE clause.'
+    }
+  ],
+  'd4': [
+    {
+      q: 'Which PostgreSQL feature restricts which rows a specific database role can see or modify?',
+      opts: ['RBAC (Role-Based Access Control)','Row-Level Security (RLS)','Column privileges','Schema search_path'],
+      correct: 1,
+      explanation: 'Row-Level Security (RLS) attaches policies to a table that evaluate per row. RBAC controls which tables/columns a role can access at all; RLS controls which rows within those tables are visible.'
+    },
+    {
+      q: 'What does the BYPASSRLS attribute do when granted to a role?',
+      opts: [
+        'Allows the role to skip authentication',
+        'Grants the role superuser status',
+        'The role sees all rows, ignoring any RLS policies on the table',
+        'Disables audit logging for the role'
+      ],
+      correct: 2,
+      explanation: 'BYPASSRLS means the role is exempt from all RLS policies — it sees every row regardless of what the policies say. Superusers automatically bypass RLS. Grant this carefully: nsr_dba and nsr_supervisor use it; nsr_caseworker must not have it.'
+    },
+    {
+      q: 'In the NSR schema, <code>current_setting(\'app.state_code\', TRUE)</code> is used in RLS policies. What does the second argument TRUE do?',
+      opts: [
+        'Makes the setting permanent across sessions',
+        'Returns NULL instead of raising an error when the variable is not set',
+        'Forces the variable to be treated as a boolean',
+        'Grants the caseworker elevated access'
+      ],
+      correct: 1,
+      explanation: 'current_setting(name, missing_ok). With missing_ok = TRUE, if the session variable app.state_code has not been set, the function returns NULL rather than throwing an error. This is essential for graceful handling when a connection is made without setting the variable first.'
+    },
+    {
+      q: 'Which pg_dump format supports parallel restore with pg_restore -j?',
+      opts: ['Plain text (-F p)','Custom (-F c)','Directory (-F d)','Tar (-F t)'],
+      correct: 2,
+      explanation: 'Directory format (-F d) splits each object into a separate file, enabling pg_restore to restore multiple objects in parallel with the -j flag. Custom format (-F c) must be restored serially. Plain text is just a SQL script and does not use pg_restore at all.'
+    }
+  ],
+  'd5': [
+    {
+      q: 'A checkpoint in PostgreSQL performs what action?',
+      opts: [
+        'Locks all tables briefly to ensure consistency',
+        'Flushes all dirty data pages from shared_buffers to disk and records the checkpoint LSN in WAL',
+        'Compresses WAL segments to save disk space',
+        'Removes dead tuples left by MVCC'
+      ],
+      correct: 1,
+      explanation: 'A checkpoint writes dirty pages from the buffer cache to data files and marks a safe recovery point in WAL. After a crash, PostgreSQL only needs to replay WAL from the last checkpoint, not from the very beginning of the WAL stream.'
+    },
+    {
+      q: 'An nsr_caseworker runs SELECT * FROM nsr.households. The RLS policy is: <code>USING (state_code = current_setting(\'app.state_code\', TRUE))</code>. The caseworker\'s session has SET app.state_code = \'KN\'. What does the caseworker see?',
+      opts: [
+        'All households in the database',
+        'Only households where state_code = \'KN\'',
+        'An error — caseworkers cannot query households directly',
+        'No rows — caseworkers are denied by default'
+      ],
+      correct: 1,
+      explanation: 'RLS evaluates the USING expression per row. The session variable is \'KN\', so only rows where state_code = \'KN\' pass the policy. nsr_supervisor and nsr_dba with BYPASSRLS would see all rows.'
+    },
+    {
+      q: 'Why is NOT EXISTS safer than NOT IN when checking for non-matching rows, when the subquery column could contain NULLs?',
+      opts: [
+        'NOT EXISTS is faster because it short-circuits',
+        'NOT IN with NULLs in the subquery returns no rows at all due to three-valued logic; NOT EXISTS handles NULLs correctly',
+        'NOT IN requires an index; NOT EXISTS does not',
+        'They behave identically — there is no safety difference'
+      ],
+      correct: 1,
+      explanation: 'In SQL three-valued logic, NULL compared to anything returns UNKNOWN. NOT IN propagates this: if the subquery returns any NULL, the entire NOT IN condition becomes UNKNOWN for every row, returning an empty result. NOT EXISTS avoids this because it checks for row existence, not equality.'
+    },
+    {
+      q: 'What does VACUUM do in PostgreSQL?',
+      opts: [
+        'Removes all data from a table quickly (like TRUNCATE)',
+        'Reclaims storage from dead tuple versions left by MVCC updates and deletes',
+        'Rebuilds indexes to improve query performance',
+        'Compresses WAL segments older than 7 days'
+      ],
+      correct: 1,
+      explanation: 'MVCC keeps old row versions (dead tuples) until VACUUM reclaims them. Without VACUUM, dead tuples accumulate, bloating the table and slowing queries. VACUUM also updates the visibility map used by index-only scans.'
+    }
+  ],
+  'd6': [
+    {
+      q: 'In EXPLAIN ANALYZE output, you see "rows=12 width=48 (actual rows=48200 loops=1)". What does this tell you?',
+      opts: [
+        'The query returned 12 rows correctly',
+        'The planner\'s row estimate (12) is wildly wrong versus actual (48200) — statistics are stale, likely needing ANALYZE',
+        'The query plan is optimal — actual rows match width correctly',
+        'An index should be dropped to fix this'
+      ],
+      correct: 1,
+      explanation: 'The "rows=" estimate comes from pg_statistic. A large gap between estimated and actual rows means the planner is choosing a bad plan (e.g., nested loop instead of hash join). Run ANALYZE to refresh statistics. This is the single most important thing to check in EXPLAIN ANALYZE output.'
+    },
+    {
+      q: 'Which index type is required for JSONB containment operators (@>, <@) in PostgreSQL?',
+      opts: ['B-tree','Hash','GIN','BRIN'],
+      correct: 2,
+      explanation: 'GIN (Generalized Inverted Index) decomposes JSONB into individual key-value pairs and indexes each one. B-tree can only index scalar values. JSONB containment, existence (@>), and key-exists (?) operators all require GIN.'
+    },
+    {
+      q: 'What is a partial index, and when would you use one on nsr.payments?',
+      opts: [
+        'An index covering only the first 50% of table rows, for large tables',
+        'An index with a WHERE clause that only indexes rows matching a condition — e.g., WHERE status = \'pending\'',
+        'An index on a subset of columns in a composite key',
+        'An index created with CONCURRENTLY to avoid table locks'
+      ],
+      correct: 1,
+      explanation: 'A partial index includes only rows satisfying a WHERE clause. If 95% of payments are \'processed\' and queries almost always filter on \'pending\', a partial index on WHERE status = \'pending\' is tiny, fits in RAM, and is very fast. Perfect for hot minority subsets.'
+    },
+    {
+      q: 'pg_stat_bgwriter shows a high checkpoints_req count relative to checkpoints_timed. What does this indicate?',
+      opts: [
+        'The autovacuum worker is running too frequently',
+        'Checkpoints are being forced by WAL filling up, not by the scheduled interval — increase checkpoint_completion_target or max_wal_size',
+        'The database is running out of disk space',
+        'Background writer is writing too slowly — increase bgwriter_lru_maxpages'
+      ],
+      correct: 1,
+      explanation: 'checkpoints_timed = checkpoint happened on schedule (healthy). checkpoints_req = checkpoint was forced because WAL grew too large before the next scheduled interval (write pressure is high). Fix: increase checkpoint_completion_target (spread I/O) or increase max_wal_size (allow more WAL before forcing).'
+    }
+  ],
+  'd7': [
+    {
+      q: 'You run EXPLAIN ANALYZE on a query against a 10-million-row partitioned table and see "Seq Scan on nsr_payments_2022". What most likely caused partition pruning to fail?',
+      opts: [
+        'The table has too many partitions',
+        'The WHERE clause does not reference the partition key, or uses a non-immutable function like NOW() that prevents compile-time pruning',
+        'Partition pruning only works with BRIN indexes',
+        'EXPLAIN ANALYZE disables partition pruning'
+      ],
+      correct: 1,
+      explanation: 'PostgreSQL prunes partitions at plan time using the WHERE clause. If the filter does not reference the partition key (payment_date), or if it wraps the key in a function that prevents static evaluation, all partitions are scanned. Always filter directly on the partition key: WHERE payment_date >= \'2022-01-01\' rather than WHERE EXTRACT(year FROM payment_date) = 2022.'
+    },
+    {
+      q: 'A monitoring query shows <code>blks_hit / (blks_hit + blks_read) = 0.87</code>. What action is most appropriate?',
+      opts: [
+        'This is excellent — 87% cache hit rate means the system is well-tuned',
+        'Below 0.99 is concerning — investigate shared_buffers size and which tables/indexes are driving the disk reads',
+        'Rebuild all indexes to improve the hit rate',
+        'Run VACUUM ANALYZE immediately to fix this'
+      ],
+      correct: 1,
+      explanation: 'A well-tuned OLTP PostgreSQL instance should have a cache hit ratio above 99%. 87% means 13% of block reads are going to disk — very expensive. Investigate which tables are cold with pg_statio_user_tables and consider increasing shared_buffers, or check if a large sequential scan is polluting the cache.'
+    },
+    {
+      q: 'What is the purpose of <code>EXPLAIN (ANALYZE, BUFFERS)</code> compared to plain <code>EXPLAIN ANALYZE</code>?',
+      opts: [
+        'BUFFERS shows the actual SQL buffers used — it is identical to plain ANALYZE',
+        'BUFFERS adds shared/local block hit and read counts, showing exactly how much work came from cache vs disk for each plan node',
+        'BUFFERS forces PostgreSQL to bypass the cache for accurate timing',
+        'BUFFERS enables parallel query execution for the EXPLAIN run'
+      ],
+      correct: 1,
+      explanation: 'BUFFERS shows shared_blks_hit (from cache), shared_blks_read (from disk), shared_blks_dirtied, and shared_blks_written per plan node. This lets you pinpoint exactly which part of the plan is causing disk I/O — invaluable for diagnosing slow queries.'
+    }
+  ],
+  'd8': [
+    {
+      q: 'Why do staging tables in an ETL pipeline deliberately have no constraints?',
+      opts: [
+        'Constraints slow down bulk COPY operations',
+        'The staging table must accept all incoming data — including nulls, bad formats, and duplicates — so that validation can report exactly what arrived rather than losing bad records at load time',
+        'PostgreSQL does not support constraints on temporary tables',
+        'Constraints are added automatically during the COPY operation'
+      ],
+      correct: 1,
+      explanation: 'A staging table is a quarantine zone, not a production table. Accepting everything means you can report exactly how many rows had each type of error. Rejecting at load time means you lose visibility into what came in — you cannot report "12 rows had invalid pmt_score" if they were never loaded.'
+    },
+    {
+      q: 'What does <code>ON CONFLICT (household_code) DO NOTHING</code> do in an INSERT statement?',
+      opts: [
+        'Raises an error if a duplicate is found',
+        'Replaces the existing row with the new one',
+        'Silently skips any row whose household_code already exists — making the INSERT idempotent',
+        'Locks the conflicting row until the transaction commits'
+      ],
+      correct: 2,
+      explanation: 'ON CONFLICT DO NOTHING (upsert with no action) means the INSERT is safe to re-run. If the pipeline fails halfway and is restarted, rows already loaded are skipped rather than causing a duplicate-key error. This is the idempotency guarantee essential for reliable ETL.'
+    },
+    {
+      q: 'The NDP Act 2023 requires a "lawful basis" for every data processing activity. How does the NSR schema implement this?',
+      opts: [
+        'Via CHECK constraints that validate the purpose of each query',
+        'Via the data_lineage table which records lawful_basis per import batch as a NOT NULL column',
+        'Via pgAudit which logs the purpose automatically',
+        'Via RLS policies that restrict access to lawful purposes'
+      ],
+      correct: 1,
+      explanation: 'The data_lineage table records source_system, lawful_basis, data_owner, and batch_ref for every import. This is the database-level paper trail required by the Act. pgAudit logs WHO accessed data; data_lineage records WHY it was processed.'
+    },
+    {
+      q: 'You find that a single NIN appears in two different households in nsr.individuals. What is the correct response?',
+      opts: [
+        'DELETE the newer record immediately — it is a duplicate',
+        'Flag both rows for manual review in audit_log, escalate to a supervisor, and do not delete until reviewed — it could be a data-entry error or a fraud signal',
+        'Run VACUUM to remove the duplicate',
+        'Merge the two households into one automatically'
+      ],
+      correct: 1,
+      explanation: 'A shared NIN could mean double-enumeration (harmless data entry error) or NIN fraud (serious). Automatic deletion destroys evidence. The correct process: mark both rows, log in audit_log, escalate to supervisor for investigation. Never auto-delete on a duplicate suspicion.'
     }
   ]
 };
