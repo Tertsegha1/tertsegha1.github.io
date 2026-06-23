@@ -1257,6 +1257,36 @@ psql -U postgres
           <div class="callout-title">Design decisions worth calling out</div>
           <strong>BIGSERIAL vs SERIAL</strong>: the NSR can grow to tens of millions of individuals; <code>BIGSERIAL</code> (64-bit) avoids integer overflow at ~2.1 billion rows that <code>SERIAL</code> would hit. <strong>ON DELETE CASCADE on individuals</strong>: if a household is removed (e.g. duplicate detected), all members cascade — prevents orphaned rows without a manual DELETE. <strong>NIN regex CHECK</strong>: <code>'^[A-Z]{2}[0-9]{7}[A-Z]{2}$'</code> enforces NIMC format at the database level, not just the application layer — the registry is the authoritative source so data quality is enforced here, not in code that may be bypassed. <strong>dob range CHECK</strong>: rejects dates before 1900 and future dates — catches common data-entry errors in field enumeration. <strong>NULLABLE nin</strong>: many enumerated individuals, especially children, may not yet have a NIN; <code>UNIQUE</code> with <code>NULL</code> allowed means multiple rows can have <code>NULL</code> without conflicting (PostgreSQL treats NULLs as distinct in UNIQUE indexes).
         </div>
+
+        <h3>Advanced — WAL Internals: LSN, Segments, and Crash Recovery</h3>
+        <p>Every WAL write is stamped with a <strong>Log Sequence Number (LSN)</strong> — a monotonically increasing byte offset into the WAL stream. LSNs are the spine of crash recovery and replication: the primary sends WAL bytes from a known LSN; the standby applies them in order.</p>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">sql – inspecting WAL position live</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="cmt">-- Current WAL write position (LSN)</span>
+<span class="kw">SELECT</span> <span class="fn">pg_current_wal_lsn</span>()                     <span class="kw">AS</span> current_lsn,
+       <span class="fn">pg_walfile_name</span>(<span class="fn">pg_current_wal_lsn</span>())     <span class="kw">AS</span> wal_file,
+       <span class="fn">pg_current_wal_insert_lsn</span>()               <span class="kw">AS</span> insert_lsn;
+
+<span class="cmt">-- Run a DML and watch LSN advance</span>
+<span class="kw">SELECT</span> <span class="fn">pg_current_wal_lsn</span>();        <span class="cmt">-- record before</span>
+<span class="kw">UPDATE</span> nsr.households <span class="kw">SET</span> is_active = <span class="kw">TRUE WHERE</span> household_id = <span class="num">1</span>;
+<span class="kw">SELECT</span> <span class="fn">pg_current_wal_lsn</span>();        <span class="cmt">-- record after — delta = WAL bytes written</span>
+
+<span class="cmt">-- Distance between two LSNs in bytes</span>
+<span class="kw">SELECT</span> <span class="fn">pg_wal_lsn_diff</span>(
+  <span class="fn">pg_current_wal_lsn</span>(),
+  <span class="str">'0/01000000'</span>    <span class="cmt">-- replace with your before-LSN</span>
+) <span class="kw">AS</span> bytes_since_start;
+
+<span class="cmt">-- Last checkpoint info</span>
+<span class="kw">SELECT</span> checkpoint_lsn, prior_checkpoint_lsn,
+       redo_lsn, wal_level, timeline_id
+<span class="kw">FROM</span> pg_control_checkpoint();</pre>
+        </div>
+        <div class="callout info" style="margin-top:8px">
+          <div class="callout-title">Why LSNs matter in production NSR operations</div>
+          <strong>WAL segments</strong>: WAL is written to 16 MB files (default) named with LSN offsets, e.g. <code>000000010000000000000001</code>. These are the files pg_basebackup and streaming replication transfer. <strong>Crash recovery</strong>: on restart after a crash, PostgreSQL reads the <code>pg_control</code> file to find the last checkpoint LSN, then replays all WAL records from that point forward — this is why commits are durable even if data pages were not flushed. <strong>pg_wal_lsn_diff</strong>: measuring LSN distance before and after a large batch INSERT tells you exactly how many WAL bytes that operation generated — critical for capacity planning when replication lag is a concern. <strong>wal_level</strong>: must be at least <code>replica</code> for streaming replication, and <code>logical</code> for logical decoding / CDC pipelines.
+        </div>
       </div>
     </div>
 
@@ -1363,6 +1393,41 @@ psql -U postgres
 <span class="kw">INSERT INTO</span> nsr.lgas (state_code, lga_name)
 <span class="kw">VALUES</span> (<span class="str">'XX'</span>,<span class="str">'Invalid State'</span>);
 <span class="cmt">-- Expected: ERROR: insert or update on table "lgas" violates foreign key constraint</span></pre>
+      </div>
+
+      <h3>Advanced — Inspecting MVCC Internals with System Columns</h3>
+      <p>Every PostgreSQL row carries hidden system columns. Querying them reveals exactly which transaction created and deleted each version — the raw mechanics of MVCC made visible.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – xmin, xmax and row visibility</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- See system columns on a live row</span>
+<span class="kw">SELECT</span> xmin, xmax, ctid, household_code, pmt_score
+<span class="kw">FROM</span>  nsr.households
+<span class="kw">WHERE</span> household_code = <span class="str">'HH-LA-001'</span>;
+<span class="cmt">-- xmin = transaction that INSERTed this row version</span>
+<span class="cmt">-- xmax = transaction that deleted/replaced it (0 means still live)</span>
+<span class="cmt">-- ctid  = (page, tuple) physical address — changes on every UPDATE</span>
+
+<span class="cmt">-- Run an UPDATE and observe the new version</span>
+<span class="kw">BEGIN</span>;
+<span class="kw">UPDATE</span> nsr.households <span class="kw">SET</span> pmt_score = <span class="num">35.0</span> <span class="kw">WHERE</span> household_code = <span class="str">'HH-LA-001'</span>;
+
+<span class="cmt">-- Inside the same transaction: what does xmin/xmax look like now?</span>
+<span class="kw">SELECT</span> xmin, xmax, ctid, pmt_score <span class="kw">FROM</span> nsr.households
+<span class="kw">WHERE</span> household_code = <span class="str">'HH-LA-001'</span>;
+<span class="cmt">-- xmin = this transaction ID, ctid points to the NEW tuple location</span>
+
+<span class="kw">ROLLBACK</span>;
+
+<span class="cmt">-- After rollback: xmin/xmax revert to the original row (old version becomes live again)</span>
+<span class="kw">SELECT</span> xmin, xmax, ctid, pmt_score <span class="kw">FROM</span> nsr.households
+<span class="kw">WHERE</span> household_code = <span class="str">'HH-LA-001'</span>;
+
+<span class="cmt">-- Check the current transaction ID for reference</span>
+<span class="kw">SELECT</span> <span class="fn">txid_current</span>() <span class="kw">AS</span> my_txid;</pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">What xmin and xmax reveal about a row's lifecycle</div>
+        <strong>xmin</strong>: the transaction ID that created this row version. A row is visible to a snapshot only if xmin's transaction committed before the snapshot was taken. <strong>xmax</strong>: the transaction that marked this row version as superseded — either a DELETE or an UPDATE that wrote a new version. If xmax = 0, the row is live. If xmax is a committed transaction, the row is a dead tuple waiting for VACUUM. <strong>ctid</strong>: the physical (page, tuple) address. Because UPDATE writes a new version rather than modifying in place, ctid changes on every UPDATE — this is why PostgreSQL cannot use the physical address as a stable row pointer (unlike SQL Server's RID). <strong>Rollback behaviour</strong>: PostgreSQL does not undo WAL on rollback. The new row version is simply marked with xmax = the rolled-back transaction ID, which future readers will see as aborted and skip. No data is physically removed — VACUUM will clean it up.
       </div>
     </div>
 
@@ -1613,7 +1678,34 @@ psql -U postgres
 
   <div id="d2tabs">
     <div class="tab-panel active" id="tab-d2-dml">
-      <h3>INSERT / UPDATE / DELETE / TRUNCATE</h3>
+      <h3>Basics — What is DML and Why Does It Matter?</h3>
+      <p>DML (Data Manipulation Language) is the set of SQL statements that change data: <code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code>, and <code>TRUNCATE</code>. Every payment record, household enrolment, and audit entry in the NSR is created and maintained through DML. Unlike DDL (which changes structure), DML always runs inside a transaction and can be rolled back.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – the four DML statements at a glance</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- INSERT: add a new row</span>
+<span class="kw">INSERT INTO</span> nsr.states (state_code, state_name) <span class="kw">VALUES</span> (<span class="str">'LA'</span>, <span class="str">'Lagos'</span>);
+
+<span class="cmt">-- UPDATE: change values in existing rows</span>
+<span class="kw">UPDATE</span> nsr.households <span class="kw">SET</span> is_active = <span class="kw">FALSE WHERE</span> household_code = <span class="str">'HH-LA-001'</span>;
+
+<span class="cmt">-- DELETE: remove specific rows (respects FKs, generates WAL, can be rolled back)</span>
+<span class="kw">DELETE FROM</span> nsr.households <span class="kw">WHERE</span> household_code = <span class="str">'HH-XX-999'</span>;
+
+<span class="cmt">-- TRUNCATE: remove ALL rows fast (no row-by-row WAL, resets sequences)</span>
+<span class="kw">TRUNCATE</span> nsr.stg_households <span class="kw">RESTART IDENTITY</span>;
+
+<span class="cmt">-- Always verify what you changed — COMMIT only when output looks right</span>
+<span class="kw">BEGIN</span>;
+<span class="kw">UPDATE</span> nsr.households <span class="kw">SET</span> pmt_score = <span class="num">28.5</span> <span class="kw">WHERE</span> household_id = <span class="num">1</span>;
+<span class="kw">SELECT</span> household_id, pmt_score <span class="kw">FROM</span> nsr.households <span class="kw">WHERE</span> household_id = <span class="num">1</span>;
+<span class="kw">COMMIT</span>; <span class="cmt">-- or ROLLBACK if the SELECT looks wrong</span></pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">DELETE vs TRUNCATE — choose deliberately</div>
+        <strong>DELETE</strong> removes rows one by one, fires triggers, respects FK constraints, and writes one WAL record per row — it is slow on large tables but safe and reversible. <strong>TRUNCATE</strong> removes all rows in a single operation, resets sequences if you use RESTART IDENTITY, and writes far less WAL — but it acquires an ACCESS EXCLUSIVE lock (blocks all other access) and does not fire row-level triggers. For a production NSR table with active users, TRUNCATE is dangerous; for a staging table between import runs it is the right choice. Always run TRUNCATE in a transaction you can roll back until you are certain.
+      </div>
+
+      <h3>Intermediate — INSERT / UPDATE / DELETE / TRUNCATE</h3>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">sql – DML</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
         <pre><span class="cmt">-- INSERT with RETURNING</span>
@@ -1718,7 +1810,36 @@ psql -U postgres
     </div>
 
     <div class="tab-panel" id="tab-d2-joins">
-      <h3>JOIN Types</h3>
+      <h3>Basics — What a JOIN Does</h3>
+      <p>A JOIN combines rows from two or more tables based on a related column. Without JOINs, you would have to write separate queries and piece the results together in code. Think of it as the database's way of answering: "give me this data from Table A <em>together with</em> related data from Table B, matched on a common key."</p>
+      <table>
+        <tr><th>JOIN type</th><th>Returns</th><th>NSR example</th></tr>
+        <tr><td><code>INNER JOIN</code></td><td>Only rows that match in both tables</td><td>Households that have at least one payment</td></tr>
+        <tr><td><code>LEFT JOIN</code></td><td>All rows from the left table; NULL for right when no match</td><td>All households, including those with no payments</td></tr>
+        <tr><td><code>FULL OUTER JOIN</code></td><td>All rows from both tables; NULL where no match on either side</td><td>Comparing two data sources for gaps</td></tr>
+        <tr><td><code>CROSS JOIN</code></td><td>Every row × every row (Cartesian product)</td><td>Generating all state × programme combinations</td></tr>
+      </table>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – simplest JOIN: households with their LGA names</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- INNER JOIN: households where the LGA exists in our reference table</span>
+<span class="kw">SELECT</span> h.household_code, l.lga_name, h.pmt_score
+<span class="kw">FROM</span>  nsr.households h
+<span class="kw">JOIN</span>  nsr.lgas       l <span class="kw">ON</span> l.lga_id = h.lga_id
+<span class="kw">LIMIT</span> <span class="num">10</span>;
+
+<span class="cmt">-- LEFT JOIN: all LGAs, even those with no enrolled households yet</span>
+<span class="kw">SELECT</span> l.lga_name, <span class="fn">COUNT</span>(h.household_id) <span class="kw">AS</span> household_count
+<span class="kw">FROM</span>  nsr.lgas       l
+<span class="kw">LEFT JOIN</span> nsr.households h <span class="kw">ON</span> h.lga_id = l.lga_id
+<span class="kw">GROUP BY</span> l.lga_name
+<span class="kw">ORDER BY</span> household_count <span class="kw">DESC</span>;</pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">The most common JOIN mistake</div>
+        Putting a filter on the right-side table in the <strong>WHERE</strong> clause of a LEFT JOIN silently converts it into an INNER JOIN — rows with no match are eliminated because WHERE NULL = value is always false. Always put right-side filters in the <strong>ON</strong> clause to preserve the outer-join behaviour. You will see a practical example of this in the Payment Status section below.
+      </div>
+
+      <h3>Intermediate — JOIN Types</h3>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">sql – household report with JOINs</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
         <pre><span class="cmt">-- INNER JOIN: households with their state and LGA</span>
@@ -1853,7 +1974,36 @@ psql -U postgres
     </div>
 
     <div class="tab-panel" id="tab-d2-window">
-      <h3>Window Functions</h3>
+      <h3>Basics — Window Functions vs GROUP BY</h3>
+      <p>A window function computes a value for each row using a "window" of related rows — without collapsing those rows into one. This is the key difference from GROUP BY: GROUP BY returns one row per group; a window function returns one row per input row, with the aggregate attached.</p>
+      <table>
+        <tr><th>Approach</th><th>Output rows</th><th>Use when you need</th></tr>
+        <tr><td><code>GROUP BY + COUNT</code></td><td>One per group</td><td>Summary totals only</td></tr>
+        <tr><td><code>COUNT() OVER ()</code></td><td>One per input row</td><td>Summary alongside detail</td></tr>
+      </table>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – the simplest window: total count alongside each row</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Without window: one summary row per state</span>
+<span class="kw">SELECT</span> state_code, <span class="fn">COUNT</span>(*) <span class="kw">AS</span> total
+<span class="kw">FROM</span>  nsr.households
+<span class="kw">GROUP BY</span> state_code;
+
+<span class="cmt">-- With window: each household row PLUS its state's total</span>
+<span class="kw">SELECT</span>
+  household_code,
+  state_code,
+  pmt_score,
+  <span class="fn">COUNT</span>(*) <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> state_code) <span class="kw">AS</span> state_total,
+  <span class="fn">RANK</span>()   <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> state_code <span class="kw">ORDER BY</span> pmt_score) <span class="kw">AS</span> poverty_rank
+<span class="kw">FROM</span>  nsr.households
+<span class="kw">ORDER BY</span> state_code, poverty_rank;</pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Anatomy of a window function call</div>
+        <code>function() OVER (PARTITION BY col ORDER BY col ROWS BETWEEN ...)</code> — the <strong>OVER</strong> clause is what makes it a window function. <strong>PARTITION BY</strong> divides rows into groups (like GROUP BY, but doesn't collapse). <strong>ORDER BY</strong> inside OVER sets the ranking or frame order. <strong>ROWS BETWEEN</strong> defines the exact frame of rows to include in the calculation. If you omit PARTITION BY, the entire result set is one window.
+      </div>
+
+      <h3>Intermediate — Window Functions</h3>
       <p>Window functions compute values across a set of rows related to the current row — without collapsing them like GROUP BY does.</p>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">sql – window functions</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
@@ -2267,7 +2417,37 @@ paid_households <span class="kw">AS</span> (
     </div>
 
     <div class="tab-panel" id="tab-d3-rbac">
-      <h3>NSR Role Model</h3>
+      <h3>Basics — Roles, Privileges, and the Principle of Least Privilege</h3>
+      <p>In PostgreSQL, a <strong>role</strong> is a named identity that can log in and own database objects. A <strong>privilege</strong> is a permission granted to a role: SELECT, INSERT, UPDATE, DELETE, CONNECT, and so on. Roles do not have access to anything by default — you must explicitly GRANT each privilege. The principle of least privilege means every role gets only what it needs to do its job, and nothing more.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – roles from scratch</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Create a login role with a password</span>
+<span class="kw">CREATE ROLE</span> alice <span class="kw">WITH LOGIN</span> PASSWORD <span class="str">'s3cr3t'</span>;
+
+<span class="cmt">-- Grant connection to a specific database</span>
+<span class="kw">GRANT CONNECT ON DATABASE</span> lab_nsr <span class="kw">TO</span> alice;
+
+<span class="cmt">-- Grant schema access (required before table access)</span>
+<span class="kw">GRANT USAGE ON SCHEMA</span> nsr <span class="kw">TO</span> alice;
+
+<span class="cmt">-- Grant table-level privilege</span>
+<span class="kw">GRANT SELECT ON</span> nsr.households <span class="kw">TO</span> alice;
+
+<span class="cmt">-- Revoke when no longer needed</span>
+<span class="kw">REVOKE SELECT ON</span> nsr.households <span class="kw">FROM</span> alice;
+
+<span class="cmt">-- Verify privileges on a table</span>
+<span class="kw">SELECT</span> grantee, privilege_type, is_grantable
+<span class="kw">FROM</span>  information_schema.role_table_grants
+<span class="kw">WHERE</span> table_schema = <span class="str">'nsr'</span>
+  <span class="kw">AND</span> table_name  = <span class="str">'households'</span>;</pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">GRANT USAGE ON SCHEMA — the step beginners forget</div>
+        Even if you GRANT SELECT on a table, a role cannot reach it without USAGE on the schema first. The schema is the namespace; the table is inside it. Without USAGE the role gets "schema does not exist" or "permission denied for schema" — a confusing error that looks like the table grant failed. Always grant schema USAGE before table privileges.
+      </div>
+
+      <h3>Intermediate — NSR Role Model</h3>
       <table>
         <tr><th>Role</th><th>Access</th><th>State restriction</th><th>NIN visible?</th><th>Payment write?</th><th>Logged?</th></tr>
         <tr>
@@ -2364,7 +2544,37 @@ paid_households <span class="kw">AS</span> (
     </div>
 
     <div class="tab-panel" id="tab-d3-rls">
-      <h3>Row-Level Security</h3>
+      <h3>Basics — Why RBAC Alone Is Not Enough</h3>
+      <p>RBAC controls <em>which tables</em> a role can access. But in the NSR, a caseworker granted SELECT on <code>nsr.households</code> can read every household in Nigeria — including states they have no business seeing. Row-Level Security (RLS) adds a second filter: even if the table privilege is granted, each row is checked against a policy before it is returned. RBAC is the door; RLS is the passport check inside.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – enabling RLS in three steps</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Step 1: Enable RLS on the table (does nothing visible until a policy is added)</span>
+<span class="kw">ALTER TABLE</span> nsr.households <span class="kw">ENABLE ROW LEVEL SECURITY</span>;
+
+<span class="cmt">-- Step 2: With no policy, a non-superuser sees ZERO rows (default-deny)</span>
+<span class="kw">SET ROLE</span> nsr_caseworker;
+<span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.households;  <span class="cmt">-- returns 0</span>
+<span class="kw">RESET ROLE</span>;
+
+<span class="cmt">-- Step 3: Create a policy that allows caseworkers to see their own state</span>
+<span class="kw">CREATE POLICY</span> cw_own_state
+<span class="kw">ON</span> nsr.households
+<span class="kw">FOR SELECT</span>
+<span class="kw">TO</span> nsr_caseworker
+<span class="kw">USING</span> (<span class="fn">current_setting</span>(<span class="str">'app.state_code'</span>, <span class="kw">TRUE</span>) = state_code);
+
+<span class="cmt">-- Now set the session variable and re-test</span>
+<span class="kw">SET ROLE</span> nsr_caseworker;
+<span class="kw">SET</span> app.state_code = <span class="str">'KN'</span>;
+<span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.households;  <span class="cmt">-- returns Kano rows only</span>
+<span class="kw">RESET ROLE</span>;</pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Default-deny is the safe starting point</div>
+        When RLS is enabled but no policy exists, non-superusers see nothing. This is intentional — it forces explicit decisions about who sees what. A superuser or BYPASSRLS role is never filtered by policies, which is why nsr_dba needs BYPASSRLS to perform maintenance queries across all states.
+      </div>
+
+      <h3>Intermediate — Row-Level Security</h3>
       <p>RLS restricts which rows a role can see. Caseworkers should only see households in their assigned state. This is implemented using a session variable <code>app.state_code</code>.</p>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">sql – RLS policy</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
@@ -2402,7 +2612,21 @@ paid_households <span class="kw">AS</span> (
     </div>
 
     <div class="tab-panel" id="tab-d3-audit">
-      <h3>Audit Logging with pgAudit</h3>
+      <h3>Basics — What Audit Logging Is and Why Databases Need It</h3>
+      <p>An audit log answers the question: <em>"Who changed what, when, and from where?"</em> Application logs can be disabled or cleared; network logs don't capture the data values; only a database-level audit captures the exact row changed, the role that changed it, and the timestamp — inside the same ACID-protected system as the data itself.</p>
+      <table>
+        <tr><th>Audit approach</th><th>What it captures</th><th>Tamper-resistant?</th></tr>
+        <tr><td>Application log file</td><td>Application events, errors</td><td>No — file can be deleted</td></tr>
+        <tr><td>PostgreSQL server log</td><td>Connections, slow queries</td><td>No — log_min_duration controls what appears</td></tr>
+        <tr><td>pgAudit extension</td><td>All DDL + DML per session or object</td><td>Partially — written to server log</td></tr>
+        <tr><td>Trigger-based audit_log table</td><td>Row-level before/after values</td><td>Yes — REVOKE DELETE enforces append-only</td></tr>
+      </table>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Why the NSR uses trigger-based logging rather than relying on pgAudit alone</div>
+        pgAudit records <em>that</em> a statement ran and <em>who</em> ran it — it writes to the PostgreSQL server log file, which is not queryable by SQL and is not stored in the database itself. For the NSR, investigators need to answer "show me every change to household HH-LA-001 over the last six months" — that requires row-level before/after values stored in a table, not grep-able log files. pgAudit is a complement (session-level DDL monitoring); the trigger-based audit_log is the primary forensic tool.
+      </div>
+
+      <h3>Intermediate — Audit Logging with pgAudit</h3>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">sql – audit log table</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
         <pre><span class="kw">CREATE TABLE</span> nsr.audit_log (
@@ -2429,8 +2653,69 @@ paid_households <span class="kw">AS</span> (
       </div>
     </div>
 
+      <h3>Advanced — Forensic Queries on the Audit Log</h3>
+      <p>A well-designed audit_log table is queryable with standard SQL. These patterns cover the most common forensic scenarios an NSR DBA or supervisor will face in practice.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – forensic audit queries</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- 1. Full change history of one household</span>
+<span class="kw">SELECT</span> log_time, role_name, action,
+       row_data->><span class="str">'pmt_score'</span>     <span class="kw">AS</span> pmt_score,
+       row_data->><span class="str">'household_code'</span> <span class="kw">AS</span> code
+<span class="kw">FROM</span>  nsr.audit_log
+<span class="kw">WHERE</span> table_name = <span class="str">'nsr.households'</span>
+  <span class="kw">AND</span> row_data->><span class="str">'household_code'</span> = <span class="str">'HH-LA-001'</span>
+<span class="kw">ORDER BY</span> log_time;
+
+<span class="cmt">-- 2. All changes by a caseworker in the last 7 days</span>
+<span class="kw">SELECT</span> log_time, table_name, action, row_data
+<span class="kw">FROM</span>  nsr.audit_log
+<span class="kw">WHERE</span> role_name = <span class="str">'nsr_caseworker'</span>
+  <span class="kw">AND</span> log_time >= now() - <span class="kw">INTERVAL</span> <span class="str">'7 days'</span>
+<span class="kw">ORDER BY</span> log_time <span class="kw">DESC</span>;
+
+<span class="cmt">-- 3. Detect bulk changes — potential fraud signal (&gt;100 updates in one hour)</span>
+<span class="kw">SELECT</span> role_name,
+       <span class="fn">DATE_TRUNC</span>(<span class="str">'hour'</span>, log_time) <span class="kw">AS</span> hour_bucket,
+       <span class="fn">COUNT</span>(*) <span class="kw">AS</span> changes
+<span class="kw">FROM</span>  nsr.audit_log
+<span class="kw">WHERE</span> action <span class="kw">IN</span> (<span class="str">'UPDATE'</span>, <span class="str">'DELETE'</span>)
+  <span class="kw">AND</span> log_time >= now() - <span class="kw">INTERVAL</span> <span class="str">'24 hours'</span>
+<span class="kw">GROUP BY</span> role_name, hour_bucket
+<span class="kw">HAVING COUNT</span>(*) > <span class="num">100</span>
+<span class="kw">ORDER BY</span> changes <span class="kw">DESC</span>;
+
+<span class="cmt">-- 4. Before/after pmt_score using LAG window function</span>
+<span class="kw">SELECT</span>
+  log_time, role_name,
+  row_data->><span class="str">'pmt_score'</span>                            <span class="kw">AS</span> new_score,
+  <span class="kw">LAG</span>(row_data->><span class="str">'pmt_score'</span>) <span class="kw">OVER</span> (
+    <span class="kw">PARTITION BY</span> row_data->><span class="str">'household_code'</span>
+    <span class="kw">ORDER BY</span> log_time
+  )                                                  <span class="kw">AS</span> prev_score
+<span class="kw">FROM</span>  nsr.audit_log
+<span class="kw">WHERE</span> table_name = <span class="str">'nsr.households'</span>
+  <span class="kw">AND</span> row_data->><span class="str">'household_code'</span> = <span class="str">'HH-LA-001'</span>;</pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">JSONB operators for audit queries</div>
+        <code>->></code> extracts a JSONB field as text — suitable for comparison and display. For fast containment searches on a large audit log, use the <code>@&gt;</code> operator with a GIN index: <code>CREATE INDEX ON nsr.audit_log USING GIN (row_data)</code> then query <code>WHERE row_data @&gt; '{"status":"approved"}'::jsonb</code> — far faster than row-by-row text extraction on millions of audit records.
+      </div>
+    </div>
+
     <div class="tab-panel" id="tab-d3-backup">
-      <h3>Logical Backup with pg_dump</h3>
+      <h3>Basics — Backup Types and Why They Differ</h3>
+      <p>PostgreSQL offers two fundamental backup approaches. Understanding the difference determines how quickly you can recover and how much data you risk losing in a disaster.</p>
+      <table>
+        <tr><th>Type</th><th>How it works</th><th>Recovery granularity</th><th>NSR use case</th></tr>
+        <tr><td><strong>Logical backup</strong> (pg_dump)</td><td>Exports data as SQL statements or binary; database must be accessible</td><td>Point-in-time only at backup moment</td><td>Schema migration, developer copies, schema-only restores</td></tr>
+        <tr><td><strong>Physical backup</strong> (pg_basebackup)</td><td>Copies the raw data files + WAL; works at file level</td><td>Any point in time with WAL archiving (PITR)</td><td>Production DR, standby servers, zero data loss recovery</td></tr>
+      </table>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Recovery Point Objective (RPO) and Recovery Time Objective (RTO)</div>
+        <strong>RPO</strong>: how much data can you afford to lose? A daily pg_dump gives you 24-hour RPO — if the server fails at 11 pm, you lose a day of changes. WAL archiving gives you near-zero RPO — you can recover to within seconds of the failure. <strong>RTO</strong>: how long can the system be unavailable? A logical restore of a large NSR database can take hours; a physical restore with a warm standby can be minutes. For a government payment system, both numbers need to be defined in an SLA and tested regularly — not estimated.
+      </div>
+
+      <h3>Intermediate — Logical Backup with pg_dump</h3>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
         <pre><span class="cmt"># Step 1: Create logical backup of nsr schema</span>
@@ -2453,6 +2738,44 @@ psql -U postgres -d lab_nsr_test -c "SELECT COUNT(*) FROM nsr.households;"</pre>
       <div class="callout tip">
         <div class="callout-title">Backup strategy tip</div>
         Use <code>-F c</code> (custom format) for production — it supports parallel restore. Use <code>-F p</code> (plain SQL) only for inspection or partial restores.
+      </div>
+
+      <h3>Advanced — WAL Archiving and Point-in-Time Recovery (PITR)</h3>
+      <p>Logical backups capture a snapshot in time. WAL archiving continuously ships WAL segment files to a safe location so you can recover to <em>any point</em> between backups — not just the moment the backup was taken. This is essential for a payment system where even one hour of lost transactions is unacceptable.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">conf – postgresql.conf settings for WAL archiving</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt"># Enable WAL archiving (add to postgresql.conf, then restart)</span>
+wal_level        = replica          <span class="cmt"># minimum for archiving</span>
+archive_mode     = on
+archive_command  = 'cp %p /var/lib/pgsql/archive/%f'
+                                    <span class="cmt"># %p = full path of WAL file, %f = filename</span>
+                                    <span class="cmt"># production: use rsync/s3 instead of cp</span>
+
+<span class="cmt"># Verify archiving is working</span>
+<span class="cmt">-- In psql:</span>
+<span class="kw">SELECT</span> archived_count, failed_count, last_archived_wal, last_archived_time
+<span class="kw">FROM</span>  pg_stat_archiver;</pre>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">bash – take a physical base backup + PITR restore</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt"># Step 1: Take a base backup (while database is live)</span>
+pg_basebackup -U postgres -D /var/lib/pgsql/basebackup \
+  -Ft -z -P --wal-method=stream
+
+<span class="cmt"># Step 2: To restore to a point in time, create recovery.conf (pre-v12)</span>
+<span class="cmt"># or postgresql.conf + standby.signal (v12+)</span>
+cat &gt; /var/lib/pgsql/data/postgresql.conf &lt;&lt;'EOF'
+restore_command   = 'cp /var/lib/pgsql/archive/%f %p'
+recovery_target_time = '2026-06-25 14:30:00'   # recover to this moment
+recovery_target_action = promote                # start accepting connections
+EOF
+
+touch /var/lib/pgsql/data/standby.signal       <span class="cmt"># triggers recovery mode on start</span>
+pg_ctl start -D /var/lib/pgsql/data</pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">PITR in a real NSR incident — what recovery looks like</div>
+        Scenario: at 14:47 a caseworker accidentally runs <code>DELETE FROM nsr.payments WHERE state_code = 'KN'</code> without a WHERE clause refinement — 12,000 payment records deleted, transaction committed. With pg_dump only, you restore to last night's backup and lose a day of legitimate entries. With WAL archiving, you restore the base backup, apply WAL up to 14:46:59, and lose nothing. The key steps: stop the corrupted database, restore the base backup files, set <code>recovery_target_time</code> to just before the bad transaction, start in recovery mode. PostgreSQL replays all WAL up to that timestamp and stops — the bad DELETE never happened. Then promote the instance to accept connections. This is the DR procedure every participant should be able to explain and execute.
       </div>
     </div>
 
@@ -3126,7 +3449,25 @@ $$;
     </div>
 
     <div class="tab-panel" id="tab-d6-explain">
-      <h3>Reading an Execution Plan</h3>
+      <h3>Basics — What EXPLAIN Does and Why You Need It</h3>
+      <p>When you run a SQL query, PostgreSQL's <strong>query planner</strong> chooses how to execute it — which indexes to use, in what order to join tables, whether to sort or hash. <code>EXPLAIN</code> shows you that plan without executing the query. <code>EXPLAIN ANALYZE</code> actually runs the query and shows both the plan <em>and</em> real measured timings, so you can see where the time actually went.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – three levels of EXPLAIN</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Level 1: estimated plan only (no execution)</span>
+<span class="kw">EXPLAIN SELECT</span> * <span class="kw">FROM</span> nsr.households <span class="kw">WHERE</span> pmt_score &lt; <span class="num">30</span>;
+
+<span class="cmt">-- Level 2: real timings (runs the query)</span>
+<span class="kw">EXPLAIN ANALYZE SELECT</span> * <span class="kw">FROM</span> nsr.households <span class="kw">WHERE</span> pmt_score &lt; <span class="num">30</span>;
+
+<span class="cmt">-- Level 3: real timings + buffer (cache hit vs disk) breakdown</span>
+<span class="kw">EXPLAIN</span> (<span class="kw">ANALYZE</span>, <span class="kw">BUFFERS</span>) <span class="kw">SELECT</span> * <span class="kw">FROM</span> nsr.households <span class="kw">WHERE</span> pmt_score &lt; <span class="num">30</span>;</pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">How to read the plan output — three numbers that matter</div>
+        Every plan node shows: <code>(cost=start..total rows=N width=B)</code>. <strong>cost</strong>: a dimensionless estimate (not milliseconds) — lower is better, but the number only matters relative to other nodes. <strong>rows</strong>: how many rows the planner thinks this node will return — if this is wildly wrong vs the actual rows in ANALYZE output, your statistics are stale and the planner is choosing a bad plan. <strong>actual time=X..Y</strong>: X ms to return the first row, Y ms to return all rows. The node with the highest actual time is your bottleneck. Work from the innermost node outward.
+      </div>
+
+      <h3>Intermediate — Reading an Execution Plan</h3>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">sql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
         <pre><span class="cmt">-- Always use ANALYZE to get real timings</span>
@@ -3154,7 +3495,36 @@ $$;
     </div>
 
     <div class="tab-panel" id="tab-d6-index">
-      <h3>Index Types and When to Use Them</h3>
+      <h3>Basics — What an Index Is and How It Works</h3>
+      <p>An index is a separate data structure that PostgreSQL maintains alongside a table, mapping column values to the physical locations of matching rows. Without an index, every query must read every row in the table (a <em>sequential scan</em>). With an index, PostgreSQL jumps directly to the relevant rows — like using a book's index rather than reading every page.</p>
+      <table>
+        <tr><th>Without index</th><th>With B-tree index</th></tr>
+        <tr><td>Scan all N rows, test each one</td><td>Binary-search the index tree — O(log N) lookups</td></tr>
+        <tr><td>Fast for full-table reads (seq scan)</td><td>Fast for selective queries (&lt;~10% of rows)</td></tr>
+        <tr><td>No storage overhead</td><td>Extra disk space + maintenance on every INSERT/UPDATE/DELETE</td></tr>
+      </table>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – create and verify a basic index</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Without an index: Seq Scan on large table</span>
+<span class="kw">EXPLAIN ANALYZE SELECT</span> * <span class="kw">FROM</span> nsr.households <span class="kw">WHERE</span> pmt_score &lt; <span class="num">30</span>;
+
+<span class="cmt">-- Create a B-tree index on pmt_score</span>
+<span class="kw">CREATE INDEX</span> idx_hh_pmt_score <span class="kw">ON</span> nsr.households (pmt_score);
+
+<span class="cmt">-- With index: Index Scan or Bitmap Heap Scan</span>
+<span class="kw">EXPLAIN ANALYZE SELECT</span> * <span class="kw">FROM</span> nsr.households <span class="kw">WHERE</span> pmt_score &lt; <span class="num">30</span>;
+
+<span class="cmt">-- Confirm the index exists and is being used</span>
+<span class="kw">SELECT</span> indexname, idx_scan, idx_tup_read
+<span class="kw">FROM</span>  pg_stat_user_indexes
+<span class="kw">WHERE</span> relname = <span class="str">'households'</span>;</pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">When PostgreSQL ignores your index</div>
+        The planner chooses a sequential scan when it estimates the index would be slower — this happens when the query is not selective enough (e.g. <code>pmt_score &lt; 100</code> returns 80% of rows — faster to scan the whole table). It also happens when statistics are stale (<code>ANALYZE</code> fixes this) or when the column is wrapped in a function (<code>WHERE UPPER(lga_name) = 'KANO'</code> cannot use a regular index — you need a functional index: <code>CREATE INDEX ON nsr.lgas (UPPER(lga_name))</code>).
+      </div>
+
+      <h3>Intermediate — Index Types and When to Use Them</h3>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">sql – index creation</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
         <pre><span class="cmt">-- B-tree (default): equality and range queries</span>
@@ -3187,7 +3557,21 @@ $$;
     </div>
 
     <div class="tab-panel" id="tab-d6-partition">
-      <h3>Table Partitioning</h3>
+      <h3>Basics — What Partitioning Is and When You Need It</h3>
+      <p>Partitioning splits one logical table into multiple physical storage files called <em>partitions</em>, based on a column's value. To users and applications, it still looks like one table — but PostgreSQL can skip entire partitions when they cannot possibly contain matching rows, dramatically reducing I/O on large tables.</p>
+      <table>
+        <tr><th>Problem without partitioning</th><th>Solution with partitioning</th></tr>
+        <tr><td>Query for 2024 payments scans all years</td><td>PostgreSQL reads only the 2024 partition</td></tr>
+        <tr><td>VACUUM must process entire table</td><td>VACUUM can target one partition at a time</td></tr>
+        <tr><td>Old data slows every query</td><td>Drop old partition instantly with no table lock</td></tr>
+        <tr><td>One large index for all years</td><td>Smaller per-partition indexes fit in cache</td></tr>
+      </table>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">When partitioning is worth it — and when it is not</div>
+        Partitioning pays off when: the table has tens of millions of rows; most queries filter on the partition key; you need fast bulk deletes (drop the partition). It adds complexity and is not worth it for tables under ~5 million rows or when queries do not filter on the partition key. For the NSR payments table — growing at millions of rows per payment cycle across 36 states — partitioning by payment_date year is a clear win. For the states reference table (37 rows), partitioning would be absurd.
+      </div>
+
+      <h3>Intermediate — Table Partitioning</h3>
       <p>Partition large tables by a column that is commonly used in WHERE clauses — for the NSR, payments by year or households by state.</p>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">sql – range partitioning by year</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
@@ -3221,7 +3605,22 @@ $$;
     </div>
 
     <div class="tab-panel" id="tab-d6-monitor">
-      <h3>Key Monitoring Queries</h3>
+      <h3>Basics — Why Database Monitoring Matters</h3>
+      <p>A database that runs well today can degrade silently over weeks — dead tuples accumulate, indexes go unused, connections pile up, and cache hit rates drop. Monitoring means running a small set of SQL queries against PostgreSQL's built-in statistics views to catch these problems before users notice them. All monitoring data lives in <code>pg_stat_*</code> views and is updated continuously by the statistics collector.</p>
+      <table>
+        <tr><th>View</th><th>What it tracks</th><th>Key metric</th></tr>
+        <tr><td><code>pg_stat_database</code></td><td>Per-database I/O, connections, transactions</td><td>blks_hit / (blks_hit + blks_read) → cache hit %</td></tr>
+        <tr><td><code>pg_stat_user_tables</code></td><td>Per-table scans, live/dead tuples, vacuum history</td><td>n_dead_tup, last_autovacuum</td></tr>
+        <tr><td><code>pg_stat_user_indexes</code></td><td>Index usage counts</td><td>idx_scan = 0 → unused index</td></tr>
+        <tr><td><code>pg_stat_activity</code></td><td>Current connections and their state</td><td>state = 'idle in transaction' → lock risk</td></tr>
+        <tr><td><code>pg_stat_bgwriter</code></td><td>Checkpoint and buffer write stats</td><td>checkpoints_req vs checkpoints_timed</td></tr>
+      </table>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">The three numbers every DBA checks first</div>
+        <strong>1. Cache hit ratio</strong> (pg_stat_database): should be &gt;99%. Below 95% means data is being read from disk too often — increase shared_buffers or investigate large sequential scans. <strong>2. Dead tuple ratio</strong> (pg_stat_user_tables): n_dead_tup / (n_live_tup + n_dead_tup) &gt; 20% on any busy table means autovacuum is falling behind — check autovacuum_vacuum_threshold. <strong>3. Idle-in-transaction connections</strong> (pg_stat_activity): a session stuck in <code>idle in transaction</code> holds locks and prevents VACUUM from reclaiming dead tuples on the rows it touched. Find and terminate them.
+      </div>
+
+      <h3>Intermediate — Key Monitoring Queries</h3>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">sql – monitoring dashboard</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
         <pre><span class="cmt">-- Table bloat (dead tuple ratio)</span>
@@ -3249,6 +3648,42 @@ $$;
       <div class="callout info" style="margin-top:8px">
         <div class="callout-title">What each monitoring query reveals</div>
         <strong>Table bloat query</strong>: <code>n_dead_tup / (n_live_tup + n_dead_tup)</code> is the dead-tuple ratio — above 20% on a frequently updated table means autovacuum is not keeping up, and sequential scans will degrade because dead tuples still occupy pages. <code>last_autovacuum</code> being NULL or very old on a busy table is a red flag. <strong>Long-running queries</strong>: any query active for more than 30 seconds on the NSR database warrants investigation — it may be holding locks that block caseworker inserts. The <code>pid</code> can be fed to <code>pg_terminate_backend(pid)</code> to cancel it if necessary. <strong>Cache hit rate</strong>: below 99% means your workload is reading from disk more than necessary — either increase <code>shared_buffers</code> (typically 25% of RAM) or investigate which queries trigger the most disk reads with <code>EXPLAIN (BUFFERS)</code>.
+      </div>
+
+      <h3>Advanced — pg_stat_statements: Finding Your Worst Queries</h3>
+      <p><code>pg_stat_statements</code> is a PostgreSQL extension that tracks cumulative execution statistics for every distinct SQL statement — total calls, total time, mean time, rows returned, cache hits. It answers the question that single-run EXPLAIN cannot: <em>"Which query is causing the most load over time?"</em></p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – enable and query pg_stat_statements</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Enable the extension (requires superuser, add to shared_preload_libraries)</span>
+<span class="kw">CREATE EXTENSION IF NOT EXISTS</span> pg_stat_statements;
+
+<span class="cmt">-- Top 10 queries by total execution time</span>
+<span class="kw">SELECT</span>
+  <span class="fn">ROUND</span>(total_exec_time::numeric, <span class="num">2</span>)          <span class="kw">AS</span> total_ms,
+  calls,
+  <span class="fn">ROUND</span>(mean_exec_time::numeric, <span class="num">2</span>)           <span class="kw">AS</span> mean_ms,
+  <span class="fn">ROUND</span>(rows::numeric / <span class="fn">NULLIF</span>(calls,<span class="num">0</span>), <span class="num">1</span>)   <span class="kw">AS</span> rows_per_call,
+  <span class="fn">LEFT</span>(query, <span class="num">80</span>)                              <span class="kw">AS</span> query_snippet
+<span class="kw">FROM</span>  pg_stat_statements
+<span class="kw">ORDER BY</span> total_exec_time <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> <span class="num">10</span>;
+
+<span class="cmt">-- Top 10 queries by mean execution time (slowest on average)</span>
+<span class="kw">SELECT</span>
+  <span class="fn">ROUND</span>(mean_exec_time::numeric, <span class="num">2</span>) <span class="kw">AS</span> mean_ms,
+  calls,
+  <span class="fn">LEFT</span>(query, <span class="num">80</span>)                   <span class="kw">AS</span> query_snippet
+<span class="kw">FROM</span>  pg_stat_statements
+<span class="kw">WHERE</span> calls > <span class="num">10</span>          <span class="cmt">-- filter out one-off queries</span>
+<span class="kw">ORDER BY</span> mean_exec_time <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> <span class="num">10</span>;
+
+<span class="cmt">-- Reset statistics (do this after making index/config changes to start fresh)</span>
+<span class="kw">SELECT</span> <span class="fn">pg_stat_statements_reset</span>();</pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Workflow: from pg_stat_statements to a fix</div>
+        <strong>Step 1</strong> — find the query with the highest total_exec_time. This is the one consuming the most cumulative server time, regardless of whether individual runs are slow. <strong>Step 2</strong> — copy the query text and run <code>EXPLAIN (ANALYZE, BUFFERS)</code> on it to see the plan. <strong>Step 3</strong> — identify the bottleneck node (highest actual time, or large actual rows vs estimated rows). <strong>Step 4</strong> — apply the fix: create a missing index, run ANALYZE to refresh statistics, or rewrite the query. <strong>Step 5</strong> — call <code>pg_stat_statements_reset()</code> and re-run for 24 hours to measure the improvement. For the NSR, add pg_stat_statements to <code>shared_preload_libraries</code> in postgresql.conf and enable it on day one of production — it costs very little and is invaluable for post-deployment performance investigations.
       </div>
     </div>
 
@@ -3480,7 +3915,35 @@ $$;
     </div>
 
     <div class="tab-panel" id="tab-d7-etl">
-      <h3>ETL vs ELT</h3>
+      <h3>Basics — What ETL Is and Why Data Migration Is Hard</h3>
+      <p><strong>ETL</strong> (Extract, Transform, Load) is the process of moving data from one system into another while cleaning and reshaping it along the way. It sounds simple but is one of the most failure-prone operations in database work — because source data is almost always dirtier than expected. The NSR receives household data from 774 LGAs collected by field enumerators using paper forms and mobile apps under poor connectivity. Expect nulls, duplicates, invalid codes, mismatched formats, and truncated names — always.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – the simplest possible ETL: load a CSV into PostgreSQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Step 1: Create a staging table with NO constraints (accept everything)</span>
+<span class="kw">CREATE TABLE</span> nsr.stg_raw (
+  raw_line  <span class="typ">TEXT</span>   <span class="cmt">-- accept as plain text first; parse later</span>
+);
+
+<span class="cmt">-- Step 2: Load the file (run in psql, not in SQL)</span>
+<span class="cmt">-- \COPY nsr.stg_raw FROM '/tmp/lga_data.csv' CSV HEADER</span>
+
+<span class="cmt">-- Step 3: Inspect what arrived</span>
+<span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.stg_raw;
+<span class="kw">SELECT</span> * <span class="kw">FROM</span>  nsr.stg_raw <span class="kw">LIMIT</span> <span class="num">5</span>;
+
+<span class="cmt">-- Step 4: Count problems before deciding how to fix them</span>
+<span class="kw">SELECT</span>
+  <span class="fn">COUNT</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> raw_line <span class="kw">IS NULL</span>)          <span class="kw">AS</span> null_rows,
+  <span class="fn">COUNT</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> <span class="fn">LENGTH</span>(raw_line) &lt; <span class="num">5</span>)        <span class="kw">AS</span> suspiciously_short,
+  <span class="fn">COUNT</span>(*)                                             <span class="kw">AS</span> total_rows
+<span class="kw">FROM</span>  nsr.stg_raw;</pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">The cardinal rule of ETL: never transform in place</div>
+        Always load raw data into a staging table first, validate it there, and only promote clean rows to the target table. If you transform as you load — casting types, applying constraints, resolving FKs — a single bad row aborts the entire COPY and you get nothing. With a staging table, you get everything, then make deliberate decisions about what to keep and what to quarantine.
+      </div>
+
+      <h3>Intermediate — ETL vs ELT</h3>
       <table>
         <tr><th>Approach</th><th>Where transformation happens</th><th>NSR use case</th></tr>
         <tr><td>ETL</td><td>Before loading into target DB</td><td>Legacy flat-file migration, census data ingestion</td></tr>
@@ -3531,7 +3994,36 @@ $$;
     </div>
 
     <div class="tab-panel" id="tab-d7-dedup">
-      <h3>Deduplication Strategies</h3>
+      <h3>Basics — Why Duplicates Exist and Why They Are Dangerous</h3>
+      <p>Duplicates enter databases in two main ways: technical duplicates (the same row loaded twice due to a failed ETL re-run) and data duplicates (the same real-world entity recorded under different IDs, e.g. a household enumerated twice by different enumerators). The consequences are different: technical duplicates inflate counts and double payments; data duplicates require human investigation because you cannot safely auto-merge without risking data loss.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – detecting duplicates at the basics level</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- How many distinct household codes do we have?</span>
+<span class="kw">SELECT COUNT</span>(*) <span class="kw">AS</span> total_rows,
+       <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> household_code) <span class="kw">AS</span> unique_codes,
+       <span class="fn">COUNT</span>(*) - <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> household_code) <span class="kw">AS</span> duplicates
+<span class="kw">FROM</span>  nsr.stg_households;
+
+<span class="cmt">-- Which codes appear more than once?</span>
+<span class="kw">SELECT</span> household_code, <span class="fn">COUNT</span>(*) <span class="kw">AS</span> occurrences
+<span class="kw">FROM</span>  nsr.stg_households
+<span class="kw">GROUP BY</span> household_code
+<span class="kw">HAVING COUNT</span>(*) > <span class="num">1</span>
+<span class="kw">ORDER BY</span> occurrences <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> <span class="num">20</span>;
+
+<span class="cmt">-- Are there rows that are completely identical?</span>
+<span class="kw">SELECT</span> household_code, head_name, pmt_score, <span class="fn">COUNT</span>(*) <span class="kw">AS</span> n
+<span class="kw">FROM</span>  nsr.stg_households
+<span class="kw">GROUP BY</span> household_code, head_name, pmt_score
+<span class="kw">HAVING COUNT</span>(*) > <span class="num">1</span>;</pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Count before you delete — understand what you have first</div>
+        Never write a DELETE for duplicates until you have run a SELECT that shows exactly what would be removed. The SELECT with HAVING COUNT(*) &gt; 1 shows the scope; a second query showing the full rows for one of those codes shows the content. Only then do you decide: are these truly the same household (safe to merge), or do they have different pmt_scores (which one is correct?). That question determines whether you auto-deduplicate or escalate for human review.
+      </div>
+
+      <h3>Intermediate — Deduplication Strategies</h3>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">sql – find duplicates</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
         <pre><span class="cmt">-- Find duplicate household codes</span>
@@ -3563,7 +4055,22 @@ $$;
     </div>
 
     <div class="tab-panel" id="tab-d7-gov">
-      <h3>Nigeria Data Protection Act 2023 – Key Requirements</h3>
+      <h3>Basics — What Data Governance Means for a Database Professional</h3>
+      <p>Governance is not paperwork — it is the set of rules, controls, and accountability mechanisms that determine who can do what with data, and how those actions are recorded. For a DBA working on the NSR, governance translates directly into technical decisions: which columns to encrypt, which tables need RLS, who can approve a bulk DELETE, and whether the audit log can be queried by an external regulator. The Nigeria Data Protection Act 2023 is the legal framework; the database controls are how you prove compliance.</p>
+      <table>
+        <tr><th>Governance concept</th><th>What it means in plain terms</th><th>Where it lives in PostgreSQL</th></tr>
+        <tr><td>Data controller</td><td>The organisation responsible for the data (NASSCO/NSIO)</td><td>Documented in data_lineage.data_owner</td></tr>
+        <tr><td>Data processor</td><td>Anyone who handles data on behalf of the controller (AUKTIE, cloud provider)</td><td>Captured in audit_log.role_name</td></tr>
+        <tr><td>Lawful basis</td><td>The legal justification for collecting and processing personal data</td><td>data_lineage.lawful_basis — must be NOT NULL</td></tr>
+        <tr><td>Data minimisation</td><td>Only collect what you need; don't store data just because you can</td><td>Column-level grants; views that mask NIN</td></tr>
+        <tr><td>Right to erasure</td><td>A data subject can request their data be deleted or anonymised</td><td>Pseudonymisation via pgcrypto; erasure workflow</td></tr>
+      </table>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Governance failures are DBA failures</div>
+        When a data breach happens in a government system, the investigation asks: Was access logged? Was the data encrypted? Were there unnecessary copies? Could an insider have exported the entire table? Each of these is a DBA responsibility, not a legal team responsibility. The NDP Act 2023 gives the regulator (NITDA) authority to impose fines and require audits — the database is the primary evidence source in both directions: proving compliance and proving a breach occurred.
+      </div>
+
+      <h3>Intermediate — Nigeria Data Protection Act 2023 – Key Requirements</h3>
       <table>
         <tr><th>Requirement</th><th>PostgreSQL implementation</th></tr>
         <tr><td>Lawful basis for processing</td><td>Document in data lineage metadata table</td></tr>
