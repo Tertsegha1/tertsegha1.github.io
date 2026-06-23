@@ -1669,7 +1669,8 @@ psql -U postgres
   <div class="callout info"><div class="callout-title">Day Focus</div>Day 2 is the most visible skills day. Participants will send these queries to colleagues. Progress through the SQL teaching sequence in order — never jump ahead.</div>
 
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab(this,'d2tabs','d2-dml')">DML / DDL</button>
+    <button class="tab-btn active" onclick="switchTab(this,'d2tabs','d2-refresher')">Refresher Quiz</button>
+    <button class="tab-btn" onclick="switchTab(this,'d2tabs','d2-dml')">DML / DDL</button>
     <button class="tab-btn" onclick="switchTab(this,'d2tabs','d2-joins')">JOINs</button>
     <button class="tab-btn" onclick="switchTab(this,'d2tabs','d2-window')">Window Functions</button>
     <button class="tab-btn" onclick="switchTab(this,'d2tabs','d2-exercises')">Exercises</button>
@@ -1677,7 +1678,15 @@ psql -U postgres
   </div>
 
   <div id="d2tabs">
-    <div class="tab-panel active" id="tab-d2-dml">
+    <div class="tab-panel active" id="tab-d2-refresher">
+      <div class="callout info" style="margin-bottom:12px">
+        <div class="callout-title">Day 1 Knowledge Refresher</div>
+        Complete all questions before starting today's SQL content. These cover PostgreSQL architecture, WAL, MVCC, and normalisation from Day 1. Aim for 100% before moving on.
+      </div>
+      <div id="quiz-d2r"></div>
+    </div>
+
+    <div class="tab-panel" id="tab-d2-dml">
       <h3>Basics — What is DML and Why Does It Matter?</h3>
       <p>DML (Data Manipulation Language) is the set of SQL statements that change data: <code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code>, and <code>TRUNCATE</code>. Every payment record, household enrolment, and audit entry in the NSR is created and maintained through DML. Unlike DDL (which changes structure), DML always runs inside a transaction and can be rolled back.</p>
       <div class="code-block">
@@ -5675,6 +5684,47 @@ const QUIZZES = {
       ],
       correct: 2,
       explanation: 'The postmaster is the primary PostgreSQL process. It listens for incoming connections and forks a new backend process for each client. Backends handle query execution independently.'
+    }
+  ],
+  'd2r': [
+    {
+      q: 'What is Write-Ahead Logging (WAL) and which ACID property does it primarily deliver?',
+      opts: [
+        'A log of read operations that helps cache performance → Isolation',
+        'A record of all changes written to disk BEFORE the data pages are modified → Durability',
+        'A lock mechanism that prevents concurrent writes → Consistency',
+        'A background process that flushes shared_buffers to disk → Atomicity'
+      ],
+      correct: 1,
+      explanation: 'WAL writes every change to a log file before touching the data pages. On crash, PostgreSQL replays the log — this guarantees Durability. The WAL record exists on disk even if the data page is still in memory when the server dies.'
+    },
+    {
+      q: 'In MVCC, when you UPDATE a row, what actually happens to the old row version?',
+      opts: [
+        'It is immediately deleted to free space',
+        'It is moved to a temporary undo log',
+        'It remains on disk as a dead tuple with xmax set to the updating transaction ID, and is later reclaimed by VACUUM',
+        'It is locked until all open transactions that could see it have committed'
+      ],
+      correct: 2,
+      explanation: 'MVCC never overwrites in place. The old version stays on disk — other transactions that started before the UPDATE may still need to see it. xmax marks it as superseded. VACUUM reclaims it once no open transaction can possibly need the old version.'
+    },
+    {
+      q: 'A table has columns: household_id, household_code, state_code, state_name. In which Normal Form is this table, and what is the problem?',
+      opts: [
+        '1NF — it has repeating groups',
+        '2NF — state_name depends on a non-key column (state_code), not the primary key',
+        '3NF — state_name is a transitive dependency on state_code which depends on household_id',
+        'BCNF — there is a functional dependency on a non-super-key'
+      ],
+      correct: 2,
+      explanation: 'household_id → state_code → state_name is a transitive dependency. state_name does not depend directly on the primary key — it depends on state_code which depends on the primary key. This violates 3NF. Fix: move state_code and state_name into a separate states table.'
+    },
+    {
+      q: 'Which PostgreSQL memory area is shared by ALL backend processes and acts as the primary data page cache?',
+      opts: ['work_mem', 'wal_buffers', 'shared_buffers', 'maintenance_work_mem'],
+      correct: 2,
+      explanation: 'shared_buffers is the pool accessible to every backend. When any query reads a page from disk, it is stored here so the next query can get it from RAM. work_mem is per-sort-operation (private to each operation); wal_buffers stages WAL entries before flushing to the WAL file; maintenance_work_mem is for VACUUM and CREATE INDEX.'
     }
   ],
   'd2': [
