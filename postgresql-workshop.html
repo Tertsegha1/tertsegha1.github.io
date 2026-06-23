@@ -1383,12 +1383,13 @@ psql -U postgres
       <div class="code-block">
         <div class="code-header"><span class="code-lang">sql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
         <pre><span class="cmt">-- Insert sample states (ON CONFLICT DO NOTHING = safe to re-run)</span>
-<span class="kw">INSERT INTO</span> nsr.states VALUES (<span class="str">'OY'</span>,<span class="str">'Oyo'</span>),(<span class="str">'PL'</span>,<span class="str">'Plateau'</span>),(<span class="str">'IM'</span>,<span class="str">'Imo'</span>)
+<span class="kw">INSERT INTO</span> nsr.states VALUES (<span class="str">'OY'</span>,<span class="str">'Oyo'</span>),(<span class="str">'PL'</span>,<span class="str">'Plateau'</span>),(<span class="str">'IM'</span>,<span class="str">'Imo'</span>),(<span class="str">'BE'</span>,<span class="str">'Benue'</span>)
 <span class="kw">ON CONFLICT DO NOTHING</span>;
 
 <span class="cmt">-- Insert sample LGAs</span>
 <span class="kw">INSERT INTO</span> nsr.lgas (state_code, lga_name)
-<span class="kw">VALUES</span> (<span class="str">'OY'</span>,<span class="str">'Ibadan North'</span>),(<span class="str">'OY'</span>,<span class="str">'Ogbomosho North'</span>),(<span class="str">'PL'</span>,<span class="str">'Jos North'</span>)
+<span class="kw">VALUES</span> (<span class="str">'OY'</span>,<span class="str">'Ibadan North'</span>),(<span class="str">'OY'</span>,<span class="str">'Ogbomosho North'</span>),
+       (<span class="str">'PL'</span>,<span class="str">'Jos North'</span>),(<span class="str">'BE'</span>,<span class="str">'Makurdi'</span>),(<span class="str">'BE'</span>,<span class="str">'Gboko'</span>)
 <span class="kw">ON CONFLICT DO NOTHING</span>;
 
 <span class="cmt">-- Verify referential integrity works</span>
