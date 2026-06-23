@@ -1690,6 +1690,66 @@ psql -U postgres
     </div>
 
     <div class="tab-panel" id="tab-d2-dml">
+      <h3>Basics — Checking What Already Exists Before You Write Any DML</h3>
+      <p>Before inserting or updating anything, verify what is already in the database. This prevents duplicate key errors, FK violations, and wasted debugging time. The checks below take seconds and should become a habit before every INSERT.</p>
+      <table>
+        <tr><th>What you want to know</th><th>Command</th></tr>
+        <tr><td>Which tables are in the nsr schema?</td><td><code>\dt nsr.*</code> (psql) or query information_schema</td></tr>
+        <tr><td>What columns does a table have?</td><td><code>\d nsr.households</code> (psql)</td></tr>
+        <tr><td>How many rows are in a table?</td><td><code>SELECT COUNT(*) FROM nsr.states;</code></td></tr>
+        <tr><td>What data is already loaded?</td><td><code>SELECT * FROM nsr.states ORDER BY state_code;</code></td></tr>
+        <tr><td>Does a specific value exist?</td><td><code>SELECT EXISTS(SELECT 1 FROM nsr.states WHERE state_code = 'BE');</code></td></tr>
+        <tr><td>What LGA IDs are available?</td><td><code>SELECT lga_id, lga_name, state_code FROM nsr.lgas ORDER BY state_code;</code></td></tr>
+      </table>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – full pre-DML checklist</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- 1. See all tables in the nsr schema</span>
+<span class="kw">SELECT</span> table_name
+<span class="kw">FROM</span>  information_schema.tables
+<span class="kw">WHERE</span> table_schema = <span class="str">'nsr'</span>
+<span class="kw">ORDER BY</span> table_name;
+
+<span class="cmt">-- 2. Check which states are already loaded</span>
+<span class="kw">SELECT</span> state_code, state_name <span class="kw">FROM</span> nsr.states <span class="kw">ORDER BY</span> state_code;
+
+<span class="cmt">-- 3. Check which LGAs exist and their IDs (needed for FK in households)</span>
+<span class="kw">SELECT</span> lga_id, lga_name, state_code
+<span class="kw">FROM</span>  nsr.lgas
+<span class="kw">ORDER BY</span> state_code, lga_name;
+
+<span class="cmt">-- 4. Does a specific value exist? Returns true/false — no error if missing</span>
+<span class="kw">SELECT EXISTS</span>(<span class="kw">SELECT</span> <span class="num">1</span> <span class="kw">FROM</span> nsr.states <span class="kw">WHERE</span> state_code = <span class="str">'BE'</span>) <span class="kw">AS</span> benue_exists;
+<span class="kw">SELECT EXISTS</span>(<span class="kw">SELECT</span> <span class="num">1</span> <span class="kw">FROM</span> nsr.lgas  <span class="kw">WHERE</span> lga_name  = <span class="str">'Makurdi'</span>) <span class="kw">AS</span> makurdi_exists;
+
+<span class="cmt">-- 5. Check household row counts and a sample of existing codes</span>
+<span class="kw">SELECT COUNT</span>(*) <span class="kw">AS</span> total_households <span class="kw">FROM</span> nsr.households;
+<span class="kw">SELECT</span> household_code, lga_id, head_name, pmt_score
+<span class="kw">FROM</span>  nsr.households
+<span class="kw">ORDER BY</span> household_id <span class="kw">DESC LIMIT</span> <span class="num">5</span>;
+
+<span class="cmt">-- 6. Confirm a specific household_code does NOT already exist before inserting</span>
+<span class="kw">SELECT EXISTS</span>(<span class="kw">SELECT</span> <span class="num">1</span> <span class="kw">FROM</span> nsr.households <span class="kw">WHERE</span> household_code = <span class="str">'HH-BE-099'</span>)
+  <span class="kw">AS</span> already_exists;
+<span class="cmt">-- Expected: false — safe to insert. If true, DELETE or use ON CONFLICT.</span>
+
+<span class="cmt">-- 7. Check what individuals already exist for a household</span>
+<span class="kw">SELECT</span> i.individual_id, i.full_name, i.nin, h.household_code
+<span class="kw">FROM</span>  nsr.individuals i
+<span class="kw">JOIN</span>  nsr.households  h <span class="kw">ON</span> h.household_id = i.household_id
+<span class="kw">WHERE</span> h.household_code = <span class="str">'HH-BE-099'</span>;</pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">The EXISTS pattern — always prefer it over COUNT for existence checks</div>
+        <code>SELECT EXISTS(SELECT 1 FROM ... WHERE ...)</code> always returns either <code>true</code> or <code>false</code> — never NULL, never an error, never 0 rows. It short-circuits as soon as one matching row is found, making it faster than <code>COUNT(*) &gt; 0</code> on large tables. Use it before every INSERT to confirm the row you are about to add does not already exist, and to confirm any parent row (state, LGA) that a FK will reference actually exists.
+      </div>
+      <div class="callout tip" style="margin-top:8px">
+        <div class="callout-title">In psql: use \dt, \d, and \x for quick inspection</div>
+        <code>\dt nsr.*</code> — list all tables in the nsr schema.<br>
+        <code>\d nsr.households</code> — show columns, types, constraints, and indexes for that table.<br>
+        <code>\x</code> — toggle expanded display (one column per line) — useful when a table has many columns and the output wraps awkwardly.<br>
+        <code>\i /path/to/file.sql</code> — run a SQL file directly in psql without copy-pasting.
+      </div>
+
       <h3>Basics — What is DML and Why Does It Matter?</h3>
       <p>DML (Data Manipulation Language) is the set of SQL statements that change data: <code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code>, and <code>TRUNCATE</code>. Every payment record, household enrolment, and audit entry in the NSR is created and maintained through DML. Unlike DDL (which changes structure), DML always runs inside a transaction and can be rolled back.</p>
       <div class="code-block">
