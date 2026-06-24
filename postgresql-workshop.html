@@ -3841,14 +3841,25 @@ pg_ctl start -D /var/lib/pgsql/data</pre>
 <span class="kw">ALTER TABLE</span> nsr.households <span class="kw">ENABLE ROW LEVEL SECURITY</span>;
 
 <span class="cmt">-- Step 2: Create policy</span>
+<span class="cmt">-- FOR ALL covers SELECT, INSERT, UPDATE, DELETE</span>
+<span class="cmt">-- USING  = filter for reads and row targeting</span>
+<span class="cmt">-- WITH CHECK = validates new/updated row values on writes</span>
+<span class="cmt">-- Both clauses are required — USING alone allows out-of-state INSERTs</span>
+<span class="kw">DROP POLICY IF EXISTS</span> caseworker_state_policy <span class="kw">ON</span> nsr.households;
 <span class="kw">CREATE POLICY</span> caseworker_state_policy
 <span class="kw">ON</span> nsr.households
-<span class="kw">FOR SELECT</span>
+<span class="kw">FOR ALL</span>
 <span class="kw">TO</span> nsr_caseworker
 <span class="kw">USING</span> (
   lga_id <span class="kw">IN</span> (
     <span class="kw">SELECT</span> lga_id <span class="kw">FROM</span> nsr.lgas
-    <span class="kw">WHERE</span> state_code = <span class="fn">current_setting</span>(<span class="str">'app.state_code'</span>, <span class="kw">TRUE</span>)
+    <span class="kw">WHERE</span>  state_code = <span class="fn">current_setting</span>(<span class="str">'app.state_code'</span>, <span class="kw">TRUE</span>)
+  )
+)
+<span class="kw">WITH CHECK</span> (
+  lga_id <span class="kw">IN</span> (
+    <span class="kw">SELECT</span> lga_id <span class="kw">FROM</span> nsr.lgas
+    <span class="kw">WHERE</span>  state_code = <span class="fn">current_setting</span>(<span class="str">'app.state_code'</span>, <span class="kw">TRUE</span>)
   )
 );
 
@@ -3858,27 +3869,32 @@ pg_ctl start -D /var/lib/pgsql/data</pre>
 <span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.households;
 <span class="cmt">-- Returns only Kano households</span>
 
-<span class="cmt">-- Step 4: Switch to Lagos</span>
+<span class="cmt">-- Step 4: Switch to Lagos — returns only Lagos households</span>
 <span class="kw">SET</span> app.state_code = <span class="str">'LA'</span>;
 <span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.households;
-<span class="cmt">-- Returns only Lagos households</span>
 
-<span class="cmt">-- Step 5: No state set (the TRUE arg to current_setting returns NULL not error)</span>
+<span class="cmt">-- Step 5: No state set — returns 0 rows (secure default)</span>
 <span class="kw">RESET</span> app.state_code;
 <span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.households;
-<span class="cmt">-- Returns 0 rows — NULL matches nothing in the lgas subquery</span>
+<span class="cmt">-- NULL = no LGA match = 0 rows visible</span>
 
-<span class="cmt">-- Return to superuser</span>
+<span class="cmt">-- Step 6: Confirm WITH CHECK blocks an out-of-state INSERT</span>
+<span class="kw">SET</span> app.state_code = <span class="str">'KN'</span>;
+<span class="kw">INSERT INTO</span> nsr.households (household_code, lga_id, head_name, pmt_score, is_active)
+  <span class="kw">SELECT</span> <span class="str">'HH-LEAK-TEST'</span>, lga_id, <span class="str">'Leak Test'</span>, <span class="num">20.0</span>, <span class="kw">TRUE</span>
+  <span class="kw">FROM</span>  nsr.lgas <span class="kw">WHERE</span> state_code = <span class="str">'LA'</span> <span class="kw">LIMIT</span> <span class="num">1</span>;
+<span class="cmt">-- Expected: ERROR: new row violates row-level security policy for table "households"</span>
+
 <span class="kw">RESET ROLE</span>;
 
-<span class="cmt">-- Verify policy exists</span>
-<span class="kw">SELECT</span> policyname, roles, cmd, qual
-<span class="kw">FROM</span> pg_policies
-<span class="kw">WHERE</span> tablename = <span class="str">'households'</span>;</pre>
+<span class="cmt">-- Step 7: Verify policy</span>
+<span class="kw">SELECT</span> policyname, cmd, permissive, roles, qual <span class="kw">AS</span> using_expr, with_check
+<span class="kw">FROM</span>  pg_policies
+<span class="kw">WHERE</span> schemaname = <span class="str">'nsr'</span> <span class="kw">AND</span> tablename = <span class="str">'households'</span>;</pre>
             </div>
             <div class="callout info" style="margin-top:8px">
-              <div class="callout-title">When no state is set — expected answer</div>
-              <code>current_setting('app.state_code', TRUE)</code> returns NULL when the variable is not set (the <code>TRUE</code> flag suppresses the "unrecognised configuration parameter" error). NULL in the WHERE clause means the lgas subquery returns no rows, so the household is invisible. This is the <strong>secure default</strong>: no state set → no data visible. Never use <code>current_setting('app.state_code')</code> without the TRUE flag — it raises an error on the first unset connection.
+              <div class="callout-title">Why both USING and WITH CHECK are required</div>
+              <code>USING</code> filters which <em>existing</em> rows a role can read or target. It does not validate the values being written. Without <code>WITH CHECK</code>, a Kano caseworker can INSERT a row with a Lagos <code>lga_id</code> — it succeeds because the check on reads is irrelevant to a write. <code>WITH CHECK</code> validates the new row before it is stored. Use the same predicate in both clauses. <strong>FOR SELECT</strong> only policies have no write risk but miss DELETE and UPDATE row-targeting — always use <code>FOR ALL</code> unless you have a deliberate reason to scope by command.
             </div>
           </div>
           <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
@@ -3909,59 +3925,74 @@ pg_ctl start -D /var/lib/pgsql/data</pre>
             <div class="callout tip"><div class="callout-title">Full Solution</div></div>
             <div class="code-block">
               <div class="code-header"><span class="code-lang">sql – audit trigger on nsr.payments</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-              <pre><span class="cmt">-- Step 1 & 2: Trigger function</span>
+              <pre><span class="cmt">-- Step 1: Create the audit_log table (skip if already done in the Audit tab)</span>
+<span class="kw">CREATE TABLE IF NOT EXISTS</span> nsr.audit_log (
+  log_id     <span class="typ">BIGSERIAL</span>   <span class="kw">PRIMARY KEY</span>,
+  log_time   <span class="typ">TIMESTAMPTZ</span> <span class="kw">NOT NULL DEFAULT</span> <span class="fn">now</span>(),
+  role_name  <span class="typ">TEXT</span>        <span class="kw">NOT NULL DEFAULT</span> <span class="fn">session_user</span>,
+  table_name <span class="typ">TEXT</span>        <span class="kw">NOT NULL</span>,
+  action     <span class="typ">TEXT</span>        <span class="kw">NOT NULL</span>,
+  row_data   <span class="typ">JSONB</span>
+);
+<span class="kw">REVOKE DELETE ON</span> nsr.audit_log <span class="kw">FROM PUBLIC</span>;
+<span class="kw">REVOKE DELETE ON</span> nsr.audit_log <span class="kw">FROM</span> nsr_dba;
+
+<span class="cmt">-- Step 2: Trigger function — matches nsr.audit_log schema exactly</span>
+<span class="cmt">-- session_user captures the real caller even inside a SECURITY DEFINER function</span>
 <span class="kw">CREATE OR REPLACE FUNCTION</span> nsr.audit_payments()
-<span class="kw">RETURNS TRIGGER</span>
-<span class="kw">LANGUAGE plpgsql</span>
-<span class="kw">SECURITY DEFINER</span> <span class="cmt">-- runs as definer so caseworkers can write to audit_log</span>
+<span class="kw">RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER</span>
 <span class="kw">AS</span> $$
-<span class="kw">DECLARE</span>
-  v_row_id    <span class="typ">BIGINT</span>;
-  v_old_val   <span class="typ">TEXT</span>;
-  v_new_val   <span class="typ">TEXT</span>;
 <span class="kw">BEGIN</span>
-  <span class="kw">IF</span> TG_OP = <span class="str">'DELETE'</span> <span class="kw">THEN</span>
-    v_row_id  := OLD.payment_id;
-    v_old_val := OLD.amount::TEXT;
-    v_new_val := <span class="kw">NULL</span>;
-  <span class="kw">ELSIF</span> TG_OP = <span class="str">'INSERT'</span> <span class="kw">THEN</span>
-    v_row_id  := NEW.payment_id;
-    v_old_val := <span class="kw">NULL</span>;
-    v_new_val := NEW.amount::TEXT;
-  <span class="kw">ELSE</span> <span class="cmt">-- UPDATE</span>
-    v_row_id  := NEW.payment_id;
-    v_old_val := OLD.amount::TEXT;
-    v_new_val := NEW.amount::TEXT;
+  <span class="kw">IF</span> TG_OP = <span class="str">'INSERT'</span> <span class="kw">THEN</span>
+    <span class="kw">INSERT INTO</span> nsr.audit_log (table_name, action, row_data)
+    <span class="kw">VALUES</span> (TG_TABLE_SCHEMA || <span class="str">'.'</span> || TG_TABLE_NAME,
+            TG_OP,
+            <span class="fn">row_to_json</span>(NEW)::<span class="typ">JSONB</span>);
+    <span class="kw">RETURN NEW</span>;
+
+  <span class="kw">ELSIF</span> TG_OP = <span class="str">'UPDATE'</span> <span class="kw">THEN</span>
+    <span class="kw">INSERT INTO</span> nsr.audit_log (table_name, action, row_data)
+    <span class="kw">VALUES</span> (TG_TABLE_SCHEMA || <span class="str">'.'</span> || TG_TABLE_NAME,
+            TG_OP,
+            <span class="fn">jsonb_build_object</span>(<span class="str">'old'</span>, <span class="fn">row_to_json</span>(OLD)::<span class="typ">JSONB</span>,
+                               <span class="str">'new'</span>, <span class="fn">row_to_json</span>(NEW)::<span class="typ">JSONB</span>));
+    <span class="kw">RETURN NEW</span>;
+
+  <span class="kw">ELSE</span> <span class="cmt">-- DELETE</span>
+    <span class="kw">INSERT INTO</span> nsr.audit_log (table_name, action, row_data)
+    <span class="kw">VALUES</span> (TG_TABLE_SCHEMA || <span class="str">'.'</span> || TG_TABLE_NAME,
+            TG_OP,
+            <span class="fn">row_to_json</span>(OLD)::<span class="typ">JSONB</span>);
+    <span class="kw">RETURN OLD</span>;
   <span class="kw">END IF</span>;
-
-  <span class="kw">INSERT INTO</span> nsr.audit_log
-    (table_name, operation, row_id, old_value, new_value, changed_by, changed_at)
-  <span class="kw">VALUES</span>
-    (<span class="str">'nsr.payments'</span>, TG_OP, v_row_id, v_old_val, v_new_val, current_user, now());
-
-  <span class="kw">RETURN NEW</span>; <span class="cmt">-- RETURN OLD for DELETE triggers, but AFTER triggers ignore the return value</span>
 <span class="kw">END</span>;
 $$;
 
 <span class="cmt">-- Step 3: Attach to payments table</span>
+<span class="kw">DROP TRIGGER IF EXISTS</span> trg_audit_payments <span class="kw">ON</span> nsr.payments;
 <span class="kw">CREATE TRIGGER</span> trg_audit_payments
 <span class="kw">AFTER INSERT OR UPDATE OR DELETE ON</span> nsr.payments
 <span class="kw">FOR EACH ROW EXECUTE FUNCTION</span> nsr.audit_payments();
 
-<span class="cmt">-- Step 4: Test the trigger</span>
+<span class="cmt">-- Step 4: Test — update a payment and check the audit record</span>
+<span class="cmt">-- Use a real payment_id: SELECT payment_id FROM nsr.payments LIMIT 5;</span>
 <span class="kw">UPDATE</span> nsr.payments
-<span class="kw">SET</span> amount = amount * <span class="num">1.05</span>
+<span class="kw">SET</span>   amount_ngn = amount_ngn * <span class="num">1.05</span>
 <span class="kw">WHERE</span> payment_id = <span class="num">1</span>;
+<span class="cmt">-- If 0 rows: use SELECT payment_id FROM nsr.payments LIMIT 1 to get a valid ID</span>
 
 <span class="cmt">-- Step 5: Verify audit trail</span>
-<span class="kw">SELECT</span> table_name, operation, row_id, old_value, new_value, changed_by, changed_at
-<span class="kw">FROM</span> nsr.audit_log
-<span class="kw">ORDER BY</span> changed_at <span class="kw">DESC</span>
-<span class="kw">LIMIT</span> <span class="num">5</span>;</pre>
+<span class="kw">SELECT</span> log_id, log_time, role_name, action,
+       row_data-><span class="str">'old'</span>->><span class="str">'amount_ngn'</span> <span class="kw">AS</span> amount_before,
+       row_data-><span class="str">'new'</span>->><span class="str">'amount_ngn'</span> <span class="kw">AS</span> amount_after
+<span class="kw">FROM</span>  nsr.audit_log
+<span class="kw">WHERE</span> table_name = <span class="str">'nsr.payments'</span>
+<span class="kw">ORDER BY</span> log_id <span class="kw">DESC LIMIT</span> <span class="num">5</span>;
+<span class="cmt">-- Expected: one UPDATE row, old and new amount_ngn values visible as separate columns</span></pre>
             </div>
             <div class="callout info" style="margin-top:8px">
               <div class="callout-title">Key teaching points</div>
-              <strong>SECURITY DEFINER</strong>: the function runs with the privileges of the owner (DBA), not the caller. This allows a restricted caseworker to write to audit_log even if they have no direct INSERT privilege on it. <strong>TG_OP</strong>: the trigger variable containing 'INSERT', 'UPDATE', or 'DELETE'. <strong>NEW/OLD</strong>: NEW is undefined for DELETE, OLD is undefined for INSERT. Always check TG_OP before referencing them. <strong>AFTER trigger</strong>: fires after the change is committed to the row — guarantees the audit record matches the actual final state.
+              <strong>SECURITY DEFINER</strong>: the function runs with the privileges of its owner (postgres), not the caller. This lets a restricted caseworker write to <code>audit_log</code> without having a direct INSERT grant on it. <strong>session_user vs current_user</strong>: inside a SECURITY DEFINER function <code>current_user</code> returns the function owner — always use <code>session_user</code> (the DEFAULT on <code>role_name</code>) to record who actually triggered the change. <strong>TG_OP / TG_TABLE_NAME / TG_TABLE_SCHEMA</strong>: trigger variables — no hard-coding needed. <strong>row_to_json(OLD/NEW)::JSONB</strong>: captures the entire row as JSONB — any future column addition is automatically included. <strong>RETURN OLD for DELETE</strong>: AFTER triggers ignore the return value but convention is to return OLD on DELETE and NEW on INSERT/UPDATE.
             </div>
           </div>
           <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
@@ -4016,7 +4047,13 @@ done</pre>
             </div>
             <div class="callout info" style="margin-top:8px">
               <div class="callout-title">Expected output</div>
-              All row counts should match exactly between <code>lab_nsr</code> and <code>lab_nsr_test</code>. If a count differs, the most likely cause is a sequence reset issue — check with <code>pg_restore -v</code> for errors during restore. Note: RLS policies and role grants are <strong>not</strong> backed up by schema-only dump unless you include <code>--no-acl</code> off and restore with superuser.
+              All row counts should match exactly between <code>lab_nsr</code> and <code>lab_nsr_test</code>. If a count differs, check <code>pg_restore -v</code> output for errors — a common cause is the target database lacking the <code>nsr</code> schema or the roles referenced in GRANT statements not existing yet.
+            </div>
+            <div class="callout warning" style="margin-top:8px">
+              <div class="callout-title">What pg_dump does and does not back up</div>
+              <strong>pg_dump DOES include</strong>: table DDL, RLS policies (<code>CREATE POLICY</code>), GRANT statements, sequences, triggers, functions, views, indexes.<br>
+              <strong>pg_dump does NOT include</strong>: role definitions (the roles themselves — their passwords, attributes, memberships). These live at cluster level, not database level. To back up roles use: <code>pg_dumpall -U postgres --globals-only -f /tmp/roles.sql</code><br>
+              This means if you restore to a fresh cluster, you must run the roles script first, then <code>pg_restore</code> — otherwise the GRANT statements will fail because the grantee roles do not exist yet.
             </div>
             <div class="callout warning" style="margin-top:8px">
               <div class="callout-title">Windows path note</div>
