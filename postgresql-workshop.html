@@ -512,16 +512,92 @@ body.instructor-mode .nav-item.instructor-block { display: flex; }
 .obs-card p { font-size: 0.82rem; color: var(--text-muted); }
 
 /* ===== RESPONSIVE ===== */
-@media (max-width: 768px) {
+
+/* --- Always: center page content in the main area --- */
+.page { margin-left: auto; margin-right: auto; }
+
+/* --- Always: tabs scroll horizontally instead of wrapping --- */
+.tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab-btn { white-space: nowrap; flex-shrink: 0; }
+
+/* --- Small laptops 1025–1280px: narrow sidebar --- */
+@media (min-width: 1025px) and (max-width: 1280px) {
+  :root { --sidebar-w: 220px; }
+  .page { padding: 28px 24px; }
+}
+
+/* --- Tablets & below (≤1024px): collapse sidebar, hamburger takes over --- */
+@media (max-width: 1024px) {
   #sidebar { transform: translateX(-100%); }
   #sidebar.open { transform: translateX(0); }
   #main { margin-left: 0; }
   footer { margin-left: 0 !important; }
   #hamburger { display: block; }
+  .page { max-width: 100%; }
+}
+
+/* --- Tablets 768–1024px: two-column grids, comfortable padding --- */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .page { padding: 28px 24px; }
+  .hero { padding: 36px 28px; }
+  .schedule-grid { grid-template-columns: 1fr 1fr; }
+  .obs-grid { grid-template-columns: 1fr 1fr; }
+  .prog-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* --- Phones (≤767px) --- */
+@media (max-width: 767px) {
+  .page { padding: 20px 16px; }
   .schedule-grid { grid-template-columns: 1fr; }
   .prog-grid { grid-template-columns: 1fr 1fr; }
   .obs-grid { grid-template-columns: 1fr; }
-  .page { padding: 20px 16px; }
+  /* Tables scroll rather than overflow the viewport */
+  table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  /* Hero: tighter on phone */
+  .hero { padding: 28px 18px; }
+  .hero h1 { font-size: 1.55rem; }
+  /* Page header stacks cleanly */
+  .page-header { flex-direction: column; align-items: flex-start; }
+  .mark-done-btn { align-self: flex-end; }
+  /* Code slightly smaller */
+  pre { font-size: 0.78rem; }
+  /* Cert locked padded less */
+  #cert-locked { padding: 40px 20px; }
+  /* Cert action bar vertical */
+  .cert-action-bar { flex-direction: column; align-items: center; }
+  .cert-action-bar .btn, .cert-linkedin-btn, .cert-download-btn { width: 100%; max-width: 320px; justify-content: center; }
+}
+
+/* --- Small phones (≤480px) --- */
+@media (max-width: 480px) {
+  :root { --header-h: 56px; }
+  /* Slim down header on tiny screens */
+  #header .subtitle { display: none; }
+  #progress-bar-wrap { width: 80px; }
+  #header { gap: 10px; padding: 0 12px; }
+  #header .logo { font-size: 0.95rem; }
+  /* Smaller mode toggle */
+  .mode-btn { padding: 4px 10px; font-size: 0.75rem; }
+  /* Hero */
+  .hero { padding: 24px 16px; border-radius: 12px; }
+  .hero h1 { font-size: 1.3rem; }
+  .hero .meta { font-size: 0.82rem; }
+  /* Page title */
+  .page-title-area h1 { font-size: 1.25rem; }
+  /* Section heading */
+  .section-header h2 { font-size: 0.95rem; }
+  /* Tabs even smaller */
+  .tab-btn { padding: 8px 12px; font-size: 0.8rem; }
+  /* Prog grid single column on very small phones */
+  .prog-grid { grid-template-columns: 1fr; }
+  /* Reduce exercise card padding */
+  .exercise-body { padding: 14px 12px; }
+  .exercise-header { padding: 12px 14px; }
+  /* Shrink code font */
+  pre { font-size: 0.73rem; padding: 12px; }
+  /* Callouts */
+  .callout { padding: 12px 14px; font-size: 0.84rem; }
 }
 
 /* ===== PRINT ===== */
