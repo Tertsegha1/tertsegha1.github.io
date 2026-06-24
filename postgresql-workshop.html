@@ -2352,7 +2352,7 @@ psql -U postgres
   state_name,
   pmt_score,
   poverty_rank,
-  <span class="fn">ROUND</span>(pct_rank * <span class="num">100</span>, <span class="num">1</span>) <span class="kw">AS</span> percentile
+  <span class="fn">ROUND</span>((pct_rank * <span class="num">100</span>)::<span class="typ">NUMERIC</span>, <span class="num">1</span>) <span class="kw">AS</span> percentile
 <span class="kw">FROM</span>  ranked_households
 <span class="kw">WHERE</span> pct_rank &lt;= <span class="num">0.20</span>
 <span class="kw">ORDER BY</span> state_name, poverty_rank;</pre>
