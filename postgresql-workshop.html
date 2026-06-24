@@ -4439,7 +4439,7 @@ $$;
             </div>
           </div>
           <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
-            <button class="btn-toggle-answer instructor-block instructor-only" onclick="toggleAnswer('d7-g2',this)">▼ Show Model Answer</button>
+            <button class="btn-toggle-answer" onclick="toggleAnswer('d7-g2',this)">▼ Show Answer</button>
             <button class="ex-complete-btn" onclick="markExDone(this)">✓ Mark done</button>
           </div>
         </div>
@@ -4581,22 +4581,315 @@ $$;
     <div id="quiz-d8"></div>
   </div>
 
+  <!-- CAPSTONE CHALLENGE -->
   <div class="section">
-    <div class="section-header"><div class="section-icon si-blue">🎤</div><h2>Final Presentations</h2></div>
-    <div class="callout info"><div class="callout-title">Format</div>Each participant presents a 5-minute summary of the most valuable thing they learned and one specific change they will implement in their organisation's data systems.</div>
-    <h3>My Presentation Notes</h3>
-    <div class="answer-area" style="min-height:120px">Key learning:<br><br>One change I will implement:<br><br>How I will measure success:</div>
+    <div class="section-header"><div class="section-icon si-blue">🏁</div><h2>Capstone Challenge — End-to-End NSR Scenario</h2></div>
+    <div class="callout info" style="margin-bottom:12px">
+      <div class="callout-title">What this is</div>
+      This challenge pulls together every skill from the programme into one connected workflow. Work through it individually. You can use any notes, the Quick Reference page, or the tab content from any day — this is not an exam. The goal is to see how it all fits together before you go back to your organisation.
+    </div>
+    <div class="callout important" style="margin-bottom:18px">
+      <div class="callout-title">Scenario</div>
+      The NSR programme office has received a new enumeration batch for <strong>Plateau State</strong>. Your job is to: set up a safe role for a new data officer, load and validate the batch, query the results with window functions, check the query plan, and write a data lineage record — all in one traceable pipeline.
+    </div>
+
+    <!-- PART 1 -->
+    <div class="exercise-card">
+      <div class="exercise-header" onclick="toggleExercise(this)">
+        <div class="ex-num">C1</div>
+        <div class="ex-title">Part 1 — Schema readiness check (Day 1 + Day 2 skills)</div>
+        <span class="ex-difficulty diff-intermediate">Intermediate</span>
+        <span class="ex-toggle">▼</span>
+      </div>
+      <div class="exercise-body" style="display:none">
+        <p>Before loading any data, confirm the NSR schema is in the expected state. Write queries to: (a) list all tables in the <code>nsr</code> schema, (b) show how many active households exist per state, and (c) confirm Plateau State (<code>'PL'</code>) is already in <code>nsr.states</code>. If it is missing, insert it.</p>
+        <div class="answer-area">Write your SQL here</div>
+        <div class="answer-reveal" id="ans-d8-c1">
+          <div class="callout tip"><div class="callout-title">Full Solution</div></div>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">sql – schema readiness check</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+            <pre><span class="cmt">-- (a) List all tables in the nsr schema</span>
+<span class="kw">SELECT</span> table_name
+<span class="kw">FROM</span>  information_schema.tables
+<span class="kw">WHERE</span> table_schema = <span class="str">'nsr'</span>
+<span class="kw">ORDER BY</span> table_name;
+
+<span class="cmt">-- (b) Active households per state</span>
+<span class="kw">SELECT</span>
+  s.state_name,
+  s.state_code,
+  <span class="fn">COUNT</span>(h.household_id) <span class="kw">AS</span> active_households
+<span class="kw">FROM</span>  nsr.states s
+<span class="kw">LEFT JOIN</span> nsr.lgas      l <span class="kw">ON</span> l.state_code = s.state_code
+<span class="kw">LEFT JOIN</span> nsr.households h <span class="kw">ON</span> h.lga_id = l.lga_id <span class="kw">AND</span> h.is_active = <span class="kw">TRUE</span>
+<span class="kw">GROUP BY</span> s.state_name, s.state_code
+<span class="kw">ORDER BY</span> active_households <span class="kw">DESC</span>;
+
+<span class="cmt">-- (c) Ensure Plateau State exists (idempotent)</span>
+<span class="kw">SELECT EXISTS</span>(<span class="kw">SELECT</span> <span class="num">1</span> <span class="kw">FROM</span> nsr.states <span class="kw">WHERE</span> state_code = <span class="str">'PL'</span>) <span class="kw">AS</span> plateau_exists;
+
+<span class="kw">INSERT INTO</span> nsr.states (state_code, state_name)
+<span class="kw">VALUES</span> (<span class="str">'PL'</span>, <span class="str">'Plateau'</span>)
+<span class="kw">ON CONFLICT DO NOTHING</span>;
+
+<span class="cmt">-- Ensure Jos North LGA exists for Plateau</span>
+<span class="kw">INSERT INTO</span> nsr.lgas (state_code, lga_name)
+<span class="kw">SELECT</span> <span class="str">'PL'</span>, <span class="str">'Jos North'</span>
+<span class="kw">WHERE NOT EXISTS</span> (
+  <span class="kw">SELECT</span> <span class="num">1</span> <span class="kw">FROM</span> nsr.lgas
+  <span class="kw">WHERE</span> state_code = <span class="str">'PL'</span> <span class="kw">AND</span> lga_name = <span class="str">'Jos North'</span>
+);
+
+<span class="kw">SELECT</span> lga_id, lga_name, state_code
+<span class="kw">FROM</span>  nsr.lgas
+<span class="kw">WHERE</span> state_code = <span class="str">'PL'</span>;</pre>
+          </div>
+          <div class="callout info" style="margin-top:8px">
+            <div class="callout-title">Why this step matters</div>
+            Running a schema readiness check before any ETL job prevents the most common cause of pipeline failures: missing reference data. A household INSERT that references a <code>lga_id</code> that doesn't exist yet will fail with a foreign key error. Checking first (and inserting with <code>ON CONFLICT DO NOTHING</code>) makes the pipeline robust against re-runs and partial state.
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+          <button class="btn-toggle-answer" onclick="toggleAnswer('d8-c1',this)">▼ Show Answer</button>
+          <button class="ex-complete-btn" onclick="markExDone(this)">✓ Mark done</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PART 2 -->
+    <div class="exercise-card">
+      <div class="exercise-header" onclick="toggleExercise(this)">
+        <div class="ex-num">C2</div>
+        <div class="ex-title">Part 2 — Role setup for a new Plateau data officer (Day 3 skills)</div>
+        <span class="ex-difficulty diff-intermediate">Intermediate</span>
+        <span class="ex-toggle">▼</span>
+      </div>
+      <div class="exercise-body" style="display:none">
+        <p>Create a login role <code>nsr_plateau_officer</code> with a password. Grant it the minimum permissions needed to: read households and individuals in <code>nsr</code>, and insert into <code>nsr.stg_households</code>. Enable RLS on <code>nsr.households</code> and create a policy that restricts this role to Plateau State rows only. Test that a Kano household is invisible when logged in as the new role.</p>
+        <div class="answer-area">Write your SQL here</div>
+        <div class="answer-reveal" id="ans-d8-c2">
+          <div class="callout tip"><div class="callout-title">Full Solution</div></div>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">sql – role and RLS setup</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+            <pre><span class="cmt">-- 1. Create role with login</span>
+<span class="kw">CREATE ROLE</span> nsr_plateau_officer <span class="kw">WITH LOGIN</span> PASSWORD <span class="str">'pl_secure_2026'</span>;
+
+<span class="cmt">-- 2. Grant schema usage</span>
+<span class="kw">GRANT USAGE ON SCHEMA</span> nsr <span class="kw">TO</span> nsr_plateau_officer;
+
+<span class="cmt">-- 3. Read-only on core tables</span>
+<span class="kw">GRANT SELECT ON</span> nsr.households, nsr.individuals, nsr.lgas, nsr.states
+<span class="kw">TO</span> nsr_plateau_officer;
+
+<span class="cmt">-- 4. Insert into staging only (never into production directly)</span>
+<span class="kw">CREATE TABLE IF NOT EXISTS</span> nsr.stg_households (
+  household_code  <span class="typ">TEXT</span>,
+  state_name      <span class="typ">TEXT</span>,
+  lga_name        <span class="typ">TEXT</span>,
+  head_name       <span class="typ">TEXT</span>,
+  pmt_score       <span class="typ">TEXT</span>,
+  import_batch    <span class="typ">TEXT</span>,
+  loaded_at       <span class="typ">TIMESTAMPTZ</span> <span class="kw">DEFAULT now</span>()
+);
+<span class="kw">GRANT INSERT ON</span> nsr.stg_households <span class="kw">TO</span> nsr_plateau_officer;
+
+<span class="cmt">-- 5. Enable RLS and create state-scoped policy</span>
+<span class="kw">ALTER TABLE</span> nsr.households <span class="kw">ENABLE ROW LEVEL SECURITY</span>;
+
+<span class="kw">CREATE POLICY</span> plateau_officer_policy
+<span class="kw">ON</span> nsr.households
+<span class="kw">FOR SELECT</span>
+<span class="kw">TO</span> nsr_plateau_officer
+<span class="kw">USING</span> (
+  lga_id <span class="kw">IN</span> (
+    <span class="kw">SELECT</span> lga_id <span class="kw">FROM</span> nsr.lgas
+    <span class="kw">WHERE</span> state_code = <span class="fn">current_setting</span>(<span class="str">'app.state_code'</span>, <span class="kw">TRUE</span>)
+  )
+);
+
+<span class="cmt">-- 6. Test: set to Plateau — should see PL rows only</span>
+<span class="kw">SET ROLE</span> nsr_plateau_officer;
+<span class="kw">SET</span> app.state_code = <span class="str">'PL'</span>;
+<span class="kw">SELECT</span> household_code, head_name <span class="kw">FROM</span> nsr.households;
+<span class="cmt">-- Should return only Plateau households (or 0 rows if none loaded yet)</span>
+
+<span class="cmt">-- 7. Kano households should be invisible</span>
+<span class="kw">SET</span> app.state_code = <span class="str">'KN'</span>;
+<span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.households;
+<span class="cmt">-- Returns 0 — Plateau officer cannot see Kano data</span>
+
+<span class="kw">RESET ROLE</span>;</pre>
+          </div>
+          <div class="callout info" style="margin-top:8px">
+            <div class="callout-title">Principle of least privilege in practice</div>
+            The officer can INSERT into staging (no constraints) but cannot promote directly to the production <code>households</code> table. A DBA or automated pipeline does the promotion after validation. This two-step pattern means a data officer error can corrupt staging — but never production — without a supervisor's action.
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+          <button class="btn-toggle-answer" onclick="toggleAnswer('d8-c2',this)">▼ Show Answer</button>
+          <button class="ex-complete-btn" onclick="markExDone(this)">✓ Mark done</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PART 3 -->
+    <div class="exercise-card">
+      <div class="exercise-header" onclick="toggleExercise(this)">
+        <div class="ex-num">C3</div>
+        <div class="ex-title">Part 3 — Load, validate and query the batch (Day 2 + Day 7 skills)</div>
+        <span class="ex-difficulty diff-advanced">Advanced</span>
+        <span class="ex-toggle">▼</span>
+      </div>
+      <div class="exercise-body" style="display:none">
+        <p>Insert three Plateau households directly (simulating a promoted batch). Then write a single query using a window function that shows: each household's PMT score, their rank within Plateau State by PMT score (lowest score = rank 1, highest poverty), and the average PMT score for all Plateau households alongside each row. Record a lineage entry for the batch.</p>
+        <div class="answer-area">Write your SQL here</div>
+        <div class="answer-reveal" id="ans-d8-c3">
+          <div class="callout tip"><div class="callout-title">Full Solution</div></div>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">sql – load and analyse Plateau batch</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+            <pre><span class="cmt">-- Step 1: Insert three Plateau households (idempotent)</span>
+<span class="kw">INSERT INTO</span> nsr.households (household_code, lga_id, head_name, pmt_score, enumeration_round)
+<span class="kw">SELECT</span> v.code, l.lga_id, v.head, v.score, <span class="num">1</span>
+<span class="kw">FROM</span> (
+  <span class="kw">VALUES</span>
+    (<span class="str">'PL-JN-001'</span>, <span class="str">'Gyang Mangut'</span>,   <span class="num">18.750</span>),
+    (<span class="str">'PL-JN-002'</span>, <span class="str">'Rebecca Dung'</span>,    <span class="num">31.200</span>),
+    (<span class="str">'PL-JN-003'</span>, <span class="str">'Emmanuel Pam'</span>,    <span class="num">24.650</span>)
+) <span class="kw">AS</span> v(code, head, score)
+<span class="kw">JOIN</span>  nsr.lgas l <span class="kw">ON</span> l.lga_name = <span class="str">'Jos North'</span> <span class="kw">AND</span> l.state_code = <span class="str">'PL'</span>
+<span class="kw">ON CONFLICT</span> (household_code) <span class="kw">DO NOTHING</span>;
+
+<span class="cmt">-- Step 2: Window function report — poverty rank within Plateau</span>
+<span class="kw">SELECT</span>
+  h.household_code,
+  h.head_name,
+  h.pmt_score,
+  <span class="fn">RANK</span>()    <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> l.state_code <span class="kw">ORDER BY</span> h.pmt_score <span class="kw">ASC</span>)  <span class="kw">AS</span> poverty_rank,
+  <span class="fn">ROUND</span>(<span class="fn">AVG</span>(h.pmt_score) <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> l.state_code), <span class="num">3</span>)         <span class="kw">AS</span> state_avg_pmt,
+  h.pmt_score - <span class="fn">AVG</span>(h.pmt_score) <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> l.state_code)     <span class="kw">AS</span> deviation_from_avg
+<span class="kw">FROM</span>  nsr.households h
+<span class="kw">JOIN</span>  nsr.lgas       l <span class="kw">ON</span> l.lga_id = h.lga_id
+<span class="kw">WHERE</span> l.state_code = <span class="str">'PL'</span>
+  <span class="kw">AND</span>  h.is_active = <span class="kw">TRUE</span>
+<span class="kw">ORDER BY</span> poverty_rank;
+
+<span class="cmt">-- Step 3: Record lineage (NDP Act compliance)</span>
+<span class="kw">INSERT INTO</span> nsr.data_lineage
+  (table_name, source_system, record_count, batch_ref, lawful_basis, data_owner)
+<span class="kw">VALUES</span> (
+  <span class="str">'nsr.households'</span>,
+  <span class="str">'Plateau Enumeration Batch Q2 2026'</span>,
+  <span class="num">3</span>,
+  <span class="str">'PL_BATCH_20260703'</span>,
+  <span class="str">'NDP Act 2023 s.25 – Conditional Cash Transfer Programme'</span>,
+  <span class="str">'NSR Plateau State Office'</span>
+);</pre>
+          </div>
+          <div class="callout info" style="margin-top:8px">
+            <div class="callout-title">Reading the window function output</div>
+            <strong>poverty_rank = 1</strong>: Gyang Mangut at 18.750 — the lowest PMT score, most economically vulnerable, first priority for disbursement. <strong>state_avg_pmt</strong>: computed once across the entire Plateau partition and repeated on every row — you see the context without a subquery or second pass. <strong>deviation_from_avg</strong>: a negative value means the household is below the state average (more vulnerable than typical); positive means above. This single query gives a caseworker enough information to prioritise home visits without needing a pivot table or a second query.
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+          <button class="btn-toggle-answer" onclick="toggleAnswer('d8-c3',this)">▼ Show Answer</button>
+          <button class="ex-complete-btn" onclick="markExDone(this)">✓ Mark done</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PART 4 -->
+    <div class="exercise-card">
+      <div class="exercise-header" onclick="toggleExercise(this)">
+        <div class="ex-num">C4</div>
+        <div class="ex-title">Part 4 — Diagnose the query plan (Day 6 skills)</div>
+        <span class="ex-difficulty diff-advanced">Advanced</span>
+        <span class="ex-toggle">▼</span>
+      </div>
+      <div class="exercise-body" style="display:none">
+        <p>Run <code>EXPLAIN (ANALYZE, BUFFERS)</code> on the window function query from C3. Identify: (a) which join strategy PostgreSQL chose, (b) whether an index was used on <code>lga_id</code>, (c) the <code>shared_blks_hit</code> count, and (d) what you would do differently if this query ran against 5 million Plateau households instead of 3.</p>
+        <div class="answer-area">Paste the EXPLAIN output and your analysis here</div>
+        <div class="answer-reveal" id="ans-d8-c4">
+          <div class="callout tip"><div class="callout-title">Model Answer</div></div>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">sql – EXPLAIN on the window query</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+            <pre><span class="kw">EXPLAIN</span> (<span class="kw">ANALYZE</span>, <span class="kw">BUFFERS</span>)
+<span class="kw">SELECT</span>
+  h.household_code, h.head_name, h.pmt_score,
+  <span class="fn">RANK</span>()    <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> l.state_code <span class="kw">ORDER BY</span> h.pmt_score <span class="kw">ASC</span>) <span class="kw">AS</span> poverty_rank,
+  <span class="fn">ROUND</span>(<span class="fn">AVG</span>(h.pmt_score) <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> l.state_code), <span class="num">3</span>)         <span class="kw">AS</span> state_avg
+<span class="kw">FROM</span>  nsr.households h
+<span class="kw">JOIN</span>  nsr.lgas       l <span class="kw">ON</span> l.lga_id = h.lga_id
+<span class="kw">WHERE</span> l.state_code = <span class="str">'PL'</span>
+  <span class="kw">AND</span>  h.is_active = <span class="kw">TRUE</span>
+<span class="kw">ORDER BY</span> poverty_rank;</pre>
+          </div>
+          <div class="callout info" style="margin-top:8px">
+            <div class="callout-title">What to look for in the plan — and what to do at scale</div>
+            <strong>(a) Join strategy</strong>: with 3 rows, PostgreSQL will almost certainly choose a Nested Loop or Hash Join. At 5 million rows, a Hash Join on lga_id is expected and correct — it builds a hash table of lgas (small), then probes it for each household row. <strong>(b) Index use</strong>: at 3 rows, a Seq Scan on both tables is normal — the planner correctly judges that reading 3 rows sequentially is faster than a B-tree traversal. At 5 million rows, you want an index: <code>CREATE INDEX idx_hh_lga_active ON nsr.households (lga_id) WHERE is_active = TRUE;</code> — a partial index covering only active households reduces index size and maintenance cost. <strong>(c) shared_blks_hit</strong>: if this equals <code>shared_blks_read + shared_blks_hit</code> and read is &gt; 0 after the first run, data is being fetched from disk. Re-run the query — on the second run, hit should dominate (data now in shared_buffers). <strong>(d) At 5 million rows</strong>: partition <code>nsr.households</code> by state_code. Then the query with <code>WHERE l.state_code = 'PL'</code> only reads the Plateau partition — partition pruning eliminates 35 other states entirely. Combine with the partial index on lga_id and the query becomes O(PL_rows × log(lga_count)) instead of O(all_rows).
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+          <button class="btn-toggle-answer" onclick="toggleAnswer('d8-c4',this)">▼ Show Answer</button>
+          <button class="ex-complete-btn" onclick="markExDone(this)">✓ Mark done</button>
+        </div>
+      </div>
+    </div>
+  </div><!-- end capstone section -->
+
+  <!-- PROGRAMME CONCEPTS MAP -->
+  <div class="section">
+    <div class="section-header"><div class="section-icon si-green">🗺</div><h2>How Everything Connects — Programme Concept Map</h2></div>
+    <table>
+      <tr><th>Concept</th><th>Day introduced</th><th>Why it matters for NSR</th><th>Connected to</th></tr>
+      <tr><td><strong>WAL &amp; MVCC</strong></td><td>Day 1</td><td>Batch reports read a consistent snapshot even while caseworkers update rows concurrently</td><td>Checkpoint tuning (D6), PITR backup (D3)</td></tr>
+      <tr><td><strong>3NF schema design</strong></td><td>Day 1</td><td>States → LGAs → Households → Individuals hierarchy prevents update anomalies across 37 states</td><td>FK constraints (D2), ETL staging (D7)</td></tr>
+      <tr><td><strong>DML + transactions</strong></td><td>Day 2</td><td>Enrolment of a household and its members must be atomic — a disconnect mid-insert leaves no orphan records</td><td>MVCC (D1), ETL pipeline (D7)</td></tr>
+      <tr><td><strong>JOINs + window functions</strong></td><td>Day 2</td><td>State-level disbursement reports join households → payments; RANK() orders beneficiaries by poverty score</td><td>Performance tuning (D6), partitioning (D6)</td></tr>
+      <tr><td><strong>RBAC + RLS</strong></td><td>Day 3</td><td>A Kano caseworker cannot query Lagos households — policy enforced at the database layer, not the application</td><td>pgAudit (D3), NDP Act (D7)</td></tr>
+      <tr><td><strong>Backup &amp; PITR</strong></td><td>Day 3</td><td>A corrupt batch import can be restored to the exact timestamp before it ran — no manual rollback needed</td><td>WAL (D1), ETL (D7)</td></tr>
+      <tr><td><strong>EXPLAIN + indexes</strong></td><td>Day 6</td><td>A household enumeration report that takes 45 seconds can be cut to milliseconds with a partial index on is_active</td><td>Partitioning (D6), pg_stat_statements (D6)</td></tr>
+      <tr><td><strong>ETL pipeline</strong></td><td>Day 7</td><td>Staging → validate → deduplicate → promote keeps corrupt data out of production; idempotency allows safe re-runs</td><td>DISTINCT ON (D2), ON CONFLICT (D2), lineage (D7)</td></tr>
+      <tr><td><strong>NDP Act 2023 compliance</strong></td><td>Day 7</td><td>lawful_basis, audit_log, RLS, and data minimisation are legal requirements, not optional features</td><td>RBAC (D3), pgAudit (D3), lineage (D7)</td></tr>
+    </table>
   </div>
 
+  <!-- FINAL PRESENTATIONS -->
+  <div class="section">
+    <div class="section-header"><div class="section-icon si-blue">🎤</div><h2>Final Presentations</h2></div>
+    <div class="callout info"><div class="callout-title">Format</div>Each participant presents a 5-minute summary of the most valuable thing they learned and one specific change they will implement in their organisation's data systems. Prepare brief notes below.</div>
+    <h3>My Presentation Notes</h3>
+    <div class="answer-area" style="min-height:120px">The most valuable thing I learned:<br><br>One specific change I will implement:<br><br>How I will measure success (a concrete metric or outcome):<br><br>One question I still have that I want to investigate:</div>
+  </div>
+
+  <!-- WHERE TO GO NEXT -->
+  <div class="section">
+    <div class="section-header"><div class="section-icon si-amber">🚀</div><h2>Where to Go from Here</h2></div>
+    <table>
+      <tr><th>Goal</th><th>Resource</th><th>Why</th></tr>
+      <tr><td>Deepen PostgreSQL knowledge</td><td>Official documentation — postgresql.org/docs/current</td><td>The most accurate reference; every SQL command has a full page with edge cases</td></tr>
+      <tr><td>Practice SQL problems</td><td>pgexercises.com</td><td>Interactive SQL challenges using a realistic dataset; instant feedback</td></tr>
+      <tr><td>Performance tuning deeper dive</td><td>use-the-index-luke.com</td><td>Free online book entirely focused on how databases use indexes — vendor-neutral but PostgreSQL-heavy</td></tr>
+      <tr><td>Community &amp; Q&amp;A</td><td>dba.stackexchange.com — tag: postgresql</td><td>High-quality answers from practitioners; search before posting — most common questions are already answered</td></tr>
+      <tr><td>Stay current</td><td>PostgreSQL release notes (new major version each November)</td><td>PostgreSQL 17 adds MERGE improvements; PostgreSQL 18 (2025) brings further parallelism — read the "What's New" page each release</td></tr>
+      <tr><td>NSR-specific governance</td><td>Nigeria Data Protection Act 2023 — nitda.gov.ng</td><td>The legal text is readable and short; every DBA on a government system should have read it at least once</td></tr>
+    </table>
+    <div class="callout tip" style="margin-top:12px">
+      <div class="callout-title">The single most important habit to build</div>
+      Run <code>EXPLAIN (ANALYZE, BUFFERS)</code> on every query you write that will run in production — before it runs in production. The 30 seconds it takes to read a plan is far cheaper than an unexplained slow query on a live caseworker system.
+    </div>
+  </div>
+
+  <!-- PROGRAMME REFLECTION -->
   <div class="section">
     <div class="section-header"><div class="section-icon si-green">📊</div><h2>Programme Reflection</h2></div>
+    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:12px;">Rate your confidence honestly — 1 = not confident at all, 5 = could teach this to a colleague. The gaps are what to work on first when you get back.</p>
     <table>
-      <tr><th>Day</th><th>Topic</th><th>Confidence before (1–5)</th><th>Confidence after (1–5)</th><th>Key takeaway</th></tr>
+      <tr><th>Day</th><th>Topic</th><th>Confidence before (1–5)</th><th>Confidence after (1–5)</th><th>Key takeaway in one sentence</th></tr>
       <tr><td>D1</td><td>Foundations &amp; Architecture</td><td></td><td></td><td></td></tr>
       <tr><td>D2</td><td>SQL Fundamentals</td><td></td><td></td><td></td></tr>
       <tr><td>D3</td><td>Admin, Security &amp; Backup</td><td></td><td></td><td></td></tr>
       <tr><td>D4</td><td>Study Visit</td><td></td><td></td><td></td></tr>
-      <tr><td>D5</td><td>Assessment Day</td><td></td><td></td><td></td></tr>
+      <tr><td>D5</td><td>Assessment</td><td></td><td></td><td></td></tr>
       <tr><td>D6</td><td>Performance Tuning</td><td></td><td></td><td></td></tr>
       <tr><td>D7</td><td>ETL/ELT &amp; Governance</td><td></td><td></td><td></td></tr>
     </table>
