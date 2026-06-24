@@ -2821,45 +2821,78 @@ paid_households <span class="kw">AS</span> (
       </div>
 
       <h3>Guided Practical — Role Permission Testing</h3>
-      <div class="callout info"><div class="callout-title">Work through each step in order — predict the result before you run</div>
-        This walkthrough builds the muscle memory of thinking like both a DBA and an attacker. Before each step, write down what you expect to happen.
+      <div class="callout info"><div class="callout-title">Run all steps in a single psql session — no new terminal needed</div>
+        <code>SET ROLE</code> switches your active identity within the current session — it is equivalent to connecting as that role. <code>RESET ROLE</code> returns you to the session owner (postgres). This means you can test every role from one window without opening multiple terminals. Before each step, write down what you expect to happen, then run it and compare.
+      </div>
+      <div class="callout warning" style="margin-bottom:12px">
+        <div class="callout-title">Run the RBAC setup block first (from the Intermediate section above)</div>
+        The roles <code>nsr_caseworker</code>, <code>nsr_supervisor</code>, and <code>nsr_dba</code> must exist, grants must be issued, and RLS must be enabled with the caseworker policy before this practical will give the expected results. If you have not done that yet, scroll up and run those blocks first.
       </div>
       <div class="code-block">
-        <div class="code-header"><span class="code-lang">sql – step-by-step role testing</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-        <pre><span class="cmt">-- STEP 1: Connect as caseworker (open a new terminal session)</span>
-<span class="cmt">-- psql -U nsr_caseworker -d lab_nsr</span>
+        <div class="code-header"><span class="code-lang">sql – step-by-step role testing (single session)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- ── CASEWORKER TESTS ────────────────────────────────────────────────────────</span>
 
-<span class="cmt">-- STEP 2: Set state context</span>
+<span class="cmt">-- STEP 1: Become the caseworker (no new terminal needed)</span>
+<span class="kw">SET ROLE</span> nsr_caseworker;
+<span class="kw">SELECT current_user</span>, <span class="fn">current_setting</span>(<span class="str">'role'</span>);
+<span class="cmt">-- Confirm: current_user = nsr_caseworker</span>
+
+<span class="cmt">-- STEP 2: Set the state context variable for this session</span>
 <span class="kw">SET</span> app.state_code = <span class="str">'KN'</span>;
 
-<span class="cmt">-- STEP 3: Read households (should succeed, Kano only)</span>
+<span class="cmt">-- STEP 3: Read households — should return Kano rows only (RLS in effect)</span>
 <span class="kw">SELECT</span> household_id, household_code, pmt_score <span class="kw">FROM</span> nsr.households <span class="kw">LIMIT</span> <span class="num">5</span>;
-<span class="cmt">-- Expected: rows where state_code = 'KN' only</span>
+<span class="cmt">-- Expected: rows whose LGA is in Kano state</span>
+<span class="cmt">-- If you see rows from other states: RLS policy is not yet created — scroll up and create it</span>
+<span class="cmt">-- If you see 0 rows: RLS is enabled but no matching data — check nsr.lgas for state_code = 'KN'</span>
 
-<span class="cmt">-- STEP 4: Try to read payments directly (should FAIL)</span>
+<span class="cmt">-- STEP 4: Try to read payments directly — should FAIL</span>
 <span class="kw">SELECT</span> * <span class="kw">FROM</span> nsr.payments <span class="kw">LIMIT</span> <span class="num">5</span>;
 <span class="cmt">-- Expected: ERROR: permission denied for table payments</span>
+<span class="cmt">-- If it succeeds: nsr_caseworker has been granted SELECT on payments — review your grants</span>
 
-<span class="cmt">-- STEP 5: Try to UPDATE a household (should FAIL)</span>
+<span class="cmt">-- STEP 5: Try to UPDATE a household — should FAIL</span>
 <span class="kw">UPDATE</span> nsr.households <span class="kw">SET</span> pmt_score = <span class="num">999</span> <span class="kw">WHERE</span> household_id = <span class="num">1</span>;
 <span class="cmt">-- Expected: ERROR: permission denied for table households</span>
 
-<span class="cmt">-- STEP 6: Try to query a different state (should return 0 rows)</span>
+<span class="cmt">-- STEP 6: Switch state_code to LA — RLS should return 0 rows (different state)</span>
 <span class="kw">SET</span> app.state_code = <span class="str">'LA'</span>;
 <span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.households;
-<span class="cmt">-- Expected: 0 — RLS filters Lagos from a Kano worker's view</span>
+<span class="cmt">-- Expected: 0  (Kano caseworker cannot see Lagos data)</span>
+<span class="cmt">-- If you see rows: RLS is not enabled on nsr.households — run ALTER TABLE … ENABLE ROW LEVEL SECURITY</span>
 
-<span class="cmt">-- STEP 7: Switch to nsr_supervisor to compare</span>
-<span class="cmt">-- psql -U nsr_supervisor -d lab_nsr</span>
+<span class="cmt">-- STEP 7: Reset and return to superuser before the next test</span>
+<span class="kw">RESET</span> app.state_code;
+<span class="kw">RESET ROLE</span>;
+<span class="kw">SELECT current_user</span>;
+<span class="cmt">-- Confirm: back to postgres (or your superuser)</span>
+
+<span class="cmt">-- ── SUPERVISOR TESTS ─────────────────────────────────────────────────────────</span>
+
+<span class="cmt">-- STEP 8: Become the supervisor — BYPASSRLS, sees all rows</span>
+<span class="kw">SET ROLE</span> nsr_supervisor;
 <span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.households;
-<span class="cmt">-- Expected: total row count — supervisor BYPASSRLS sees everything</span>
+<span class="cmt">-- Expected: total row count — BYPASSRLS means no state filter applies</span>
 
-<span class="cmt">-- STEP 8: Try to delete an audit record (should FAIL for both roles)</span>
+<span class="cmt">-- STEP 9: Supervisor can UPDATE payments</span>
+<span class="kw">UPDATE</span> nsr.payments <span class="kw">SET</span> status = <span class="str">'processed'</span> <span class="kw">WHERE</span> payment_id = <span class="num">1</span>;
+<span class="cmt">-- Expected: UPDATE 1  (supervisor has UPDATE on payments)</span>
+
+<span class="cmt">-- STEP 10: Try to delete an audit record — should FAIL even for supervisor</span>
 <span class="kw">DELETE FROM</span> nsr.audit_log <span class="kw">WHERE</span> log_id = <span class="num">1</span>;
-<span class="cmt">-- Expected: ERROR: permission denied — REVOKE DELETE protects audit integrity</span></pre>
+<span class="cmt">-- Expected: ERROR: permission denied — REVOKE DELETE protects the audit trail</span>
+
+<span class="kw">RESET ROLE</span>;</pre>
       </div>
-      <div class="callout tip"><div class="callout-title">What to observe</div>
-        For each step, compare your prediction to the actual result. Steps 4 and 5 should fail — if they succeed, you have a misconfigured grant. Step 6 is the RLS test: switching state_code to 'LA' while logged in as a Kano caseworker should return 0 rows. If you see Lagos data, RLS is not enabled or the policy does not match the state_code column.
+      <div class="callout tip"><div class="callout-title">Troubleshooting — what to check if a step gives an unexpected result</div>
+        <table style="margin:0">
+          <tr><th>Unexpected result</th><th>Most likely cause</th><th>Fix</th></tr>
+          <tr><td>Step 3 returns rows from all states</td><td>RLS policy not yet created</td><td>Run the CREATE POLICY block in the RLS tab</td></tr>
+          <tr><td>Step 3 returns 0 rows</td><td>No households with Kano LGAs in test data, OR RLS enabled with no policy yet</td><td>Run <code>SELECT state_code, COUNT(*) FROM nsr.lgas GROUP BY 1</code> to check what states have data</td></tr>
+          <tr><td>Step 4 succeeds (no error)</td><td>SELECT granted to caseworker on payments</td><td>Run <code>REVOKE SELECT ON nsr.payments FROM nsr_caseworker</code></td></tr>
+          <tr><td>Step 6 returns rows</td><td>RLS not enabled on the table</td><td>Run <code>ALTER TABLE nsr.households ENABLE ROW LEVEL SECURITY</code></td></tr>
+          <tr><td>Step 10 succeeds (delete works)</td><td>REVOKE DELETE not yet run</td><td>Run <code>REVOKE DELETE ON nsr.audit_log FROM PUBLIC; REVOKE DELETE ON nsr.audit_log FROM nsr_dba</code></td></tr>
+        </table>
       </div>
 
       <h3>Advanced — Role Attributes and Inheritance</h3>
