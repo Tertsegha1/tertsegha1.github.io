@@ -2882,13 +2882,34 @@ paid_households <span class="kw">AS</span> (
         <div class="callout-title">Why the audit log is append-only</div>
         <strong>REVOKE DELETE … FROM nsr_dba</strong> is the key line — it makes the audit log tamper-resistant even to the database administrator. This satisfies the requirement that audit trails in government systems must not be alterable by insiders. <code>row_data JSONB</code> stores the full NEW or OLD row as JSON, giving forensic detail without needing a separate shadow table per entity. <code>DEFAULT current_user</code> on <code>role_name</code> captures the actual database role, not a session variable that could be spoofed. In production you would pair this table with a trigger function (see the Exercise) that fires on INSERT, UPDATE, and DELETE on every NSR table — the trigger uses <code>SECURITY DEFINER</code> so it can write to <code>audit_log</code> even when the calling role has no INSERT privilege on it.
       </div>
-    </div>
 
       <h3>Advanced — Forensic Queries on the Audit Log</h3>
-      <p>A well-designed audit_log table is queryable with standard SQL. These patterns cover the most common forensic scenarios an NSR DBA or supervisor will face in practice.</p>
+      <div class="callout info" style="margin-bottom:12px">
+        <div class="callout-title">What you are doing in this section — and what you need first</div>
+        These queries investigate your <code>nsr.audit_log</code> table as if you were a DBA responding to a fraud report or a regulator audit. Before running them you need two things in place:<br><br>
+        <strong>1. The table must exist.</strong> Run the <code>CREATE TABLE nsr.audit_log</code> block from the Intermediate section above if you haven't already.<br><br>
+        <strong>2. The table must have data.</strong> Audit records are written by a trigger — but the trigger is the Day 3 Exercise (H1.3). For now, manually insert a few test records so the queries return rows:<br>
+        <div style="margin-top:8px;">
+          <code style="display:block;background:var(--code-bg);color:var(--code-text);padding:10px 14px;border-radius:6px;font-size:0.82rem;white-space:pre-wrap;">-- Seed test audit records (simulates what the trigger would write)
+INSERT INTO nsr.audit_log (role_name, table_name, action, row_data) VALUES
+  ('nsr_caseworker', 'nsr.households', 'INSERT',
+   '{"household_code":"HH-LA-001","pmt_score":"28.5"}'::jsonb),
+  ('nsr_caseworker', 'nsr.households', 'UPDATE',
+   '{"household_code":"HH-LA-001","pmt_score":"32.0"}'::jsonb),
+  ('nsr_supervisor',  'nsr.households', 'UPDATE',
+   '{"household_code":"HH-LA-001","pmt_score":"35.5"}'::jsonb),
+  ('nsr_caseworker', 'nsr.households', 'UPDATE',
+   '{"household_code":"HH-BE-099","pmt_score":"22.5"}'::jsonb);
+
+SELECT log_id, log_time, role_name, action, row_data FROM nsr.audit_log ORDER BY log_id;</code>
+        </div>
+        Once you have rows in the table, run each forensic query below and read what it tells you.
+      </div>
+      <p>A well-designed <code>audit_log</code> table is queryable with standard SQL. These four patterns cover the most common forensic scenarios an NSR DBA or supervisor faces in practice — from tracing a single household's history to detecting a potential fraud signal.</p>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">sql – forensic audit queries</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-        <pre><span class="cmt">-- 1. Full change history of one household</span>
+        <pre><span class="cmt">-- Query 1: Full change history of one household</span>
+<span class="cmt">-- Use this when a supervisor asks "who changed HH-LA-001 and when?"</span>
 <span class="kw">SELECT</span> log_time, role_name, action,
        row_data->><span class="str">'pmt_score'</span>     <span class="kw">AS</span> pmt_score,
        row_data->><span class="str">'household_code'</span> <span class="kw">AS</span> code
@@ -2897,14 +2918,16 @@ paid_households <span class="kw">AS</span> (
   <span class="kw">AND</span> row_data->><span class="str">'household_code'</span> = <span class="str">'HH-LA-001'</span>
 <span class="kw">ORDER BY</span> log_time;
 
-<span class="cmt">-- 2. All changes by a caseworker in the last 7 days</span>
+<span class="cmt">-- Query 2: All changes by a specific role in the last 7 days</span>
+<span class="cmt">-- Use this when investigating a caseworker's activity</span>
 <span class="kw">SELECT</span> log_time, table_name, action, row_data
 <span class="kw">FROM</span>  nsr.audit_log
 <span class="kw">WHERE</span> role_name = <span class="str">'nsr_caseworker'</span>
   <span class="kw">AND</span> log_time >= now() - <span class="kw">INTERVAL</span> <span class="str">'7 days'</span>
 <span class="kw">ORDER BY</span> log_time <span class="kw">DESC</span>;
 
-<span class="cmt">-- 3. Detect bulk changes — potential fraud signal (&gt;100 updates in one hour)</span>
+<span class="cmt">-- Query 3: Detect bulk changes — potential fraud signal</span>
+<span class="cmt">-- Flags any role that made more than 100 UPDATE/DELETE in one hour</span>
 <span class="kw">SELECT</span> role_name,
        <span class="fn">DATE_TRUNC</span>(<span class="str">'hour'</span>, log_time) <span class="kw">AS</span> hour_bucket,
        <span class="fn">COUNT</span>(*) <span class="kw">AS</span> changes
@@ -2914,22 +2937,27 @@ paid_households <span class="kw">AS</span> (
 <span class="kw">GROUP BY</span> role_name, hour_bucket
 <span class="kw">HAVING COUNT</span>(*) > <span class="num">100</span>
 <span class="kw">ORDER BY</span> changes <span class="kw">DESC</span>;
+<span class="cmt">-- With only 4 test rows this returns nothing — that is correct (no fraud signal)</span>
 
-<span class="cmt">-- 4. Before/after pmt_score using LAG window function</span>
+<span class="cmt">-- Query 4: Before/after comparison using LAG()</span>
+<span class="cmt">-- Shows what pmt_score was BEFORE each change — the audit trail of modifications</span>
 <span class="kw">SELECT</span>
-  log_time, role_name,
-  row_data->><span class="str">'pmt_score'</span>                            <span class="kw">AS</span> new_score,
+  log_time,
+  role_name,
+  row_data->><span class="str">'pmt_score'</span>                            <span class="kw">AS</span> score_after_change,
   <span class="kw">LAG</span>(row_data->><span class="str">'pmt_score'</span>) <span class="kw">OVER</span> (
     <span class="kw">PARTITION BY</span> row_data->><span class="str">'household_code'</span>
     <span class="kw">ORDER BY</span> log_time
-  )                                                  <span class="kw">AS</span> prev_score
+  )                                                  <span class="kw">AS</span> score_before_change
 <span class="kw">FROM</span>  nsr.audit_log
 <span class="kw">WHERE</span> table_name = <span class="str">'nsr.households'</span>
-  <span class="kw">AND</span> row_data->><span class="str">'household_code'</span> = <span class="str">'HH-LA-001'</span>;</pre>
+  <span class="kw">AND</span> row_data->><span class="str">'household_code'</span> = <span class="str">'HH-LA-001'</span>;
+<span class="cmt">-- First row: score_before_change is NULL (nothing came before the INSERT)</span>
+<span class="cmt">-- Subsequent rows: shows the previous value, revealing who changed it and by how much</span></pre>
       </div>
       <div class="callout info" style="margin-top:8px">
-        <div class="callout-title">JSONB operators for audit queries</div>
-        <code>->></code> extracts a JSONB field as text — suitable for comparison and display. For fast containment searches on a large audit log, use the <code>@&gt;</code> operator with a GIN index: <code>CREATE INDEX ON nsr.audit_log USING GIN (row_data)</code> then query <code>WHERE row_data @&gt; '{"status":"approved"}'::jsonb</code> — far faster than row-by-row text extraction on millions of audit records.
+        <div class="callout-title">JSONB operators used here — and when to use an index</div>
+        <code>->></code> extracts a JSONB field as <strong>text</strong> — right for display and equality checks (<code>= 'HH-LA-001'</code>). On a small audit log this is fast enough. On a production NSR log with millions of rows, add a GIN index: <code>CREATE INDEX ON nsr.audit_log USING GIN (row_data)</code> — then use the containment operator <code>@&gt;</code> instead: <code>WHERE row_data @&gt; '{"household_code":"HH-LA-001"}'::jsonb</code>. The GIN index makes that containment check O(log N) rather than scanning every row.
       </div>
     </div>
 
