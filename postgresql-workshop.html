@@ -6815,17 +6815,29 @@ function drawCertificate(canvas, participantName, id, dateStr) {
     ctx.beginPath(); ctx.moveTo(x, colY - 44); ctx.lineTo(x, colY + 44); ctx.stroke();
   });
 
-  // ── Signature lines ────────────────────────────────────────────────────
-  const sigY = 800;
-  [[col1, 'Participant'], [col3, 'Lead Instructor']].forEach(([x, lbl]) => {
-    ctx.strokeStyle = '#0C2340';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(x - 110, sigY); ctx.lineTo(x + 110, sigY); ctx.stroke();
-    ctx.fillStyle = '#718096';
-    ctx.font = '15px Arial, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(lbl, x, sigY + 22);
-  });
+  // ── Instructor signature (participant line removed) ───────────────────
+  const sigY = 820;
+
+  // Digital signature — italic, slight tilt
+  ctx.save();
+  ctx.translate(col3, sigY - 26);
+  ctx.rotate(-0.07);
+  ctx.fillStyle = '#0C2340';
+  ctx.font = 'italic 30px Georgia, serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Tertsegha J. Anande', 0, 0);
+  ctx.restore();
+
+  // Signature underline
+  ctx.strokeStyle = '#0C2340';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(col3 - 120, sigY); ctx.lineTo(col3 + 120, sigY); ctx.stroke();
+
+  // Label
+  ctx.fillStyle = '#718096';
+  ctx.font = '15px Arial, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Lead Instructor', col3, sigY + 22);
 
   // ── Programme seal (circle) ────────────────────────────────────────────
   const sx = W / 2, sy = 795, sr = 68;
