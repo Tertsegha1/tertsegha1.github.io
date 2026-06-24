@@ -2006,6 +2006,59 @@ psql -U postgres
         The NSR programme manager wants a state-by-state report showing: how many active households exist, how many have received at least one processed payment, total amount disbursed, and the payment failure rate. This requires combining three JOIN types and aggregate functions. Work through it step by step.
       </div>
 
+      <p><strong>Setup — create and seed the payments table (run once)</strong></p>
+      <div class="callout warning" style="margin-bottom:10px">
+        <div class="callout-title">Run this before the steps below</div>
+        The <code>nsr.payments</code> table is not part of the Day 1 schema creation exercise. Run this block once to create it and load sample disbursement records referencing the households already in your database. The block is idempotent — safe to re-run.
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – setup: create nsr.payments and load sample data</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Create payments table if it doesn't already exist</span>
+<span class="kw">CREATE TABLE IF NOT EXISTS</span> nsr.payments (
+  payment_id    BIGSERIAL    <span class="kw">PRIMARY KEY</span>,
+  household_id  BIGINT       <span class="kw">NOT NULL REFERENCES</span> nsr.households(household_id),
+  amount_ngn    NUMERIC(<span class="num">12</span>,<span class="num">2</span>) <span class="kw">NOT NULL</span>,
+  status        TEXT         <span class="kw">NOT NULL</span> <span class="kw">CHECK</span> (status <span class="kw">IN</span> (<span class="str">'processed'</span>, <span class="str">'pending'</span>, <span class="str">'failed'</span>)),
+  payment_date  DATE         <span class="kw">NOT NULL</span> <span class="kw">DEFAULT</span> <span class="fn">CURRENT_DATE</span>,
+  created_at    TIMESTAMPTZ  <span class="kw">NOT NULL</span> <span class="kw">DEFAULT</span> <span class="fn">now</span>()
+);
+
+<span class="cmt">-- Seed one processed + one pending payment for each existing household</span>
+<span class="cmt">-- ON CONFLICT DO NOTHING keeps re-runs safe</span>
+<span class="kw">INSERT INTO</span> nsr.payments (household_id, amount_ngn, status, payment_date)
+<span class="kw">SELECT</span>
+  h.household_id,
+  <span class="num">22000.00</span>,
+  <span class="str">'processed'</span>,
+  <span class="str">'2024-03-15'</span>::DATE
+<span class="kw">FROM</span> nsr.households h
+<span class="kw">WHERE</span> h.is_active = <span class="kw">TRUE</span>
+  <span class="kw">AND NOT EXISTS</span> (
+    <span class="kw">SELECT</span> <span class="num">1</span> <span class="kw">FROM</span> nsr.payments p
+    <span class="kw">WHERE</span> p.household_id = h.household_id <span class="kw">AND</span> p.status = <span class="str">'processed'</span>
+  );
+
+<span class="cmt">-- Add a failed payment for the first household (Benue scenario)</span>
+<span class="kw">INSERT INTO</span> nsr.payments (household_id, amount_ngn, status, payment_date)
+<span class="kw">SELECT</span> h.household_id, <span class="num">22000.00</span>, <span class="str">'failed'</span>, <span class="str">'2024-01-10'</span>::DATE
+<span class="kw">FROM</span>  nsr.households h
+<span class="kw">WHERE</span> h.household_code = <span class="str">'HH-BE-099'</span>
+  <span class="kw">AND NOT EXISTS</span> (
+    <span class="kw">SELECT</span> <span class="num">1</span> <span class="kw">FROM</span> nsr.payments p
+    <span class="kw">WHERE</span> p.household_id = h.household_id <span class="kw">AND</span> p.status = <span class="str">'failed'</span>
+  );
+
+<span class="cmt">-- Verify: should see payment rows referencing your households</span>
+<span class="kw">SELECT</span>
+  h.household_code,
+  p.amount_ngn,
+  p.status,
+  p.payment_date
+<span class="kw">FROM</span>  nsr.payments  p
+<span class="kw">JOIN</span>  nsr.households h <span class="kw">ON</span> h.household_id = p.household_id
+<span class="kw">ORDER BY</span> h.household_code, p.payment_date;</pre>
+      </div>
+
       <p><strong>Step 1 — start with the household-to-state backbone (INNER JOIN)</strong></p>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">sql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
