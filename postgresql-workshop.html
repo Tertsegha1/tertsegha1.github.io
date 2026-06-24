@@ -2725,6 +2725,18 @@ paid_households <span class="kw">AS</span> (
     </div>
 
     <div class="tab-panel" id="tab-d3-rbac">
+      <h3>Core Terms — RBAC at a Glance</h3>
+      <table>
+        <tr><th>Term</th><th>What it means</th><th>Key command</th></tr>
+        <tr><td><strong>Role</strong></td><td>A named identity in PostgreSQL. Can log in (a user) or be a group that other roles inherit from. Everything in PostgreSQL — users, groups, service accounts — is a role.</td><td><code>CREATE ROLE name WITH LOGIN</code></td></tr>
+        <tr><td><strong>Privilege</strong></td><td>A specific permission on a database object: SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER, CONNECT, TEMPORARY, EXECUTE, USAGE. Each must be granted explicitly.</td><td><code>GRANT SELECT ON table TO role</code></td></tr>
+        <tr><td><strong>Schema USAGE</strong></td><td>Permission to see and resolve object names within a schema. Without it, a role cannot find any table — even if it has a table-level SELECT grant.</td><td><code>GRANT USAGE ON SCHEMA nsr TO role</code></td></tr>
+        <tr><td><strong>BYPASSRLS</strong></td><td>Role attribute that skips all Row-Level Security policies entirely. Required for nsr_dba to run cross-state maintenance queries without being filtered by caseworker policies.</td><td><code>CREATE ROLE dba BYPASSRLS</code></td></tr>
+        <tr><td><strong>INHERIT</strong></td><td>When a role is a member of a group role, INHERIT means it automatically acquires the group's privileges. Without INHERIT, the member must explicitly run SET ROLE to switch into the group.</td><td><code>GRANT group_role TO member_role</code></td></tr>
+        <tr><td><strong>REVOKE</strong></td><td>Removes a privilege from a role. Does not affect privileges granted by other grantors. REVOKE DELETE from nsr_dba is how we make audit_log tamper-resistant.</td><td><code>REVOKE DELETE ON audit_log FROM nsr_dba</code></td></tr>
+        <tr><td><strong>pg_roles / \du</strong></td><td>System catalogue view listing all roles and their attributes. Use <code>\du+</code> in psql to see membership, attributes, and comments. Use <code>information_schema.role_table_grants</code> to audit object-level privileges.</td><td><code>\du+</code> or <code>SELECT * FROM pg_roles</code></td></tr>
+      </table>
+
       <h3>Basics — Roles, Privileges, and the Principle of Least Privilege</h3>
       <p>In PostgreSQL, a <strong>role</strong> is a named identity that can log in and own database objects. A <strong>privilege</strong> is a permission granted to a role: SELECT, INSERT, UPDATE, DELETE, CONNECT, and so on. Roles do not have access to anything by default — you must explicitly GRANT each privilege. The principle of least privilege means every role gets only what it needs to do its job, and nothing more.</p>
       <div class="code-block">
@@ -2849,9 +2861,108 @@ paid_households <span class="kw">AS</span> (
       <div class="callout tip"><div class="callout-title">What to observe</div>
         For each step, compare your prediction to the actual result. Steps 4 and 5 should fail — if they succeed, you have a misconfigured grant. Step 6 is the RLS test: switching state_code to 'LA' while logged in as a Kano caseworker should return 0 rows. If you see Lagos data, RLS is not enabled or the policy does not match the state_code column.
       </div>
+
+      <h3>Advanced — Role Attributes and Inheritance</h3>
+      <p>Every role in PostgreSQL has a set of <strong>attributes</strong> that define cluster-level abilities, separate from object-level privileges. These are set at role creation or changed with <code>ALTER ROLE</code>.</p>
+      <table>
+        <tr><th>Attribute</th><th>What it allows</th><th>NSR relevance</th></tr>
+        <tr><td><code>LOGIN</code></td><td>The role can open a database connection. Without it the role is a group only.</td><td>All three NSR roles need LOGIN</td></tr>
+        <tr><td><code>SUPERUSER</code></td><td>Bypasses all permission checks. Should never be used for application roles.</td><td>Never assign to NSR roles — use nsr_dba instead</td></tr>
+        <tr><td><code>CREATEDB</code></td><td>Role can create new databases.</td><td>Not needed for NSR application roles</td></tr>
+        <tr><td><code>CREATEROLE</code></td><td>Role can create and manage other roles below its own privilege level.</td><td>Only nsr_dba if you need delegation</td></tr>
+        <tr><td><code>BYPASSRLS</code></td><td>Skips all RLS policies on every table.</td><td>nsr_dba and nsr_supervisor only</td></tr>
+        <tr><td><code>INHERIT</code> (default)</td><td>Automatically acquires privileges from any group role it belongs to.</td><td>Default — caseworker inherits from any group it joins</td></tr>
+        <tr><td><code>NOINHERIT</code></td><td>Must explicitly SET ROLE to activate a group's privileges. Useful for break-glass escalation roles.</td><td>Use for privileged maintenance accounts</td></tr>
+        <tr><td><code>CONNECTION LIMIT n</code></td><td>Caps simultaneous connections. -1 means unlimited.</td><td>Set on caseworker to prevent accidental connection floods</td></tr>
+      </table>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – role attributes and inheritance</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Inspect all role attributes in the cluster</span>
+<span class="kw">SELECT</span> rolname, rolsuper, rolcreaterole, rolcreatedb,
+       rolcanlogin, rolbypassrls, rolinherit, rolconnlimit
+<span class="kw">FROM</span>  pg_roles
+<span class="kw">WHERE</span> rolname <span class="kw">LIKE</span> <span class="str">'nsr%'</span>
+<span class="kw">ORDER BY</span> rolname;
+
+<span class="cmt">-- Change an attribute after creation</span>
+<span class="kw">ALTER ROLE</span> nsr_caseworker CONNECTION LIMIT <span class="num">10</span>;
+<span class="kw">ALTER ROLE</span> nsr_caseworker VALID UNTIL <span class="str">'2027-01-01'</span>; <span class="cmt">-- expire the password</span>
+
+<span class="cmt">-- Role inheritance: create a read-only group and add caseworker to it</span>
+<span class="kw">CREATE ROLE</span> nsr_readonly;  <span class="cmt">-- no LOGIN — group role only</span>
+<span class="kw">GRANT SELECT ON ALL TABLES IN SCHEMA</span> nsr <span class="kw">TO</span> nsr_readonly;
+<span class="kw">GRANT</span> nsr_readonly <span class="kw">TO</span> nsr_caseworker;  <span class="cmt">-- caseworker now INHERITs SELECT on all tables</span>
+
+<span class="cmt">-- NOINHERIT break-glass pattern: a maintenance role that must be activated explicitly</span>
+<span class="kw">CREATE ROLE</span> nsr_maint <span class="kw">WITH</span> NOINHERIT LOGIN PASSWORD <span class="str">'maint_pw'</span>;
+<span class="kw">GRANT</span> nsr_dba <span class="kw">TO</span> nsr_maint;          <span class="cmt">-- membership granted but NOT automatically active</span>
+<span class="cmt">-- nsr_maint must run: SET ROLE nsr_dba; to escalate privileges</span>
+<span class="cmt">-- This leaves an audit trail and prevents accidental use of DBA powers</span>
+
+<span class="cmt">-- Check role membership</span>
+<span class="kw">SELECT</span> r.rolname <span class="kw">AS</span> role,
+       m.rolname <span class="kw">AS</span> member_of,
+       pg.admin_option
+<span class="kw">FROM</span>  pg_auth_members am
+<span class="kw">JOIN</span>  pg_roles r  <span class="kw">ON</span> r.oid  = am.member
+<span class="kw">JOIN</span>  pg_roles m  <span class="kw">ON</span> m.oid  = am.roleid
+<span class="kw">JOIN</span>  pg_roles pg <span class="kw">ON</span> pg.oid = am.grantor
+<span class="kw">WHERE</span> r.rolname <span class="kw">LIKE</span> <span class="str">'nsr%'</span>;</pre>
+      </div>
+
+      <h3>Advanced — Column-Level Privileges</h3>
+      <p>Table-level GRANT gives access to all columns. Column-level grants let you expose only specific columns — useful when a table contains mixed-sensitivity data that you cannot fully split into separate tables or views.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – column-level privileges</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Grant SELECT on specific columns only (not NIN, not payment amounts)</span>
+<span class="kw">GRANT SELECT</span> (household_id, household_code, lga_id, pmt_score, is_active)
+  <span class="kw">ON</span> nsr.households <span class="kw">TO</span> nsr_caseworker;
+
+<span class="cmt">-- The caseworker can now query only those columns:</span>
+<span class="kw">SELECT</span> household_code, pmt_score <span class="kw">FROM</span> nsr.households; <span class="cmt">-- ✓ works</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> nsr.households;                       <span class="cmt">-- ✗ ERROR: permission denied</span>
+
+<span class="cmt">-- Audit which columns a role has access to</span>
+<span class="kw">SELECT</span> grantee, column_name, privilege_type
+<span class="kw">FROM</span>  information_schema.column_privileges
+<span class="kw">WHERE</span> table_schema = <span class="str">'nsr'</span>
+  <span class="kw">AND</span> table_name   = <span class="str">'households'</span>
+<span class="kw">ORDER BY</span> grantee, column_name;
+
+<span class="cmt">-- In practice, a masked VIEW is cleaner than column grants for NIN masking</span>
+<span class="kw">CREATE OR REPLACE VIEW</span> nsr.v_households_safe <span class="kw">AS</span>
+<span class="kw">SELECT</span>
+  household_id,
+  household_code,
+  lga_id,
+  pmt_score,
+  is_active,
+  <span class="fn">LEFT</span>(nin_hash, <span class="num">4</span>) || <span class="str">'****'</span> <span class="kw">AS</span> nin_partial   <span class="cmt">-- partial NIN for verification only</span>
+<span class="kw">FROM</span>  nsr.households;
+
+<span class="kw">GRANT SELECT ON</span> nsr.v_households_safe <span class="kw">TO</span> nsr_caseworker;
+<span class="kw">REVOKE SELECT ON</span> nsr.households <span class="kw">FROM</span> nsr_caseworker;  <span class="cmt">-- revoke direct table access</span></pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Views vs column grants — which to use</div>
+        Column grants are simpler to set up but harder to maintain — adding a new column to the table requires re-issuing the grant. A security view (<code>nsr.v_households_safe</code>) is more flexible: it can apply masking logic, join in lookup labels, and the <code>WITH CHECK OPTION</code> clause prevents writes that bypass the view's filter. For NSR's NIN masking requirement, a view is the right tool because the masking formula can be updated in one place without touching any GRANT statements.
+      </div>
     </div>
 
     <div class="tab-panel" id="tab-d3-rls">
+      <h3>Core Terms — Row-Level Security at a Glance</h3>
+      <table>
+        <tr><th>Term</th><th>What it means</th></tr>
+        <tr><td><strong>Row-Level Security (RLS)</strong></td><td>A PostgreSQL feature that filters rows returned to (or written by) a role based on a policy expression — evaluated row-by-row, invisibly, as if it were an additional WHERE clause.</td></tr>
+        <tr><td><strong>Policy</strong></td><td>A named expression attached to a table. PostgreSQL evaluates it for every row. Only rows where the expression is TRUE are visible to (or writable by) the role.</td></tr>
+        <tr><td><strong>USING clause</strong></td><td>Controls which rows a role can <em>read</em> (SELECT) or modify (UPDATE/DELETE target). Applied to existing rows.</td></tr>
+        <tr><td><strong>WITH CHECK clause</strong></td><td>Controls which rows a role can <em>write</em> (INSERT/UPDATE result). Applied to the new row being written. If omitted, the USING expression is reused for writes.</td></tr>
+        <tr><td><strong>Permissive policy</strong></td><td>The default. Multiple permissive policies on the same table are combined with OR — a row is visible if <em>any</em> policy allows it.</td></tr>
+        <tr><td><strong>Restrictive policy</strong></td><td>Created with <code>AS RESTRICTIVE</code>. Combined with AND — a row must pass <em>all</em> restrictive policies as well as at least one permissive policy. Use for mandatory access controls that must always apply.</td></tr>
+        <tr><td><strong>BYPASSRLS</strong></td><td>Role attribute that skips all policies. The table owner also bypasses RLS unless <code>FORCE ROW LEVEL SECURITY</code> is set on the table.</td></tr>
+        <tr><td><strong>GUC / session variable</strong></td><td>A configuration setting stored for the duration of a connection session. <code>SET app.state_code = 'KN'</code> sets a custom GUC read by the RLS policy via <code>current_setting()</code>.</td></tr>
+      </table>
+
       <h3>Basics — Why RBAC Alone Is Not Enough</h3>
       <p>RBAC controls <em>which tables</em> a role can access. But in the NSR, a caseworker granted SELECT on <code>nsr.households</code> can read every household in Nigeria — including states they have no business seeing. Row-Level Security (RLS) adds a second filter: even if the table privilege is granted, each row is checked against a policy before it is returned. RBAC is the door; RLS is the passport check inside.</p>
       <div class="code-block">
@@ -2915,11 +3026,135 @@ paid_households <span class="kw">AS</span> (
       </div>
       <div class="callout info" style="margin-top:8px">
         <div class="callout-title">How the RLS policy works</div>
-        <code>current_setting('app.state_code', TRUE)</code> reads a session-level GUC (Grand Unified Configuration variable) set by the application or the caseworker's login script. The second argument <code>TRUE</code> means "return NULL if not set" rather than throwing an error — without it, a connection that hasn't set the variable would error on every SELECT. The policy sub-selects LGA IDs belonging to that state, so a Kano caseworker (<code>app.state_code = 'KN'</code>) only ever sees rows where <code>lga_id</code> falls within Kano. <strong>BYPASSRLS on nsr_dba and nsr_supervisor</strong> is intentional — they need cross-state visibility for reports and corrections; the audit log compensates by recording every action they take. Demonstrate the COUNT(*) query change between <code>'KN'</code> and <code>'LA'</code> — the visible row count is the most concrete proof that RLS is working.
+        <code>current_setting('app.state_code', TRUE)</code> reads a session-level GUC set by the application or the caseworker's login script. The second argument <code>TRUE</code> means "return NULL if not set" rather than throwing an error. The policy sub-selects LGA IDs belonging to that state, so a Kano caseworker only ever sees rows where <code>lga_id</code> falls within Kano. <strong>BYPASSRLS on nsr_dba and nsr_supervisor</strong> is intentional — they need cross-state visibility for reports and corrections; the audit log compensates by recording every action they take.
+      </div>
+
+      <h3>Advanced — USING vs WITH CHECK</h3>
+      <p>A policy has two optional clauses that control different directions of data access. Understanding the difference prevents a subtle security gap: a policy with only <code>USING</code> controls what a caseworker can <em>read</em>, but without <code>WITH CHECK</code> they could still <em>insert or update</em> a row into a state they cannot see.</p>
+      <table>
+        <tr><th>Clause</th><th>Applied to</th><th>Direction</th><th>Example</th></tr>
+        <tr><td><code>USING (expr)</code></td><td>Existing rows</td><td>Read &amp; write target</td><td>Filters rows returned by SELECT; also filters which UPDATE/DELETE targets are allowed</td></tr>
+        <tr><td><code>WITH CHECK (expr)</code></td><td>New/updated row values</td><td>Write result</td><td>Validates the row being INSERTed or the new values after an UPDATE. Prevents writing out-of-state rows.</td></tr>
+      </table>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – USING vs WITH CHECK illustrated</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Policy with USING only: caseworker can read and modify Kano rows,</span>
+<span class="cmt">-- but could INSERT a row with a Lagos lga_id if not checked</span>
+<span class="kw">CREATE POLICY</span> cw_read_only_state
+<span class="kw">ON</span> nsr.households <span class="kw">FOR ALL TO</span> nsr_caseworker
+<span class="kw">USING</span> (
+  lga_id <span class="kw">IN</span> (<span class="kw">SELECT</span> lga_id <span class="kw">FROM</span> nsr.lgas
+              <span class="kw">WHERE</span> state_code = <span class="fn">current_setting</span>(<span class="str">'app.state_code'</span>, <span class="kw">TRUE</span>))
+);
+<span class="cmt">-- Without WITH CHECK, a caseworker SET app.state_code='KN' could still INSERT</span>
+<span class="cmt">-- a row with an lga_id from Lagos — the USING filter only guards reads</span>
+
+<span class="cmt">-- Correct approach: add WITH CHECK to validate the written row too</span>
+<span class="kw">DROP POLICY</span> cw_read_only_state <span class="kw">ON</span> nsr.households;
+
+<span class="kw">CREATE POLICY</span> cw_own_state_full
+<span class="kw">ON</span> nsr.households <span class="kw">FOR ALL TO</span> nsr_caseworker
+<span class="kw">USING</span> (
+  lga_id <span class="kw">IN</span> (<span class="kw">SELECT</span> lga_id <span class="kw">FROM</span> nsr.lgas
+              <span class="kw">WHERE</span> state_code = <span class="fn">current_setting</span>(<span class="str">'app.state_code'</span>, <span class="kw">TRUE</span>))
+)
+<span class="kw">WITH CHECK</span> (
+  lga_id <span class="kw">IN</span> (<span class="kw">SELECT</span> lga_id <span class="kw">FROM</span> nsr.lgas
+              <span class="kw">WHERE</span> state_code = <span class="fn">current_setting</span>(<span class="str">'app.state_code'</span>, <span class="kw">TRUE</span>))
+);
+<span class="cmt">-- Now: SET app.state_code='KN' then INSERT a Lagos lga_id</span>
+<span class="cmt">-- Expected: ERROR: new row violates row-level security policy</span>
+
+<span class="cmt">-- Verify policies on a table</span>
+<span class="kw">SELECT</span> policyname, cmd, qual <span class="kw">AS</span> using_expr,
+       with_check <span class="kw">AS</span> check_expr, permissive
+<span class="kw">FROM</span>  pg_policies
+<span class="kw">WHERE</span> schemaname = <span class="str">'nsr'</span>
+  <span class="kw">AND</span> tablename  = <span class="str">'households'</span>;</pre>
+      </div>
+
+      <h3>Advanced — Permissive vs Restrictive Policies</h3>
+      <p>By default all policies are <strong>permissive</strong> — if you have two permissive policies, a row is visible if <em>either</em> passes (they are OR'd together). A <strong>restrictive</strong> policy is AND'd with everything else — a row must pass the restrictive policy regardless of what other policies allow. Use restrictive policies for mandatory controls that must never be overridden by a more permissive policy.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – permissive vs restrictive policies</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Scenario: caseworkers can see their own state (permissive),</span>
+<span class="cmt">-- BUT active-only records is a mandatory data quality rule (restrictive)</span>
+
+<span class="cmt">-- Permissive: caseworker sees their state</span>
+<span class="kw">CREATE POLICY</span> perm_own_state
+<span class="kw">ON</span> nsr.households <span class="kw">AS PERMISSIVE FOR SELECT TO</span> nsr_caseworker
+<span class="kw">USING</span> (
+  lga_id <span class="kw">IN</span> (<span class="kw">SELECT</span> lga_id <span class="kw">FROM</span> nsr.lgas
+              <span class="kw">WHERE</span> state_code = <span class="fn">current_setting</span>(<span class="str">'app.state_code'</span>, <span class="kw">TRUE</span>))
+);
+
+<span class="cmt">-- Restrictive: NOBODY (in policy scope) sees deactivated records</span>
+<span class="kw">CREATE POLICY</span> restr_active_only
+<span class="kw">ON</span> nsr.households <span class="kw">AS RESTRICTIVE FOR SELECT TO</span> nsr_caseworker
+<span class="kw">USING</span> (is_active = <span class="kw">TRUE</span>);
+
+<span class="cmt">-- Result: caseworker sees rows where (own state) AND (is_active = TRUE)</span>
+<span class="cmt">-- Even if a future policy relaxed the state check, the active-only rule still applies</span>
+
+<span class="cmt">-- Test: count all rows vs active rows in Kano</span>
+<span class="kw">SET ROLE</span> nsr_caseworker;
+<span class="kw">SET</span> app.state_code = <span class="str">'KN'</span>;
+<span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.households;          <span class="cmt">-- Kano active rows only</span>
+<span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.households
+  <span class="kw">WHERE</span> is_active = <span class="kw">FALSE</span>;                     <span class="cmt">-- returns 0 — restrictive policy hides them</span>
+<span class="kw">RESET ROLE</span>;</pre>
+      </div>
+
+      <h3>Advanced — FORCE ROW LEVEL SECURITY</h3>
+      <p>By default, the <em>table owner</em> bypasses RLS even when it is enabled — they can always see all rows. For a government payment system this is a risk: if a caseworker's role is also the schema owner, they bypass the state filter. <code>FORCE ROW LEVEL SECURITY</code> closes this gap by applying policies to the owner as well. BYPASSRLS roles still bypass regardless.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – force RLS on table owner</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Without FORCE, the table owner sees all rows regardless of policies</span>
+<span class="kw">SET ROLE</span> postgres;  <span class="cmt">-- postgres is the owner of nsr.households</span>
+<span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.households;  <span class="cmt">-- returns ALL rows (policies ignored)</span>
+<span class="kw">RESET ROLE</span>;
+
+<span class="cmt">-- Enable FORCE so even the owner is subject to policies</span>
+<span class="kw">ALTER TABLE</span> nsr.households <span class="kw">FORCE ROW LEVEL SECURITY</span>;
+
+<span class="cmt">-- Now the owner must also satisfy the policy expressions</span>
+<span class="cmt">-- Note: BYPASSRLS roles (nsr_dba, nsr_supervisor) are STILL exempt</span>
+<span class="cmt">-- FORCE only affects the table owner when they are not BYPASSRLS</span>
+
+<span class="cmt">-- To undo:</span>
+<span class="kw">ALTER TABLE</span> nsr.households <span class="kw">NO FORCE ROW LEVEL SECURITY</span>;
+
+<span class="cmt">-- Summary view: RLS status on all NSR tables</span>
+<span class="kw">SELECT</span> relname <span class="kw">AS</span> table_name,
+       relrowsecurity  <span class="kw">AS</span> rls_enabled,
+       relforcerowsecurity <span class="kw">AS</span> force_rls
+<span class="kw">FROM</span>  pg_class c
+<span class="kw">JOIN</span>  pg_namespace n <span class="kw">ON</span> n.oid = c.relnamespace
+<span class="kw">WHERE</span> n.nspname = <span class="str">'nsr'</span>
+  <span class="kw">AND</span> c.relkind = <span class="str">'r'</span>  <span class="cmt">-- 'r' = regular table</span>
+<span class="kw">ORDER BY</span> relname;</pre>
+      </div>
+      <div class="callout warning" style="margin-top:8px">
+        <div class="callout-title">RLS is not a substitute for application-level validation</div>
+        RLS stops unauthorised data access at the database layer — it is a last line of defence. Your application should still validate state_code on login, enforce it in all queries, and never expose raw database errors to end users. Think of RLS as the database refusing to lie down even if the application misbehaves.
       </div>
     </div>
 
     <div class="tab-panel" id="tab-d3-audit">
+      <h3>Core Terms — Audit Logging at a Glance</h3>
+      <table>
+        <tr><th>Term</th><th>What it means</th></tr>
+        <tr><td><strong>Audit log</strong></td><td>A tamper-resistant record of who changed what data, when, and from which role. Stored as rows in a database table so it is queryable with SQL — unlike server log files.</td></tr>
+        <tr><td><strong>Trigger</strong></td><td>A function PostgreSQL calls automatically when a row is inserted, updated, or deleted. The audit trigger fires on every DML operation and writes a record to <code>nsr.audit_log</code>.</td></tr>
+        <tr><td><strong>Trigger function</strong></td><td>A PL/pgSQL function that returns <code>TRIGGER</code>. It receives special variables: <code>TG_OP</code> (INSERT/UPDATE/DELETE), <code>NEW</code> (the new row), <code>OLD</code> (the old row), <code>TG_TABLE_NAME</code> (the table that fired it).</td></tr>
+        <tr><td><strong>NEW / OLD</strong></td><td>Inside a trigger function, <code>NEW</code> holds the row after the change; <code>OLD</code> holds the row before. On INSERT only NEW exists. On DELETE only OLD exists. On UPDATE both exist.</td></tr>
+        <tr><td><strong>TG_OP</strong></td><td>A trigger variable containing the operation that fired the trigger: <code>'INSERT'</code>, <code>'UPDATE'</code>, or <code>'DELETE'</code>. Used to decide what to log.</td></tr>
+        <tr><td><strong>SECURITY DEFINER</strong></td><td>The function executes with the privileges of its <em>owner</em>, not the caller. This allows a caseworker (who has no INSERT on <code>audit_log</code>) to indirectly write to it through the trigger — the trigger's owner has INSERT rights.</td></tr>
+        <tr><td><strong>pgAudit</strong></td><td>A PostgreSQL extension that logs DDL and DML statements to the server log. Complements the trigger-based audit log — pgAudit captures statement-level events; the trigger captures row-level before/after values.</td></tr>
+        <tr><td><strong>JSONB</strong></td><td>A binary JSON column type. Used in <code>audit_log.row_data</code> to store the full row snapshot as a JSON document. Supports GIN indexes for fast containment searches (<code>@&gt;</code> operator).</td></tr>
+        <tr><td><strong>Append-only</strong></td><td>An audit log from which DELETE is revoked even from the DBA. Once a record is written it cannot be removed — ensuring the trail is tamper-resistant.</td></tr>
+      </table>
+
       <h3>Basics — What Audit Logging Is and Why Databases Need It</h3>
       <p>An audit log answers the question: <em>"Who changed what, when, and from where?"</em> Application logs can be disabled or cleared; network logs don't capture the data values; only a database-level audit captures the exact row changed, the role that changed it, and the timestamp — inside the same ACID-protected system as the data itself.</p>
       <table>
@@ -2957,7 +3192,138 @@ paid_households <span class="kw">AS</span> (
       </div>
       <div class="callout info" style="margin-top:8px">
         <div class="callout-title">Why the audit log is append-only</div>
-        <strong>REVOKE DELETE … FROM nsr_dba</strong> is the key line — it makes the audit log tamper-resistant even to the database administrator. This satisfies the requirement that audit trails in government systems must not be alterable by insiders. <code>row_data JSONB</code> stores the full NEW or OLD row as JSON, giving forensic detail without needing a separate shadow table per entity. <code>DEFAULT current_user</code> on <code>role_name</code> captures the actual database role, not a session variable that could be spoofed. In production you would pair this table with a trigger function (see the Exercise) that fires on INSERT, UPDATE, and DELETE on every NSR table — the trigger uses <code>SECURITY DEFINER</code> so it can write to <code>audit_log</code> even when the calling role has no INSERT privilege on it.
+        <strong>REVOKE DELETE … FROM nsr_dba</strong> is the key line — it makes the audit log tamper-resistant even to the database administrator. <code>row_data JSONB</code> stores the full NEW or OLD row as JSON, giving forensic detail without needing a separate shadow table per entity. <code>DEFAULT current_user</code> on <code>role_name</code> captures the actual database role, not a session variable that could be spoofed.
+      </div>
+
+      <h3>Intermediate — The Audit Trigger Function</h3>
+      <p>The <code>audit_log</code> table is only useful if records are written to it automatically on every INSERT, UPDATE, and DELETE. A PostgreSQL <strong>trigger function</strong> does this — it fires after every row change on the target table, captures <code>NEW</code> and <code>OLD</code> row data, and inserts a record into <code>audit_log</code>. The function uses <code>SECURITY DEFINER</code> so it can write to <code>audit_log</code> even when the calling role (e.g. <code>nsr_caseworker</code>) has no INSERT privilege on it.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – audit trigger function</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Step 1: Create the trigger function</span>
+<span class="cmt">-- RETURNS TRIGGER is required for all trigger functions</span>
+<span class="cmt">-- SECURITY DEFINER means it runs as its owner (postgres), not the calling role</span>
+<span class="kw">CREATE OR REPLACE FUNCTION</span> nsr.fn_audit_log()
+<span class="kw">RETURNS TRIGGER</span>
+<span class="kw">LANGUAGE</span> plpgsql
+<span class="kw">SECURITY DEFINER</span>
+<span class="kw">AS</span> $$
+<span class="kw">DECLARE</span>
+  v_row_data <span class="typ">JSONB</span>;
+<span class="kw">BEGIN</span>
+  <span class="cmt">-- TG_OP is 'INSERT', 'UPDATE', or 'DELETE'</span>
+  <span class="cmt">-- NEW holds the row after the change; OLD holds it before</span>
+  <span class="kw">IF</span> TG_OP = <span class="str">'DELETE'</span> <span class="kw">THEN</span>
+    v_row_data := <span class="fn">row_to_json</span>(OLD)::<span class="typ">JSONB</span>;  <span class="cmt">-- capture the deleted row</span>
+  <span class="kw">ELSIF</span> TG_OP = <span class="str">'INSERT'</span> <span class="kw">THEN</span>
+    v_row_data := <span class="fn">row_to_json</span>(NEW)::<span class="typ">JSONB</span>;  <span class="cmt">-- capture the new row</span>
+  <span class="kw">ELSE</span>  <span class="cmt">-- UPDATE: store the NEW row; OLD is available if you need before/after</span>
+    v_row_data := <span class="fn">jsonb_build_object</span>(
+      <span class="str">'old'</span>, <span class="fn">row_to_json</span>(OLD)::<span class="typ">JSONB</span>,
+      <span class="str">'new'</span>, <span class="fn">row_to_json</span>(NEW)::<span class="typ">JSONB</span>
+    );
+  <span class="kw">END IF</span>;
+
+  <span class="kw">INSERT INTO</span> nsr.audit_log (table_name, action, row_data)
+  <span class="kw">VALUES</span> (TG_TABLE_SCHEMA || <span class="str">'.'</span> || TG_TABLE_NAME, TG_OP, v_row_data);
+
+  <span class="cmt">-- AFTER triggers must return NULL for row-level triggers</span>
+  <span class="cmt">-- BEFORE triggers return NEW (to allow/modify the operation)</span>
+  <span class="kw">RETURN NULL</span>;
+<span class="kw">END</span>;
+$$;
+
+<span class="cmt">-- Step 2: Attach the trigger to nsr.households</span>
+<span class="cmt">-- AFTER ensures the row is already committed before we log it</span>
+<span class="cmt">-- FOR EACH ROW fires once per changed row (not once per statement)</span>
+<span class="kw">CREATE TRIGGER</span> trg_audit_households
+<span class="kw">AFTER INSERT OR UPDATE OR DELETE ON</span> nsr.households
+<span class="kw">FOR EACH ROW EXECUTE FUNCTION</span> nsr.fn_audit_log();
+
+<span class="cmt">-- Step 3: Test it — insert a household, then check the audit log</span>
+<span class="kw">INSERT INTO</span> nsr.households (household_code, lga_id, pmt_score, is_active)
+<span class="kw">VALUES</span> (<span class="str">'HH-TEST-999'</span>, <span class="num">1</span>, <span class="num">30.0</span>, <span class="kw">TRUE</span>);
+
+<span class="kw">SELECT</span> log_time, role_name, action, row_data
+<span class="kw">FROM</span>  nsr.audit_log
+<span class="kw">WHERE</span> table_name = <span class="str">'nsr.households'</span>
+<span class="kw">ORDER BY</span> log_time <span class="kw">DESC LIMIT</span> <span class="num">3</span>;
+<span class="cmt">-- You should see the INSERT with row_data containing the full new row as JSONB</span>
+
+<span class="cmt">-- Step 4: Update a pmt_score and confirm before/after is captured</span>
+<span class="kw">UPDATE</span> nsr.households <span class="kw">SET</span> pmt_score = <span class="num">45.0</span>
+<span class="kw">WHERE</span>  household_code = <span class="str">'HH-TEST-999'</span>;
+
+<span class="kw">SELECT</span> action,
+       row_data-><span class="str">'old'</span>->><span class="str">'pmt_score'</span> <span class="kw">AS</span> score_before,
+       row_data-><span class="str">'new'</span>->><span class="str">'pmt_score'</span> <span class="kw">AS</span> score_after
+<span class="kw">FROM</span>  nsr.audit_log
+<span class="kw">WHERE</span> table_name = <span class="str">'nsr.households'</span>
+  <span class="kw">AND</span> action = <span class="str">'UPDATE'</span>
+<span class="kw">ORDER BY</span> log_time <span class="kw">DESC LIMIT</span> <span class="num">1</span>;</pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Key trigger variables — quick reference</div>
+        <table style="margin:0">
+          <tr><th>Variable</th><th>Type</th><th>Value</th></tr>
+          <tr><td><code>TG_OP</code></td><td>TEXT</td><td><code>'INSERT'</code>, <code>'UPDATE'</code>, or <code>'DELETE'</code></td></tr>
+          <tr><td><code>NEW</code></td><td>RECORD</td><td>Row after the change (NULL on DELETE)</td></tr>
+          <tr><td><code>OLD</code></td><td>RECORD</td><td>Row before the change (NULL on INSERT)</td></tr>
+          <tr><td><code>TG_TABLE_NAME</code></td><td>TEXT</td><td>Name of the table that fired the trigger</td></tr>
+          <tr><td><code>TG_TABLE_SCHEMA</code></td><td>TEXT</td><td>Schema of the table (<code>'nsr'</code>)</td></tr>
+          <tr><td><code>TG_WHEN</code></td><td>TEXT</td><td><code>'BEFORE'</code> or <code>'AFTER'</code></td></tr>
+        </table>
+      </div>
+
+      <h3>Intermediate — pgAudit Configuration</h3>
+      <p><strong>pgAudit</strong> is a PostgreSQL extension that logs every DDL and DML statement to the server log, capturing the SQL text, the role that ran it, and the object it touched. It works at the <em>statement</em> level rather than the row level — complementary to, not a replacement for, the trigger-based <code>audit_log</code>.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – pgAudit setup and configuration</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Step 1: Install pgAudit (run as superuser)</span>
+<span class="cmt">-- On most systems the extension is already available; just load it</span>
+<span class="kw">CREATE EXTENSION IF NOT EXISTS</span> pgaudit;
+
+<span class="cmt">-- Step 2: Configure in postgresql.conf (or with ALTER SYSTEM)</span>
+<span class="cmt">-- pgaudit.log controls which statement classes are logged:</span>
+<span class="cmt">--   read    → SELECT, COPY FROM</span>
+<span class="cmt">--   write   → INSERT, UPDATE, DELETE, TRUNCATE, COPY TO</span>
+<span class="cmt">--   ddl     → CREATE, ALTER, DROP (schema changes)</span>
+<span class="cmt">--   role    → GRANT, REVOKE, CREATE ROLE (privilege changes)</span>
+<span class="cmt">--   misc    → DISCARD, FETCH, CHECKPOINT, VACUUM</span>
+<span class="cmt">--   all     → everything</span>
+
+<span class="cmt">-- Log all write operations and DDL — typical NSR production setting</span>
+<span class="kw">ALTER SYSTEM SET</span> pgaudit.log = <span class="str">'write, ddl, role'</span>;
+<span class="kw">SELECT</span> pg_reload_conf();   <span class="cmt">-- applies without a restart</span>
+
+<span class="cmt">-- Step 3: Verify pgAudit is active</span>
+<span class="kw">SHOW</span> pgaudit.log;
+<span class="kw">SHOW</span> shared_preload_libraries;  <span class="cmt">-- should include 'pgaudit'</span>
+
+<span class="cmt">-- Step 4: Run a test statement and check the server log</span>
+<span class="kw">UPDATE</span> nsr.households <span class="kw">SET</span> pmt_score = pmt_score
+<span class="kw">WHERE</span> household_id = <span class="num">1</span>;
+<span class="cmt">-- Server log will contain a line like:</span>
+<span class="cmt">-- AUDIT: SESSION,1,1,WRITE,UPDATE,TABLE,nsr.households,</span>
+<span class="cmt">--        "UPDATE nsr.households SET pmt_score = pmt_score WHERE household_id = 1"</span>
+
+<span class="cmt">-- Step 5: Object-level audit — log every access to a specific table</span>
+<span class="kw">ALTER SYSTEM SET</span> pgaudit.log_catalog = <span class="str">'on'</span>;
+<span class="kw">AUDIT TABLE</span> nsr.payments;   <span class="cmt">-- every SELECT/INSERT/UPDATE/DELETE on payments is logged</span>
+
+<span class="cmt">-- Step 6: Role-level audit — log everything done by nsr_supervisor</span>
+<span class="kw">ALTER ROLE</span> nsr_supervisor <span class="kw">SET</span> pgaudit.log = <span class="str">'all'</span>;</pre>
+      </div>
+      <div class="callout tip" style="margin-top:8px">
+        <div class="callout-title">pgAudit vs trigger audit_log — when to use each</div>
+        <table style="margin:0">
+          <tr><th>Need</th><th>Use</th></tr>
+          <tr><td>Prove a specific SQL statement was run and by whom</td><td>pgAudit (server log)</td></tr>
+          <tr><td>See the exact values before and after a row change</td><td>Trigger audit_log</td></tr>
+          <tr><td>Query the audit trail with SQL filters and window functions</td><td>Trigger audit_log</td></tr>
+          <tr><td>Audit schema changes (CREATE TABLE, ALTER COLUMN)</td><td>pgAudit DDL logging</td></tr>
+          <tr><td>Detect a bulk fraud operation across many rows</td><td>Trigger audit_log (COUNT per hour bucket)</td></tr>
+          <tr><td>Comply with a requirement to log all SELECT access to PII tables</td><td>pgAudit read logging</td></tr>
+        </table>
       </div>
 
       <h3>Advanced — Forensic Queries on the Audit Log</h3>
@@ -3039,6 +3405,22 @@ SELECT log_id, log_time, role_name, action, row_data FROM nsr.audit_log ORDER BY
     </div>
 
     <div class="tab-panel" id="tab-d3-backup">
+      <h3>Core Terms — Backup &amp; Disaster Recovery at a Glance</h3>
+      <table>
+        <tr><th>Term</th><th>What it means</th></tr>
+        <tr><td><strong>Logical backup</strong></td><td>A human-readable export of database objects and data as SQL statements or a binary archive. Created with <code>pg_dump</code>. The database must be running. Cannot capture in-progress transactions.</td></tr>
+        <tr><td><strong>Physical backup</strong></td><td>A byte-for-byte copy of the PostgreSQL data directory files. Created with <code>pg_basebackup</code>. Works independently of the database's logical structure and supports Point-in-Time Recovery when combined with WAL archiving.</td></tr>
+        <tr><td><strong>WAL (Write-Ahead Log)</strong></td><td>PostgreSQL's internal change journal. Every INSERT, UPDATE, and DELETE is written to WAL <em>before</em> the data files are updated. WAL files are the foundation of replication and PITR — they can be replayed to rebuild the database to any past state.</td></tr>
+        <tr><td><strong>WAL archiving</strong></td><td>Continuously copying WAL segment files to a safe location (another server, S3, NFS). Enables recovery to any point in time between backups, not just the backup moment.</td></tr>
+        <tr><td><strong>PITR (Point-in-Time Recovery)</strong></td><td>Restoring a physical base backup then replaying archived WAL up to a specific timestamp. Allows recovery from accidental deletions or corruption with near-zero data loss.</td></tr>
+        <tr><td><strong>RPO (Recovery Point Objective)</strong></td><td>The maximum acceptable amount of data loss measured in time. A daily pg_dump has 24-hour RPO. WAL archiving achieves near-zero RPO (seconds of data loss).</td></tr>
+        <tr><td><strong>RTO (Recovery Time Objective)</strong></td><td>The maximum acceptable time the system can be offline during recovery. A logical restore of a large database can take hours; a physical restore with a warm standby can be minutes.</td></tr>
+        <tr><td><strong>pg_dump</strong></td><td>PostgreSQL's logical backup tool. Can export an entire database, a single schema, or a single table. Supports plain SQL (<code>-F p</code>), custom binary (<code>-F c</code>), directory (<code>-F d</code>), and tar (<code>-F t</code>) formats.</td></tr>
+        <tr><td><strong>pg_restore</strong></td><td>Restores a non-plain-text pg_dump archive. Supports parallel restore with <code>-j N</code> to use N CPU cores simultaneously — dramatically faster for large databases.</td></tr>
+        <tr><td><strong>pg_basebackup</strong></td><td>Creates a physical backup of the running PostgreSQL cluster, including WAL. The starting point for PITR.</td></tr>
+        <tr><td><strong>Streaming replication</strong></td><td>A standby server that continuously receives WAL from the primary and stays in sync. A warm standby can be promoted to primary within seconds if the primary fails.</td></tr>
+      </table>
+
       <h3>Basics — Backup Types and Why They Differ</h3>
       <p>PostgreSQL offers two fundamental backup approaches. Understanding the difference determines how quickly you can recover and how much data you risk losing in a disaster.</p>
       <table>
@@ -3074,6 +3456,95 @@ psql -U postgres -d lab_nsr_test -c "SELECT COUNT(*) FROM nsr.households;"</pre>
       <div class="callout tip">
         <div class="callout-title">Backup strategy tip</div>
         Use <code>-F c</code> (custom format) for production — it supports parallel restore. Use <code>-F p</code> (plain SQL) only for inspection or partial restores.
+      </div>
+
+      <h3>Intermediate — pg_dump Flags Reference</h3>
+      <p>Understanding the flags prevents the most common backup mistakes — backing up the wrong schema, missing sequences, or creating a dump that cannot be cleanly restored to a fresh database.</p>
+      <table>
+        <tr><th>Flag</th><th>Meaning</th><th>When to use</th></tr>
+        <tr><td><code>-F c</code></td><td>Custom binary format. Compressed, supports selective restore and parallel restore with <code>pg_restore -j</code>.</td><td>All production backups</td></tr>
+        <tr><td><code>-F p</code></td><td>Plain SQL text. Human-readable; can be piped directly into psql.</td><td>Inspection, small databases, sharing with developers</td></tr>
+        <tr><td><code>-F d</code></td><td>Directory format. One file per table, can be restored in parallel.</td><td>Very large databases where parallel restore is needed</td></tr>
+        <tr><td><code>-n nsr</code></td><td>Dump only the named schema (and its objects). Excludes other schemas in the database.</td><td>Schema-specific backups; avoid on system schemas</td></tr>
+        <tr><td><code>-t nsr.households</code></td><td>Dump only the named table.</td><td>Targeted restore of a single table</td></tr>
+        <tr><td><code>-s</code></td><td>Schema-only: exports DDL (CREATE TABLE, GRANT, etc.) but no data rows.</td><td>Setting up a new environment with the same structure</td></tr>
+        <tr><td><code>-a</code></td><td>Data-only: exports INSERT statements or COPY data but no DDL.</td><td>Reloading data into an existing schema</td></tr>
+        <tr><td><code>--no-owner</code></td><td>Omits <code>ALTER TABLE … OWNER TO</code> statements from the dump.</td><td>Restoring to a database with different role names</td></tr>
+        <tr><td><code>--no-acl</code></td><td>Omits GRANT/REVOKE statements.</td><td>Restoring to a fresh environment where you will re-grant manually</td></tr>
+        <tr><td><code>-j N</code> (pg_restore)</td><td>Parallel restore using N worker processes.</td><td>Any custom or directory format restore on a multi-core server</td></tr>
+      </table>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">bash – pg_dump and pg_restore in practice</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt"># Schema-only dump — capture the DDL without any data</span>
+pg_dump -U postgres -d lab_nsr -n nsr -s -F c -f /tmp/nsr_schema.dump
+
+<span class="cmt"># Full nsr schema backup with data (custom format, compressed)</span>
+pg_dump -U postgres -d lab_nsr -n nsr -F c -f /tmp/nsr_full.dump
+
+<span class="cmt"># Inspect what is inside a custom-format dump before restoring</span>
+pg_restore -l /tmp/nsr_full.dump
+
+<span class="cmt"># Restore to a fresh database — parallel (4 workers)</span>
+createdb -U postgres lab_nsr_restore
+pg_restore -U postgres -d lab_nsr_restore -F c -j 4 /tmp/nsr_full.dump
+
+<span class="cmt"># Restore a single table only (selective restore from a full dump)</span>
+pg_restore -U postgres -d lab_nsr_restore -F c \
+  -t households /tmp/nsr_full.dump
+
+<span class="cmt"># Data-only restore (schema already exists in the target)</span>
+pg_restore -U postgres -d lab_nsr_restore -F c -a /tmp/nsr_full.dump
+
+<span class="cmt"># Verify restore: compare row counts across every NSR table</span>
+for tbl in states lgas households individuals payments audit_log; do
+  orig=$(psql -U postgres -d lab_nsr         -tAc "SELECT COUNT(*) FROM nsr.$tbl")
+  rest=$(psql -U postgres -d lab_nsr_restore  -tAc "SELECT COUNT(*) FROM nsr.$tbl")
+  echo "$tbl — original: $orig  restored: $rest  match: $([ $orig = $rest ] && echo YES || echo NO)"
+done</pre>
+      </div>
+
+      <h3>Intermediate — Backup Verification: the Anti-Pattern to Avoid</h3>
+      <p>The most dangerous backup mistake is <strong>never testing the restore</strong>. A backup that has never been restored successfully is not a backup — it is a false sense of security. For the NSR, an untested backup could mean weeks of lost payment records in a real incident.</p>
+      <div class="callout warning">
+        <div class="callout-title">The Golden Rule of Backups</div>
+        A backup is only as good as the last successful restore test. Schedule restore drills on a test database at least monthly. Verify: (1) row counts match, (2) sequences are not reset, (3) all GRANT statements were preserved, (4) RLS policies are in place on the restored database.
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – restore integrity checks</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- After restoring, run these checks against the restored database</span>
+
+<span class="cmt">-- 1. Row counts (run on both original and restored db, compare)</span>
+<span class="kw">SELECT</span> schemaname, relname <span class="kw">AS</span> table_name,
+       n_live_tup <span class="kw">AS</span> approx_row_count
+<span class="kw">FROM</span>  pg_stat_user_tables
+<span class="kw">WHERE</span> schemaname = <span class="str">'nsr'</span>
+<span class="kw">ORDER BY</span> relname;
+
+<span class="cmt">-- 2. Sequence current values (verify they were not reset to 1)</span>
+<span class="kw">SELECT</span> sequence_schema, sequence_name,
+       <span class="fn">nextval</span>(sequence_schema || <span class="str">'.'</span> || sequence_name) <span class="kw">AS</span> next_val
+<span class="kw">FROM</span>  information_schema.sequences
+<span class="kw">WHERE</span> sequence_schema = <span class="str">'nsr'</span>;
+
+<span class="cmt">-- 3. Verify RLS is enabled on the restored tables</span>
+<span class="kw">SELECT</span> relname, relrowsecurity <span class="kw">AS</span> rls_on
+<span class="kw">FROM</span>  pg_class c
+<span class="kw">JOIN</span>  pg_namespace n <span class="kw">ON</span> n.oid = c.relnamespace
+<span class="kw">WHERE</span> n.nspname = <span class="str">'nsr'</span> <span class="kw">AND</span> c.relkind = <span class="str">'r'</span>;
+<span class="cmt">-- All tables should show rls_on = true</span>
+
+<span class="cmt">-- 4. Verify grants were preserved</span>
+<span class="kw">SELECT</span> grantee, table_name, privilege_type
+<span class="kw">FROM</span>  information_schema.role_table_grants
+<span class="kw">WHERE</span> table_schema = <span class="str">'nsr'</span>
+  <span class="kw">AND</span> grantee <span class="kw">LIKE</span> <span class="str">'nsr%'</span>
+<span class="kw">ORDER BY</span> grantee, table_name;
+
+<span class="cmt">-- 5. Spot-check a payment record to confirm data integrity</span>
+<span class="kw">SELECT</span> p.payment_id, h.household_code, p.amount_ngn, p.status, p.payment_date
+<span class="kw">FROM</span>  nsr.payments p
+<span class="kw">JOIN</span>  nsr.households h <span class="kw">ON</span> h.household_id = p.household_id
+<span class="kw">ORDER BY</span> p.payment_id <span class="kw">DESC LIMIT</span> <span class="num">5</span>;</pre>
       </div>
 
       <h3>Advanced — WAL Archiving and Point-in-Time Recovery (PITR)</h3>
