@@ -3861,6 +3861,192 @@ done</pre>
           </div>
         </div>
       </div>
+
+      <div class="exercise-card">
+        <div class="exercise-header" onclick="toggleExercise(this)">
+          <div class="ex-num">H1.5</div>
+          <div class="ex-title">Role attributes, inheritance, and column-level privileges</div>
+          <span class="ex-difficulty diff-advanced">Advanced</span>
+          <span class="ex-toggle">▼</span>
+        </div>
+        <div class="exercise-body" style="display:none">
+          <p>This exercise builds on the NSR role model to explore role attributes, group inheritance, and column-level access control.</p>
+          <ol style="margin-left:18px;margin-bottom:12px;font-size:0.88rem">
+            <li style="margin-bottom:6px">Create a group role <code>nsr_readonly</code> (no LOGIN), grant it SELECT on all tables in the nsr schema, then add <code>nsr_caseworker</code> as a member. Confirm the caseworker inherits SELECT on <code>nsr.payments</code> via <code>pg_auth_members</code>.</li>
+            <li style="margin-bottom:6px">Create a <strong>break-glass</strong> maintenance role <code>nsr_maint</code> with NOINHERIT and LOGIN. Grant it membership in <code>nsr_dba</code>. Demonstrate that <code>nsr_maint</code> cannot use DBA privileges without running <code>SET ROLE nsr_dba</code>.</li>
+            <li style="margin-bottom:6px">Set a connection limit of 5 on <code>nsr_caseworker</code> and a password expiry of 2027-01-01. Verify in <code>pg_roles</code>.</li>
+            <li style="margin-bottom:6px">Grant SELECT on only <code>(household_id, household_code, pmt_score)</code> columns of <code>nsr.households</code> to a new role <code>nsr_reporter</code>. Show that <code>SELECT *</code> fails but <code>SELECT household_code, pmt_score</code> succeeds.</li>
+          </ol>
+          <div class="callout info"><div class="callout-title">Why this matters</div>
+            Group roles let you centralise privilege management — grant to the group, not individual users. NOINHERIT break-glass accounts leave a clear audit trail (the <code>SET ROLE</code> statement appears in pgAudit) and prevent accidental use of elevated privileges. Column grants are a last-resort — prefer security views for masking.
+          </div>
+          <div class="answer-area">Write your SQL here — include the pg_auth_members and pg_roles verification queries</div>
+          <div class="answer-reveal" id="ans-d3-h15">
+            <div class="callout tip"><div class="callout-title">Full Solution</div></div>
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">sql – role attributes, inheritance, column grants</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre><span class="cmt">-- Part 1: Group role with inheritance</span>
+<span class="kw">CREATE ROLE</span> nsr_readonly;   <span class="cmt">-- no LOGIN = group role</span>
+<span class="kw">GRANT SELECT ON ALL TABLES IN SCHEMA</span> nsr <span class="kw">TO</span> nsr_readonly;
+<span class="kw">GRANT</span> nsr_readonly <span class="kw">TO</span> nsr_caseworker;  <span class="cmt">-- caseworker INHERITs SELECT on all tables</span>
+
+<span class="cmt">-- Verify membership</span>
+<span class="kw">SELECT</span> r.rolname <span class="kw">AS</span> member, m.rolname <span class="kw">AS</span> member_of
+<span class="kw">FROM</span>  pg_auth_members am
+<span class="kw">JOIN</span>  pg_roles r <span class="kw">ON</span> r.oid = am.member
+<span class="kw">JOIN</span>  pg_roles m <span class="kw">ON</span> m.oid = am.roleid
+<span class="kw">WHERE</span> r.rolname = <span class="str">'nsr_caseworker'</span>;
+<span class="cmt">-- Should show nsr_caseworker | nsr_readonly</span>
+
+<span class="cmt">-- Part 2: NOINHERIT break-glass role</span>
+<span class="kw">CREATE ROLE</span> nsr_maint <span class="kw">WITH</span> NOINHERIT LOGIN PASSWORD <span class="str">'maint_secure_pw'</span>;
+<span class="kw">GRANT</span> nsr_dba <span class="kw">TO</span> nsr_maint;
+
+<span class="cmt">-- Connect as nsr_maint and try to use DBA privileges directly — should fail</span>
+<span class="kw">SET ROLE</span> nsr_maint;
+<span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.audit_log;  <span class="cmt">-- ERROR: permission denied (NOINHERIT)</span>
+<span class="kw">SET ROLE</span> nsr_dba;                      <span class="cmt">-- explicit escalation required</span>
+<span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.audit_log;  <span class="cmt">-- now succeeds</span>
+<span class="kw">RESET ROLE</span>;
+
+<span class="cmt">-- Part 3: Connection limit and password expiry</span>
+<span class="kw">ALTER ROLE</span> nsr_caseworker CONNECTION LIMIT <span class="num">5</span>;
+<span class="kw">ALTER ROLE</span> nsr_caseworker VALID UNTIL <span class="str">'2027-01-01'</span>;
+
+<span class="kw">SELECT</span> rolname, rolconnlimit, rolvaliduntil
+<span class="kw">FROM</span>  pg_roles
+<span class="kw">WHERE</span> rolname = <span class="str">'nsr_caseworker'</span>;
+<span class="cmt">-- rolconnlimit = 5, rolvaliduntil = 2027-01-01 00:00:00+00</span>
+
+<span class="cmt">-- Part 4: Column-level privilege</span>
+<span class="kw">CREATE ROLE</span> nsr_reporter <span class="kw">WITH LOGIN</span> PASSWORD <span class="str">'rep_pw'</span>;
+<span class="kw">GRANT USAGE ON SCHEMA</span> nsr <span class="kw">TO</span> nsr_reporter;
+<span class="kw">GRANT SELECT</span> (household_id, household_code, pmt_score)
+  <span class="kw">ON</span> nsr.households <span class="kw">TO</span> nsr_reporter;
+
+<span class="kw">SET ROLE</span> nsr_reporter;
+<span class="kw">SELECT</span> household_code, pmt_score <span class="kw">FROM</span> nsr.households <span class="kw">LIMIT</span> <span class="num">3</span>;  <span class="cmt">-- ✓ succeeds</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> nsr.households <span class="kw">LIMIT</span> <span class="num">1</span>;                         <span class="cmt">-- ✗ permission denied</span>
+<span class="kw">RESET ROLE</span>;
+
+<span class="cmt">-- Audit column-level grants</span>
+<span class="kw">SELECT</span> grantee, column_name, privilege_type
+<span class="kw">FROM</span>  information_schema.column_privileges
+<span class="kw">WHERE</span> table_schema = <span class="str">'nsr'</span> <span class="kw">AND</span> table_name = <span class="str">'households'</span>
+  <span class="kw">AND</span> grantee = <span class="str">'nsr_reporter'</span>;</pre>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            <button class="btn-toggle-answer" onclick="toggleAnswer('d3-h15',this)">▼ Show Answer</button>
+            <button class="ex-complete-btn" onclick="markExDone(this)">✓ Mark done</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="exercise-card">
+        <div class="exercise-header" onclick="toggleExercise(this)">
+          <div class="ex-num">H1.6</div>
+          <div class="ex-title">WITH CHECK, restrictive policies, and FORCE RLS</div>
+          <span class="ex-difficulty diff-advanced">Advanced</span>
+          <span class="ex-toggle">▼</span>
+        </div>
+        <div class="exercise-body" style="display:none">
+          <p>This exercise exposes the limits of a USING-only policy and demonstrates the full defensive RLS stack: USING + WITH CHECK, a restrictive policy, and FORCE ROW LEVEL SECURITY.</p>
+          <ol style="margin-left:18px;margin-bottom:12px;font-size:0.88rem">
+            <li style="margin-bottom:6px"><strong>Expose the gap:</strong> Create a policy on <code>nsr.households</code> for <code>nsr_caseworker</code> using USING only (state filter). Then as the caseworker, try to INSERT a row with a Lagos <code>lga_id</code> while <code>app.state_code = 'KN'</code>. Does it fail?</li>
+            <li style="margin-bottom:6px"><strong>Fix it:</strong> Drop the old policy and recreate it adding a matching WITH CHECK clause. Repeat the out-of-state INSERT — confirm it now raises an error.</li>
+            <li style="margin-bottom:6px"><strong>Add a restrictive policy:</strong> Create an <code>AS RESTRICTIVE</code> policy that forces <code>is_active = TRUE</code> for all caseworker reads. Confirm that deactivated households are no longer visible even in their own state.</li>
+            <li style="margin-bottom:6px"><strong>FORCE RLS:</strong> Use <code>ALTER TABLE nsr.households FORCE ROW LEVEL SECURITY</code>. As the postgres superuser (table owner), confirm you are now also subject to the policies. Undo with <code>NO FORCE ROW LEVEL SECURITY</code>.</li>
+          </ol>
+          <div class="callout warning"><div class="callout-title">Order matters</div>
+            Complete steps 1 and 2 in order — if you create WITH CHECK in step 1 you will not observe the gap. The point of step 1 is to prove the vulnerability exists before you fix it.
+          </div>
+          <div class="answer-area">Record what happened at each step — specifically what the out-of-state INSERT returned in steps 1 vs 2</div>
+          <div class="answer-reveal" id="ans-d3-h16">
+            <div class="callout tip"><div class="callout-title">Full Solution</div></div>
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">sql – WITH CHECK, restrictive policy, FORCE RLS</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre><span class="cmt">-- Prerequisite: lga_id 1 = Kano LGA, lga_id 2 = Lagos LGA (adjust to your data)</span>
+<span class="kw">SELECT</span> lga_id, lga_name, state_code <span class="kw">FROM</span> nsr.lgas <span class="kw">ORDER BY</span> lga_id <span class="kw">LIMIT</span> <span class="num">5</span>;
+
+<span class="cmt">-- STEP 1: USING only — find a Lagos lga_id first</span>
+<span class="kw">DO</span> $$ <span class="kw">DECLARE</span> v_lagos_lga <span class="typ">INT</span>;
+<span class="kw">BEGIN</span>
+  <span class="kw">SELECT</span> lga_id <span class="kw">INTO</span> v_lagos_lga <span class="kw">FROM</span> nsr.lgas
+  <span class="kw">WHERE</span> state_code = <span class="str">'LA'</span> <span class="kw">LIMIT</span> <span class="num">1</span>;
+  <span class="kw">RAISE NOTICE</span> <span class="str">'Lagos lga_id: %'</span>, v_lagos_lga;
+<span class="kw">END</span> $$;
+
+<span class="kw">DROP POLICY IF EXISTS</span> caseworker_state_policy <span class="kw">ON</span> nsr.households;
+<span class="kw">CREATE POLICY</span> cw_using_only
+<span class="kw">ON</span> nsr.households <span class="kw">FOR ALL TO</span> nsr_caseworker
+<span class="kw">USING</span> (lga_id <span class="kw">IN</span> (<span class="kw">SELECT</span> lga_id <span class="kw">FROM</span> nsr.lgas
+                   <span class="kw">WHERE</span> state_code = <span class="fn">current_setting</span>(<span class="str">'app.state_code'</span>, <span class="kw">TRUE</span>)));
+
+<span class="kw">SET ROLE</span> nsr_caseworker;
+<span class="kw">SET</span> app.state_code = <span class="str">'KN'</span>;
+<span class="cmt">-- Insert a row with Lagos lga_id while pretending to be a Kano worker</span>
+<span class="kw">INSERT INTO</span> nsr.households (household_code, lga_id, pmt_score, is_active)
+  <span class="kw">VALUES</span> (<span class="str">'HH-LEAK-001'</span>, <span class="num">2</span>, <span class="num">20.0</span>, <span class="kw">TRUE</span>);  <span class="cmt">-- lga_id 2 = Lagos</span>
+<span class="cmt">-- BUG: INSERT succeeds! USING only guards reads, not writes</span>
+<span class="kw">RESET ROLE</span>;
+
+<span class="cmt">-- STEP 2: Add WITH CHECK — drop and recreate</span>
+<span class="kw">DROP POLICY</span> cw_using_only <span class="kw">ON</span> nsr.households;
+<span class="kw">CREATE POLICY</span> cw_full_state
+<span class="kw">ON</span> nsr.households <span class="kw">FOR ALL TO</span> nsr_caseworker
+<span class="kw">USING</span> (lga_id <span class="kw">IN</span> (<span class="kw">SELECT</span> lga_id <span class="kw">FROM</span> nsr.lgas
+                   <span class="kw">WHERE</span> state_code = <span class="fn">current_setting</span>(<span class="str">'app.state_code'</span>, <span class="kw">TRUE</span>)))
+<span class="kw">WITH CHECK</span> (lga_id <span class="kw">IN</span> (<span class="kw">SELECT</span> lga_id <span class="kw">FROM</span> nsr.lgas
+                        <span class="kw">WHERE</span> state_code = <span class="fn">current_setting</span>(<span class="str">'app.state_code'</span>, <span class="kw">TRUE</span>)));
+
+<span class="kw">SET ROLE</span> nsr_caseworker;
+<span class="kw">SET</span> app.state_code = <span class="str">'KN'</span>;
+<span class="kw">INSERT INTO</span> nsr.households (household_code, lga_id, pmt_score, is_active)
+  <span class="kw">VALUES</span> (<span class="str">'HH-LEAK-002'</span>, <span class="num">2</span>, <span class="num">20.0</span>, <span class="kw">TRUE</span>);
+<span class="cmt">-- FIXED: ERROR: new row violates row-level security policy</span>
+<span class="kw">RESET ROLE</span>;
+
+<span class="cmt">-- STEP 3: Restrictive policy — active rows only</span>
+<span class="kw">CREATE POLICY</span> restr_active_only
+<span class="kw">ON</span> nsr.households <span class="kw">AS RESTRICTIVE FOR SELECT TO</span> nsr_caseworker
+<span class="kw">USING</span> (is_active = <span class="kw">TRUE</span>);
+
+<span class="kw">SET ROLE</span> nsr_caseworker;
+<span class="kw">SET</span> app.state_code = <span class="str">'KN'</span>;
+<span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.households;                     <span class="cmt">-- Kano active only</span>
+<span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.households <span class="kw">WHERE</span> is_active = <span class="kw">FALSE</span>; <span class="cmt">-- 0 (hidden by restrictive)</span>
+<span class="kw">RESET ROLE</span>;
+
+<span class="cmt">-- STEP 4: FORCE RLS — apply policies even to table owner</span>
+<span class="kw">ALTER TABLE</span> nsr.households <span class="kw">FORCE ROW LEVEL SECURITY</span>;
+
+<span class="cmt">-- As postgres (owner), test without setting state_code</span>
+<span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.households;  <span class="cmt">-- 0 — owner now filtered too</span>
+<span class="kw">SET</span> app.state_code = <span class="str">'KN'</span>;
+<span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.households;  <span class="cmt">-- Kano active rows</span>
+
+<span class="kw">ALTER TABLE</span> nsr.households <span class="kw">NO FORCE ROW LEVEL SECURITY</span>;  <span class="cmt">-- restore normal behaviour</span>
+
+<span class="cmt">-- Confirm policy state</span>
+<span class="kw">SELECT</span> policyname, cmd, permissive, qual <span class="kw">AS</span> using_expr, with_check
+<span class="kw">FROM</span>  pg_policies
+<span class="kw">WHERE</span> schemaname = <span class="str">'nsr'</span> <span class="kw">AND</span> tablename = <span class="str">'households'</span>;</pre>
+            </div>
+            <div class="callout info" style="margin-top:8px">
+              <div class="callout-title">Key takeaways</div>
+              <strong>Step 1 result</strong>: the INSERT succeeds — USING only protects reads (SELECT, UPDATE/DELETE row targeting), not writes. A caseworker with only a USING policy can insert rows into any state.<br>
+              <strong>Step 2 result</strong>: the INSERT fails with "violates row-level security policy" — WITH CHECK validates the new row against the same state filter.<br>
+              <strong>Step 3 result</strong>: inactive rows vanish even within the caseworker's own state. Restrictive AND permissive: both must pass.<br>
+              <strong>Step 4 result</strong>: the table owner (postgres) also sees 0 rows when state_code is unset. FORCE RLS closes the owner bypass but not the BYPASSRLS attribute.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            <button class="btn-toggle-answer" onclick="toggleAnswer('d3-h16',this)">▼ Show Answer</button>
+            <button class="ex-complete-btn" onclick="markExDone(this)">✓ Mark done</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div><!-- end day3 -->
@@ -3881,15 +4067,6 @@ done</pre>
     <span class="obj-chip">#8 Digital Welfare Administration</span>
     <span class="obj-chip">#9 Social Protection Systems</span>
     <span class="obj-chip">#12 Public Sector Digital Transformation</span>
-  </div>
-
-  <div class="section">
-    <div class="section-header"><div class="section-icon si-purple">🧠</div><h2>Day 3 Refresher Quiz</h2></div>
-    <div class="callout info" style="margin-bottom:12px">
-      <div class="callout-title">Before you leave for the study visit</div>
-      Complete this short refresher on yesterday's security content. It takes about 5 minutes and ensures you can connect what you see today to the technical controls you've already built.
-    </div>
-    <div id="quiz-d4"></div>
   </div>
 
   <div class="section">
@@ -3954,8 +4131,8 @@ done</pre>
   <div class="section">
     <div class="section-header"><div class="section-icon si-purple">🧠</div><h2>Refresher Quiz – Days 1–4</h2></div>
     <div class="callout info" style="margin-bottom:12px">
-      <div class="callout-title">Warm up before the assessment</div>
-      Complete this mixed refresher before starting Parts A–C. Questions cover WAL, MVCC, SQL, RBAC, and RLS. This is not marked — it is calibration so you know where to focus your effort.
+      <div class="callout-title">Weekend + Study Visit Refresher</div>
+      This combined quiz covers Thursday's security content (RBAC, RLS, Audit Logging, Backup &amp; DR) plus Friday's study visit themes. Complete all questions before starting today's assessment — it is not marked, but it will tell you exactly where to focus your revision.
     </div>
     <div id="quiz-d5"></div>
   </div>
@@ -6970,48 +7147,92 @@ const QUIZZES = {
   ],
   'd5': [
     {
-      q: 'A WAL segment is filled and a checkpoint has not yet occurred. PostgreSQL forces a checkpoint. Which pg_stat_bgwriter column increments?',
+      q: 'nsr_caseworker has been GRANTed SELECT on nsr.households. RLS is enabled on the table but no policies have been created yet. What does the caseworker see?',
       opts: [
-        'checkpoints_timed',
-        'checkpoints_req',
-        'buffers_checkpoint',
-        'buffers_backend'
+        'All rows — RLS without policies defaults to allow-all',
+        'No rows — RLS with no matching USING policy defaults to deny-all for non-owner roles',
+        'An error — RLS cannot be enabled without at least one policy',
+        'The same rows the table owner would see'
       ],
       correct: 1,
-      explanation: 'checkpoints_req counts checkpoints forced by WAL pressure (WAL filling up before the scheduled checkpoint_timeout). checkpoints_timed counts scheduled checkpoints. A high checkpoints_req / checkpoints_timed ratio signals sustained write pressure — increase max_wal_size or checkpoint_completion_target.'
+      explanation: 'PostgreSQL\'s default when RLS is enabled but no policy applies to a role is deny-all — zero rows are returned. The table owner and BYPASSRLS roles are exempt. This is intentional: it forces an explicit decision about who sees what. Always create at least one policy immediately after enabling RLS.'
     },
     {
-      q: 'nsr_caseworker connects and runs a SELECT on nsr.households without first executing <code>SET app.state_code</code>. The RLS policy uses <code>current_setting(\'app.state_code\', TRUE)</code>. What is returned?',
+      q: 'A caseworker policy uses only a USING clause (no WITH CHECK) to restrict reads to their own state. The caseworker runs SET app.state_code = \'KN\' then INSERTs a row with a Lagos lga_id. What happens?',
       opts: [
-        'All rows — missing variable defaults to allow-all',
-        'An error — current_setting raises an exception when the variable is missing',
-        'No rows — NULL = any state_code evaluates to UNKNOWN, which fails the USING filter',
-        'All rows from the first state in the table'
+        'The INSERT fails — USING also validates writes',
+        'The INSERT succeeds — USING only filters rows for reads; it does not validate new rows being written',
+        'The INSERT fails with a foreign key error because lga_id belongs to Lagos',
+        'PostgreSQL raises a row-level security violation automatically'
+      ],
+      correct: 1,
+      explanation: 'USING guards which existing rows a role can read or target for UPDATE/DELETE. It does not validate the values being written in an INSERT or the new values in an UPDATE. The WITH CHECK clause is required to block out-of-state inserts. Without it, a caseworker can silently insert rows into any state they cannot see.'
+    },
+    {
+      q: 'What is the minimum set of grants for nsr_caseworker to run <code>SELECT * FROM nsr.households</code> successfully?',
+      opts: [
+        'GRANT SELECT ON nsr.households TO nsr_caseworker',
+        'GRANT ALL ON SCHEMA nsr TO nsr_caseworker',
+        'GRANT USAGE ON SCHEMA nsr TO nsr_caseworker; GRANT SELECT ON nsr.households TO nsr_caseworker',
+        'GRANT CONNECT ON DATABASE lab_nsr TO nsr_caseworker; GRANT SELECT ON nsr.households TO nsr_caseworker'
       ],
       correct: 2,
-      explanation: 'With missing_ok = TRUE, current_setting returns NULL when the variable is not set. NULL = state_code is UNKNOWN (not TRUE), so the USING predicate fails for every row — the caseworker sees nothing. This is a security feature: deny by default when the session is misconfigured.'
+      explanation: 'Two separate grants are required: GRANT USAGE ON SCHEMA nsr lets the role resolve object names inside the schema (without it the role cannot see any table). GRANT SELECT on the specific table allows reading rows. A table-level SELECT grant alone returns "permission denied for schema nsr", which confuses beginners because the error looks like the table grant failed.'
     },
     {
-      q: 'An UPDATE on nsr.households creates a new row version. Where does the old version go, and what eventually reclaims it?',
+      q: 'A role is created with NOINHERIT and then granted membership in nsr_dba. The role connects and immediately runs a DBA query. What happens?',
       opts: [
-        'It is moved to an undo log and automatically removed after the transaction commits',
-        'It stays in the table as a dead tuple with xmax set; VACUUM reclaims it once no open transaction needs the old version',
-        'It is immediately deleted to free space',
-        'It is written to a temporary WAL segment and discarded after the checkpoint'
+        'The query succeeds — GRANT … TO role always activates those privileges immediately',
+        'The query fails — NOINHERIT means the role must explicitly run SET ROLE nsr_dba to activate the inherited privileges',
+        'The query fails with an authentication error',
+        'The query succeeds only if the role also has BYPASSRLS'
       ],
       correct: 1,
-      explanation: 'MVCC never overwrites in place. The old version remains on disk as a dead tuple — other transactions that started before the UPDATE may still need it. xmax records which transaction superseded it. VACUUM reclaims dead tuples once the transaction horizon advances past them.'
+      explanation: 'NOINHERIT prevents a role from automatically acquiring the privileges of any group role it belongs to. The role must run SET ROLE nsr_dba to switch into that identity. This is the break-glass pattern: elevated privileges are available but require an explicit, auditable escalation step — the SET ROLE statement appears in the pgAudit log.'
     },
     {
-      q: 'A query uses NOT IN against a subquery that includes a NULL value in nsr.individuals.nin. What does the NOT IN return?',
+      q: '<code>pgaudit.log = \'write\'</code> is set. A caseworker runs a SELECT then an UPDATE on nsr.households. Which statement appears in the PostgreSQL server log?',
       opts: [
-        'All rows that are not in the subquery result',
-        'No rows — NULL in the subquery propagates UNKNOWN via three-valued logic, making NOT IN false for every comparison',
-        'A SQL error — NOT IN cannot handle NULLs',
-        'The same result as NOT EXISTS'
+        'Both the SELECT and the UPDATE',
+        'Only the SELECT',
+        'Only the UPDATE',
+        'Neither — pgaudit.log = \'write\' only applies to DDL statements'
+      ],
+      correct: 2,
+      explanation: 'pgaudit.log = \'write\' captures write DML: INSERT, UPDATE, DELETE, TRUNCATE. It does not log SELECT. To also capture reads, use pgaudit.log = \'read, write\'. pgAudit logs statement-level events to the server log; it does not capture the before/after row values — that requires the trigger-based audit_log table.'
+    },
+    {
+      q: 'Inside a SECURITY DEFINER trigger function, <code>current_user</code> returns the function owner. How do you capture the role that actually fired the trigger?',
+      opts: [
+        'Use TG_OP — it contains the calling role name',
+        'Use session_user — it always returns the original authenticated role regardless of SET ROLE or SECURITY DEFINER context',
+        'Use current_role — it returns the active role after SECURITY DEFINER escalation',
+        'Use pg_backend_pid() to look up the role in pg_stat_activity'
       ],
       correct: 1,
-      explanation: 'In SQL three-valued logic, anything compared to NULL returns UNKNOWN. NOT IN checks each candidate row against every value in the subquery including NULLs: if any comparison is UNKNOWN, the entire NOT IN evaluates to UNKNOWN (treated as false). The result is an empty set. Use NOT EXISTS or filter NULLs from the subquery: WHERE nin IS NOT NULL.'
+      explanation: 'In a SECURITY DEFINER function, current_user returns the function\'s owner (e.g. postgres), not the caseworker who triggered it. session_user always returns the originally authenticated role — it is unaffected by SET ROLE or SECURITY DEFINER. For an audit log, always store session_user as the actor, not current_user.'
+    },
+    {
+      q: 'A pg_basebackup was taken at 09:00 with WAL archiving enabled. A caseworker accidentally deletes 3,000 payment rows at 14:30 and commits. What is the correct recovery approach?',
+      opts: [
+        'Restore the pg_basebackup and replay archived WAL up to 14:29 using recovery_target_time',
+        'Run pg_dump immediately to capture the remaining data before the server shuts down',
+        'Use pg_restore -F d on the base backup only — WAL is not needed for row-level errors',
+        'TRUNCATE nsr.payments and restore just that table from a pg_dump taken yesterday'
+      ],
+      correct: 0,
+      explanation: 'PITR: restore the base backup files, set recovery_target_time = \'2026-06-25 14:29:00\' in postgresql.conf, touch standby.signal, then start PostgreSQL. It replays all archived WAL up to 14:29 — the delete at 14:30 never happened and all legitimate work that day is preserved. pg_dump alone cannot do this: it only restores to the snapshot moment, losing the entire day\'s transactions.'
+    },
+    {
+      q: 'You run <code>pg_dump -U postgres -d lab_nsr -n nsr -F c -f /tmp/nsr.dump</code> then restore to a fresh database. After the restore, you query pg_policies on the restored database and find no rows. Why?',
+      opts: [
+        'RLS policies are stored in pg_hba.conf and must be copied separately',
+        'pg_dump with -n (schema only flag) excludes security objects by default',
+        'RLS policies are part of the schema DDL and should be present — check that the restore user had superuser rights and that pg_restore reported no errors',
+        'Custom format (-F c) does not support RLS policy export'
+      ],
+      correct: 2,
+      explanation: 'pg_dump does include RLS policies as part of the schema DDL (they appear as CREATE POLICY statements). If they are missing after restore the most likely causes are: (1) pg_restore encountered an error and skipped DDL objects — always run pg_restore -v and check for errors; (2) the restore user lacked superuser rights and some statements were skipped; (3) the dump used --no-acl which strips some security objects. Always run the four-point integrity check: row counts, sequences, RLS status, and grants.'
     }
   ],
   'd6': [
