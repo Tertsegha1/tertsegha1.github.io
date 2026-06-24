@@ -6775,12 +6775,19 @@ function drawCertificate(canvas, participantName, id, dateStr) {
   const col1 = 160, col2 = W / 2, col3 = W - 160;
 
   function drawFooterCol(x, label, value, value2) {
+    const colMaxW = 300; // max px before shrinking
     ctx.fillStyle = '#B8952A';
     ctx.font = 'bold 13px Arial, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(label.toUpperCase(), x, colY - 28);
     ctx.fillStyle = '#0C2340';
-    ctx.font = 'bold 19px Georgia, serif';
+    // Auto-shrink font if value is too wide for the column
+    let fs = 19;
+    ctx.font = 'bold ' + fs + 'px Georgia, serif';
+    while (ctx.measureText(value).width > colMaxW && fs > 12) {
+      fs--;
+      ctx.font = 'bold ' + fs + 'px Georgia, serif';
+    }
     ctx.fillText(value, x, colY + 4);
     if (value2) {
       ctx.fillStyle = '#718096';
