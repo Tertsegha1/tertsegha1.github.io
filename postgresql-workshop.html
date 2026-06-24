@@ -2209,20 +2209,25 @@ psql -U postgres
       </table>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">sql – the simplest window: total count alongside each row</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-        <pre><span class="cmt">-- Without window: one summary row per state</span>
-<span class="kw">SELECT</span> state_code, <span class="fn">COUNT</span>(*) <span class="kw">AS</span> total
-<span class="kw">FROM</span>  nsr.households
-<span class="kw">GROUP BY</span> state_code;
+        <pre><span class="cmt">-- state_code lives in nsr.lgas, not nsr.households — always JOIN to get it</span>
+
+<span class="cmt">-- Without window: one summary row per state</span>
+<span class="kw">SELECT</span> l.state_code, <span class="fn">COUNT</span>(*) <span class="kw">AS</span> total
+<span class="kw">FROM</span>  nsr.households h
+<span class="kw">JOIN</span>  nsr.lgas l <span class="kw">ON</span> l.lga_id = h.lga_id
+<span class="kw">GROUP BY</span> l.state_code
+<span class="kw">ORDER BY</span> l.state_code;
 
 <span class="cmt">-- With window: each household row PLUS its state's total</span>
 <span class="kw">SELECT</span>
-  household_code,
-  state_code,
-  pmt_score,
-  <span class="fn">COUNT</span>(*) <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> state_code) <span class="kw">AS</span> state_total,
-  <span class="fn">RANK</span>()   <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> state_code <span class="kw">ORDER BY</span> pmt_score) <span class="kw">AS</span> poverty_rank
-<span class="kw">FROM</span>  nsr.households
-<span class="kw">ORDER BY</span> state_code, poverty_rank;</pre>
+  h.household_code,
+  l.state_code,
+  h.pmt_score,
+  <span class="fn">COUNT</span>(*) <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> l.state_code) <span class="kw">AS</span> state_total,
+  <span class="fn">RANK</span>()   <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> l.state_code <span class="kw">ORDER BY</span> h.pmt_score) <span class="kw">AS</span> poverty_rank
+<span class="kw">FROM</span>  nsr.households h
+<span class="kw">JOIN</span>  nsr.lgas l <span class="kw">ON</span> l.lga_id = h.lga_id
+<span class="kw">ORDER BY</span> l.state_code, poverty_rank;</pre>
       </div>
       <div class="callout info" style="margin-top:8px">
         <div class="callout-title">Anatomy of a window function call</div>
