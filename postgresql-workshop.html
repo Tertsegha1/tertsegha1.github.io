@@ -6772,22 +6772,15 @@ function drawCertificate(canvas, participantName, id, dateStr) {
 
   // ── Bottom three columns: Issued / Cert ID / Instructor ──────────────
   const colY = 680;
-  const col1 = 160, col2 = W / 2, col3 = W - 160;
+  const col1 = 180, col2 = W / 2, col3 = W - 220;
 
   function drawFooterCol(x, label, value, value2) {
-    const colMaxW = 300; // max px before shrinking
     ctx.fillStyle = '#B8952A';
     ctx.font = 'bold 13px Arial, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(label.toUpperCase(), x, colY - 28);
     ctx.fillStyle = '#0C2340';
-    // Auto-shrink font if value is too wide for the column
-    let fs = 19;
-    ctx.font = 'bold ' + fs + 'px Georgia, serif';
-    while (ctx.measureText(value).width > colMaxW && fs > 12) {
-      fs--;
-      ctx.font = 'bold ' + fs + 'px Georgia, serif';
-    }
+    ctx.font = 'bold 19px Georgia, serif';
     ctx.fillText(value, x, colY + 4);
     if (value2) {
       ctx.fillStyle = '#718096';
@@ -6796,9 +6789,24 @@ function drawCertificate(canvas, participantName, id, dateStr) {
     }
   }
 
+  // Instructor name: two lines so it never overflows
+  function drawInstructorCol(x, label, line1, line2, creds) {
+    ctx.fillStyle = '#B8952A';
+    ctx.font = 'bold 13px Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(label.toUpperCase(), x, colY - 28);
+    ctx.fillStyle = '#0C2340';
+    ctx.font = 'bold 17px Georgia, serif';
+    ctx.fillText(line1, x, colY - 4);
+    ctx.fillText(line2, x, colY + 18);
+    ctx.fillStyle = '#718096';
+    ctx.font = '14px Georgia, serif';
+    ctx.fillText(creds, x, colY + 38);
+  }
+
   drawFooterCol(col1, 'Date Issued', dateStr);
   drawFooterCol(col2, 'Certificate ID', id);
-  drawFooterCol(col3, 'Lead Instructor', 'Dr Tertsegha Joseph Anande', 'PhD, MSc, MBCS, FHEA');
+  drawInstructorCol(col3, 'Lead Instructor', 'Dr Tertsegha Joseph', 'Anande', 'PhD, MSc, MBCS, FHEA');
 
   // Column separator rules
   ctx.strokeStyle = '#CBD5E0';
