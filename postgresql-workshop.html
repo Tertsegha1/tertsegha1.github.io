@@ -3273,8 +3273,9 @@ $$;
 <span class="kw">FOR EACH ROW EXECUTE FUNCTION</span> nsr.fn_audit_log();
 
 <span class="cmt">-- Step 3: Test it — insert a household, then check the audit log</span>
-<span class="kw">INSERT INTO</span> nsr.households (household_code, lga_id, pmt_score, is_active)
-<span class="kw">VALUES</span> (<span class="str">'HH-TEST-999'</span>, <span class="num">1</span>, <span class="num">30.0</span>, <span class="kw">TRUE</span>);
+<span class="cmt">-- head_name is NOT NULL — always include it (check lga_id with: SELECT lga_id, lga_name FROM nsr.lgas LIMIT 5)</span>
+<span class="kw">INSERT INTO</span> nsr.households (household_code, lga_id, head_name, pmt_score, is_active)
+<span class="kw">VALUES</span> (<span class="str">'HH-TEST-999'</span>, <span class="num">2</span>, <span class="str">'Test Household'</span>, <span class="num">30.0</span>, <span class="kw">TRUE</span>);
 
 <span class="kw">SELECT</span> log_time, role_name, action, row_data
 <span class="kw">FROM</span>  nsr.audit_log
@@ -4018,9 +4019,11 @@ done</pre>
 
 <span class="kw">SET ROLE</span> nsr_caseworker;
 <span class="kw">SET</span> app.state_code = <span class="str">'KN'</span>;
-<span class="cmt">-- Insert a row with Lagos lga_id while pretending to be a Kano worker</span>
-<span class="kw">INSERT INTO</span> nsr.households (household_code, lga_id, pmt_score, is_active)
-  <span class="kw">VALUES</span> (<span class="str">'HH-LEAK-001'</span>, <span class="num">2</span>, <span class="num">20.0</span>, <span class="kw">TRUE</span>);  <span class="cmt">-- lga_id 2 = Lagos</span>
+<span class="cmt">-- Use a Lagos lga_id from your nsr.lgas table (run: SELECT lga_id FROM nsr.lgas WHERE state_code = 'LA' LIMIT 1)</span>
+<span class="cmt">-- Goal: a Kano caseworker tries to insert a row belonging to a different state's LGA</span>
+<span class="kw">INSERT INTO</span> nsr.households (household_code, lga_id, head_name, pmt_score, is_active)
+  <span class="kw">SELECT</span> <span class="str">'HH-LEAK-001'</span>, lga_id, <span class="str">'Leak Test'</span>, <span class="num">20.0</span>, <span class="kw">TRUE</span>
+  <span class="kw">FROM</span>  nsr.lgas <span class="kw">WHERE</span> state_code = <span class="str">'LA'</span> <span class="kw">LIMIT</span> <span class="num">1</span>;
 <span class="cmt">-- BUG: INSERT succeeds! USING only guards reads, not writes</span>
 <span class="kw">RESET ROLE</span>;
 
@@ -4035,8 +4038,9 @@ done</pre>
 
 <span class="kw">SET ROLE</span> nsr_caseworker;
 <span class="kw">SET</span> app.state_code = <span class="str">'KN'</span>;
-<span class="kw">INSERT INTO</span> nsr.households (household_code, lga_id, pmt_score, is_active)
-  <span class="kw">VALUES</span> (<span class="str">'HH-LEAK-002'</span>, <span class="num">2</span>, <span class="num">20.0</span>, <span class="kw">TRUE</span>);
+<span class="kw">INSERT INTO</span> nsr.households (household_code, lga_id, head_name, pmt_score, is_active)
+  <span class="kw">SELECT</span> <span class="str">'HH-LEAK-002'</span>, lga_id, <span class="str">'Leak Test 2'</span>, <span class="num">20.0</span>, <span class="kw">TRUE</span>
+  <span class="kw">FROM</span>  nsr.lgas <span class="kw">WHERE</span> state_code = <span class="str">'LA'</span> <span class="kw">LIMIT</span> <span class="num">1</span>;
 <span class="cmt">-- FIXED: ERROR: new row violates row-level security policy</span>
 <span class="kw">RESET ROLE</span>;
 
