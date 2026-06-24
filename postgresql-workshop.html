@@ -2385,7 +2385,7 @@ psql -U postgres
   r.head_name,
   r.state_name,
   r.pmt_score,
-  <span class="fn">ROUND</span>(r.pct_rank * <span class="num">100</span>, <span class="num">1</span>) <span class="kw">AS</span> percentile,
+  <span class="fn">ROUND</span>((r.pct_rank * <span class="num">100</span>)::<span class="typ">NUMERIC</span>, <span class="num">1</span>) <span class="kw">AS</span> percentile,
   <span class="kw">CASE WHEN</span> p.household_id <span class="kw">IS NULL</span> <span class="kw">THEN</span> <span class="str">'NEVER PAID'</span>
        <span class="kw">ELSE</span> <span class="str">'paid'</span>
   <span class="kw">END</span>                         <span class="kw">AS</span> payment_status
