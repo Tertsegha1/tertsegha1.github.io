@@ -2822,76 +2822,210 @@ paid_households <span class="kw">AS</span> (
 
       <h3>Guided Practical — Role Permission Testing</h3>
       <div class="callout info"><div class="callout-title">Run all steps in a single psql session — no new terminal needed</div>
-        <code>SET ROLE</code> switches your active identity within the current session — it is equivalent to connecting as that role. <code>RESET ROLE</code> returns you to the session owner (postgres). This means you can test every role from one window without opening multiple terminals. Before each step, write down what you expect to happen, then run it and compare.
+        <code>SET ROLE</code> switches your active identity within the current session. <code>RESET ROLE</code> returns you to the session owner (postgres). Work through the five phases in order: <strong>preflight → RLS setup → seed data → caseworker tests → supervisor tests</strong>. Each phase must complete before the next will give correct results.
       </div>
-      <div class="callout warning" style="margin-bottom:12px">
-        <div class="callout-title">Run the RBAC setup block first (from the Intermediate section above)</div>
-        The roles <code>nsr_caseworker</code>, <code>nsr_supervisor</code>, and <code>nsr_dba</code> must exist, grants must be issued, and RLS must be enabled with the caseworker policy before this practical will give the expected results. If you have not done that yet, scroll up and run those blocks first.
+
+      <h4 style="margin:16px 0 6px">Phase 1 — Preflight: confirm the database is ready</h4>
+      <p style="font-size:0.88rem;margin-bottom:8px">Run these checks <em>before</em> any role tests. They tell you exactly what is missing so you know which setup block to run first.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – preflight checks</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- 1a. Confirm roles exist</span>
+<span class="kw">SELECT</span> rolname, rolcanlogin, rolbypassrls, rolinherit, rolconnlimit
+<span class="kw">FROM</span>  pg_roles
+<span class="kw">WHERE</span> rolname <span class="kw">LIKE</span> <span class="str">'nsr%'</span>
+<span class="kw">ORDER BY</span> rolname;
+<span class="cmt">-- Expected: nsr_caseworker (login, no bypass), nsr_supervisor (login, bypass), nsr_dba (login, bypass)</span>
+<span class="cmt">-- If missing: run the CREATE ROLE block in the Intermediate section above</span>
+
+<span class="cmt">-- 1b. Confirm grants are in place</span>
+<span class="kw">SELECT</span> grantee, table_name, privilege_type
+<span class="kw">FROM</span>  information_schema.role_table_grants
+<span class="kw">WHERE</span> table_schema = <span class="str">'nsr'</span>
+  <span class="kw">AND</span> grantee <span class="kw">LIKE</span> <span class="str">'nsr%'</span>
+<span class="kw">ORDER BY</span> grantee, table_name;
+<span class="cmt">-- Expected: caseworker → SELECT on households/individuals/lgas/states (NOT payments)</span>
+<span class="cmt">-- If missing: run the GRANT block in the Intermediate section above</span>
+
+<span class="cmt">-- 1c. Confirm RLS status and policies</span>
+<span class="kw">SELECT</span> relname, relrowsecurity, relforcerowsecurity
+<span class="kw">FROM</span>  pg_class
+<span class="kw">WHERE</span> relname = <span class="str">'households'</span>
+  <span class="kw">AND</span> relnamespace = (<span class="kw">SELECT</span> oid <span class="kw">FROM</span> pg_namespace <span class="kw">WHERE</span> nspname = <span class="str">'nsr'</span>);
+<span class="cmt">-- Expected: relrowsecurity = t  (true = RLS enabled)</span>
+<span class="cmt">-- If f: run Phase 2 below before continuing</span>
+
+<span class="kw">SELECT</span> policyname, cmd, roles, qual
+<span class="kw">FROM</span>  pg_policies
+<span class="kw">WHERE</span> schemaname = <span class="str">'nsr'</span> <span class="kw">AND</span> tablename = <span class="str">'households'</span>;
+<span class="cmt">-- Expected: at least one policy for nsr_caseworker</span>
+<span class="cmt">-- If 0 rows: run Phase 2 below</span>
+
+<span class="cmt">-- 1d. Confirm test data exists with matching state codes</span>
+<span class="kw">SELECT</span> state_code, <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> nsr.lgas <span class="kw">GROUP BY</span> state_code <span class="kw">ORDER BY</span> state_code;
+<span class="cmt">-- Expected: BE, KN, LA each with ≥1 LGA</span>
+
+<span class="kw">SELECT</span> l.state_code, <span class="fn">COUNT</span>(h.household_id) <span class="kw">AS</span> households
+<span class="kw">FROM</span>  nsr.lgas l
+<span class="kw">LEFT JOIN</span> nsr.households h <span class="kw">ON</span> h.lga_id = l.lga_id
+<span class="kw">GROUP BY</span> l.state_code <span class="kw">ORDER BY</span> l.state_code;
+<span class="cmt">-- Expected: KN ≥ 1 household. If KN = 0: run Phase 3 below to seed Kano data</span></pre>
+      </div>
+
+      <h4 style="margin:16px 0 6px">Phase 2 — Enable RLS and create the caseworker policy</h4>
+      <div class="callout warning" style="margin-bottom:8px">
+        <div class="callout-title">Skip this phase if preflight 1c shows relrowsecurity = t and a policy already exists</div>
+        Running it again on a configured database is harmless (DROP POLICY IF EXISTS is safe to re-run).
       </div>
       <div class="code-block">
-        <div class="code-header"><span class="code-lang">sql – step-by-step role testing (single session)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-        <pre><span class="cmt">-- ── CASEWORKER TESTS ────────────────────────────────────────────────────────</span>
+        <div class="code-header"><span class="code-lang">sql – enable RLS and create state policy</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Enable RLS — without this, SET ROLE + state_code does nothing</span>
+<span class="kw">ALTER TABLE</span> nsr.households <span class="kw">ENABLE ROW LEVEL SECURITY</span>;
 
-<span class="cmt">-- STEP 1: Become the caseworker (no new terminal needed)</span>
+<span class="cmt">-- Create the state-scoped policy for caseworker</span>
+<span class="cmt">-- USING  = which rows the caseworker can read or target for UPDATE/DELETE</span>
+<span class="cmt">-- WITH CHECK = which new row values the caseworker is allowed to write (INSERT/UPDATE)</span>
+<span class="kw">DROP POLICY IF EXISTS</span> cw_state_policy <span class="kw">ON</span> nsr.households;
+<span class="kw">CREATE POLICY</span> cw_state_policy
+<span class="kw">ON</span> nsr.households
+<span class="kw">FOR ALL</span>
+<span class="kw">TO</span> nsr_caseworker
+<span class="kw">USING</span> (
+  lga_id <span class="kw">IN</span> (
+    <span class="kw">SELECT</span> lga_id <span class="kw">FROM</span> nsr.lgas
+    <span class="kw">WHERE</span>  state_code = <span class="fn">current_setting</span>(<span class="str">'app.state_code'</span>, <span class="kw">TRUE</span>)
+  )
+)
+<span class="kw">WITH CHECK</span> (
+  lga_id <span class="kw">IN</span> (
+    <span class="kw">SELECT</span> lga_id <span class="kw">FROM</span> nsr.lgas
+    <span class="kw">WHERE</span>  state_code = <span class="fn">current_setting</span>(<span class="str">'app.state_code'</span>, <span class="kw">TRUE</span>)
+  )
+);
+
+<span class="cmt">-- Verify</span>
+<span class="kw">SELECT</span> policyname, cmd, permissive, roles, qual <span class="kw">AS</span> using_expr
+<span class="kw">FROM</span>  pg_policies
+<span class="kw">WHERE</span> schemaname = <span class="str">'nsr'</span> <span class="kw">AND</span> tablename = <span class="str">'households'</span>;
+<span class="cmt">-- Expected: cw_state_policy | ALL | YES | {nsr_caseworker} | (lga_id IN (SELECT …))</span></pre>
+      </div>
+
+      <h4 style="margin:16px 0 6px">Phase 3 — Seed Kano test households</h4>
+      <div class="callout warning" style="margin-bottom:8px">
+        <div class="callout-title">Skip this phase if preflight 1d shows KN ≥ 1 household</div>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – seed Kano households</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- First confirm which lga_ids belong to Kano</span>
+<span class="kw">SELECT</span> lga_id, lga_name <span class="kw">FROM</span> nsr.lgas <span class="kw">WHERE</span> state_code = <span class="str">'KN'</span>;
+<span class="cmt">-- Example output (your IDs may differ):</span>
+<span class="cmt">--  lga_id | lga_name</span>
+<span class="cmt">-- --------+----------------</span>
+<span class="cmt">--       2 | Kano Municipal</span>
+<span class="cmt">--       5 | Kano Municipal</span>
+
+<span class="cmt">-- Insert four Kano households — use the lga_ids returned above</span>
+<span class="cmt">-- head_name is NOT NULL and must always be included</span>
+<span class="kw">INSERT INTO</span> nsr.households (household_code, lga_id, head_name, pmt_score, enumeration_round, is_active)
+<span class="kw">VALUES</span>
+  (<span class="str">'HH-KN-001'</span>, <span class="num">2</span>, <span class="str">'Musa Usman'</span>,      <span class="num">31.50</span>, <span class="num">1</span>, <span class="kw">TRUE</span>),
+  (<span class="str">'HH-KN-002'</span>, <span class="num">2</span>, <span class="str">'Fatima Abdullahi'</span>, <span class="num">18.75</span>, <span class="num">1</span>, <span class="kw">TRUE</span>),
+  (<span class="str">'HH-KN-003'</span>, <span class="num">5</span>, <span class="str">'Lawal Ibrahim'</span>,   <span class="num">45.00</span>, <span class="num">1</span>, <span class="kw">TRUE</span>),
+  (<span class="str">'HH-KN-004'</span>, <span class="num">5</span>, <span class="str">'Aisha Garba'</span>,     <span class="num">22.00</span>, <span class="num">1</span>, <span class="kw">FALSE</span>);
+<span class="cmt">-- Note: HH-KN-004 is is_active = FALSE — useful for the restrictive policy test in H1.6</span>
+
+<span class="cmt">-- Confirm the insert and LGA mapping</span>
+<span class="kw">SELECT</span> h.household_id, h.household_code, h.head_name, h.pmt_score, l.state_code, l.lga_name
+<span class="kw">FROM</span>  nsr.households h
+<span class="kw">JOIN</span>  nsr.lgas l <span class="kw">ON</span> l.lga_id = h.lga_id
+<span class="kw">WHERE</span> l.state_code = <span class="str">'KN'</span>
+<span class="kw">ORDER BY</span> h.household_id;
+<span class="cmt">-- Expected: 4 rows, all state_code = KN</span></pre>
+      </div>
+
+      <h4 style="margin:16px 0 6px">Phase 4 — Caseworker role tests</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – caseworker tests (steps 1–7)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- STEP 1: Switch to caseworker — no new terminal needed</span>
 <span class="kw">SET ROLE</span> nsr_caseworker;
 <span class="kw">SELECT current_user</span>, <span class="fn">current_setting</span>(<span class="str">'role'</span>);
-<span class="cmt">-- Confirm: current_user = nsr_caseworker</span>
+<span class="cmt">-- Expected:</span>
+<span class="cmt">--  current_user  | current_setting</span>
+<span class="cmt">-- ---------------+-----------------</span>
+<span class="cmt">--  nsr_caseworker | nsr_caseworker</span>
 
-<span class="cmt">-- STEP 2: Set the state context variable for this session</span>
+<span class="cmt">-- STEP 2: Set state context</span>
 <span class="kw">SET</span> app.state_code = <span class="str">'KN'</span>;
+<span class="cmt">-- Expected: SET</span>
 
-<span class="cmt">-- STEP 3: Read households — should return Kano rows only (RLS in effect)</span>
-<span class="kw">SELECT</span> household_id, household_code, pmt_score <span class="kw">FROM</span> nsr.households <span class="kw">LIMIT</span> <span class="num">5</span>;
-<span class="cmt">-- Expected: rows whose LGA is in Kano state</span>
-<span class="cmt">-- If you see rows from other states: RLS policy is not yet created — scroll up and create it</span>
-<span class="cmt">-- If you see 0 rows: RLS is enabled but no matching data — check nsr.lgas for state_code = 'KN'</span>
+<span class="cmt">-- STEP 3: Read households — RLS should return only Kano rows</span>
+<span class="kw">SELECT</span> household_id, household_code, head_name, pmt_score
+<span class="kw">FROM</span>  nsr.households;
+<span class="cmt">-- Expected: only rows whose lga_id belongs to Kano state</span>
+<span class="cmt">-- Example output:</span>
+<span class="cmt">--  household_id | household_code |     head_name     | pmt_score</span>
+<span class="cmt">-- --------------+----------------+-------------------+-----------</span>
+<span class="cmt">--            15 | HH-KN-001      | Musa Usman        |    31.500</span>
+<span class="cmt">--            16 | HH-KN-002      | Fatima Abdullahi  |    18.750</span>
+<span class="cmt">--            17 | HH-KN-003      | Lawal Ibrahim     |    45.000</span>
+<span class="cmt">--            18 | HH-KN-004      | Aisha Garba       |    22.000</span>
 
 <span class="cmt">-- STEP 4: Try to read payments directly — should FAIL</span>
 <span class="kw">SELECT</span> * <span class="kw">FROM</span> nsr.payments <span class="kw">LIMIT</span> <span class="num">5</span>;
-<span class="cmt">-- Expected: ERROR: permission denied for table payments</span>
-<span class="cmt">-- If it succeeds: nsr_caseworker has been granted SELECT on payments — review your grants</span>
+<span class="cmt">-- Expected: ERROR:  permission denied for table payments</span>
 
 <span class="cmt">-- STEP 5: Try to UPDATE a household — should FAIL</span>
-<span class="kw">UPDATE</span> nsr.households <span class="kw">SET</span> pmt_score = <span class="num">999</span> <span class="kw">WHERE</span> household_id = <span class="num">1</span>;
-<span class="cmt">-- Expected: ERROR: permission denied for table households</span>
+<span class="kw">UPDATE</span> nsr.households <span class="kw">SET</span> pmt_score = <span class="num">999</span> <span class="kw">WHERE</span> household_id = <span class="num">15</span>;
+<span class="cmt">-- Expected: ERROR:  permission denied for table households</span>
 
-<span class="cmt">-- STEP 6: Switch state_code to LA — RLS should return 0 rows (different state)</span>
+<span class="cmt">-- STEP 6: Switch state to LA — RLS should return 0 rows</span>
 <span class="kw">SET</span> app.state_code = <span class="str">'LA'</span>;
 <span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.households;
-<span class="cmt">-- Expected: 0  (Kano caseworker cannot see Lagos data)</span>
-<span class="cmt">-- If you see rows: RLS is not enabled on nsr.households — run ALTER TABLE … ENABLE ROW LEVEL SECURITY</span>
+<span class="cmt">-- Expected:</span>
+<span class="cmt">--  count</span>
+<span class="cmt">-- -------</span>
+<span class="cmt">--      1   ← or however many Lagos households are in your test data</span>
+<span class="cmt">-- The Kano caseworker has no business in Lagos — RLS enforces this</span>
 
-<span class="cmt">-- STEP 7: Reset and return to superuser before the next test</span>
+<span class="cmt">-- STEP 7: Return to superuser before supervisor tests</span>
 <span class="kw">RESET</span> app.state_code;
 <span class="kw">RESET ROLE</span>;
 <span class="kw">SELECT current_user</span>;
-<span class="cmt">-- Confirm: back to postgres (or your superuser)</span>
+<span class="cmt">-- Expected: postgres (your superuser)</span></pre>
+      </div>
 
-<span class="cmt">-- ── SUPERVISOR TESTS ─────────────────────────────────────────────────────────</span>
-
-<span class="cmt">-- STEP 8: Become the supervisor — BYPASSRLS, sees all rows</span>
+      <h4 style="margin:16px 0 6px">Phase 5 — Supervisor role tests</h4>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – supervisor tests (steps 8–10)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- STEP 8: Switch to supervisor — BYPASSRLS means no state filter</span>
 <span class="kw">SET ROLE</span> nsr_supervisor;
 <span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.households;
-<span class="cmt">-- Expected: total row count — BYPASSRLS means no state filter applies</span>
+<span class="cmt">-- Expected: total row count across ALL states (no SET app.state_code needed)</span>
+<span class="cmt">-- The supervisor's BYPASSRLS attribute skips every RLS policy on every table</span>
 
-<span class="cmt">-- STEP 9: Supervisor can UPDATE payments</span>
+<span class="cmt">-- STEP 9: Supervisor can UPDATE payments — caseworker could not</span>
 <span class="kw">UPDATE</span> nsr.payments <span class="kw">SET</span> status = <span class="str">'processed'</span> <span class="kw">WHERE</span> payment_id = <span class="num">1</span>;
-<span class="cmt">-- Expected: UPDATE 1  (supervisor has UPDATE on payments)</span>
+<span class="cmt">-- Expected: UPDATE 1</span>
+<span class="cmt">-- If 0 rows updated: payment_id 1 may not exist — run SELECT * FROM nsr.payments LIMIT 5 first</span>
 
 <span class="cmt">-- STEP 10: Try to delete an audit record — should FAIL even for supervisor</span>
 <span class="kw">DELETE FROM</span> nsr.audit_log <span class="kw">WHERE</span> log_id = <span class="num">1</span>;
-<span class="cmt">-- Expected: ERROR: permission denied — REVOKE DELETE protects the audit trail</span>
+<span class="cmt">-- Expected: ERROR:  permission denied for table audit_log</span>
+<span class="cmt">-- The audit trail is append-only: REVOKE DELETE was issued on audit_log for all roles</span>
+<span class="cmt">-- including nsr_dba — only the postgres superuser can delete from it</span>
 
 <span class="kw">RESET ROLE</span>;</pre>
       </div>
+
       <div class="callout tip"><div class="callout-title">Troubleshooting — what to check if a step gives an unexpected result</div>
         <table style="margin:0">
-          <tr><th>Unexpected result</th><th>Most likely cause</th><th>Fix</th></tr>
-          <tr><td>Step 3 returns rows from all states</td><td>RLS policy not yet created</td><td>Run the CREATE POLICY block in the RLS tab</td></tr>
-          <tr><td>Step 3 returns 0 rows</td><td>No households with Kano LGAs in test data, OR RLS enabled with no policy yet</td><td>Run <code>SELECT state_code, COUNT(*) FROM nsr.lgas GROUP BY 1</code> to check what states have data</td></tr>
-          <tr><td>Step 4 succeeds (no error)</td><td>SELECT granted to caseworker on payments</td><td>Run <code>REVOKE SELECT ON nsr.payments FROM nsr_caseworker</code></td></tr>
-          <tr><td>Step 6 returns rows</td><td>RLS not enabled on the table</td><td>Run <code>ALTER TABLE nsr.households ENABLE ROW LEVEL SECURITY</code></td></tr>
-          <tr><td>Step 10 succeeds (delete works)</td><td>REVOKE DELETE not yet run</td><td>Run <code>REVOKE DELETE ON nsr.audit_log FROM PUBLIC; REVOKE DELETE ON nsr.audit_log FROM nsr_dba</code></td></tr>
+          <tr><th>Step</th><th>Unexpected result</th><th>Cause</th><th>Fix</th></tr>
+          <tr><td>3</td><td>Rows from all states visible</td><td>RLS not enabled or no policy</td><td>Run Phase 2 above</td></tr>
+          <tr><td>3</td><td>0 rows returned</td><td>No Kano households in database</td><td>Run Phase 3 above to seed test data</td></tr>
+          <tr><td>4</td><td>SELECT on payments succeeds</td><td>SELECT granted to caseworker on payments</td><td><code>REVOKE SELECT ON nsr.payments FROM nsr_caseworker</code></td></tr>
+          <tr><td>5</td><td>UPDATE succeeds</td><td>UPDATE granted to caseworker on households</td><td><code>REVOKE UPDATE ON nsr.households FROM nsr_caseworker</code></td></tr>
+          <tr><td>6</td><td>Lagos rows visible to KN caseworker</td><td>RLS not enabled</td><td><code>ALTER TABLE nsr.households ENABLE ROW LEVEL SECURITY</code></td></tr>
+          <tr><td>9</td><td>UPDATE 0 rows</td><td>payment_id 1 not in table</td><td>Run <code>SELECT payment_id FROM nsr.payments LIMIT 5</code> and use a real ID</td></tr>
+          <tr><td>10</td><td>DELETE succeeds</td><td>REVOKE DELETE not yet run</td><td><code>REVOKE DELETE ON nsr.audit_log FROM PUBLIC</code></td></tr>
         </table>
       </div>
 
