@@ -2249,9 +2249,9 @@ psql -U postgres
     <span class="kw">ORDER BY</span> h.pmt_score <span class="kw">ASC</span>
   ) <span class="kw">AS</span> poverty_rank,
   <span class="fn">ROUND</span>(
-    <span class="num">100.0</span> * <span class="fn">PERCENT_RANK</span>() <span class="kw">OVER</span> (
+    (<span class="num">100.0</span> * <span class="fn">PERCENT_RANK</span>() <span class="kw">OVER</span> (
       <span class="kw">PARTITION BY</span> l.state_code <span class="kw">ORDER BY</span> h.pmt_score
-    ), <span class="num">1</span>
+    ))::<span class="typ">NUMERIC</span>, <span class="num">1</span>
   ) <span class="kw">AS</span> percentile
 <span class="kw">FROM</span> nsr.households h
 <span class="kw">JOIN</span>  nsr.lgas   l <span class="kw">ON</span> h.lga_id     = l.lga_id
