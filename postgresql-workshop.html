@@ -2885,13 +2885,20 @@ paid_households <span class="kw">AS</span> (
 
 <span class="cmt">-- 1d. Confirm test data exists with matching state codes</span>
 <span class="kw">SELECT</span> state_code, <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> nsr.lgas <span class="kw">GROUP BY</span> state_code <span class="kw">ORDER BY</span> state_code;
-<span class="cmt">-- Expected: BE, KN, LA each with ≥1 LGA</span>
+<span class="cmt">-- Expected:</span>
+<span class="cmt">--  state_code | count</span>
+<span class="cmt">-- ------------+-------</span>
+<span class="cmt">--  BE         |     2</span>
+<span class="cmt">--  KN         |     2</span>
+<span class="cmt">--  LA         |     3</span>
+<span class="cmt">-- If a state is missing: check nsr.states and nsr.lgas seed data</span>
 
 <span class="kw">SELECT</span> l.state_code, <span class="fn">COUNT</span>(h.household_id) <span class="kw">AS</span> households
 <span class="kw">FROM</span>  nsr.lgas l
 <span class="kw">LEFT JOIN</span> nsr.households h <span class="kw">ON</span> h.lga_id = l.lga_id
 <span class="kw">GROUP BY</span> l.state_code <span class="kw">ORDER BY</span> l.state_code;
-<span class="cmt">-- Expected: KN ≥ 1 household. If KN = 0: run Phase 3 below to seed Kano data</span></pre>
+<span class="cmt">-- Expected: KN ≥ 1 household (HH-KN-001 through HH-KN-004 from Phase 3)</span>
+<span class="cmt">-- If KN = 0: run Phase 3 below to seed Kano test households</span></pre>
       </div>
 
       <h4 style="margin:16px 0 6px">Phase 2 — Enable RLS and create the caseworker policy</h4>
