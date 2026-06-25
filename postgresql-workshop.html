@@ -3153,7 +3153,9 @@ GRANT UPDATE ON nsr.payments TO nsr_supervisor;</code></div>
   <span class="kw">AND</span> table_name   = <span class="str">'households'</span>
 <span class="kw">ORDER BY</span> grantee, column_name;
 
-<span class="cmt">-- In practice, a masked VIEW is cleaner than column grants for NIN masking</span>
+<span class="cmt">-- In practice, a masked VIEW is cleaner than column grants for sensitive data</span>
+<span class="cmt">-- nsr.households has no NIN column (NIN lives in nsr.individuals)</span>
+<span class="cmt">-- We mask head_name here to illustrate the pattern — same technique applies to NIN on individuals</span>
 <span class="kw">CREATE OR REPLACE VIEW</span> nsr.v_households_safe <span class="kw">AS</span>
 <span class="kw">SELECT</span>
   household_id,
@@ -3161,8 +3163,11 @@ GRANT UPDATE ON nsr.payments TO nsr_supervisor;</code></div>
   lga_id,
   pmt_score,
   is_active,
-  <span class="fn">LEFT</span>(nin_hash, <span class="num">4</span>) || <span class="str">'****'</span> <span class="kw">AS</span> nin_partial   <span class="cmt">-- partial NIN for verification only</span>
+  <span class="fn">LEFT</span>(head_name, <span class="num">1</span>) || <span class="fn">REPEAT</span>(<span class="str">'*'</span>, <span class="fn">LENGTH</span>(head_name) - <span class="num">1</span>) <span class="kw">AS</span> head_name_masked
 <span class="kw">FROM</span>  nsr.households;
+
+<span class="cmt">-- For NIN masking, use the same pattern on nsr.individuals:</span>
+<span class="cmt">-- LEFT(nin, 3) || '****' || RIGHT(nin, 2) AS nin_partial</span>
 
 <span class="kw">GRANT SELECT ON</span> nsr.v_households_safe <span class="kw">TO</span> nsr_caseworker;
 <span class="kw">REVOKE SELECT ON</span> nsr.households <span class="kw">FROM</span> nsr_caseworker;  <span class="cmt">-- revoke direct table access</span></pre>
