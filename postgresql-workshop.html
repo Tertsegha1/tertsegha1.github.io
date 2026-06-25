@@ -4711,6 +4711,435 @@ done</pre>
     })();
     </script>
 
+    <!-- ═══════════════════════════════════════════════════════════
+         CWR Integrated SQL Editor — puzzle definitions + runtime
+    ════════════════════════════════════════════════════════════ -->
+    <script>
+    (function(){
+      var _curKey = null;
+
+      /* ── Puzzle definitions ─────────────────────────────────── */
+      var PUZZLES = {
+        p1: {
+          title:'Phase 1 · Foundation Schema', badge:'Verification', lang:'SQL',
+          desc:[
+            'The foundation schema is pre-built — you do not need to write it.',
+            'Run the verification query to confirm all 5 CWR tables exist in your database.',
+            'Expected tables: audit_log, beneficiaries, disbursements, welfare_programs, zones.'
+          ],
+          hints:[
+            'Connect to <code>lab_nsr</code> as postgres superuser before running',
+            'All tables were created by the Phase 1 scripts provided above'
+          ],
+          starter:'-- Verify the foundation schema\nSELECT schemaname,\n       tablename,\n       tableowner\nFROM   pg_tables\nWHERE  schemaname = \'cwr\'\nORDER  BY tablename;',
+          validate:function(sql){
+            if(!sql.trim())return{ok:false,msg:'Editor is empty — enter a query first.'};
+            if(!/cwr/i.test(sql))return{ok:false,msg:'Query must reference the cwr schema.'};
+            if(!/SELECT|FROM/i.test(sql))return{ok:false,msg:'Write a SELECT query to verify the schema.'};
+            return{ok:true};
+          },
+          output:[
+            ' schemaname |    tablename     | tableowner',
+            '------------+------------------+------------',
+            ' cwr        | audit_log        | postgres',
+            ' cwr        | beneficiaries    | postgres',
+            ' cwr        | disbursements    | postgres',
+            ' cwr        | welfare_programs | postgres',
+            ' cwr        | zones            | postgres',
+            '(5 rows)'
+          ]
+        },
+        pa: {
+          title:'Puzzle A · RBAC Security', badge:'Role-Based Access Control', lang:'SQL',
+          desc:[
+            'Create two database roles for the CWR system:',
+            '① <strong>cwr_analyst</strong> — SELECT only on all tables in the cwr schema.',
+            '② <strong>cwr_caseworker</strong> — SELECT + INSERT + UPDATE on beneficiaries and disbursements.',
+            'Both roles need USAGE on the cwr schema first.'
+          ],
+          hints:[
+            'Use <code>NOLOGIN</code> — these are group roles, not login users',
+            '<code>GRANT USAGE ON SCHEMA cwr</code> must come before object-level grants',
+            'Use <code>GRANT SELECT ON ALL TABLES IN SCHEMA cwr</code> for the analyst shorthand'
+          ],
+          starter:'-- ① Read-only analyst role\nCREATE ROLE cwr_analyst NOLOGIN;\nGRANT USAGE ON SCHEMA cwr TO cwr_analyst;\nGRANT SELECT ON ALL TABLES IN SCHEMA cwr\n  TO cwr_analyst;\n\n-- ② Caseworker role with write access\nCREATE ROLE cwr_caseworker NOLOGIN;\nGRANT USAGE ON SCHEMA cwr TO cwr_caseworker;\nGRANT SELECT, INSERT, UPDATE\n  ON cwr.beneficiaries,\n     cwr.disbursements\n  TO cwr_caseworker;',
+          validate:function(sql){
+            if(!sql.trim())return{ok:false,msg:'Editor is empty.'};
+            if(!/CREATE\s+ROLE\s+cwr_analyst/i.test(sql))
+              return{ok:false,msg:'Missing: CREATE ROLE cwr_analyst'};
+            if(!/CREATE\s+ROLE\s+cwr_caseworker/i.test(sql))
+              return{ok:false,msg:'Missing: CREATE ROLE cwr_caseworker'};
+            if(!/GRANT\s+USAGE\s+ON\s+SCHEMA\s+cwr/i.test(sql))
+              return{ok:false,msg:'Missing: GRANT USAGE ON SCHEMA cwr (needed for both roles)'};
+            if(!/GRANT\s+SELECT/i.test(sql))
+              return{ok:false,msg:'Missing: GRANT SELECT to cwr_analyst'};
+            if(!/INSERT/i.test(sql))
+              return{ok:false,msg:'cwr_caseworker needs INSERT privilege — add it to the GRANT'};
+            if(!/UPDATE/i.test(sql))
+              return{ok:false,msg:'cwr_caseworker needs UPDATE privilege — add it to the GRANT'};
+            return{ok:true};
+          },
+          output:['CREATE ROLE','GRANT','GRANT','CREATE ROLE','GRANT','GRANT']
+        },
+        pb: {
+          title:'Puzzle B · Row-Level Security', badge:'RLS Policies', lang:'SQL',
+          desc:[
+            'Enable Row-Level Security (RLS) on <code>cwr.beneficiaries</code>.',
+            'Create a policy so <code>cwr_caseworker</code> can only access beneficiaries in their assigned zone.',
+            'Read the zone from the session variable <code>app.current_zone</code> using <code>current_setting()</code>.'
+          ],
+          hints:[
+            '<code>ALTER TABLE ... ENABLE ROW LEVEL SECURITY</code> must come before CREATE POLICY',
+            'Test with: <code>SET app.current_zone = \'NE\';</code> then query as cwr_caseworker',
+            'The second arg <code>true</code> in current_setting means return NULL (not error) if variable is not set'
+          ],
+          starter:'-- Step 1: Enable RLS\nALTER TABLE cwr.beneficiaries\n  ENABLE ROW LEVEL SECURITY;\n\n-- Step 2: Zone-based access policy\nCREATE POLICY caseworker_zone_policy\n  ON cwr.beneficiaries\n  AS PERMISSIVE\n  FOR ALL\n  TO cwr_caseworker\n  USING (\n    zone_code = current_setting(\'app.current_zone\', true)\n  );\n\n-- Verify\nSELECT policyname, cmd, roles\nFROM   pg_policies\nWHERE  schemaname = \'cwr\' AND tablename = \'beneficiaries\';',
+          validate:function(sql){
+            if(!sql.trim())return{ok:false,msg:'Editor is empty.'};
+            if(!/ENABLE\s+ROW\s+LEVEL\s+SECURITY/i.test(sql))
+              return{ok:false,msg:'Missing: ALTER TABLE cwr.beneficiaries ENABLE ROW LEVEL SECURITY'};
+            if(!/CREATE\s+POLICY/i.test(sql))
+              return{ok:false,msg:'Missing: CREATE POLICY statement'};
+            if(!/TO\s+\w+/i.test(sql))
+              return{ok:false,msg:'Policy must specify which role it applies TO (e.g. TO cwr_caseworker)'};
+            if(!/USING\s*\(/i.test(sql))
+              return{ok:false,msg:'Missing: USING (...) clause to define the row filter condition'};
+            return{ok:true};
+          },
+          output:[
+            'ALTER TABLE',
+            'CREATE POLICY',
+            '',
+            '        policyname        | cmd |      roles',
+            '--------------------------+-----+------------------',
+            ' caseworker_zone_policy   | ALL | {cwr_caseworker}',
+            '(1 row)'
+          ]
+        },
+        pc: {
+          title:'Puzzle C · Audit Trigger', badge:'Change Data Capture', lang:'SQL',
+          desc:[
+            'Create an audit trigger on <code>cwr.beneficiaries</code> that logs every INSERT, UPDATE, and DELETE to <code>cwr.audit_log</code>.',
+            'Record: <code>table_name</code>, <code>action</code> (TG_OP), <code>role_name</code> (session_user), and <code>row_data</code> as JSONB.',
+            'For UPDATEs store both: <code>jsonb_build_object(\'old\', to_jsonb(OLD), \'new\', to_jsonb(NEW))</code>'
+          ],
+          hints:[
+            'Use <code>SECURITY DEFINER</code> so the function can write to audit_log regardless of the caller\'s role',
+            'Use <code>session_user</code> (not current_user) — it captures the original caller inside SECURITY DEFINER',
+            'Trigger function must RETURN OLD for DELETE, RETURN NEW for INSERT/UPDATE'
+          ],
+          starter:'-- Audit trigger function\nCREATE OR REPLACE FUNCTION cwr.fn_audit_trigger()\nRETURNS TRIGGER\nLANGUAGE plpgsql\nSECURITY DEFINER\nAS $$\nBEGIN\n  INSERT INTO cwr.audit_log(table_name, action, role_name, row_data)\n  VALUES (\n    TG_TABLE_SCHEMA || \'.\' || TG_TABLE_NAME,\n    TG_OP,\n    session_user,\n    CASE TG_OP\n      WHEN \'DELETE\' THEN to_jsonb(OLD)\n      WHEN \'INSERT\' THEN to_jsonb(NEW)\n      WHEN \'UPDATE\' THEN\n        jsonb_build_object(\'old\', to_jsonb(OLD), \'new\', to_jsonb(NEW))\n    END\n  );\n  RETURN CASE TG_OP WHEN \'DELETE\' THEN OLD ELSE NEW END;\nEND;\n$$;\n\n-- Attach to beneficiaries\nCREATE TRIGGER trg_beneficiaries_audit\n  AFTER INSERT OR UPDATE OR DELETE\n  ON cwr.beneficiaries\n  FOR EACH ROW\n  EXECUTE FUNCTION cwr.fn_audit_trigger();',
+          validate:function(sql){
+            if(!sql.trim())return{ok:false,msg:'Editor is empty.'};
+            if(!/CREATE\s+(OR\s+REPLACE\s+)?FUNCTION/i.test(sql))
+              return{ok:false,msg:'Missing: CREATE OR REPLACE FUNCTION for the trigger function'};
+            if(!/RETURNS\s+TRIGGER/i.test(sql))
+              return{ok:false,msg:'Function must declare RETURNS TRIGGER'};
+            if(!/INSERT\s+INTO\s+cwr\.audit_log/i.test(sql))
+              return{ok:false,msg:'Missing: INSERT INTO cwr.audit_log inside the function body'};
+            if(!/TG_OP/i.test(sql))
+              return{ok:false,msg:'Missing: TG_OP variable to detect INSERT / UPDATE / DELETE'};
+            if(!/session_user|current_user/i.test(sql))
+              return{ok:false,msg:'Missing: capture role name with session_user (or current_user)'};
+            if(!/CREATE\s+TRIGGER/i.test(sql))
+              return{ok:false,msg:'Missing: CREATE TRIGGER statement to attach the function'};
+            if(!/AFTER\s+INSERT\s+OR\s+(UPDATE|DELETE)|AFTER\s+(DELETE|UPDATE)\s+OR/i.test(sql))
+              return{ok:false,msg:'Trigger must fire AFTER INSERT OR UPDATE OR DELETE'};
+            return{ok:true};
+          },
+          output:['CREATE FUNCTION','CREATE TRIGGER']
+        },
+        pd: {
+          title:'Puzzle D · Performance Monitoring', badge:'System Catalog Access', lang:'SQL',
+          desc:[
+            'Grant the <code>cwr_monitor</code> role access to PostgreSQL system monitoring.',
+            'Grant SELECT on the three CWR monitoring views created in Phase 1.',
+            'Refresh <code>cwr.mv_zone_stats</code> concurrently to get up-to-date zone statistics.'
+          ],
+          hints:[
+            '<code>pg_monitor</code> is a built-in PostgreSQL role granting read access to all pg_stat_* views',
+            '<code>REFRESH MATERIALIZED VIEW CONCURRENTLY</code> requires the unique index on mv_zone_stats (already created in Phase 1)',
+            'The cwr_monitor role was created in Phase 1 — you are extending its grants here'
+          ],
+          starter:'-- Grant built-in monitoring role\nGRANT pg_monitor TO cwr_monitor;\n\n-- Grant SELECT on the three CWR monitoring views\nGRANT SELECT ON cwr.v_active_sessions TO cwr_monitor;\nGRANT SELECT ON cwr.v_lock_monitor    TO cwr_monitor;\nGRANT SELECT ON cwr.v_wal_health      TO cwr_monitor;\n\n-- Refresh materialized view with latest data\nREFRESH MATERIALIZED VIEW CONCURRENTLY cwr.mv_zone_stats;\n\n-- Verify zone statistics\nSELECT zone_code,\n       total_beneficiaries,\n       total_disbursed\nFROM   cwr.mv_zone_stats\nORDER  BY total_disbursed DESC;',
+          validate:function(sql){
+            if(!sql.trim())return{ok:false,msg:'Editor is empty.'};
+            if(!/GRANT\s+pg_monitor\s+TO\s+cwr_monitor/i.test(sql))
+              return{ok:false,msg:'Missing: GRANT pg_monitor TO cwr_monitor'};
+            if((sql.match(/GRANT\s+SELECT\s+ON\s+cwr\./gi)||[]).length < 2)
+              return{ok:false,msg:'Grant SELECT on all three monitoring views: v_active_sessions, v_lock_monitor, v_wal_health'};
+            if(!/REFRESH\s+MATERIALIZED\s+VIEW/i.test(sql))
+              return{ok:false,msg:'Missing: REFRESH MATERIALIZED VIEW CONCURRENTLY cwr.mv_zone_stats'};
+            return{ok:true};
+          },
+          output:[
+            'GRANT ROLE','GRANT','GRANT','GRANT',
+            'REFRESH MATERIALIZED VIEW','',
+            ' zone_code | total_beneficiaries | total_disbursed',
+            '-----------+---------------------+-----------------',
+            ' NE        |                   2 |        25000.00',
+            ' SW        |                   2 |        20000.00',
+            ' NW        |                   2 |        10000.00',
+            '(3 rows)'
+          ]
+        },
+        pe: {
+          title:'Puzzle E · Backup & Disaster Recovery', badge:'pg_dump / pg_restore', lang:'Shell',
+          desc:[
+            'Write the <code>pg_dump</code> command to create a custom-format backup of <strong>only the cwr schema</strong>.',
+            'Then write <code>createdb</code> and <code>pg_restore</code> to recover it to a new database.',
+            'Save to: <code>C:\\temp\\cwr_backup.dump</code> · Restore target: <code>lab_nsr_restore</code>'
+          ],
+          hints:[
+            '<code>-F c</code> = custom format (compressed, supports parallel restore with -j)',
+            '<code>-n cwr</code> restricts the backup to the cwr schema only — not the whole database',
+            '<code>--no-privileges</code> on pg_restore suppresses "role does not exist" warnings'
+          ],
+          starter:'-- Backup: custom-format, cwr schema only\npg_dump -U postgres -d lab_nsr -n cwr -F c -f C:\\temp\\cwr_backup.dump\n\n-- Create restore target\ncreatedb -U postgres lab_nsr_restore\n\n-- Restore (suppress role warnings)\npg_restore -U postgres -d lab_nsr_restore --no-privileges -F c C:\\temp\\cwr_backup.dump\n\n-- Verify row counts match\npsql -U postgres -d lab_nsr         -c "SELECT COUNT(*) FROM cwr.beneficiaries;"\npsql -U postgres -d lab_nsr_restore -c "SELECT COUNT(*) FROM cwr.beneficiaries;"',
+          validate:function(sql){
+            if(!sql.trim())return{ok:false,msg:'Editor is empty.'};
+            if(!/pg_dump/i.test(sql))
+              return{ok:false,msg:'Missing: pg_dump command'};
+            if(!/-n\s*cwr/i.test(sql))
+              return{ok:false,msg:'Missing: -n cwr flag to restrict backup to the cwr schema'};
+            if(!/-F\s*c|-Fc/i.test(sql))
+              return{ok:false,msg:'Missing: -F c flag for custom format'};
+            if(!/pg_restore/i.test(sql))
+              return{ok:false,msg:'Missing: pg_restore command to recover the backup'};
+            if(!/createdb|CREATE\s+DATABASE/i.test(sql))
+              return{ok:false,msg:'Missing: createdb command to create the restore target database first'};
+            return{ok:true};
+          },
+          output:[
+            '$ pg_dump -U postgres -d lab_nsr -n cwr -F c -f C:\\temp\\cwr_backup.dump',
+            '  -- backup complete (5 tables, indexes, triggers)',
+            '',
+            '$ createdb -U postgres lab_nsr_restore',
+            '',
+            '$ pg_restore -U postgres -d lab_nsr_restore --no-privileges -F c C:\\temp\\cwr_backup.dump',
+            '  -- restore complete',
+            '',
+            '  count      count',
+            ' -------    -------',
+            '      6          6',
+            '',
+            '✓ Row counts match — backup verified'
+          ]
+        }
+      };
+
+      /* ── Open editor ─────────────────────────────────────────── */
+      window.cwrOpenPuzzle = function(key){
+        var p=PUZZLES[key]; if(!p)return;
+        _curKey=key;
+        document.getElementById('cwr-ed-title').textContent=p.title;
+        document.getElementById('cwr-ed-badge').textContent=p.lang;
+        document.getElementById('cwr-ed-desc').innerHTML=p.desc.map(function(d){
+          return '<div style="margin-bottom:6px;">'+d+'</div>';
+        }).join('');
+        document.getElementById('cwr-ed-hints').innerHTML=p.hints.map(function(h){
+          return '<div style="background:#071120;border-left:2px solid #2563eb;border-radius:0 4px 4px 0;padding:5px 8px;margin-bottom:5px;color:#7dd3fc;font-size:0.72rem;line-height:1.5;">'+h+'</div>';
+        }).join('');
+        document.getElementById('cwr-ed-expected').textContent=p.output.join('\n');
+        var code=document.getElementById('cwr-ed-code');
+        if(code.dataset.key!==key){code.value=p.starter;code.dataset.key=key;}
+        document.getElementById('cwr-ed-terminal').innerHTML='';
+        var s=localStorage.getItem('cwr_'+key)||'todo';
+        var rb=document.getElementById('cwr-run-btn');
+        rb.style.background=s==='done'?'#14532d':'#2563eb';
+        rb.style.borderColor=s==='done'?'#22c55e':'#2563eb';
+        rb.textContent=s==='done'?'✓ Complete — Re-run?':'▶ Run';
+        var modal=document.getElementById('cwr-editor-modal');
+        modal.style.display='flex';
+        setTimeout(function(){code.focus();},80);
+      };
+
+      /* ── Run / validate ──────────────────────────────────────── */
+      window.cwrRunPuzzle = function(){
+        if(!_curKey)return;
+        var p=PUZZLES[_curKey];
+        var sql=document.getElementById('cwr-ed-code').value;
+        var term=document.getElementById('cwr-ed-terminal');
+        var rb=document.getElementById('cwr-run-btn');
+        rb.textContent='⏳ Running…'; rb.disabled=true;
+        setTimeout(function(){
+          rb.disabled=false;
+          var res=p.validate(sql);
+          if(res.ok){
+            var lines=[
+              '<span style="color:#475569;">psql (18.0)  Type "help" for help.</span>',
+              '<span style="color:#7dd3fc;">lab_nsr=#</span> <span style="color:#94a3b8;">[executing…]</span>',''
+            ];
+            p.output.forEach(function(ln){
+              lines.push('<span style="color:#4ade80;">'+esc(ln)+'</span>');
+            });
+            lines.push('');
+            lines.push('<span style="color:#7dd3fc;">lab_nsr=#</span>');
+            lines.push('<span style="color:#22c55e;font-weight:700;">✓ Validation passed — puzzle marked complete</span>');
+            term.innerHTML=lines.join('<br>');
+            term.scrollTop=term.scrollHeight;
+            window.cwrMark(_curKey,'done');
+            rb.style.background='#14532d'; rb.style.borderColor='#22c55e';
+            rb.textContent='✓ Complete';
+          } else {
+            var lines=[
+              '<span style="color:#475569;">psql (18.0)  Type "help" for help.</span>',
+              '<span style="color:#7dd3fc;">lab_nsr=#</span> <span style="color:#94a3b8;">[executing…]</span>','',
+              '<span style="color:#ef4444;font-weight:700;">ERROR:  Validation failed</span>',
+              '<span style="color:#fca5a5;">DETAIL: '+esc(res.msg)+'</span>','',
+              '<span style="color:#475569;">Fix the SQL above and click ▶ Run again.</span>'
+            ];
+            term.innerHTML=lines.join('<br>');
+            term.scrollTop=term.scrollHeight;
+            rb.style.background='#2563eb'; rb.style.borderColor='#2563eb';
+            rb.textContent='▶ Run';
+          }
+        },550);
+      };
+
+      /* ── Close ───────────────────────────────────────────────── */
+      window.cwrCloseEditor = function(){
+        var m=document.getElementById('cwr-editor-modal');
+        if(m)m.style.display='none';
+      };
+
+      /* ── Update Open/Retry buttons on every status change ────── */
+      function cwrSyncBtns(){
+        ['p1','pa','pb','pc','pd','pe'].forEach(function(k){
+          var s=localStorage.getItem('cwr_'+k)||'todo';
+          var btn=document.getElementById('cwr-openBtn-'+k);
+          if(btn){
+            if(s==='done'){
+              btn.style.display='none';
+            } else {
+              btn.style.display='inline-block';
+              if(s==='fail'){
+                btn.textContent='↺ Retry'; btn.style.background='#450a0a';
+                btn.style.color='#fca5a5'; btn.style.borderColor='#ef4444';
+              } else {
+                btn.textContent='▶ Open'; btn.style.background='#0f2a4a';
+                btn.style.color='#7dd3fc'; btn.style.borderColor='#2563eb';
+              }
+            }
+          }
+          /* p1 health dot/label (not handled by the main cwrRefresh loop) */
+          if(k==='p1'){
+            var dot=document.getElementById('cwr-dot-p1');
+            var lbl=document.getElementById('cwr-hlabel-p1');
+            var clr={todo:'#f59e0b',done:'#22c55e',fail:'#ef4444'}[s]||'#f59e0b';
+            var txt={todo:'Not started',done:'✓ Complete',fail:'✗ Failed — revisit'}[s]||'Not started';
+            if(dot)dot.style.background=clr;
+            if(lbl){lbl.style.color=clr;lbl.textContent=txt;}
+          }
+        });
+      }
+
+      /* ── Patch cwrMark + cwrReset to also sync buttons ──────── */
+      var _origMark=window.cwrMark;
+      window.cwrMark=function(k,s){_origMark(k,s);cwrSyncBtns();};
+      var _origReset=window.cwrReset;
+      window.cwrReset=function(){_origReset();cwrSyncBtns();};
+
+      /* ── Tab key indents in editor ───────────────────────────── */
+      function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+      if(document.readyState==='loading'){
+        document.addEventListener('DOMContentLoaded',function(){
+          cwrSyncBtns();
+          var ta=document.getElementById('cwr-ed-code');
+          if(ta)ta.addEventListener('keydown',function(e){
+            if(e.key==='Tab'){
+              e.preventDefault();
+              var s=this.selectionStart,en=this.selectionEnd;
+              this.value=this.value.substring(0,s)+'  '+this.value.substring(en);
+              this.selectionStart=this.selectionEnd=s+2;
+            }
+          });
+        });
+      } else {
+        cwrSyncBtns();
+        var ta=document.getElementById('cwr-ed-code');
+        if(ta)ta.addEventListener('keydown',function(e){
+          if(e.key==='Tab'){
+            e.preventDefault();
+            var s=this.selectionStart,en=this.selectionEnd;
+            this.value=this.value.substring(0,s)+'  '+this.value.substring(en);
+            this.selectionStart=this.selectionEnd=s+2;
+          }
+        });
+      }
+    })();
+    </script>
+
+    <!-- Integrated SQL Editor Modal -->
+    <div id="cwr-editor-modal" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.88);align-items:center;justify-content:center;">
+      <div onclick="cwrCloseEditor()" style="position:absolute;inset:0;"></div>
+      <div style="position:relative;background:#0d1929;border:1px solid #1e293b;border-radius:12px;width:94vw;max-width:1160px;height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,0.7);">
+
+        <!-- Header -->
+        <div style="background:#071120;border-bottom:1px solid #1e293b;padding:11px 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:1rem;">💻</span>
+            <span id="cwr-ed-title" style="color:#e2e8f0;font-weight:700;font-size:0.92rem;"></span>
+            <span id="cwr-ed-badge" style="background:#1e3a5f;color:#7dd3fc;font-size:0.6rem;padding:1px 8px;border-radius:999px;font-weight:700;letter-spacing:0.5px;"></span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <button id="cwr-run-btn" onclick="cwrRunPuzzle()"
+              style="background:#2563eb;color:#fff;border:1px solid #2563eb;border-radius:6px;padding:6px 20px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;">
+              ▶ Run
+            </button>
+            <button onclick="cwrCloseEditor()"
+              style="background:none;border:1px solid #334155;color:#64748b;border-radius:6px;padding:6px 12px;font-size:0.82rem;cursor:pointer;font-family:inherit;">
+              ✕ Close
+            </button>
+          </div>
+        </div>
+
+        <!-- Body -->
+        <div style="display:flex;flex:1;overflow:hidden;min-height:0;">
+
+          <!-- Left: task description -->
+          <div style="width:268px;flex-shrink:0;background:#071120;border-right:1px solid #1e293b;overflow-y:auto;padding:15px 13px;font-family:system-ui,sans-serif;">
+            <div style="font-size:0.61rem;color:#475569;text-transform:uppercase;letter-spacing:0.9px;margin-bottom:7px;">Task</div>
+            <div id="cwr-ed-desc" style="color:#94a3b8;font-size:0.78rem;line-height:1.65;margin-bottom:14px;"></div>
+            <div style="font-size:0.61rem;color:#475569;text-transform:uppercase;letter-spacing:0.9px;margin-bottom:7px;">Hints</div>
+            <div id="cwr-ed-hints" style="margin-bottom:14px;"></div>
+            <div style="font-size:0.61rem;color:#475569;text-transform:uppercase;letter-spacing:0.9px;margin-bottom:7px;">Expected Output</div>
+            <pre id="cwr-ed-expected" style="font-family:monospace;font-size:0.65rem;color:#4ade80;background:#050c18;border:1px solid #1e293b;border-radius:5px;padding:9px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0;"></pre>
+          </div>
+
+          <!-- Right: editor + terminal -->
+          <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;">
+
+            <!-- Editor bar -->
+            <div style="background:#0d1929;border-bottom:1px solid #1e293b;padding:5px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+              <span style="font-size:0.67rem;color:#475569;font-family:monospace;">psql -U postgres -d lab_nsr</span>
+              <button onclick="document.getElementById('cwr-ed-code').value=''" style="background:none;border:none;color:#334155;font-size:0.67rem;cursor:pointer;font-family:inherit;padding:0;">Clear</button>
+            </div>
+
+            <!-- Code textarea -->
+            <textarea id="cwr-ed-code" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"
+              style="flex:1;min-height:0;background:#060e1a;color:#e2e8f0;font-family:'Cascadia Code','Fira Code',Consolas,'Courier New',monospace;font-size:0.82rem;line-height:1.7;padding:14px 16px;border:none;outline:none;resize:none;tab-size:2;"></textarea>
+
+            <!-- Terminal output -->
+            <div style="height:186px;flex-shrink:0;border-top:1px solid #1e293b;display:flex;flex-direction:column;background:#050c18;">
+              <div style="background:#071120;border-bottom:1px solid #1e293b;padding:4px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+                <div style="display:flex;align-items:center;gap:5px;">
+                  <span style="display:inline-block;width:7px;height:7px;background:#ef4444;border-radius:50%;"></span>
+                  <span style="display:inline-block;width:7px;height:7px;background:#f59e0b;border-radius:50%;"></span>
+                  <span style="display:inline-block;width:7px;height:7px;background:#22c55e;border-radius:50%;"></span>
+                  <span style="color:#475569;font-size:0.67rem;font-family:monospace;margin-left:4px;">Terminal Output</span>
+                </div>
+                <button onclick="document.getElementById('cwr-ed-terminal').innerHTML=''" style="background:none;border:none;color:#334155;font-size:0.65rem;cursor:pointer;font-family:inherit;padding:0;">Clear</button>
+              </div>
+              <div id="cwr-ed-terminal" style="flex:1;overflow-y:auto;padding:10px 14px;font-family:'Cascadia Code','Fira Code',Consolas,monospace;font-size:0.75rem;line-height:1.75;"></div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Participant Name Modal (shown on first Mark Complete if Firebase is configured) -->
     <div id="cwr-name-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.82);z-index:9999;align-items:center;justify-content:center;">
       <div style="background:#0d1929;border:1px solid #334155;border-radius:14px;padding:32px 28px;max-width:380px;width:90%;box-shadow:0 30px 60px rgba(0,0,0,0.5);text-align:center;font-family:system-ui,sans-serif;">
@@ -4876,29 +5305,64 @@ done</pre>
         <!-- System Health -->
         <div style="background:#0d1929;padding:18px 20px;">
           <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Puzzle Status</div>
-          <div style="display:flex;flex-direction:column;gap:7px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#071120;border-radius:5px;cursor:pointer;" onclick="cwrJump('cwr-puzzle-a')">
-              <span style="color:#94a3b8;font-size:0.78rem;">🔑 Puzzle A · RBAC</span>
-              <span style="display:flex;align-items:center;gap:5px;"><span id="cwr-dot-pa" style="width:7px;height:7px;background:#f59e0b;border-radius:50%;display:inline-block;flex-shrink:0;"></span><span id="cwr-hlabel-pa" style="color:#f59e0b;font-size:0.76rem;font-weight:600;">Not started</span></span>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#071120;border-radius:5px;">
+              <span style="color:#94a3b8;font-size:0.76rem;">🗄 Phase 1 · Foundation</span>
+              <span style="display:flex;align-items:center;gap:6px;">
+                <span id="cwr-dot-p1" style="width:7px;height:7px;background:#f59e0b;border-radius:50%;display:inline-block;flex-shrink:0;"></span>
+                <span id="cwr-hlabel-p1" style="color:#f59e0b;font-size:0.72rem;font-weight:600;">Not started</span>
+                <button id="cwr-openBtn-p1" onclick="cwrOpenPuzzle('p1')" style="background:#0f2a4a;color:#7dd3fc;border:1px solid #2563eb;font-size:0.62rem;padding:2px 8px;border-radius:4px;cursor:pointer;font-family:inherit;white-space:nowrap;">▶ Open</button>
+              </span>
             </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#071120;border-radius:5px;cursor:pointer;" onclick="cwrJump('cwr-puzzle-b')">
-              <span style="color:#94a3b8;font-size:0.78rem;">🛡 Puzzle B · RLS</span>
-              <span style="display:flex;align-items:center;gap:5px;"><span id="cwr-dot-pb" style="width:7px;height:7px;background:#f59e0b;border-radius:50%;display:inline-block;flex-shrink:0;"></span><span id="cwr-hlabel-pb" style="color:#f59e0b;font-size:0.76rem;font-weight:600;">Not started</span></span>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#071120;border-radius:5px;">
+              <span style="color:#94a3b8;font-size:0.76rem;">🔑 Puzzle A · RBAC</span>
+              <span style="display:flex;align-items:center;gap:6px;">
+                <span id="cwr-dot-pa" style="width:7px;height:7px;background:#f59e0b;border-radius:50%;display:inline-block;flex-shrink:0;"></span>
+                <span id="cwr-hlabel-pa" style="color:#f59e0b;font-size:0.72rem;font-weight:600;">Not started</span>
+                <button id="cwr-openBtn-pa" onclick="cwrOpenPuzzle('pa')" style="background:#0f2a4a;color:#7dd3fc;border:1px solid #2563eb;font-size:0.62rem;padding:2px 8px;border-radius:4px;cursor:pointer;font-family:inherit;white-space:nowrap;">▶ Open</button>
+              </span>
             </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#071120;border-radius:5px;cursor:pointer;" onclick="cwrJump('cwr-puzzle-c')">
-              <span style="color:#94a3b8;font-size:0.78rem;">📋 Puzzle C · Audit Trigger</span>
-              <span style="display:flex;align-items:center;gap:5px;"><span id="cwr-dot-pc" style="width:7px;height:7px;background:#f59e0b;border-radius:50%;display:inline-block;flex-shrink:0;"></span><span id="cwr-hlabel-pc" style="color:#f59e0b;font-size:0.76rem;font-weight:600;">Not started</span></span>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#071120;border-radius:5px;">
+              <span style="color:#94a3b8;font-size:0.76rem;">🛡 Puzzle B · RLS</span>
+              <span style="display:flex;align-items:center;gap:6px;">
+                <span id="cwr-dot-pb" style="width:7px;height:7px;background:#f59e0b;border-radius:50%;display:inline-block;flex-shrink:0;"></span>
+                <span id="cwr-hlabel-pb" style="color:#f59e0b;font-size:0.72rem;font-weight:600;">Not started</span>
+                <button id="cwr-openBtn-pb" onclick="cwrOpenPuzzle('pb')" style="background:#0f2a4a;color:#7dd3fc;border:1px solid #2563eb;font-size:0.62rem;padding:2px 8px;border-radius:4px;cursor:pointer;font-family:inherit;white-space:nowrap;">▶ Open</button>
+              </span>
             </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#071120;border-radius:5px;cursor:pointer;" onclick="cwrJump('cwr-puzzle-d')">
-              <span style="color:#94a3b8;font-size:0.78rem;">📊 Puzzle D · Monitoring</span>
-              <span style="display:flex;align-items:center;gap:5px;"><span id="cwr-dot-pd" style="width:7px;height:7px;background:#f59e0b;border-radius:50%;display:inline-block;flex-shrink:0;"></span><span id="cwr-hlabel-pd" style="color:#f59e0b;font-size:0.76rem;font-weight:600;">Not started</span></span>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#071120;border-radius:5px;">
+              <span style="color:#94a3b8;font-size:0.76rem;">📋 Puzzle C · Audit Trigger</span>
+              <span style="display:flex;align-items:center;gap:6px;">
+                <span id="cwr-dot-pc" style="width:7px;height:7px;background:#f59e0b;border-radius:50%;display:inline-block;flex-shrink:0;"></span>
+                <span id="cwr-hlabel-pc" style="color:#f59e0b;font-size:0.72rem;font-weight:600;">Not started</span>
+                <button id="cwr-openBtn-pc" onclick="cwrOpenPuzzle('pc')" style="background:#0f2a4a;color:#7dd3fc;border:1px solid #2563eb;font-size:0.62rem;padding:2px 8px;border-radius:4px;cursor:pointer;font-family:inherit;white-space:nowrap;">▶ Open</button>
+              </span>
             </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#071120;border-radius:5px;cursor:pointer;" onclick="cwrJump('cwr-puzzle-e')">
-              <span style="color:#94a3b8;font-size:0.78rem;">💾 Puzzle E · Backup &amp; DR</span>
-              <span style="display:flex;align-items:center;gap:5px;"><span id="cwr-dot-pe" style="width:7px;height:7px;background:#f59e0b;border-radius:50%;display:inline-block;flex-shrink:0;"></span><span id="cwr-hlabel-pe" style="color:#f59e0b;font-size:0.76rem;font-weight:600;">Not started</span></span>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#071120;border-radius:5px;">
+              <span style="color:#94a3b8;font-size:0.76rem;">📊 Puzzle D · Monitoring</span>
+              <span style="display:flex;align-items:center;gap:6px;">
+                <span id="cwr-dot-pd" style="width:7px;height:7px;background:#f59e0b;border-radius:50%;display:inline-block;flex-shrink:0;"></span>
+                <span id="cwr-hlabel-pd" style="color:#f59e0b;font-size:0.72rem;font-weight:600;">Not started</span>
+                <button id="cwr-openBtn-pd" onclick="cwrOpenPuzzle('pd')" style="background:#0f2a4a;color:#7dd3fc;border:1px solid #2563eb;font-size:0.62rem;padding:2px 8px;border-radius:4px;cursor:pointer;font-family:inherit;white-space:nowrap;">▶ Open</button>
+              </span>
             </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#071120;border-radius:5px;">
+              <span style="color:#94a3b8;font-size:0.76rem;">💾 Puzzle E · Backup &amp; DR</span>
+              <span style="display:flex;align-items:center;gap:6px;">
+                <span id="cwr-dot-pe" style="width:7px;height:7px;background:#f59e0b;border-radius:50%;display:inline-block;flex-shrink:0;"></span>
+                <span id="cwr-hlabel-pe" style="color:#f59e0b;font-size:0.72rem;font-weight:600;">Not started</span>
+                <button id="cwr-openBtn-pe" onclick="cwrOpenPuzzle('pe')" style="background:#0f2a4a;color:#7dd3fc;border:1px solid #2563eb;font-size:0.62rem;padding:2px 8px;border-radius:4px;cursor:pointer;font-family:inherit;white-space:nowrap;">▶ Open</button>
+              </span>
+            </div>
+
           </div>
-          <div style="margin-top:8px;color:#334155;font-size:0.67rem;">Click any row to jump to that puzzle</div>
+          <div style="margin-top:8px;color:#334155;font-size:0.67rem;">▶ Open to write SQL · completes automatically on successful run</div>
         </div>
       </div>
 
