@@ -2798,21 +2798,44 @@ paid_households <span class="kw">AS</span> (
 
       <div class="code-block">
         <div class="code-header"><span class="code-lang">sql – create NSR roles</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-        <pre><span class="cmt">-- Create roles</span>
-<span class="kw">CREATE ROLE</span> nsr_dba        <span class="kw">WITH LOGIN</span> PASSWORD <span class="str">'dba_pw'</span>   BYPASSRLS;
-<span class="kw">CREATE ROLE</span> nsr_supervisor <span class="kw">WITH LOGIN</span> PASSWORD <span class="str">'sup_pw'</span>   BYPASSRLS;
+        <pre><span class="cmt">-- Safe to re-run: DROP IF EXISTS first</span>
+<span class="kw">DROP ROLE IF EXISTS</span> nsr_dba;
+<span class="kw">DROP ROLE IF EXISTS</span> nsr_supervisor;
+<span class="kw">DROP ROLE IF EXISTS</span> nsr_caseworker;
+
+<span class="cmt">-- Create roles with correct attributes</span>
+<span class="kw">CREATE ROLE</span> nsr_dba        <span class="kw">WITH LOGIN</span> PASSWORD <span class="str">'dba_pw'</span>  BYPASSRLS;
+<span class="kw">CREATE ROLE</span> nsr_supervisor <span class="kw">WITH LOGIN</span> PASSWORD <span class="str">'sup_pw'</span>  BYPASSRLS;
 <span class="kw">CREATE ROLE</span> nsr_caseworker <span class="kw">WITH LOGIN</span> PASSWORD <span class="str">'cw_pw'</span>;
 
-<span class="cmt">-- Grant schema usage</span>
+<span class="cmt">-- Grant schema USAGE (required before any table grant)</span>
 <span class="kw">GRANT USAGE ON SCHEMA</span> nsr <span class="kw">TO</span> nsr_dba, nsr_supervisor, nsr_caseworker;
 
-<span class="cmt">-- DBA: full access</span>
+<span class="cmt">-- DBA: full access to all tables and sequences</span>
 <span class="kw">GRANT ALL ON ALL TABLES IN SCHEMA</span> nsr <span class="kw">TO</span> nsr_dba;
+<span class="kw">GRANT ALL ON ALL SEQUENCES IN SCHEMA</span> nsr <span class="kw">TO</span> nsr_dba;
 
-<span class="cmt">-- Caseworker: read only (NIN masked via view)</span>
+<span class="cmt">-- Supervisor: read all tables + update payments (BYPASSRLS means no state filter)</span>
+<span class="kw">GRANT SELECT ON ALL TABLES IN SCHEMA</span> nsr <span class="kw">TO</span> nsr_supervisor;
+<span class="kw">GRANT UPDATE ON</span> nsr.payments <span class="kw">TO</span> nsr_supervisor;
+
+<span class="cmt">-- Caseworker: read households, lgas, states only — no payments, no individuals directly</span>
 <span class="kw">GRANT SELECT ON</span> nsr.households, nsr.lgas, nsr.states <span class="kw">TO</span> nsr_caseworker;
 
-<span class="cmt">-- Verify</span>
+<span class="cmt">-- Audit log: no one can DELETE (append-only)</span>
+<span class="kw">REVOKE DELETE ON</span> nsr.audit_log <span class="kw">FROM PUBLIC</span>;
+<span class="kw">REVOKE DELETE ON</span> nsr.audit_log <span class="kw">FROM</span> nsr_dba;
+
+<span class="cmt">-- Verify the privilege matrix</span>
+<span class="kw">SELECT</span> grantee, table_name, privilege_type
+<span class="kw">FROM</span>  information_schema.role_table_grants
+<span class="kw">WHERE</span> table_schema = <span class="str">'nsr'</span>
+  <span class="kw">AND</span> grantee <span class="kw">LIKE</span> <span class="str">'nsr%'</span>
+<span class="kw">ORDER BY</span> grantee, table_name, privilege_type;
+<span class="cmt">-- Expected: supervisor → SELECT on all tables + UPDATE on payments</span>
+<span class="cmt">--           caseworker → SELECT on households, lgas, states only</span>
+<span class="cmt">--           dba        → ALL on all tables</span>
+
 \du+</pre>
       </div>
       <div class="callout info" style="margin-top:8px">
