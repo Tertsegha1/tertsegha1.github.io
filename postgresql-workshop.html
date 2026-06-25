@@ -3566,47 +3566,62 @@ sudo dnf install pgaudit_16</pre>
       <p><strong>Step 4 — Configure what to log</strong></p>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">sql – configure pgaudit.log</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-        <pre><span class="cmt">-- pgaudit.log classes:</span>
+        <pre><span class="cmt">-- pgaudit.log controls which statement classes are captured. Options:</span>
 <span class="cmt">--   read    → SELECT, COPY FROM</span>
 <span class="cmt">--   write   → INSERT, UPDATE, DELETE, TRUNCATE, COPY TO</span>
 <span class="cmt">--   ddl     → CREATE, ALTER, DROP (schema changes)</span>
 <span class="cmt">--   role    → GRANT, REVOKE, CREATE ROLE (privilege changes)</span>
 <span class="cmt">--   misc    → DISCARD, FETCH, CHECKPOINT, VACUUM</span>
-<span class="cmt">--   all     → everything</span>
+<span class="cmt">--   all     → everything above</span>
 
-<span class="cmt">-- Log write + schema changes + privilege changes — typical NSR production setting</span>
+<span class="cmt">-- Typical NSR production setting: log data writes, schema changes, and privilege changes</span>
 <span class="kw">ALTER SYSTEM SET</span> pgaudit.log = <span class="str">'write, ddl, role'</span>;
-<span class="kw">SELECT</span> pg_reload_conf();   <span class="cmt">-- applies without a restart</span>
 
-<span class="cmt">-- Confirm</span>
-<span class="kw">SHOW</span> pgaudit.log;</pre>
+<span class="cmt">-- pg_reload_conf() applies the change without a full restart</span>
+<span class="cmt">-- (pgaudit must already be in shared_preload_libraries for this to take effect)</span>
+<span class="kw">SELECT</span> pg_reload_conf();
+
+<span class="cmt">-- Confirm the active setting</span>
+<span class="kw">SHOW</span> pgaudit.log;
+<span class="cmt">-- Expected: write, ddl, role</span></pre>
       </div>
 
-      <p><strong>Step 5 — Test: run a statement and check the server log</strong></p>
+      <p><strong>Step 5 — Test: trigger a logged statement and read the server log</strong></p>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">sql – test pgAudit logging</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-        <pre><span class="cmt">-- Run any write — pgAudit will log it to the PostgreSQL server log file</span>
+        <pre><span class="cmt">-- SET pmt_score = pmt_score is intentional — it writes the same value back,</span>
+<span class="cmt">-- changing no data but still firing an UPDATE that pgAudit will log</span>
 <span class="kw">UPDATE</span> nsr.households <span class="kw">SET</span> pmt_score = pmt_score
 <span class="kw">WHERE</span> household_id = <span class="num">1</span>;
 
-<span class="cmt">-- Open the server log (default locations):</span>
-<span class="cmt">-- Windows: C:\Program Files\PostgreSQL\{ver}\data\log\postgresql-*.log</span>
-<span class="cmt">-- Linux:   /var/log/postgresql/postgresql-{ver}-main.log</span>
+<span class="cmt">-- pgAudit writes to the PostgreSQL server log file, not to a table.</span>
+<span class="cmt">-- Default log file locations:</span>
+<span class="cmt">--   Windows: C:\Program Files\PostgreSQL\18\data\log\postgresql-*.log</span>
+<span class="cmt">--   Linux:   /var/log/postgresql/postgresql-16-main.log</span>
 <span class="cmt">--</span>
-<span class="cmt">-- Look for a line like:</span>
+<span class="cmt">-- Open the latest log file and search for "AUDIT:". You should see:</span>
 <span class="cmt">-- AUDIT: SESSION,1,1,WRITE,UPDATE,TABLE,nsr.households,</span>
-<span class="cmt">--   "UPDATE nsr.households SET pmt_score = pmt_score WHERE household_id = 1"</span></pre>
+<span class="cmt">--   "UPDATE nsr.households SET pmt_score = pmt_score WHERE household_id = 1"</span>
+<span class="cmt">--</span>
+<span class="cmt">-- Fields: audit_type, statement_id, substatement_id, class, command,</span>
+<span class="cmt">--         object_type, object_name, statement</span></pre>
       </div>
 
-      <p><strong>Step 6 — Optional: role-level and object-level audit</strong></p>
+      <p><strong>Step 6 — Role-level and object-level audit</strong></p>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">sql – role-level and object-level audit</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-        <pre><span class="cmt">-- Log ALL statements made by nsr_supervisor (overrides session-level setting)</span>
+        <pre><span class="cmt">-- Role-level audit: log ALL statements by nsr_supervisor regardless of session setting</span>
 <span class="kw">ALTER ROLE</span> nsr_supervisor <span class="kw">SET</span> pgaudit.log = <span class="str">'all'</span>;
+<span class="cmt">-- Takes effect on the role's next login — no restart required</span>
 
-<span class="cmt">-- Object-level audit: log every access to nsr.payments specifically</span>
-<span class="kw">ALTER SYSTEM SET</span> pgaudit.log_catalog = <span class="str">'on'</span>;
-<span class="kw">SECURITY LABEL FOR</span> pgaudit <span class="kw">ON TABLE</span> nsr.payments <span class="kw">IS</span> <span class="str">'OBJECT'</span>;</pre>
+<span class="cmt">-- Object-level audit: log every SELECT/INSERT/UPDATE/DELETE on nsr.payments</span>
+<span class="cmt">-- This uses a security label to mark the table for object-level logging</span>
+<span class="cmt">-- pgaudit.log_relation = 'on' must also be set for object audit to fire</span>
+<span class="kw">ALTER SYSTEM SET</span> pgaudit.log_relation = <span class="str">'on'</span>;
+<span class="kw">SELECT</span> pg_reload_conf();
+<span class="kw">SECURITY LABEL FOR</span> pgaudit <span class="kw">ON TABLE</span> nsr.payments <span class="kw">IS</span> <span class="str">'OBJECT'</span>;
+<span class="cmt">-- Every access to nsr.payments now generates an AUDIT: OBJECT entry in the server log</span>
+<span class="cmt">-- independent of the session-level pgaudit.log setting</span></pre>
       </div>
       <div class="callout tip" style="margin-top:8px">
         <div class="callout-title">pgAudit vs trigger audit_log — when to use each</div>
