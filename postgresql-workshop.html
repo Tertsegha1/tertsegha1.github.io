@@ -3205,11 +3205,18 @@ GRANT UPDATE ON nsr.payments TO nsr_supervisor;</code></div>
 <span class="kw">RESET ROLE</span>;
 
 <span class="cmt">-- Step 3: Create a policy that allows caseworkers to see their own state</span>
+<span class="cmt">-- nsr.households has no state_code column — state is reached via lga_id → nsr.lgas</span>
+<span class="kw">DROP POLICY IF EXISTS</span> cw_own_state <span class="kw">ON</span> nsr.households;
 <span class="kw">CREATE POLICY</span> cw_own_state
 <span class="kw">ON</span> nsr.households
 <span class="kw">FOR SELECT</span>
 <span class="kw">TO</span> nsr_caseworker
-<span class="kw">USING</span> (<span class="fn">current_setting</span>(<span class="str">'app.state_code'</span>, <span class="kw">TRUE</span>) = state_code);
+<span class="kw">USING</span> (
+  lga_id <span class="kw">IN</span> (
+    <span class="kw">SELECT</span> lga_id <span class="kw">FROM</span> nsr.lgas
+    <span class="kw">WHERE</span>  state_code = <span class="fn">current_setting</span>(<span class="str">'app.state_code'</span>, <span class="kw">TRUE</span>)
+  )
+);
 
 <span class="cmt">-- Now set the session variable and re-test</span>
 <span class="kw">SET ROLE</span> nsr_caseworker;
