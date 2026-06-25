@@ -3663,12 +3663,19 @@ SELECT log_id, log_time, role_name, action, row_data FROM nsr.audit_log ORDER BY
         <div class="code-header"><span class="code-lang">sql – forensic audit queries</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
         <pre><span class="cmt">-- Query 1: Full change history of one household</span>
 <span class="cmt">-- Use this when a supervisor asks "who changed HH-LA-001 and when?"</span>
+<span class="cmt">-- COALESCE handles two row_data shapes:</span>
+<span class="cmt">--   INSERT/DELETE → flat:   {"household_code":"HH-LA-001","pmt_score":"28.5",...}</span>
+<span class="cmt">--   UPDATE        → nested: {"old":{...},"new":{...}}</span>
+<span class="cmt">-- Without COALESCE, ->> returns NULL for every UPDATE row — silently wrong</span>
 <span class="kw">SELECT</span> log_time, role_name, action,
-       row_data->><span class="str">'pmt_score'</span>     <span class="kw">AS</span> pmt_score,
-       row_data->><span class="str">'household_code'</span> <span class="kw">AS</span> code
+       <span class="fn">COALESCE</span>(row_data->><span class="str">'pmt_score'</span>,
+                row_data-><span class="str">'new'</span>->><span class="str">'pmt_score'</span>)      <span class="kw">AS</span> pmt_score,
+       <span class="fn">COALESCE</span>(row_data->><span class="str">'household_code'</span>,
+                row_data-><span class="str">'new'</span>->><span class="str">'household_code'</span>) <span class="kw">AS</span> code
 <span class="kw">FROM</span>  nsr.audit_log
 <span class="kw">WHERE</span> table_name = <span class="str">'nsr.households'</span>
-  <span class="kw">AND</span> row_data->><span class="str">'household_code'</span> = <span class="str">'HH-LA-001'</span>
+  <span class="kw">AND</span> <span class="fn">COALESCE</span>(row_data->><span class="str">'household_code'</span>,
+              row_data-><span class="str">'new'</span>->><span class="str">'household_code'</span>) = <span class="str">'HH-LA-001'</span>
 <span class="kw">ORDER BY</span> log_time;
 
 <span class="cmt">-- Query 2: All changes by a specific role in the last 7 days</span>
@@ -3690,23 +3697,34 @@ SELECT log_id, log_time, role_name, action, row_data FROM nsr.audit_log ORDER BY
 <span class="kw">GROUP BY</span> role_name, hour_bucket
 <span class="kw">HAVING COUNT</span>(*) > <span class="num">100</span>
 <span class="kw">ORDER BY</span> changes <span class="kw">DESC</span>;
-<span class="cmt">-- With only 4 test rows this returns nothing — that is correct (no fraud signal)</span>
+<span class="cmt">-- With only a few test rows this returns nothing — that is correct (no fraud signal)</span>
 
-<span class="cmt">-- Query 4: Before/after comparison using LAG()</span>
-<span class="cmt">-- Shows what pmt_score was BEFORE each change — the audit trail of modifications</span>
+<span class="cmt">-- Query 4: Before/after comparison — explicit CASE on row_data shape</span>
+<span class="cmt">-- LAG() does not work here: UPDATE rows store {"old":...,"new":...} so</span>
+<span class="cmt">-- row_data->>'pmt_score' returns NULL, and LAG() just chains NULLs.</span>
+<span class="cmt">-- The trigger already captures old and new in one row for UPDATE — use that directly.</span>
 <span class="kw">SELECT</span>
   log_time,
   role_name,
-  row_data->><span class="str">'pmt_score'</span>                            <span class="kw">AS</span> score_after_change,
-  <span class="kw">LAG</span>(row_data->><span class="str">'pmt_score'</span>) <span class="kw">OVER</span> (
-    <span class="kw">PARTITION BY</span> row_data->><span class="str">'household_code'</span>
-    <span class="kw">ORDER BY</span> log_time
-  )                                                  <span class="kw">AS</span> score_before_change
+  action,
+  <span class="kw">CASE</span> action
+    <span class="kw">WHEN</span> <span class="str">'INSERT'</span> <span class="kw">THEN</span> <span class="kw">NULL</span>
+    <span class="kw">WHEN</span> <span class="str">'DELETE'</span> <span class="kw">THEN</span> row_data->><span class="str">'pmt_score'</span>
+    <span class="kw">WHEN</span> <span class="str">'UPDATE'</span> <span class="kw">THEN</span> row_data-><span class="str">'old'</span>->><span class="str">'pmt_score'</span>
+  <span class="kw">END</span> <span class="kw">AS</span> score_before,
+  <span class="kw">CASE</span> action
+    <span class="kw">WHEN</span> <span class="str">'INSERT'</span> <span class="kw">THEN</span> row_data->><span class="str">'pmt_score'</span>
+    <span class="kw">WHEN</span> <span class="str">'DELETE'</span> <span class="kw">THEN</span> <span class="kw">NULL</span>
+    <span class="kw">WHEN</span> <span class="str">'UPDATE'</span> <span class="kw">THEN</span> row_data-><span class="str">'new'</span>->><span class="str">'pmt_score'</span>
+  <span class="kw">END</span> <span class="kw">AS</span> score_after
 <span class="kw">FROM</span>  nsr.audit_log
 <span class="kw">WHERE</span> table_name = <span class="str">'nsr.households'</span>
-  <span class="kw">AND</span> row_data->><span class="str">'household_code'</span> = <span class="str">'HH-LA-001'</span>;
-<span class="cmt">-- First row: score_before_change is NULL (nothing came before the INSERT)</span>
-<span class="cmt">-- Subsequent rows: shows the previous value, revealing who changed it and by how much</span></pre>
+  <span class="kw">AND</span> <span class="fn">COALESCE</span>(row_data->><span class="str">'household_code'</span>,
+              row_data-><span class="str">'new'</span>->><span class="str">'household_code'</span>) = <span class="str">'HH-LA-001'</span>
+<span class="kw">ORDER BY</span> log_time;
+<span class="cmt">-- INSERT row: score_before = NULL, score_after = the initial value</span>
+<span class="cmt">-- UPDATE row: score_before and score_after both populated from old/new</span>
+<span class="cmt">-- DELETE row: score_before = the last value, score_after = NULL</span></pre>
       </div>
       <div class="callout info" style="margin-top:8px">
         <div class="callout-title">JSONB operators used here — and when to use an index</div>
