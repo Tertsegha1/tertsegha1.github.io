@@ -3123,13 +3123,14 @@ GRANT UPDATE ON nsr.payments TO nsr_supervisor;</code></div>
 <span class="cmt">-- This leaves an audit trail and prevents accidental use of DBA powers</span>
 
 <span class="cmt">-- Check role membership</span>
-<span class="kw">SELECT</span> r.rolname <span class="kw">AS</span> role,
-       m.rolname <span class="kw">AS</span> member_of,
-       pg.admin_option
+<span class="kw">SELECT</span> r.rolname  <span class="kw">AS</span> role,
+       m.rolname  <span class="kw">AS</span> member_of,
+       g.rolname  <span class="kw">AS</span> granted_by,
+       am.admin_option
 <span class="kw">FROM</span>  pg_auth_members am
-<span class="kw">JOIN</span>  pg_roles r  <span class="kw">ON</span> r.oid  = am.member
-<span class="kw">JOIN</span>  pg_roles m  <span class="kw">ON</span> m.oid  = am.roleid
-<span class="kw">JOIN</span>  pg_roles pg <span class="kw">ON</span> pg.oid = am.grantor
+<span class="kw">JOIN</span>  pg_roles r  <span class="kw">ON</span> r.oid = am.member
+<span class="kw">JOIN</span>  pg_roles m  <span class="kw">ON</span> m.oid = am.roleid
+<span class="kw">JOIN</span>  pg_roles g  <span class="kw">ON</span> g.oid = am.grantor
 <span class="kw">WHERE</span> r.rolname <span class="kw">LIKE</span> <span class="str">'nsr%'</span>;</pre>
       </div>
 
