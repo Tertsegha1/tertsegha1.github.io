@@ -3767,28 +3767,39 @@ SELECT log_id, log_time, role_name, action, row_data FROM nsr.audit_log ORDER BY
       </div>
 
       <h3>Intermediate — Logical Backup with pg_dump</h3>
+      <div class="callout info" style="margin-bottom:12px">
+        <div class="callout-title">Windows path note — create C:\temp before running Step 1</div>
+        These commands use <code>C:\temp\</code> as the backup directory. Create it first if it does not exist:<br>
+        <code style="display:block;background:var(--code-bg);color:var(--code-text);padding:6px 12px;border-radius:4px;margin-top:6px;">mkdir C:\temp</code>
+        On Linux/macOS replace <code>C:\temp\nsr_backup.dump</code> with <code>/tmp/nsr_backup.dump</code>.
+      </div>
       <div class="code-block">
-        <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-        <pre><span class="cmt"># Step 1: Create logical backup of nsr schema</span>
-pg_dump -U postgres -d lab_nsr -n nsr -F c -f /tmp/nsr_backup.dump
+        <div class="code-header"><span class="code-lang">bash – run in a terminal, not in psql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt"># Step 1: Create logical backup of the nsr schema</span>
+<span class="cmt"># -n nsr       → schema filter: only objects in the nsr schema</span>
+<span class="cmt"># -F c         → custom binary format (compressed, supports selective restore)</span>
+<span class="cmt"># -f           → output file path</span>
+pg_dump -U postgres -d lab_nsr -n nsr -F c -f C:\temp\nsr_backup.dump
 
-<span class="cmt"># Step 2: List backup contents</span>
-pg_restore -l /tmp/nsr_backup.dump | head -30
+<span class="cmt"># Step 2: List backup contents (shows every object that will be restored)</span>
+pg_restore -l C:\temp\nsr_backup.dump
 
 <span class="cmt"># Step 3: Create restore test database</span>
 createdb -U postgres lab_nsr_test
 
 <span class="cmt"># Step 4: Restore to test database</span>
-pg_restore -U postgres -d lab_nsr_test -F c /tmp/nsr_backup.dump
+<span class="cmt"># --no-privileges skips GRANT/REVOKE statements — avoids "role does not exist"</span>
+<span class="cmt"># warnings if nsr_dba/nsr_supervisor/nsr_caseworker are not in this cluster</span>
+pg_restore -U postgres -d lab_nsr_test --no-privileges -F c C:\temp\nsr_backup.dump
 
-<span class="cmt"># Step 5: Verify row counts match</span>
+<span class="cmt"># Step 5: Verify row counts match between source and restored database</span>
 psql -U postgres -d lab_nsr      -c "SELECT COUNT(*) FROM nsr.households;"
 psql -U postgres -d lab_nsr_test -c "SELECT COUNT(*) FROM nsr.households;"</pre>
       </div>
 
       <div class="callout tip">
         <div class="callout-title">Backup strategy tip</div>
-        Use <code>-F c</code> (custom format) for production — it supports parallel restore. Use <code>-F p</code> (plain SQL) only for inspection or partial restores.
+        Use <code>-F c</code> (custom format) for production — it supports parallel restore with <code>pg_restore -j N</code>. Use <code>-F p</code> (plain SQL) only for inspection or partial restores where you want to read or edit the SQL directly.
       </div>
 
       <h3>Intermediate — pg_dump Flags Reference</h3>
