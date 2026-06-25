@@ -3553,9 +3553,14 @@ sudo dnf install pgaudit_16</pre>
 <span class="cmt">-- Linux:    sudo systemctl restart postgresql</span></pre>
       </div>
 
+      <div class="callout warning" style="margin-bottom:12px">
+        <div class="callout-title">Steps 3–6 cannot be run on PostgreSQL 18</div>
+        pgAudit is not yet available for PostgreSQL 18. Steps 3–6 below are <strong>reference material only</strong> — read them to understand what pgAudit configuration looks like in a production environment, but do not attempt to run the code. The Copy buttons have been removed to avoid confusion. When pgAudit support for PostgreSQL 18 is released, these steps will become fully executable.
+      </div>
+
       <p><strong>Step 3 — Load the extension (psql as superuser, after restart)</strong></p>
       <div class="code-block">
-        <div class="code-header"><span class="code-lang">sql – create extension</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <div class="code-header"><span class="code-lang">sql – create extension &nbsp;·&nbsp; reference only, not runnable on PostgreSQL 18</span></div>
         <pre><span class="kw">CREATE EXTENSION IF NOT EXISTS</span> pgaudit;
 
 <span class="cmt">-- Verify it loaded</span>
@@ -3565,7 +3570,7 @@ sudo dnf install pgaudit_16</pre>
 
       <p><strong>Step 4 — Configure what to log</strong></p>
       <div class="code-block">
-        <div class="code-header"><span class="code-lang">sql – configure pgaudit.log</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <div class="code-header"><span class="code-lang">sql – configure pgaudit.log &nbsp;·&nbsp; reference only, not runnable on PostgreSQL 18</span></div>
         <pre><span class="cmt">-- pgaudit.log controls which statement classes are captured. Options:</span>
 <span class="cmt">--   read    → SELECT, COPY FROM</span>
 <span class="cmt">--   write   → INSERT, UPDATE, DELETE, TRUNCATE, COPY TO</span>
@@ -3588,7 +3593,7 @@ sudo dnf install pgaudit_16</pre>
 
       <p><strong>Step 5 — Test: trigger a logged statement and read the server log</strong></p>
       <div class="code-block">
-        <div class="code-header"><span class="code-lang">sql – test pgAudit logging</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <div class="code-header"><span class="code-lang">sql – test pgAudit logging &nbsp;·&nbsp; reference only, not runnable on PostgreSQL 18</span></div>
         <pre><span class="cmt">-- SET pmt_score = pmt_score is intentional — it writes the same value back,</span>
 <span class="cmt">-- changing no data but still firing an UPDATE that pgAudit will log</span>
 <span class="kw">UPDATE</span> nsr.households <span class="kw">SET</span> pmt_score = pmt_score
@@ -3609,7 +3614,7 @@ sudo dnf install pgaudit_16</pre>
 
       <p><strong>Step 6 — Role-level and object-level audit</strong></p>
       <div class="code-block">
-        <div class="code-header"><span class="code-lang">sql – role-level and object-level audit</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <div class="code-header"><span class="code-lang">sql – role-level and object-level audit &nbsp;·&nbsp; reference only, not runnable on PostgreSQL 18</span></div>
         <pre><span class="cmt">-- Role-level audit: log ALL statements by nsr_supervisor regardless of session setting</span>
 <span class="kw">ALTER ROLE</span> nsr_supervisor <span class="kw">SET</span> pgaudit.log = <span class="str">'all'</span>;
 <span class="cmt">-- Takes effect on the role's next login — no restart required</span>
