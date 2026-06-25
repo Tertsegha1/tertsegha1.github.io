@@ -3047,10 +3047,25 @@ GRANT UPDATE ON nsr.payments TO nsr_supervisor;</code></div>
 <span class="cmt">-- If 0 rows updated: payment_id 1 may not exist — run SELECT * FROM nsr.payments LIMIT 5 first</span>
 
 <span class="cmt">-- STEP 10: Try to delete an audit record — should FAIL even for supervisor</span>
+<span class="cmt">-- Prerequisite: nsr.audit_log must exist — create it first if not already done (see Audit tab)</span>
+<span class="kw">RESET ROLE</span>; <span class="cmt">-- return to postgres to create the table</span>
+<span class="kw">CREATE TABLE IF NOT EXISTS</span> nsr.audit_log (
+  log_id     <span class="typ">BIGSERIAL</span>   <span class="kw">PRIMARY KEY</span>,
+  log_time   <span class="typ">TIMESTAMPTZ</span> <span class="kw">NOT NULL DEFAULT</span> <span class="fn">now</span>(),
+  role_name  <span class="typ">TEXT</span>        <span class="kw">NOT NULL DEFAULT</span> <span class="fn">session_user</span>,
+  table_name <span class="typ">TEXT</span>        <span class="kw">NOT NULL</span>,
+  action     <span class="typ">TEXT</span>        <span class="kw">NOT NULL</span>,
+  row_data   <span class="typ">JSONB</span>
+);
+<span class="kw">REVOKE DELETE ON</span> nsr.audit_log <span class="kw">FROM PUBLIC</span>;
+<span class="kw">REVOKE DELETE ON</span> nsr.audit_log <span class="kw">FROM</span> nsr_dba;
+
+<span class="cmt">-- Now switch back to supervisor and attempt the delete</span>
+<span class="kw">SET ROLE</span> nsr_supervisor;
 <span class="kw">DELETE FROM</span> nsr.audit_log <span class="kw">WHERE</span> log_id = <span class="num">1</span>;
 <span class="cmt">-- Expected: ERROR:  permission denied for table audit_log</span>
-<span class="cmt">-- The audit trail is append-only: REVOKE DELETE was issued on audit_log for all roles</span>
-<span class="cmt">-- including nsr_dba — only the postgres superuser can delete from it</span>
+<span class="cmt">-- BYPASSRLS bypasses row filters — it does NOT bypass REVOKE DELETE</span>
+<span class="cmt">-- Even the DBA cannot delete from audit_log — only the postgres superuser can</span>
 
 <span class="kw">RESET ROLE</span>;</pre>
       </div>
@@ -3063,8 +3078,10 @@ GRANT UPDATE ON nsr.payments TO nsr_supervisor;</code></div>
           <tr><td>4</td><td>SELECT on payments succeeds</td><td>SELECT granted to caseworker on payments</td><td><code>REVOKE SELECT ON nsr.payments FROM nsr_caseworker</code></td></tr>
           <tr><td>5</td><td>UPDATE succeeds</td><td>UPDATE granted to caseworker on households</td><td><code>REVOKE UPDATE ON nsr.households FROM nsr_caseworker</code></td></tr>
           <tr><td>6</td><td>Lagos rows visible to KN caseworker</td><td>RLS not enabled</td><td><code>ALTER TABLE nsr.households ENABLE ROW LEVEL SECURITY</code></td></tr>
+          <tr><td>8</td><td>permission denied for table households</td><td>Supervisor grants not yet issued</td><td><code>RESET ROLE; GRANT SELECT ON ALL TABLES IN SCHEMA nsr TO nsr_supervisor;</code></td></tr>
           <tr><td>9</td><td>UPDATE 0 rows</td><td>payment_id 1 not in table</td><td>Run <code>SELECT payment_id FROM nsr.payments LIMIT 5</code> and use a real ID</td></tr>
-          <tr><td>10</td><td>DELETE succeeds</td><td>REVOKE DELETE not yet run</td><td><code>REVOKE DELETE ON nsr.audit_log FROM PUBLIC</code></td></tr>
+          <tr><td>10</td><td>relation "nsr.audit_log" does not exist</td><td>audit_log table not yet created</td><td>Run the <code>CREATE TABLE IF NOT EXISTS nsr.audit_log</code> block embedded in Step 10 above</td></tr>
+          <tr><td>10</td><td>DELETE succeeds (no error)</td><td>REVOKE DELETE not yet run</td><td><code>REVOKE DELETE ON nsr.audit_log FROM PUBLIC; REVOKE DELETE ON nsr.audit_log FROM nsr_dba;</code></td></tr>
         </table>
       </div>
 
