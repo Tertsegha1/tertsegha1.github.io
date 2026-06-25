@@ -3864,18 +3864,25 @@ done</pre>
         <div class="code-header"><span class="code-lang">sql – restore integrity checks</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
         <pre><span class="cmt">-- After restoring, run these checks against the restored database</span>
 
-<span class="cmt">-- 1. Row counts (run on both original and restored db, compare)</span>
-<span class="kw">SELECT</span> schemaname, relname <span class="kw">AS</span> table_name,
-       n_live_tup <span class="kw">AS</span> approx_row_count
-<span class="kw">FROM</span>  pg_stat_user_tables
-<span class="kw">WHERE</span> schemaname = <span class="str">'nsr'</span>
-<span class="kw">ORDER BY</span> relname;
+<span class="cmt">-- 1. Row counts — use exact COUNT(*), not pg_stat_user_tables</span>
+<span class="cmt">-- pg_stat_user_tables.n_live_tup is NOT restored by pg_dump; it resets</span>
+<span class="cmt">-- to 0 on a fresh restore and only updates after ANALYZE runs.</span>
+<span class="cmt">-- Run on both original and restored db and compare results.</span>
+<span class="kw">SELECT</span> <span class="str">'states'</span>      <span class="kw">AS</span> tbl, <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> nsr.states      <span class="kw">UNION ALL</span>
+<span class="kw">SELECT</span> <span class="str">'lgas'</span>        <span class="kw">AS</span> tbl, <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> nsr.lgas        <span class="kw">UNION ALL</span>
+<span class="kw">SELECT</span> <span class="str">'households'</span>  <span class="kw">AS</span> tbl, <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> nsr.households  <span class="kw">UNION ALL</span>
+<span class="kw">SELECT</span> <span class="str">'individuals'</span> <span class="kw">AS</span> tbl, <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> nsr.individuals <span class="kw">UNION ALL</span>
+<span class="kw">SELECT</span> <span class="str">'payments'</span>    <span class="kw">AS</span> tbl, <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> nsr.payments    <span class="kw">UNION ALL</span>
+<span class="kw">SELECT</span> <span class="str">'audit_log'</span>   <span class="kw">AS</span> tbl, <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> nsr.audit_log
+<span class="kw">ORDER BY</span> tbl;
 
-<span class="cmt">-- 2. Sequence current values (verify they were not reset to 1)</span>
-<span class="kw">SELECT</span> sequence_schema, sequence_name,
-       <span class="fn">nextval</span>(sequence_schema || <span class="str">'.'</span> || sequence_name) <span class="kw">AS</span> next_val
-<span class="kw">FROM</span>  information_schema.sequences
-<span class="kw">WHERE</span> sequence_schema = <span class="str">'nsr'</span>;
+<span class="cmt">-- 2. Sequence current values — use pg_sequences, NOT nextval()</span>
+<span class="cmt">-- nextval() advances the sequence each time it is called — destructive.</span>
+<span class="cmt">-- pg_sequences.last_value reads the current value without touching it.</span>
+<span class="kw">SELECT</span> schemaname, sequencename, last_value, start_value, increment_by
+<span class="kw">FROM</span>  pg_sequences
+<span class="kw">WHERE</span> schemaname = <span class="str">'nsr'</span>;
+<span class="cmt">-- last_value should be greater than 1 — if it shows 1 the sequence was reset</span>
 
 <span class="cmt">-- 3. Verify RLS is enabled on the restored tables</span>
 <span class="kw">SELECT</span> relname, relrowsecurity <span class="kw">AS</span> rls_on
@@ -3885,6 +3892,9 @@ done</pre>
 <span class="cmt">-- All tables should show rls_on = true</span>
 
 <span class="cmt">-- 4. Verify grants were preserved</span>
+<span class="cmt">-- NOTE: if you restored with --no-privileges this query returns nothing —</span>
+<span class="cmt">-- that is expected. Re-run the GRANT statements from the RBAC setup block</span>
+<span class="cmt">-- to restore privileges, then re-run this check.</span>
 <span class="kw">SELECT</span> grantee, table_name, privilege_type
 <span class="kw">FROM</span>  information_schema.role_table_grants
 <span class="kw">WHERE</span> table_schema = <span class="str">'nsr'</span>
