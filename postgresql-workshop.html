@@ -3429,7 +3429,7 @@ GRANT UPDATE ON nsr.payments TO nsr_supervisor;</code></div>
       </div>
       <div class="callout info" style="margin-top:8px">
         <div class="callout-title">Why the audit log is append-only</div>
-        <strong>REVOKE DELETE … FROM nsr_dba</strong> is the key line — it makes the audit log tamper-resistant even to the database administrator. <code>row_data JSONB</code> stores the full NEW or OLD row as JSON, giving forensic detail without needing a separate shadow table per entity. <code>DEFAULT current_user</code> on <code>role_name</code> captures the actual database role, not a session variable that could be spoofed.
+        <strong>REVOKE DELETE … FROM nsr_dba</strong> is the key line — it makes the audit log tamper-resistant even to the database administrator. <code>row_data JSONB</code> stores the full NEW or OLD row as JSON, giving forensic detail without needing a separate shadow table per entity. <code>DEFAULT session_user</code> on <code>role_name</code> captures the original authenticated role — inside a <code>SECURITY DEFINER</code> function, <code>current_user</code> would return the function owner, not the caller.
       </div>
 
       <h3>Intermediate — The Audit Trigger Function</h3>
@@ -3519,8 +3519,10 @@ $$;
       <p><strong>pgAudit</strong> is a PostgreSQL extension that logs every DDL and DML statement to the server log, capturing the SQL text, the role that ran it, and the object it touched. It works at the <em>statement</em> level rather than the row level — complementary to, not a replacement for, the trigger-based <code>audit_log</code>.</p>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">sql – pgAudit setup and configuration</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-        <pre><span class="cmt">-- Step 1: Install pgAudit (run as superuser)</span>
-<span class="cmt">-- On most systems the extension is already available; just load it</span>
+        <pre><span class="cmt">-- Step 1: Install pgAudit (requires OS-level package first)</span>
+<span class="cmt">-- Windows: use Stack Builder to install the pgAudit add-on, then restart PostgreSQL</span>
+<span class="cmt">-- Linux:   sudo apt install postgresql-{ver}-pgaudit  (then restart PostgreSQL)</span>
+<span class="cmt">-- After restarting: ALTER SYSTEM SET shared_preload_libraries = 'pgaudit'; + restart</span>
 <span class="kw">CREATE EXTENSION IF NOT EXISTS</span> pgaudit;
 
 <span class="cmt">-- Step 2: Configure in postgresql.conf (or with ALTER SYSTEM)</span>
