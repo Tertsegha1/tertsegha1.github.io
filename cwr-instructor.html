@@ -60,11 +60,25 @@
 
     /* ── Score badge ── */
     .score{font-weight:700;font-size:0.85rem;}
-    .score-6{color:#4ade80;}
+    .score-max{color:#4ade80;}
     .score-hi{color:#86efac;}
     .score-mid{color:#fbbf24;}
     .score-lo{color:#f87171;}
     .score-0{color:#475569;}
+
+    /* ── Team badge ── */
+    .team-a{display:inline-block;font-size:0.6rem;font-weight:700;padding:1px 6px;border-radius:999px;background:#0f2a4a;color:#7dd3fc;border:1px solid #2563eb;margin-left:6px;vertical-align:middle;}
+    .team-b{display:inline-block;font-size:0.6rem;font-weight:700;padding:1px 6px;border-radius:999px;background:#3d2200;color:#fbbf24;border:1px solid #d97706;margin-left:6px;vertical-align:middle;}
+
+    /* ── Phase divider in table header ── */
+    .th-phase{background:#071120;font-size:0.55rem;color:#334155;padding:3px 4px;letter-spacing:0.3px;}
+
+    /* ── Team leaderboard ── */
+    #team-bar{display:flex;gap:16px;padding:12px 24px;border-bottom:1px solid #1e293b;flex-wrap:wrap;}
+    .team-card{background:#0d1929;border-radius:8px;padding:10px 18px;min-width:200px;display:flex;align-items:center;gap:14px;}
+    .team-card .team-score{font-size:1.5rem;font-weight:700;}
+    .team-card .team-info{font-size:0.7rem;color:#475569;}
+    .team-card .team-name{font-size:0.82rem;font-weight:600;margin-bottom:2px;}
 
     /* ── Row indicator ── */
     .row-bar{display:inline-block;width:4px;height:28px;border-radius:2px;vertical-align:middle;margin-right:8px;}
@@ -105,10 +119,36 @@
 <!-- Stats bar -->
 <div id="stats">
   <div class="stat-card"><div id="s-total" class="stat-val">—</div><div class="stat-lbl">Participants</div></div>
-  <div class="stat-card green"><div id="s-complete" class="stat-val">—</div><div class="stat-lbl">All 6 done</div></div>
+  <div class="stat-card green"><div id="s-complete" class="stat-val">—</div><div class="stat-lbl">All 14 done</div></div>
   <div class="stat-card amber"><div id="s-progress" class="stat-val">—</div><div class="stat-lbl">In progress</div></div>
   <div class="stat-card red"><div id="s-stuck" class="stat-val">—</div><div class="stat-lbl">Not started</div></div>
   <div class="stat-card" style="margin-left:auto;"><div id="s-avg" class="stat-val">—</div><div class="stat-lbl">Avg puzzles</div></div>
+</div>
+
+<!-- Team leaderboard -->
+<div id="team-bar">
+  <div style="color:#475569;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;align-self:center;margin-right:4px;">Team Scores</div>
+  <div class="team-card" style="border:1px solid #1d4ed8;">
+    <span style="font-size:1.6rem;">🔵</span>
+    <div>
+      <div class="team-name" style="color:#7dd3fc;">Team A &nbsp;<span style="font-weight:400;color:#475569;font-size:0.7rem;">Murtala Mohammed</span></div>
+      <div style="display:flex;align-items:baseline;gap:6px;">
+        <span id="ta-score" class="team-score" style="color:#7dd3fc;">—</span>
+        <span class="team-info">puzzles · <span id="ta-count">—</span> members</span>
+      </div>
+    </div>
+  </div>
+  <div class="team-card" style="border:1px solid #b45309;">
+    <span style="font-size:1.6rem;">🟠</span>
+    <div>
+      <div class="team-name" style="color:#fbbf24;">Team B &nbsp;<span style="font-weight:400;color:#475569;font-size:0.7rem;">Adeyinka Ismail Adisa</span></div>
+      <div style="display:flex;align-items:baseline;gap:6px;">
+        <span id="tb-score" class="team-score" style="color:#fbbf24;">—</span>
+        <span class="team-info">puzzles · <span id="tb-count">—</span> members</span>
+      </div>
+    </div>
+  </div>
+  <div id="team-leader" style="align-self:center;font-size:0.78rem;color:#475569;margin-left:8px;"></div>
 </div>
 
 <!-- Overall progress bar -->
@@ -139,14 +179,28 @@
   <table>
     <thead>
       <tr>
-        <th style="text-align:left;">Participant</th>
-        <th title="Phase 1 Foundation">P1</th>
+        <th style="text-align:left;" rowspan="2">Participant</th>
+        <th colspan="6" class="th-phase" style="color:#3b82f6;background:#071a30;">── PHASE 1 · FOUNDATION ──</th>
+        <th colspan="3" class="th-phase" style="color:#8b5cf6;background:#12092a;">── PHASE 2 · SECURITY ──</th>
+        <th colspan="3" class="th-phase" style="color:#10b981;background:#041a10;">── PHASE 3 · ANALYTICS ──</th>
+        <th colspan="2" class="th-phase" style="color:#d946ef;background:#1a0520;">── PHASE 4 ──</th>
+        <th rowspan="2">Score</th>
+      </tr>
+      <tr>
+        <th title="Phase 1 — Foundation">P1</th>
         <th title="Puzzle A — RBAC">A</th>
         <th title="Puzzle B — RLS">B</th>
         <th title="Puzzle C — Audit Trigger">C</th>
         <th title="Puzzle D — Monitoring">D</th>
-        <th title="Puzzle E — Backup & DR">E</th>
-        <th>Score</th>
+        <th title="Puzzle E — Backup &amp; DR">E</th>
+        <th title="Puzzle F — Column Security">F</th>
+        <th title="Puzzle G — Role Hierarchy">G</th>
+        <th title="Puzzle H — Forensic Audit">H</th>
+        <th title="Puzzle I — Index Tuning">I</th>
+        <th title="Puzzle J — Window Functions">J</th>
+        <th title="Puzzle K — CTE Pipeline">K</th>
+        <th title="Puzzle L — Transactions">L</th>
+        <th title="Puzzle M — Constraints">M</th>
       </tr>
     </thead>
     <tbody id="participants"></tbody>
@@ -159,8 +213,9 @@
 
 <script>
 (function(){
-  var KEYS=['p1','pa','pb','pc','pd','pe'];
-  var LABELS=['P1','A','B','C','D','E'];
+  var KEYS=['p1','pa','pb','pc','pd','pe','pf','pg','ph','pi','pj','pk','pl','pm'];
+  var LABELS=['P1','A','B','C','D','E','F','G','H','I','J','K','L','M'];
+  var MAX=KEYS.length;
   var participants={};
   var timerHandle=null;
 
@@ -282,19 +337,21 @@
         return '<td><span class="dot '+cls+'">'+ic+'</span></td>';
       }).join('');
 
-      var barColor=s>=5?'#22c55e':s>=3?'#fbbf24':'#ef4444';
-      var scoreClass=s===6?'score-6':s>=4?'score-hi':s>=2?'score-mid':s>=1?'score-lo':'score-0';
+      var barColor=s>=12?'#22c55e':s>=7?'#fbbf24':'#ef4444';
+      var scoreClass=s===MAX?'score-max':s>=10?'score-hi':s>=5?'score-mid':s>=1?'score-lo':'score-0';
+      var team=p.team||'';
+      var teamBadge=team?'<span class="team-'+(team==='A'?'a':'b')+'">Team '+team+'</span>':'';
 
       var ts=p.updated?relTime(p.updated):'—';
 
       return '<tr'+(isNew?' class="p-row-new"':'')+'>'+
         '<td>'+
           '<span class="row-bar" style="background:'+barColor+';"></span>'+
-          '<span class="p-name">'+(p.name||k)+'</span>'+
+          '<span class="p-name">'+(p.name||k)+'</span>'+teamBadge+
           '<div class="p-time">'+ts+'</div>'+
         '</td>'+
         dotCells+
-        '<td><span class="score '+scoreClass+'">'+s+'/6</span></td>'+
+        '<td><span class="score '+scoreClass+'">'+s+'/'+MAX+'</span></td>'+
       '</tr>';
     });
     tbody.innerHTML=rows.join('');
@@ -310,10 +367,10 @@
 
   function updateStats(list){
     var total=list.length;
-    var complete=list.filter(function(p){return score(p)===6;}).length;
+    var complete=list.filter(function(p){return score(p)===MAX;}).length;
     var notStarted=list.filter(function(p){return score(p)===0;}).length;
     var inProgress=total-complete-notStarted;
-    var totalPossible=total*6;
+    var totalPossible=total*MAX;
     var totalDone=list.reduce(function(a,p){return a+score(p);},0);
     var avg=total?Math.round((totalDone/total)*10)/10:0;
     var pct=totalPossible?Math.round((totalDone/totalPossible)*100):0;
@@ -322,11 +379,27 @@
     document.getElementById('s-complete').textContent=complete||'—';
     document.getElementById('s-progress').textContent=inProgress||'—';
     document.getElementById('s-stuck').textContent=notStarted||'—';
-    document.getElementById('s-avg').textContent=total?(avg+'/6'):'—';
+    document.getElementById('s-avg').textContent=total?(avg+'/'+MAX):'—';
 
     document.getElementById('prog-fill').style.width=pct+'%';
     document.getElementById('prog-label').textContent=
       'Class completion — '+totalDone+' of '+totalPossible+' puzzles solved ('+pct+'%)';
+
+    /* ── Team leaderboard ── */
+    var ta=list.filter(function(p){return p.team==='A';});
+    var tb=list.filter(function(p){return p.team==='B';});
+    var taScore=ta.reduce(function(a,p){return a+score(p);},0);
+    var tbScore=tb.reduce(function(a,p){return a+score(p);},0);
+    document.getElementById('ta-score').textContent=taScore||'0';
+    document.getElementById('ta-count').textContent=ta.length;
+    document.getElementById('tb-score').textContent=tbScore||'0';
+    document.getElementById('tb-count').textContent=tb.length;
+    var ldr=document.getElementById('team-leader');
+    if(ta.length&&tb.length){
+      if(taScore>tbScore)ldr.innerHTML='🏆 <strong style="color:#7dd3fc;">Team A</strong> leading';
+      else if(tbScore>taScore)ldr.innerHTML='🏆 <strong style="color:#fbbf24;">Team B</strong> leading';
+      else ldr.innerHTML='<strong style="color:#94a3b8;">Tied!</strong>';
+    } else {ldr.textContent='';}
   }
 
   function relTime(iso){

@@ -4596,8 +4596,8 @@ done</pre>
       <p style="color:#94a3b8;font-size:0.85rem;line-height:1.75;margin:0;">
         You are the <strong style="color:#e2e8f0;">Lead Database Engineer</strong> for the Community Welfare Register (CWR) — a system that tracks welfare beneficiaries and cash disbursements across Nigeria's geopolitical zones.
         The data layer has been built for you (partitioned tables, materialized views, monitoring views).
-        Your job is to <strong style="color:#e2e8f0;">complete the five missing security and operational layers</strong> that make the system production-ready.
-        Every puzzle you complete updates the live dashboard above — both yours and your instructor's.
+        Your job is to <strong style="color:#e2e8f0;">complete 13 puzzles across 4 phases</strong> that make the system production-ready: security, performance, analytics, and data integrity.
+        You are working as part of a team — select yours from the welcome screen when the page loads. Every puzzle you complete updates the live dashboard — yours, your team's, and your instructor's view — in real time.
       </p>
     </div>
 
@@ -4631,8 +4631,46 @@ done</pre>
       </div>
     </div>
 
+    <!-- Teams + timing overview -->
+    <div style="background:#071120;border:1px solid #1e293b;border-radius:10px;padding:18px 22px;margin-bottom:18px;">
+      <div style="color:#fbbf24;font-weight:700;font-size:0.88rem;margin-bottom:12px;">👥 Teams &amp; Session Structure — 4 Hours</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+        <div style="background:#0d1929;border:1.5px solid #1d4ed8;border-radius:7px;padding:12px 14px;">
+          <div style="color:#7dd3fc;font-weight:700;font-size:0.82rem;margin-bottom:4px;">🔵 Team A</div>
+          <div style="color:#94a3b8;font-size:0.76rem;line-height:1.6;">Led by <strong style="color:#e2e8f0;">Murtala Mohammed</strong><br>Select "Team A" on the welcome screen</div>
+        </div>
+        <div style="background:#0d1929;border:1.5px solid #b45309;border-radius:7px;padding:12px 14px;">
+          <div style="color:#fbbf24;font-weight:700;font-size:0.82rem;margin-bottom:4px;">🟠 Team B</div>
+          <div style="color:#94a3b8;font-size:0.76rem;line-height:1.6;">Led by <strong style="color:#e2e8f0;">Adeyinka Ismail Adisa</strong><br>Select "Team B" on the welcome screen</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+        <div style="background:#0d1929;border-radius:6px;padding:9px 10px;text-align:center;">
+          <div style="color:#3b82f6;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px;">Phase 1</div>
+          <div style="color:#e2e8f0;font-size:0.75rem;font-weight:600;">Foundation</div>
+          <div style="color:#475569;font-size:0.68rem;margin-top:2px;">~65 min</div>
+        </div>
+        <div style="background:#0d1929;border-radius:6px;padding:9px 10px;text-align:center;">
+          <div style="color:#8b5cf6;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px;">Phase 2</div>
+          <div style="color:#e2e8f0;font-size:0.75rem;font-weight:600;">Adv. Security</div>
+          <div style="color:#475569;font-size:0.68rem;margin-top:2px;">~75 min</div>
+        </div>
+        <div style="background:#0d1929;border-radius:6px;padding:9px 10px;text-align:center;">
+          <div style="color:#10b981;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px;">Phase 3</div>
+          <div style="color:#e2e8f0;font-size:0.75rem;font-weight:600;">Analytics</div>
+          <div style="color:#475569;font-size:0.68rem;margin-top:2px;">~75 min</div>
+        </div>
+        <div style="background:#0d1929;border-radius:6px;padding:9px 10px;text-align:center;">
+          <div style="color:#d946ef;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px;">Phase 4</div>
+          <div style="color:#e2e8f0;font-size:0.75rem;font-weight:600;">Data Integrity</div>
+          <div style="color:#475569;font-size:0.68rem;margin-top:2px;">~45 min bonus</div>
+        </div>
+      </div>
+      <div style="margin-top:10px;color:#334155;font-size:0.71rem;line-height:1.6;">Two 15-minute breaks are built in — between Phase 1→2 and Phase 2→3. The team with the most puzzles completed by end of session wins.</div>
+    </div>
+
     <!-- Step-by-step guide -->
-    <div style="color:#e2e8f0;font-weight:700;font-size:0.9rem;margin-bottom:14px;">📌 Step-by-Step: All Five Puzzles</div>
+    <div style="color:#e2e8f0;font-weight:700;font-size:0.9rem;margin-bottom:14px;">📌 Step-by-Step: All 13 Puzzles Across 4 Phases</div>
 
     <!-- Phase 1 -->
     <div style="background:#0d1929;border:1px solid #1e293b;border-left:3px solid #3b82f6;border-radius:8px;padding:16px 20px;margin-bottom:12px;">
@@ -4862,12 +4900,20 @@ done</pre>
     <script>
     (function(){
       var PHASES=[
-        {key:'p1',label:'Phase 1 · Foundation',anchor:'cwr-phase1'},
-        {key:'pa',label:'A · RBAC',            anchor:'cwr-puzzle-a'},
-        {key:'pb',label:'B · RLS',             anchor:'cwr-puzzle-b'},
-        {key:'pc',label:'C · Audit Trigger',   anchor:'cwr-puzzle-c'},
-        {key:'pd',label:'D · Monitoring',      anchor:'cwr-puzzle-d'},
-        {key:'pe',label:'E · Backup & DR',     anchor:'cwr-puzzle-e'}
+        {key:'p1',label:'Phase 1 · Foundation',  anchor:'cwr-phase1'},
+        {key:'pa',label:'A · RBAC',              anchor:'cwr-puzzle-a'},
+        {key:'pb',label:'B · RLS',               anchor:'cwr-puzzle-b'},
+        {key:'pc',label:'C · Audit Trigger',     anchor:'cwr-puzzle-c'},
+        {key:'pd',label:'D · Monitoring',        anchor:'cwr-puzzle-d'},
+        {key:'pe',label:'E · Backup & DR',       anchor:'cwr-puzzle-e'},
+        {key:'pf',label:'F · Column Security',   anchor:'cwr-puzzle-f'},
+        {key:'pg',label:'G · Role Hierarchy',    anchor:'cwr-puzzle-g'},
+        {key:'ph',label:'H · Forensic Audit',    anchor:'cwr-puzzle-h'},
+        {key:'pi',label:'I · Index Tuning',      anchor:'cwr-puzzle-i'},
+        {key:'pj',label:'J · Window Functions',  anchor:'cwr-puzzle-j'},
+        {key:'pk',label:'K · CTE Pipeline',      anchor:'cwr-puzzle-k'},
+        {key:'pl',label:'L · Transactions',      anchor:'cwr-puzzle-l'},
+        {key:'pm',label:'M · Constraints',       anchor:'cwr-puzzle-m'}
       ];
       function gs(k){return localStorage.getItem('cwr_'+k)||'todo';}
       function fbOk(){return window.CWR_FIREBASE&&window.CWR_FIREBASE.databaseURL&&!window.CWR_FIREBASE.databaseURL.includes('REPLACE');}
@@ -4877,8 +4923,9 @@ done</pre>
         if(!fbOk())return;
         var name=localStorage.getItem('cwr_participant_name');
         if(!name)return;
+        var team=localStorage.getItem('cwr_team')||'';
         var key=name.replace(/[^a-zA-Z0-9_-]/g,'_').toLowerCase().slice(0,40);
-        var data={name:name,updated:new Date().toISOString(),puzzles:{}};
+        var data={name:name,team:team,updated:new Date().toISOString(),puzzles:{}};
         PHASES.forEach(function(p){data.puzzles[p.key]=gs(p.key);});
         fetch(window.CWR_FIREBASE.databaseURL+'/cwr_workshop/'+key+'.json',{
           method:'PUT',headers:{'Content-Type':'application/json'},
@@ -4888,29 +4935,37 @@ done</pre>
 
       /* ── Public API ──────────────────────────────────────────── */
       window.cwrMark=function(k,s){
-        if(fbOk()&&!localStorage.getItem('cwr_participant_name')){
-          window._cwrPending={k:k,s:s};
-          var m=document.getElementById('cwr-name-modal');
-          if(m){m.style.display='flex';}
-          setTimeout(function(){var i=document.getElementById('cwr-name-input');if(i)i.focus();},50);
-          return;
-        }
         localStorage.setItem('cwr_'+k,s);
         cwrRefresh();
         syncFb();
       };
 
+      window.cwrSelectTeam=function(t){
+        localStorage.setItem('cwr_team',t);
+        ['A','B'].forEach(function(x){
+          var btn=document.getElementById('cwr-team-btn-'+x);
+          if(!btn)return;
+          var sel=(x===t);
+          btn.style.borderColor=sel?(x==='A'?'#2563eb':'#d97706'):'#334155';
+          btn.style.background=sel?(x==='A'?'#0f2a4a':'#3d2200'):'#071120';
+          btn.style.color=sel?(x==='A'?'#7dd3fc':'#fbbf24'):'#475569';
+        });
+        var err=document.getElementById('cwr-team-error');
+        if(err)err.style.display='none';
+      };
+
       window.cwrSetName=function(){
+        var team=localStorage.getItem('cwr_team');
+        if(!team){
+          var err=document.getElementById('cwr-team-error');
+          if(err)err.style.display='block'; return;
+        }
         var inp=document.getElementById('cwr-name-input');
         var name=inp?inp.value.trim():'';
         if(!name){if(inp)inp.style.borderColor='#ef4444';return;}
         localStorage.setItem('cwr_participant_name',name);
         var m=document.getElementById('cwr-name-modal');if(m)m.style.display='none';
         updateBadge();
-        if(window._cwrPending){
-          var p=window._cwrPending;window._cwrPending=null;
-          localStorage.setItem('cwr_'+p.k,p.s);cwrRefresh();
-        }
         syncFb();
       };
 
@@ -4924,11 +4979,17 @@ done</pre>
 
       function updateBadge(){
         var name=localStorage.getItem('cwr_participant_name');
+        var team=localStorage.getItem('cwr_team');
         var b=document.getElementById('cwr-participant-badge');
         if(!b)return;
-        if(name){b.textContent='👤 '+name;b.style.color='#7dd3fc';}
-        else if(fbOk()){b.textContent='👤 Not registered';b.style.color='#f59e0b';}
-        else{b.style.display='none';}
+        if(name&&team){
+          var clr=team==='A'?'#7dd3fc':'#fbbf24';
+          b.textContent='👤 Team '+team+' · '+name; b.style.color=clr;
+        } else if(name){
+          b.textContent='👤 '+name; b.style.color='#7dd3fc';
+        } else {
+          b.textContent='👤 Not registered'; b.style.color='#f59e0b';
+        }
       }
 
       /* ── UI refresh ──────────────────────────────────────────── */
@@ -4951,7 +5012,10 @@ done</pre>
             else{btn.style.background='#0f172a';btn.style.borderColor='#475569';btn.style.color='#94a3b8';btn.innerHTML='✅ Mark Complete';}
           }
         });
-        [['pa','🔑 RBAC'],['pb','🛡 RLS'],['pc','📋 Audit Trigger'],['pd','📊 Monitoring'],['pe','💾 Backup']].forEach(function(r){
+        [['pa','🔑 RBAC'],['pb','🛡 RLS'],['pc','📋 Audit Trigger'],['pd','📊 Monitoring'],['pe','💾 Backup'],
+         ['pf','🔒 Column Security'],['pg','👑 Role Hierarchy'],['ph','🔍 Forensic Audit'],
+         ['pi','⚡ Index Tuning'],['pj','📊 Window Functions'],['pk','📋 CTE Pipeline'],
+         ['pl','💼 Transactions'],['pm','✅ Constraints']].forEach(function(r){
           var dot=document.getElementById('cwr-dot-'+r[0]);
           var lbl=document.getElementById('cwr-hlabel-'+r[0]);
           var s=gs(r[0]);
@@ -4973,8 +5037,20 @@ done</pre>
         }
         updateBadge();
       }
-      if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',cwrRefresh);}
-      else{cwrRefresh();}
+      function checkShowWelcome(){
+        var name=localStorage.getItem('cwr_participant_name');
+        var team=localStorage.getItem('cwr_team');
+        if(!name||!team){
+          var m=document.getElementById('cwr-name-modal');
+          if(m){
+            m.style.display='flex';
+            if(team)window.cwrSelectTeam(team);
+            setTimeout(function(){var i=document.getElementById('cwr-name-input');if(i)i.focus();},80);
+          }
+        }
+      }
+      if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',function(){cwrRefresh();checkShowWelcome();});}
+      else{cwrRefresh();checkShowWelcome();}
     })();
     </script>
 
@@ -5192,7 +5268,344 @@ done</pre>
             '',
             '✓ Row counts match — backup verified'
           ]
+        },
+
+        /* ══ PHASE 2 ══════════════════════════════════════════════ */
+
+        pf: {
+          title:'Puzzle F · Column-Level Security', badge:'Phase 2', lang:'SQL',
+          desc:[
+            'Create a security view <code>cwr.v_beneficiary_public</code> that masks the national_id column.',
+            'Grant SELECT on this view to <code>cwr_analyst</code> — the analyst must never see raw national_id values.',
+            'Also revoke direct SELECT on <code>cwr.beneficiaries</code> from <code>cwr_analyst</code> so the view is the only access path.'
+          ],
+          hints:[
+            'Use <code>CREATE OR REPLACE VIEW cwr.v_beneficiary_public AS SELECT ... FROM cwr.beneficiaries</code>',
+            'Replace national_id with <code>\'***-MASKED***\'::text AS national_id</code>',
+            'Grant: <code>GRANT SELECT ON cwr.v_beneficiary_public TO cwr_analyst;</code>',
+            'Revoke: <code>REVOKE SELECT ON cwr.beneficiaries FROM cwr_analyst;</code>'
+          ],
+          starter:'-- Puzzle F: Column-Level Security View\n-- Create a view that hides national_id from cwr_analyst\n\nCREATE OR REPLACE VIEW cwr.v_beneficiary_public AS\nSELECT\n    beneficiary_id,\n    full_name,\n    \'***-MASKED***\'::text AS national_id,\n    zone_id,\n    registration_date,\n    is_active\nFROM cwr.beneficiaries;\n\nGRANT SELECT ON cwr.v_beneficiary_public TO cwr_analyst;\n\n-- Revoke direct table access from analyst\nREVOKE SELECT ON cwr.beneficiaries FROM cwr_analyst;\n',
+          validate:function(sql){
+            if(!/CREATE\s+(OR\s+REPLACE\s+)?VIEW\s+cwr\.v_beneficiary_public/i.test(sql))
+              return{ok:false,msg:'Missing: CREATE OR REPLACE VIEW cwr.v_beneficiary_public'};
+            if(!/MASKED/i.test(sql))
+              return{ok:false,msg:'national_id must be masked (use ***-MASKED*** or similar)'};
+            if(!/GRANT\s+SELECT\s+ON\s+cwr\.v_beneficiary_public\s+TO\s+cwr_analyst/i.test(sql))
+              return{ok:false,msg:'Missing: GRANT SELECT ON cwr.v_beneficiary_public TO cwr_analyst'};
+            if(!/REVOKE\s+SELECT\s+ON\s+cwr\.beneficiaries\s+FROM\s+cwr_analyst/i.test(sql))
+              return{ok:false,msg:'Missing: REVOKE SELECT ON cwr.beneficiaries FROM cwr_analyst'};
+            return{ok:true};
+          },
+          output:[
+            'CREATE VIEW',
+            'GRANT',
+            'REVOKE',
+            '',
+            '-- Verify: run as cwr_analyst',
+            'SELECT national_id FROM cwr.v_beneficiary_public LIMIT 1;',
+            ' national_id',
+            '-------------',
+            ' ***-MASKED***',
+            '(1 row)',
+            '',
+            '✓ Column-level security enforced — analyst cannot see raw national_id'
+          ]
+        },
+
+        pg: {
+          title:'Puzzle G · Role Hierarchy & Inheritance', badge:'Phase 2', lang:'SQL',
+          desc:[
+            'Create a <code>cwr_supervisor</code> role that <em>inherits</em> all privileges of <code>cwr_caseworker</code>.',
+            'Additionally grant the supervisor the ability to DELETE from <code>cwr.beneficiaries</code>.',
+            'Create a login user <code>carol_sup</code> with password <code>CWR2026!</code> and assign her the supervisor role.'
+          ],
+          hints:[
+            '<code>CREATE ROLE cwr_supervisor INHERIT;</code>',
+            '<code>GRANT cwr_caseworker TO cwr_supervisor;</code> — this gives inherited permissions',
+            '<code>GRANT DELETE ON cwr.beneficiaries TO cwr_supervisor;</code>',
+            '<code>CREATE USER carol_sup WITH PASSWORD \'CWR2026!\' IN ROLE cwr_supervisor;</code>'
+          ],
+          starter:'-- Puzzle G: Role Hierarchy\n\nCREATE ROLE cwr_supervisor INHERIT;\n\n-- Inherit all caseworker privileges\nGRANT cwr_caseworker TO cwr_supervisor;\n\n-- Additional supervisor-only privilege\nGRANT DELETE ON cwr.beneficiaries TO cwr_supervisor;\n\n-- Create login user assigned to supervisor role\nCREATE USER carol_sup WITH PASSWORD \'CWR2026!\' IN ROLE cwr_supervisor;\n',
+          validate:function(sql){
+            if(!/CREATE\s+ROLE\s+cwr_supervisor/i.test(sql))
+              return{ok:false,msg:'Missing: CREATE ROLE cwr_supervisor'};
+            if(!/GRANT\s+cwr_caseworker\s+TO\s+cwr_supervisor/i.test(sql))
+              return{ok:false,msg:'Missing: GRANT cwr_caseworker TO cwr_supervisor'};
+            if(!/GRANT\s+DELETE\s+ON\s+cwr\.beneficiaries\s+TO\s+cwr_supervisor/i.test(sql))
+              return{ok:false,msg:'Missing: GRANT DELETE ON cwr.beneficiaries TO cwr_supervisor'};
+            if(!/CREATE\s+USER\s+carol_sup/i.test(sql))
+              return{ok:false,msg:'Missing: CREATE USER carol_sup'};
+            return{ok:true};
+          },
+          output:[
+            'CREATE ROLE',
+            'GRANT ROLE',
+            'GRANT',
+            'CREATE ROLE',
+            '',
+            '-- Verify role tree',
+            '\\du cwr_supervisor',
+            '   Role name     | Member of',
+            '----------------+--------------------',
+            ' cwr_supervisor | {cwr_caseworker}',
+            '',
+            '✓ Role hierarchy established — carol_sup inherits caseworker + delete rights'
+          ]
+        },
+
+        ph: {
+          title:'Puzzle H · Forensic Audit Analysis', badge:'Phase 2', lang:'SQL',
+          desc:[
+            'The audit_log table contains JSONB event records from Puzzle C\'s trigger.',
+            'Write a query that retrieves the last 10 INSERT events from <code>cwr.audit_log</code>, showing: log_time, role_name, action, and the <code>beneficiary_id</code> extracted from the row_data JSONB column.',
+            'Order by log_time DESC.'
+          ],
+          hints:[
+            'JSONB extraction: <code>row_data->>\'beneficiary_id\'</code>',
+            'Filter by action: <code>WHERE action = \'INSERT\'</code>',
+            'Order: <code>ORDER BY log_time DESC LIMIT 10</code>',
+            'If audit_log is empty, first run: <code>INSERT INTO cwr.beneficiaries(full_name,national_id,zone_id) VALUES(\'Test\',\'NIN999\',1);</code>'
+          ],
+          starter:'-- Puzzle H: Forensic Audit Investigation\n-- Query the audit log to find recent INSERT events\n\nSELECT\n    log_time,\n    role_name,\n    action,\n    row_data->>\'beneficiary_id\' AS beneficiary_id\nFROM cwr.audit_log\nWHERE action = \'INSERT\'\nORDER BY log_time DESC\nLIMIT 10;\n',
+          validate:function(sql){
+            if(!/SELECT/i.test(sql))
+              return{ok:false,msg:'Missing: SELECT statement'};
+            if(!/cwr\.audit_log/i.test(sql))
+              return{ok:false,msg:'Missing: FROM cwr.audit_log'};
+            if(!/->>/.test(sql))
+              return{ok:false,msg:'Missing: JSONB extraction operator ->>'};
+            if(!/action\s*=\s*'INSERT'/i.test(sql))
+              return{ok:false,msg:"Missing: WHERE action = 'INSERT'"};
+            if(!/ORDER\s+BY/i.test(sql))
+              return{ok:false,msg:'Missing: ORDER BY log_time DESC'};
+            return{ok:true};
+          },
+          output:[
+            '          log_time          | role_name  | action | beneficiary_id',
+            '----------------------------+------------+--------+----------------',
+            ' 2026-06-29 09:14:32.441+01 | postgres   | INSERT | 7',
+            ' 2026-06-29 09:11:18.203+01 | postgres   | INSERT | 6',
+            ' 2026-06-29 09:08:55.119+01 | postgres   | INSERT | 5',
+            '(3 rows)',
+            '',
+            '✓ Forensic query complete — audit trail is queryable'
+          ]
+        },
+
+        /* ══ PHASE 3 ══════════════════════════════════════════════ */
+
+        pi: {
+          title:'Puzzle I · EXPLAIN ANALYZE & Index Tuning', badge:'Phase 3', lang:'SQL',
+          desc:[
+            'The disbursements table is missing an index on <code>zone_id</code> — queries that filter by zone do a full sequential scan.',
+            'First run EXPLAIN ANALYZE on the slow query (provided). Then create a B-tree index on <code>cwr.disbursements(zone_id)</code>. Finally run EXPLAIN ANALYZE again to confirm the index is used.'
+          ],
+          hints:[
+            '<code>EXPLAIN ANALYZE SELECT * FROM cwr.disbursements WHERE zone_id = 3;</code>',
+            '<code>CREATE INDEX idx_disbursements_zone ON cwr.disbursements(zone_id);</code>',
+            'After creating the index, re-run EXPLAIN ANALYZE — you should see "Index Scan" instead of "Seq Scan"',
+            'If the table is small, PostgreSQL may still choose Seq Scan — run <code>SET enable_seqscan = off;</code> to force index usage for testing'
+          ],
+          starter:'-- Puzzle I: Index Tuning\n-- Step 1: run the slow query (Seq Scan expected)\nEXPLAIN ANALYZE\nSELECT * FROM cwr.disbursements WHERE zone_id = 3;\n\n-- Step 2: create the index\nCREATE INDEX idx_disbursements_zone ON cwr.disbursements(zone_id);\n\n-- Step 3: confirm index is used\nSET enable_seqscan = off;\nEXPLAIN ANALYZE\nSELECT * FROM cwr.disbursements WHERE zone_id = 3;\nSET enable_seqscan = on;\n',
+          validate:function(sql){
+            if(!/EXPLAIN\s+ANALYZE/i.test(sql))
+              return{ok:false,msg:'Missing: EXPLAIN ANALYZE'};
+            if(!/CREATE\s+INDEX/i.test(sql))
+              return{ok:false,msg:'Missing: CREATE INDEX'};
+            if(!/idx_disbursements_zone/i.test(sql))
+              return{ok:false,msg:'Index must be named idx_disbursements_zone'};
+            if(!/cwr\.disbursements\s*\(\s*zone_id\s*\)/i.test(sql))
+              return{ok:false,msg:'Missing: CREATE INDEX on cwr.disbursements(zone_id)'};
+            return{ok:true};
+          },
+          output:[
+            '-- Before index:',
+            'Seq Scan on disbursements  (cost=0.00..1.08 rows=2 width=52)',
+            '  Filter: (zone_id = 3)',
+            '',
+            'CREATE INDEX',
+            '',
+            '-- After index:',
+            'Index Scan using idx_disbursements_zone on disbursements',
+            '  Index Cond: (zone_id = 3)',
+            '  Execution Time: 0.041 ms',
+            '',
+            '✓ Index created — query now uses Index Scan instead of Seq Scan'
+          ]
+        },
+
+        pj: {
+          title:'Puzzle J · Window Functions', badge:'Phase 3', lang:'SQL',
+          desc:[
+            'Write a window function query over <code>cwr.disbursements</code> that shows for each disbursement: the zone_id, amount, and a running total of amount within each zone (ordered by disbursement_date).',
+            'Also include a rank() of each disbursement within its zone by amount (highest first).',
+            'The result gives a cumulative spending view per zone.'
+          ],
+          hints:[
+            '<code>SUM(amount) OVER (PARTITION BY zone_id ORDER BY disbursement_date)</code>',
+            '<code>RANK() OVER (PARTITION BY zone_id ORDER BY amount DESC)</code>',
+            'Both window functions can be in the same SELECT — no subquery needed',
+            'Alias running total as <code>running_total</code> and rank as <code>zone_rank</code>'
+          ],
+          starter:'-- Puzzle J: Window Functions\n-- Running total and rank per zone\n\nSELECT\n    disbursement_id,\n    zone_id,\n    amount,\n    disbursement_date,\n    SUM(amount) OVER (\n        PARTITION BY zone_id\n        ORDER BY disbursement_date\n    ) AS running_total,\n    RANK() OVER (\n        PARTITION BY zone_id\n        ORDER BY amount DESC\n    ) AS zone_rank\nFROM cwr.disbursements\nORDER BY zone_id, disbursement_date;\n',
+          validate:function(sql){
+            if(!/SELECT/i.test(sql))
+              return{ok:false,msg:'Missing: SELECT statement'};
+            if(!/cwr\.disbursements/i.test(sql))
+              return{ok:false,msg:'Missing: FROM cwr.disbursements'};
+            if(!/SUM\s*\(\s*amount\s*\)\s*OVER/i.test(sql))
+              return{ok:false,msg:'Missing: SUM(amount) OVER (...) window function'};
+            if(!/PARTITION\s+BY\s+zone_id/i.test(sql))
+              return{ok:false,msg:'Missing: PARTITION BY zone_id'};
+            if(!/RANK\s*\(\s*\)\s*OVER/i.test(sql))
+              return{ok:false,msg:'Missing: RANK() OVER (...) window function'};
+            return{ok:true};
+          },
+          output:[
+            ' disbursement_id | zone_id |  amount   | running_total | zone_rank',
+            '-----------------+---------+-----------+---------------+-----------',
+            '               1 |       1 | 25000.00  |     25000.00  |         1',
+            '               3 |       1 | 18000.00  |     43000.00  |         2',
+            '               2 |       2 | 32000.00  |     32000.00  |         1',
+            '               4 |       3 | 15000.00  |     15000.00  |         1',
+            '(4 rows)',
+            '',
+            '✓ Window functions correct — running totals and zone ranks calculated'
+          ]
+        },
+
+        pk: {
+          title:'Puzzle K · Multi-CTE Management Report', badge:'Phase 3', lang:'SQL',
+          desc:[
+            'Write a management report using at least 2 CTEs that calculates: (1) total disbursed per zone, (2) beneficiary count per zone, and (3) average disbursement per beneficiary per zone.',
+            'Join zones table to show zone names. Present as a ranked summary (highest avg disbursement first).',
+            'This is the final analytics report the Minister will see.'
+          ],
+          hints:[
+            'CTE 1: <code>WITH zone_spend AS (SELECT zone_id, SUM(amount) AS total FROM cwr.disbursements GROUP BY zone_id)</code>',
+            'CTE 2: <code>bene_count AS (SELECT zone_id, COUNT(*) AS beneficiaries FROM cwr.beneficiaries GROUP BY zone_id)</code>',
+            'Final SELECT joins both CTEs to cwr.zones on zone_id',
+            'Compute avg: <code>ROUND(zs.total / NULLIF(bc.beneficiaries,0), 2) AS avg_per_bene</code>'
+          ],
+          starter:'-- Puzzle K: Multi-CTE Management Report\n\nWITH zone_spend AS (\n    SELECT zone_id, SUM(amount) AS total_disbursed\n    FROM cwr.disbursements\n    GROUP BY zone_id\n),\nbene_count AS (\n    SELECT zone_id, COUNT(*) AS beneficiaries\n    FROM cwr.beneficiaries\n    WHERE is_active = TRUE\n    GROUP BY zone_id\n)\nSELECT\n    z.zone_name,\n    COALESCE(zs.total_disbursed, 0)  AS total_disbursed,\n    COALESCE(bc.beneficiaries, 0)    AS beneficiaries,\n    ROUND(\n        COALESCE(zs.total_disbursed,0)\n        / NULLIF(COALESCE(bc.beneficiaries,0), 0)\n    , 2) AS avg_per_beneficiary\nFROM cwr.zones z\nLEFT JOIN zone_spend  zs ON z.zone_id = zs.zone_id\nLEFT JOIN bene_count  bc ON z.zone_id = bc.zone_id\nORDER BY avg_per_beneficiary DESC NULLS LAST;\n',
+          validate:function(sql){
+            if(!/WITH\s+\w+\s+AS\s*\(/i.test(sql))
+              return{ok:false,msg:'Missing: WITH ... AS (...) CTE syntax'};
+            if((sql.match(/\bAS\s*\(/gi)||[]).length<2)
+              return{ok:false,msg:'Need at least 2 CTEs'};
+            if(!/cwr\.disbursements/i.test(sql))
+              return{ok:false,msg:'Missing: cwr.disbursements in a CTE'};
+            if(!/cwr\.beneficiaries/i.test(sql))
+              return{ok:false,msg:'Missing: cwr.beneficiaries in a CTE'};
+            if(!/SUM\s*\(\s*amount\s*\)/i.test(sql))
+              return{ok:false,msg:'Missing: SUM(amount) aggregation'};
+            if(!/cwr\.zones/i.test(sql))
+              return{ok:false,msg:'Missing: JOIN cwr.zones for zone names'};
+            return{ok:true};
+          },
+          output:[
+            '   zone_name    | total_disbursed | beneficiaries | avg_per_beneficiary',
+            '----------------+-----------------+---------------+--------------------',
+            ' South-West     |       57000.00  |             2 |            28500.00',
+            ' North-Central  |       25000.00  |             1 |            25000.00',
+            ' North-West     |       15000.00  |             1 |            15000.00',
+            ' North-East     |          0.00   |             1 |                0.00',
+            '(4 rows)',
+            '',
+            '✓ Management report complete — multi-CTE pipeline working'
+          ]
+        },
+
+        /* ══ PHASE 4 (BONUS) ══════════════════════════════════════ */
+
+        pl: {
+          title:'Puzzle L · Transaction Management & Savepoints', badge:'Phase 4', lang:'SQL',
+          desc:[
+            'Demonstrate safe transaction management with a SAVEPOINT.',
+            'Start a transaction that: (1) inserts a new beneficiary, (2) creates a SAVEPOINT, (3) inserts a disbursement for them, (4) rolls back to the savepoint (simulating an error on the disbursement), and (5) commits — leaving only the beneficiary row.',
+            'Verify the beneficiary exists but no disbursement was added.'
+          ],
+          hints:[
+            '<code>BEGIN;</code> starts the transaction',
+            '<code>SAVEPOINT sp1;</code> creates the checkpoint',
+            '<code>ROLLBACK TO SAVEPOINT sp1;</code> undoes work since the savepoint',
+            '<code>COMMIT;</code> commits everything before the savepoint'
+          ],
+          starter:'-- Puzzle L: Transaction Management & Savepoints\n\nBEGIN;\n\n-- Step 1: insert a new beneficiary\nINSERT INTO cwr.beneficiaries(full_name, national_id, zone_id)\nVALUES (\'Zainab Musa\', \'NIN-TXN-001\', 2)\nRETURNING beneficiary_id;\n\n-- Step 2: create a savepoint before the disbursement\nSAVEPOINT sp1;\n\n-- Step 3: attempt a disbursement (will be rolled back)\nINSERT INTO cwr.disbursements(beneficiary_id, program_id, amount, zone_id)\nVALUES (currval(\'cwr.beneficiaries_beneficiary_id_seq\'), 1, 99999.00, 2);\n\n-- Step 4: simulate error — roll back disbursement only\nROLLBACK TO SAVEPOINT sp1;\n\n-- Step 5: commit — only beneficiary insert survives\nCOMMIT;\n\n-- Verify\nSELECT beneficiary_id, full_name FROM cwr.beneficiaries WHERE national_id = \'NIN-TXN-001\';\n',
+          validate:function(sql){
+            if(!/BEGIN/i.test(sql))
+              return{ok:false,msg:'Missing: BEGIN'};
+            if(!/SAVEPOINT\s+\w+/i.test(sql))
+              return{ok:false,msg:'Missing: SAVEPOINT sp1'};
+            if(!/ROLLBACK\s+TO\s+SAVEPOINT/i.test(sql))
+              return{ok:false,msg:'Missing: ROLLBACK TO SAVEPOINT'};
+            if(!/COMMIT/i.test(sql))
+              return{ok:false,msg:'Missing: COMMIT'};
+            if(!/INSERT\s+INTO\s+cwr\.beneficiaries/i.test(sql))
+              return{ok:false,msg:'Missing: INSERT INTO cwr.beneficiaries'};
+            return{ok:true};
+          },
+          output:[
+            'BEGIN',
+            ' beneficiary_id',
+            '----------------',
+            '              8',
+            '(1 row)',
+            '',
+            'SAVEPOINT',
+            'INSERT 0 1',
+            'ROLLBACK',
+            'COMMIT',
+            '',
+            ' beneficiary_id |  full_name',
+            '----------------+------------',
+            '              8 | Zainab Musa',
+            '(1 row)',
+            '',
+            '✓ Savepoint rollback worked — beneficiary saved, bad disbursement discarded'
+          ]
+        },
+
+        pm: {
+          title:'Puzzle M · Check Constraints & Data Validation', badge:'Phase 4', lang:'SQL',
+          desc:[
+            'The disbursements table currently allows negative amounts and future dates — both are invalid business rules.',
+            'Add two CHECK constraints: (1) amount must be > 0, (2) disbursement_date must not be in the future.',
+            'Then verify the constraints by attempting to insert an invalid row — it must be rejected.'
+          ],
+          hints:[
+            '<code>ALTER TABLE cwr.disbursements ADD CONSTRAINT chk_amount_positive CHECK (amount > 0);</code>',
+            '<code>ALTER TABLE cwr.disbursements ADD CONSTRAINT chk_date_not_future CHECK (disbursement_date <= CURRENT_DATE);</code>',
+            'Test rejection: <code>INSERT INTO cwr.disbursements(...) VALUES(..., -500, ...);</code> — should raise ERROR',
+            'Existing rows must already satisfy the constraints or the ALTER TABLE will fail'
+          ],
+          starter:'-- Puzzle M: Check Constraints\n\n-- Add constraint: amount must be positive\nALTER TABLE cwr.disbursements\n    ADD CONSTRAINT chk_amount_positive\n    CHECK (amount > 0);\n\n-- Add constraint: date cannot be in the future\nALTER TABLE cwr.disbursements\n    ADD CONSTRAINT chk_date_not_future\n    CHECK (disbursement_date <= CURRENT_DATE);\n\n-- Verify: this insert should FAIL\nDO $$\nBEGIN\n    INSERT INTO cwr.disbursements(beneficiary_id, program_id, amount, zone_id)\n    VALUES (1, 1, -500.00, 1);\n    RAISE NOTICE \'ERROR: constraint did not fire!\'; -- should not reach here\nEXCEPTION WHEN check_violation THEN\n    RAISE NOTICE \'OK: negative amount correctly rejected — %\', SQLERRM;\nEND;\n$$;\n',
+          validate:function(sql){
+            if(!/ALTER\s+TABLE\s+cwr\.disbursements/i.test(sql))
+              return{ok:false,msg:'Missing: ALTER TABLE cwr.disbursements'};
+            if(!/ADD\s+CONSTRAINT\s+chk_amount_positive/i.test(sql))
+              return{ok:false,msg:'Missing: ADD CONSTRAINT chk_amount_positive'};
+            if(!/CHECK\s*\(\s*amount\s*>\s*0\s*\)/i.test(sql))
+              return{ok:false,msg:'Missing: CHECK (amount > 0)'};
+            if(!/ADD\s+CONSTRAINT\s+chk_date_not_future/i.test(sql))
+              return{ok:false,msg:'Missing: ADD CONSTRAINT chk_date_not_future'};
+            if(!/disbursement_date\s*<=\s*CURRENT_DATE/i.test(sql))
+              return{ok:false,msg:'Missing: CHECK (disbursement_date <= CURRENT_DATE)'};
+            return{ok:true};
+          },
+          output:[
+            'ALTER TABLE',
+            'ALTER TABLE',
+            '',
+            'DO',
+            'NOTICE:  OK: negative amount correctly rejected — new row for relation',
+            '         "disbursements" violates check constraint "chk_amount_positive"',
+            '',
+            '✓ Check constraints active — invalid data rejected at the database layer'
+          ]
         }
+
       };
 
       /* ── Open editor ─────────────────────────────────────────── */
@@ -5272,7 +5685,7 @@ done</pre>
 
       /* ── Update Open/Retry buttons on every status change ────── */
       function cwrSyncBtns(){
-        ['p1','pa','pb','pc','pd','pe'].forEach(function(k){
+        ['p1','pa','pb','pc','pd','pe','pf','pg','ph','pi','pj','pk','pl','pm'].forEach(function(k){
           var s=localStorage.getItem('cwr_'+k)||'todo';
           var btn=document.getElementById('cwr-openBtn-'+k);
           if(btn){
@@ -5407,20 +5820,43 @@ done</pre>
       </div>
     </div>
 
-    <!-- Participant Name Modal (shown on first Mark Complete if Firebase is configured) -->
-    <div id="cwr-name-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.82);z-index:9999;align-items:center;justify-content:center;">
-      <div style="background:#0d1929;border:1px solid #334155;border-radius:14px;padding:32px 28px;max-width:380px;width:90%;box-shadow:0 30px 60px rgba(0,0,0,0.5);text-align:center;font-family:system-ui,sans-serif;">
-        <div style="font-size:2rem;margin-bottom:10px;">🏛</div>
-        <h3 style="color:#e2e8f0;margin:0 0 6px;font-size:1.05rem;">CWR Mini Project</h3>
-        <p style="color:#64748b;font-size:0.85rem;margin:0 0 20px;line-height:1.5;">Enter your name so your instructor can track your progress live on the monitoring dashboard.</p>
-        <input id="cwr-name-input" type="text" placeholder="Your full name"
-          style="width:100%;padding:10px 12px;background:#071120;border:1.5px solid #334155;border-radius:7px;color:#e2e8f0;font-size:0.95rem;font-family:inherit;box-sizing:border-box;outline:none;"
+    <!-- Welcome / Team Selection Modal — shown on page load until name+team registered -->
+    <div id="cwr-name-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.88);z-index:9999;align-items:center;justify-content:center;">
+      <div style="background:#0d1929;border:1px solid #1e293b;border-radius:14px;padding:28px 26px;max-width:500px;width:94%;box-shadow:0 30px 60px rgba(0,0,0,0.5);font-family:system-ui,sans-serif;">
+        <div style="text-align:center;margin-bottom:20px;">
+          <div style="font-size:2rem;margin-bottom:6px;">🏛</div>
+          <div style="color:#e2e8f0;font-weight:700;font-size:1rem;">CWR Mini Project &nbsp;·&nbsp; 29 June 2026</div>
+          <div style="color:#475569;font-size:0.78rem;margin-top:4px;">Select your team and enter your name to begin · Your progress syncs live to the instructor</div>
+        </div>
+
+        <!-- Team selection -->
+        <div style="font-size:0.6rem;color:#475569;text-transform:uppercase;letter-spacing:0.9px;margin-bottom:8px;font-weight:600;">Select Your Team</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px;">
+          <button id="cwr-team-btn-A" onclick="cwrSelectTeam('A')"
+            style="background:#071120;border:1.5px solid #334155;color:#475569;border-radius:8px;padding:14px 12px;cursor:pointer;font-family:inherit;text-align:left;transition:all 0.15s;">
+            <div style="font-size:1.3rem;margin-bottom:5px;">🔵</div>
+            <div style="font-size:0.82rem;font-weight:700;color:#94a3b8;margin-bottom:2px;">Team A</div>
+            <div style="font-size:0.7rem;color:#475569;line-height:1.4;">Led by<br><strong style="color:#64748b;">Murtala Mohammed</strong></div>
+          </button>
+          <button id="cwr-team-btn-B" onclick="cwrSelectTeam('B')"
+            style="background:#071120;border:1.5px solid #334155;color:#475569;border-radius:8px;padding:14px 12px;cursor:pointer;font-family:inherit;text-align:left;transition:all 0.15s;">
+            <div style="font-size:1.3rem;margin-bottom:5px;">🟠</div>
+            <div style="font-size:0.82rem;font-weight:700;color:#94a3b8;margin-bottom:2px;">Team B</div>
+            <div style="font-size:0.7rem;color:#475569;line-height:1.4;">Led by<br><strong style="color:#64748b;">Adeyinka Ismail Adisa</strong></div>
+          </button>
+        </div>
+        <div id="cwr-team-error" style="display:none;color:#ef4444;font-size:0.72rem;margin-bottom:8px;">Please select a team first.</div>
+
+        <!-- Name input -->
+        <div style="font-size:0.6rem;color:#475569;text-transform:uppercase;letter-spacing:0.9px;margin-top:12px;margin-bottom:6px;font-weight:600;">Your Full Name</div>
+        <input id="cwr-name-input" type="text" placeholder="e.g. Amaka Okafor"
+          style="width:100%;padding:10px 12px;background:#071120;border:1.5px solid #334155;border-radius:7px;color:#e2e8f0;font-size:0.92rem;font-family:inherit;box-sizing:border-box;outline:none;"
           onkeydown="if(event.key==='Enter')cwrSetName()" />
         <button onclick="cwrSetName()"
-          style="margin-top:10px;width:100%;padding:11px;background:#2563eb;color:#fff;border:none;border-radius:7px;font-size:0.92rem;font-weight:600;cursor:pointer;font-family:inherit;">
-          Start Workshop →
+          style="margin-top:10px;width:100%;padding:11px;background:#2563eb;color:#fff;border:none;border-radius:7px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit;">
+          Join Team &amp; Start →
         </button>
-        <div style="color:#334155;font-size:0.7rem;margin-top:12px;">Only your name and puzzle completion status is shared with your instructor.</div>
+        <div style="color:#334155;font-size:0.69rem;text-align:center;margin-top:10px;">Your name, team, and puzzle status are shared with your instructor in real time.</div>
       </div>
     </div>
 
@@ -5625,6 +6061,115 @@ done</pre>
                 <span id="cwr-dot-pe" style="width:7px;height:7px;background:#f59e0b;border-radius:50%;display:inline-block;flex-shrink:0;"></span>
                 <span id="cwr-hlabel-pe" style="color:#f59e0b;font-size:0.72rem;font-weight:600;">Not started</span>
                 <button id="cwr-openBtn-pe" onclick="cwrOpenPuzzle('pe')" style="background:#0f2a4a;color:#7dd3fc;border:1px solid #2563eb;font-size:0.62rem;padding:2px 8px;border-radius:4px;cursor:pointer;font-family:inherit;white-space:nowrap;">▶ Open</button>
+              </span>
+            </div>
+
+            <!-- Break 1 -->
+            <div style="display:flex;align-items:center;gap:8px;padding:5px 2px;margin:4px 0;">
+              <div style="flex:1;height:1px;background:#1e293b;"></div>
+              <span style="color:#475569;font-size:0.63rem;font-weight:600;letter-spacing:0.5px;white-space:nowrap;">☕ BREAK · 15 min · Phase 2 starts below</span>
+              <div style="flex:1;height:1px;background:#1e293b;"></div>
+            </div>
+
+            <!-- Phase 2 header -->
+            <div style="padding:4px 6px;margin-bottom:2px;">
+              <span style="background:#312e81;color:#a5b4fc;font-size:0.6rem;font-weight:700;padding:2px 8px;border-radius:999px;letter-spacing:0.5px;">PHASE 2 · ADVANCED SECURITY</span>
+            </div>
+
+            <!-- Puzzle F -->
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#071120;border-radius:5px;">
+              <span style="color:#94a3b8;font-size:0.76rem;">🔒 Puzzle F · Column Security</span>
+              <span style="display:flex;align-items:center;gap:6px;">
+                <span id="cwr-dot-pf" style="width:7px;height:7px;background:#f59e0b;border-radius:50%;display:inline-block;flex-shrink:0;"></span>
+                <span id="cwr-hlabel-pf" style="color:#f59e0b;font-size:0.72rem;font-weight:600;">Not started</span>
+                <button id="cwr-openBtn-pf" onclick="cwrOpenPuzzle('pf')" style="background:#0f2a4a;color:#7dd3fc;border:1px solid #2563eb;font-size:0.62rem;padding:2px 8px;border-radius:4px;cursor:pointer;font-family:inherit;white-space:nowrap;">▶ Open</button>
+              </span>
+            </div>
+
+            <!-- Puzzle G -->
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#071120;border-radius:5px;">
+              <span style="color:#94a3b8;font-size:0.76rem;">👑 Puzzle G · Role Hierarchy</span>
+              <span style="display:flex;align-items:center;gap:6px;">
+                <span id="cwr-dot-pg" style="width:7px;height:7px;background:#f59e0b;border-radius:50%;display:inline-block;flex-shrink:0;"></span>
+                <span id="cwr-hlabel-pg" style="color:#f59e0b;font-size:0.72rem;font-weight:600;">Not started</span>
+                <button id="cwr-openBtn-pg" onclick="cwrOpenPuzzle('pg')" style="background:#0f2a4a;color:#7dd3fc;border:1px solid #2563eb;font-size:0.62rem;padding:2px 8px;border-radius:4px;cursor:pointer;font-family:inherit;white-space:nowrap;">▶ Open</button>
+              </span>
+            </div>
+
+            <!-- Puzzle H -->
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#071120;border-radius:5px;">
+              <span style="color:#94a3b8;font-size:0.76rem;">🔍 Puzzle H · Forensic Audit</span>
+              <span style="display:flex;align-items:center;gap:6px;">
+                <span id="cwr-dot-ph" style="width:7px;height:7px;background:#f59e0b;border-radius:50%;display:inline-block;flex-shrink:0;"></span>
+                <span id="cwr-hlabel-ph" style="color:#f59e0b;font-size:0.72rem;font-weight:600;">Not started</span>
+                <button id="cwr-openBtn-ph" onclick="cwrOpenPuzzle('ph')" style="background:#0f2a4a;color:#7dd3fc;border:1px solid #2563eb;font-size:0.62rem;padding:2px 8px;border-radius:4px;cursor:pointer;font-family:inherit;white-space:nowrap;">▶ Open</button>
+              </span>
+            </div>
+
+            <!-- Break 2 -->
+            <div style="display:flex;align-items:center;gap:8px;padding:5px 2px;margin:4px 0;">
+              <div style="flex:1;height:1px;background:#1e293b;"></div>
+              <span style="color:#475569;font-size:0.63rem;font-weight:600;letter-spacing:0.5px;white-space:nowrap;">☕ BREAK · 15 min · Phase 3 starts below</span>
+              <div style="flex:1;height:1px;background:#1e293b;"></div>
+            </div>
+
+            <!-- Phase 3 header -->
+            <div style="padding:4px 6px;margin-bottom:2px;">
+              <span style="background:#064e3b;color:#6ee7b7;font-size:0.6rem;font-weight:700;padding:2px 8px;border-radius:999px;letter-spacing:0.5px;">PHASE 3 · PERFORMANCE &amp; ANALYTICS</span>
+            </div>
+
+            <!-- Puzzle I -->
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#071120;border-radius:5px;">
+              <span style="color:#94a3b8;font-size:0.76rem;">⚡ Puzzle I · Index Tuning</span>
+              <span style="display:flex;align-items:center;gap:6px;">
+                <span id="cwr-dot-pi" style="width:7px;height:7px;background:#f59e0b;border-radius:50%;display:inline-block;flex-shrink:0;"></span>
+                <span id="cwr-hlabel-pi" style="color:#f59e0b;font-size:0.72rem;font-weight:600;">Not started</span>
+                <button id="cwr-openBtn-pi" onclick="cwrOpenPuzzle('pi')" style="background:#0f2a4a;color:#7dd3fc;border:1px solid #2563eb;font-size:0.62rem;padding:2px 8px;border-radius:4px;cursor:pointer;font-family:inherit;white-space:nowrap;">▶ Open</button>
+              </span>
+            </div>
+
+            <!-- Puzzle J -->
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#071120;border-radius:5px;">
+              <span style="color:#94a3b8;font-size:0.76rem;">📊 Puzzle J · Window Functions</span>
+              <span style="display:flex;align-items:center;gap:6px;">
+                <span id="cwr-dot-pj" style="width:7px;height:7px;background:#f59e0b;border-radius:50%;display:inline-block;flex-shrink:0;"></span>
+                <span id="cwr-hlabel-pj" style="color:#f59e0b;font-size:0.72rem;font-weight:600;">Not started</span>
+                <button id="cwr-openBtn-pj" onclick="cwrOpenPuzzle('pj')" style="background:#0f2a4a;color:#7dd3fc;border:1px solid #2563eb;font-size:0.62rem;padding:2px 8px;border-radius:4px;cursor:pointer;font-family:inherit;white-space:nowrap;">▶ Open</button>
+              </span>
+            </div>
+
+            <!-- Puzzle K -->
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#071120;border-radius:5px;">
+              <span style="color:#94a3b8;font-size:0.76rem;">📋 Puzzle K · CTE Pipeline</span>
+              <span style="display:flex;align-items:center;gap:6px;">
+                <span id="cwr-dot-pk" style="width:7px;height:7px;background:#f59e0b;border-radius:50%;display:inline-block;flex-shrink:0;"></span>
+                <span id="cwr-hlabel-pk" style="color:#f59e0b;font-size:0.72rem;font-weight:600;">Not started</span>
+                <button id="cwr-openBtn-pk" onclick="cwrOpenPuzzle('pk')" style="background:#0f2a4a;color:#7dd3fc;border:1px solid #2563eb;font-size:0.62rem;padding:2px 8px;border-radius:4px;cursor:pointer;font-family:inherit;white-space:nowrap;">▶ Open</button>
+              </span>
+            </div>
+
+            <!-- Phase 4 header -->
+            <div style="padding:4px 6px;margin:6px 0 2px;">
+              <span style="background:#4a1942;color:#f0abfc;font-size:0.6rem;font-weight:700;padding:2px 8px;border-radius:999px;letter-spacing:0.5px;">PHASE 4 · DATA INTEGRITY (BONUS)</span>
+            </div>
+
+            <!-- Puzzle L -->
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#071120;border-radius:5px;">
+              <span style="color:#94a3b8;font-size:0.76rem;">💼 Puzzle L · Transactions</span>
+              <span style="display:flex;align-items:center;gap:6px;">
+                <span id="cwr-dot-pl" style="width:7px;height:7px;background:#f59e0b;border-radius:50%;display:inline-block;flex-shrink:0;"></span>
+                <span id="cwr-hlabel-pl" style="color:#f59e0b;font-size:0.72rem;font-weight:600;">Not started</span>
+                <button id="cwr-openBtn-pl" onclick="cwrOpenPuzzle('pl')" style="background:#0f2a4a;color:#7dd3fc;border:1px solid #2563eb;font-size:0.62rem;padding:2px 8px;border-radius:4px;cursor:pointer;font-family:inherit;white-space:nowrap;">▶ Open</button>
+              </span>
+            </div>
+
+            <!-- Puzzle M -->
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#071120;border-radius:5px;">
+              <span style="color:#94a3b8;font-size:0.76rem;">✅ Puzzle M · Constraints</span>
+              <span style="display:flex;align-items:center;gap:6px;">
+                <span id="cwr-dot-pm" style="width:7px;height:7px;background:#f59e0b;border-radius:50%;display:inline-block;flex-shrink:0;"></span>
+                <span id="cwr-hlabel-pm" style="color:#f59e0b;font-size:0.72rem;font-weight:600;">Not started</span>
+                <button id="cwr-openBtn-pm" onclick="cwrOpenPuzzle('pm')" style="background:#0f2a4a;color:#7dd3fc;border:1px solid #2563eb;font-size:0.62rem;padding:2px 8px;border-radius:4px;cursor:pointer;font-family:inherit;white-space:nowrap;">▶ Open</button>
               </span>
             </div>
 
@@ -6471,11 +7016,344 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
     </div>
 
     <!-- ══════════════════════════════════════════════════════════════
+         PHASE 2 — ADVANCED SECURITY
+    ═══════════════════════════════════════════════════════════════ -->
+    <div style="display:flex;align-items:center;gap:14px;margin:2.5rem 0 1.5rem;">
+      <div style="flex:1;height:1px;background:#1e293b;"></div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="background:#312e81;color:#a5b4fc;font-size:0.7rem;font-weight:700;padding:4px 14px;border-radius:999px;letter-spacing:0.5px;white-space:nowrap;">PHASE 2 · ADVANCED SECURITY</span>
+        <span style="color:#475569;font-size:0.78rem;">~75 min</span>
+      </div>
+      <div style="flex:1;height:1px;background:#1e293b;"></div>
+    </div>
+    <div style="background:#1a1046;border:1px solid #312e81;border-radius:8px;padding:12px 16px;margin-bottom:1.5rem;display:flex;align-items:center;gap:10px;">
+      <span style="font-size:1.2rem;">☕</span>
+      <div>
+        <div style="color:#a5b4fc;font-weight:600;font-size:0.82rem;">Take a 15-minute break before Phase 2</div>
+        <div style="color:#475569;font-size:0.75rem;margin-top:2px;">Phase 2 covers column-level security, role inheritance, and forensic audit queries.</div>
+      </div>
+    </div>
+
+    <!-- Puzzle F -->
+    <div id="cwr-puzzle-f" style="scroll-margin-top:80px;"></div>
+    <h3>Puzzle F &nbsp;<span style="font-size:0.75rem;font-weight:500;color:#475569;">Column-Level Security &amp; Security Views</span> <span style="font-size:0.72rem;color:#a5b4fc;font-weight:600;">~20 min</span></h3>
+    <div class="callout concept">
+      <div class="callout-title">Concept: Column-Level Privilege</div>
+      <p>PostgreSQL does not support column-level <code>REVOKE</code> in the same way it supports table-level grants. The correct pattern is: create a VIEW that selects only the safe columns (masking sensitive ones), grant the role access to the VIEW, and revoke direct table access. The view becomes the only access path — the role can never see raw sensitive data.</p>
+    </div>
+    <p>Your task: create <code>cwr.v_beneficiary_public</code> that replaces <code>national_id</code> with <code>'***-MASKED***'</code>. Grant SELECT on the view to <code>cwr_analyst</code>. Revoke direct SELECT on <code>cwr.beneficiaries</code> from <code>cwr_analyst</code>.</p>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">SQL — starter template</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre>CREATE OR REPLACE VIEW cwr.v_beneficiary_public AS
+SELECT
+    beneficiary_id,
+    full_name,
+    <span class="hl">'***-MASKED***'::text AS national_id</span>,   <span class="cmt">-- mask sensitive column</span>
+    zone_id,
+    registration_date,
+    is_active
+FROM cwr.beneficiaries;
+
+GRANT SELECT ON cwr.v_beneficiary_public TO cwr_analyst;
+
+<span class="cmt">-- Revoke direct table access</span>
+REVOKE SELECT ON cwr.beneficiaries FROM cwr_analyst;</pre>
+    </div>
+    <div class="task-box">
+      <strong>Your task:</strong> Click <strong>▶ Open</strong> on Puzzle F in the dashboard. The starter is pre-filled — run it to complete. After passing, execute in psql and verify with: <code>SET ROLE cwr_analyst; SELECT national_id FROM cwr.v_beneficiary_public LIMIT 1;</code>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+      <button id="cwr-markbtn-pf" onclick="cwrMark('pf','done')" style="padding:5px 14px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#94a3b8;font-size:0.78rem;cursor:pointer;font-family:inherit;">✅ Mark Complete</button>
+      <button onclick="cwrMark('pf','fail')" style="padding:5px 14px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#94a3b8;font-size:0.78rem;cursor:pointer;font-family:inherit;">✗ Mark Failed</button>
+      <button onclick="cwrMark('pf','todo')" style="padding:5px 14px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:#475569;font-size:0.78rem;cursor:pointer;font-family:inherit;">↺ Reset</button>
+    </div>
+
+    <!-- Puzzle G -->
+    <div id="cwr-puzzle-g" style="scroll-margin-top:80px;"></div>
+    <h3>Puzzle G &nbsp;<span style="font-size:0.75rem;font-weight:500;color:#475569;">Role Hierarchy &amp; Inheritance</span> <span style="font-size:0.72rem;color:#a5b4fc;font-weight:600;">~20 min</span></h3>
+    <div class="callout concept">
+      <div class="callout-title">Concept: Role Inheritance</div>
+      <p>When Role B is granted to Role A (<code>GRANT B TO A</code>) and A has <code>INHERIT</code>, sessions running as A automatically gain all privileges B holds — without needing <code>SET ROLE B</code>. This lets you build a privilege hierarchy where senior roles accumulate junior role permissions plus their own extras.</p>
+    </div>
+    <p>Create <code>cwr_supervisor</code> (INHERIT), grant it the <code>cwr_caseworker</code> role, add DELETE privilege on <code>cwr.beneficiaries</code>, and create login user <code>carol_sup</code> in that role.</p>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">SQL — starter template</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre>CREATE ROLE cwr_supervisor INHERIT;
+
+<span class="cmt">-- Inherit all caseworker privileges automatically</span>
+GRANT cwr_caseworker TO cwr_supervisor;
+
+<span class="cmt">-- Supervisor-only additional privilege</span>
+GRANT DELETE ON cwr.beneficiaries TO cwr_supervisor;
+
+<span class="cmt">-- Create a real login user in the supervisor role</span>
+CREATE USER carol_sup WITH PASSWORD 'CWR2026!' IN ROLE cwr_supervisor;</pre>
+    </div>
+    <div class="task-box">
+      <strong>Your task:</strong> Click <strong>▶ Open</strong> on Puzzle G. After passing, run in psql and verify: <code>\du cwr_supervisor</code> — the Member of column should show <code>{cwr_caseworker}</code>.
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+      <button id="cwr-markbtn-pg" onclick="cwrMark('pg','done')" style="padding:5px 14px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#94a3b8;font-size:0.78rem;cursor:pointer;font-family:inherit;">✅ Mark Complete</button>
+      <button onclick="cwrMark('pg','fail')" style="padding:5px 14px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#94a3b8;font-size:0.78rem;cursor:pointer;font-family:inherit;">✗ Mark Failed</button>
+      <button onclick="cwrMark('pg','todo')" style="padding:5px 14px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:#475569;font-size:0.78rem;cursor:pointer;font-family:inherit;">↺ Reset</button>
+    </div>
+
+    <!-- Puzzle H -->
+    <div id="cwr-puzzle-h" style="scroll-margin-top:80px;"></div>
+    <h3>Puzzle H &nbsp;<span style="font-size:0.75rem;font-weight:500;color:#475569;">Forensic Audit Investigation</span> <span style="font-size:0.72rem;color:#a5b4fc;font-weight:600;">~35 min</span></h3>
+    <div class="callout concept">
+      <div class="callout-title">Concept: JSONB Querying</div>
+      <p><code>row_data-&gt;&gt;'key'</code> extracts a JSONB value as TEXT. <code>row_data-&gt;'key'</code> returns JSON. For filtering: <code>WHERE (row_data-&gt;&gt;'zone_id')::int = 3</code>. For nested: <code>row_data-&gt;'address'-&gt;&gt;'city'</code>. The audit_log stores the entire changed row as JSONB — you can reconstruct exactly what changed, when, and by whom.</p>
+    </div>
+    <p>Write a forensic query that retrieves the last 10 INSERT events from <code>cwr.audit_log</code>, extracting <code>beneficiary_id</code> from the JSONB <code>row_data</code> column. Order by <code>log_time DESC</code>.</p>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">SQL — starter template</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre>SELECT
+    log_time,
+    role_name,
+    action,
+    <span class="hl">row_data->>'beneficiary_id'</span>  AS beneficiary_id,   <span class="cmt">-- JSONB extraction</span>
+    row_data->>'full_name'       AS beneficiary_name
+FROM cwr.audit_log
+WHERE action = 'INSERT'
+ORDER BY log_time DESC
+LIMIT 10;</pre>
+    </div>
+    <div class="callout tip">
+      <div class="callout-title">If audit_log is empty</div>
+      Run this first to generate events: <code>INSERT INTO cwr.beneficiaries(full_name,national_id,zone_id) VALUES('Test User','NIN-TEST-999',1);</code>
+    </div>
+    <div class="task-box">
+      <strong>Your task:</strong> Click <strong>▶ Open</strong> on Puzzle H. Write the JSONB query, run it to pass validation, then execute in psql.
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+      <button id="cwr-markbtn-ph" onclick="cwrMark('ph','done')" style="padding:5px 14px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#94a3b8;font-size:0.78rem;cursor:pointer;font-family:inherit;">✅ Mark Complete</button>
+      <button onclick="cwrMark('ph','fail')" style="padding:5px 14px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#94a3b8;font-size:0.78rem;cursor:pointer;font-family:inherit;">✗ Mark Failed</button>
+      <button onclick="cwrMark('ph','todo')" style="padding:5px 14px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:#475569;font-size:0.78rem;cursor:pointer;font-family:inherit;">↺ Reset</button>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         PHASE 3 — PERFORMANCE & ANALYTICS
+    ═══════════════════════════════════════════════════════════════ -->
+    <div style="display:flex;align-items:center;gap:14px;margin:2.5rem 0 1.5rem;">
+      <div style="flex:1;height:1px;background:#1e293b;"></div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="background:#064e3b;color:#6ee7b7;font-size:0.7rem;font-weight:700;padding:4px 14px;border-radius:999px;letter-spacing:0.5px;white-space:nowrap;">PHASE 3 · PERFORMANCE &amp; ANALYTICS</span>
+        <span style="color:#475569;font-size:0.78rem;">~75 min</span>
+      </div>
+      <div style="flex:1;height:1px;background:#1e293b;"></div>
+    </div>
+    <div style="background:#052016;border:1px solid #064e3b;border-radius:8px;padding:12px 16px;margin-bottom:1.5rem;display:flex;align-items:center;gap:10px;">
+      <span style="font-size:1.2rem;">☕</span>
+      <div>
+        <div style="color:#6ee7b7;font-weight:600;font-size:0.82rem;">Take a 15-minute break before Phase 3</div>
+        <div style="color:#475569;font-size:0.75rem;margin-top:2px;">Phase 3 covers query optimisation with EXPLAIN ANALYZE, window functions, and multi-CTE analytics pipelines.</div>
+      </div>
+    </div>
+
+    <!-- Puzzle I -->
+    <div id="cwr-puzzle-i" style="scroll-margin-top:80px;"></div>
+    <h3>Puzzle I &nbsp;<span style="font-size:0.75rem;font-weight:500;color:#475569;">EXPLAIN ANALYZE &amp; Index Optimisation</span> <span style="font-size:0.72rem;color:#6ee7b7;font-weight:600;">~25 min</span></h3>
+    <div class="callout concept">
+      <div class="callout-title">Concept: EXPLAIN ANALYZE</div>
+      <p><code>EXPLAIN</code> shows the query plan without running. <code>EXPLAIN ANALYZE</code> runs the query and shows actual execution times. Look for <em>Seq Scan</em> on large tables — it means no index is being used. After adding an index, re-run to confirm it shows <em>Index Scan</em>. On small tables, PostgreSQL may still prefer Seq Scan — use <code>SET enable_seqscan=off;</code> to force index usage for testing.</p>
+    </div>
+    <p>Run EXPLAIN ANALYZE on the zone-filtered query, create <code>idx_disbursements_zone</code> on <code>cwr.disbursements(zone_id)</code>, then confirm the plan changes to Index Scan.</p>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">SQL — full sequence</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cmt">-- Step 1: before index (expect Seq Scan)</span>
+EXPLAIN ANALYZE
+SELECT * FROM cwr.disbursements WHERE zone_id = 3;
+
+<span class="cmt">-- Step 2: create the index</span>
+CREATE INDEX idx_disbursements_zone ON cwr.disbursements(zone_id);
+
+<span class="cmt">-- Step 3: confirm index is used</span>
+SET enable_seqscan = off;
+EXPLAIN ANALYZE
+SELECT * FROM cwr.disbursements WHERE zone_id = 3;
+SET enable_seqscan = on;</pre>
+    </div>
+    <div class="task-box">
+      <strong>Your task:</strong> Click <strong>▶ Open</strong> on Puzzle I. The full sequence is pre-loaded — run it to validate, then execute in psql. Compare the two EXPLAIN outputs side by side.
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+      <button id="cwr-markbtn-pi" onclick="cwrMark('pi','done')" style="padding:5px 14px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#94a3b8;font-size:0.78rem;cursor:pointer;font-family:inherit;">✅ Mark Complete</button>
+      <button onclick="cwrMark('pi','fail')" style="padding:5px 14px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#94a3b8;font-size:0.78rem;cursor:pointer;font-family:inherit;">✗ Mark Failed</button>
+      <button onclick="cwrMark('pi','todo')" style="padding:5px 14px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:#475569;font-size:0.78rem;cursor:pointer;font-family:inherit;">↺ Reset</button>
+    </div>
+
+    <!-- Puzzle J -->
+    <div id="cwr-puzzle-j" style="scroll-margin-top:80px;"></div>
+    <h3>Puzzle J &nbsp;<span style="font-size:0.75rem;font-weight:500;color:#475569;">Window Functions</span> <span style="font-size:0.72rem;color:#6ee7b7;font-weight:600;">~25 min</span></h3>
+    <div class="callout concept">
+      <div class="callout-title">Concept: Window Functions</div>
+      <p>Window functions compute a value across a set of rows related to the current row — without collapsing rows like GROUP BY does. <code>OVER (PARTITION BY zone_id ORDER BY date)</code> means "within each zone, ordered by date". Common functions: <code>SUM()</code> for running totals, <code>RANK()</code> for ranking within a partition, <code>LAG()</code>/<code>LEAD()</code> to reference adjacent rows.</p>
+    </div>
+    <p>Write a query over <code>cwr.disbursements</code> that calculates: a <strong>running total</strong> of amount within each zone (ordered by date), and a <strong>zone rank</strong> for each row (highest amount first).</p>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">SQL — starter template</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre>SELECT
+    disbursement_id,
+    zone_id,
+    amount,
+    disbursement_date,
+    <span class="hl">SUM(amount) OVER (
+        PARTITION BY zone_id
+        ORDER BY disbursement_date
+    ) AS running_total</span>,
+    <span class="hl">RANK() OVER (
+        PARTITION BY zone_id
+        ORDER BY amount DESC
+    ) AS zone_rank</span>
+FROM cwr.disbursements
+ORDER BY zone_id, disbursement_date;</pre>
+    </div>
+    <div class="task-box">
+      <strong>Your task:</strong> Click <strong>▶ Open</strong> on Puzzle J. Edit the starter if needed, run to validate. Verify in psql that running_total increases within each zone and zone_rank = 1 is the largest disbursement per zone.
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+      <button id="cwr-markbtn-pj" onclick="cwrMark('pj','done')" style="padding:5px 14px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#94a3b8;font-size:0.78rem;cursor:pointer;font-family:inherit;">✅ Mark Complete</button>
+      <button onclick="cwrMark('pj','fail')" style="padding:5px 14px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#94a3b8;font-size:0.78rem;cursor:pointer;font-family:inherit;">✗ Mark Failed</button>
+      <button onclick="cwrMark('pj','todo')" style="padding:5px 14px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:#475569;font-size:0.78rem;cursor:pointer;font-family:inherit;">↺ Reset</button>
+    </div>
+
+    <!-- Puzzle K -->
+    <div id="cwr-puzzle-k" style="scroll-margin-top:80px;"></div>
+    <h3>Puzzle K &nbsp;<span style="font-size:0.75rem;font-weight:500;color:#475569;">Multi-CTE Management Report</span> <span style="font-size:0.72rem;color:#6ee7b7;font-weight:600;">~25 min</span></h3>
+    <div class="callout concept">
+      <div class="callout-title">Concept: Common Table Expressions (CTEs)</div>
+      <p><code>WITH cte_name AS (SELECT ...)</code> defines a named subquery visible to subsequent CTEs and the final SELECT. Chain multiple CTEs with commas. Use them to break complex queries into readable stages — each CTE is like a temporary view. <code>COALESCE(val, 0)</code> handles NULLs from LEFT JOINs where zones have no disbursements.</p>
+    </div>
+    <p>Write a two-CTE report: CTE 1 totals disbursements per zone, CTE 2 counts active beneficiaries per zone. Join both CTEs to <code>cwr.zones</code> to produce a ranked summary with average disbursement per beneficiary.</p>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">SQL — starter template</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="hl">WITH zone_spend AS (</span>
+    SELECT zone_id, SUM(amount) AS total_disbursed
+    FROM cwr.disbursements
+    GROUP BY zone_id
+<span class="hl">),
+bene_count AS (</span>
+    SELECT zone_id, COUNT(*) AS beneficiaries
+    FROM cwr.beneficiaries WHERE is_active = TRUE
+    GROUP BY zone_id
+<span class="hl">)</span>
+SELECT
+    z.zone_name,
+    COALESCE(zs.total_disbursed, 0)           AS total_disbursed,
+    COALESCE(bc.beneficiaries, 0)             AS beneficiaries,
+    ROUND(COALESCE(zs.total_disbursed,0)
+          / NULLIF(COALESCE(bc.beneficiaries,0),0), 2) AS avg_per_beneficiary
+FROM cwr.zones z
+LEFT JOIN zone_spend  zs ON z.zone_id = zs.zone_id
+LEFT JOIN bene_count  bc ON z.zone_id = bc.zone_id
+ORDER BY avg_per_beneficiary DESC NULLS LAST;</pre>
+    </div>
+    <div class="task-box">
+      <strong>Your task:</strong> Click <strong>▶ Open</strong> on Puzzle K. The query is pre-loaded — run to validate. This is the final analytics report. Discuss with your team which zone has the lowest average disbursement and why.
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+      <button id="cwr-markbtn-pk" onclick="cwrMark('pk','done')" style="padding:5px 14px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#94a3b8;font-size:0.78rem;cursor:pointer;font-family:inherit;">✅ Mark Complete</button>
+      <button onclick="cwrMark('pk','fail')" style="padding:5px 14px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#94a3b8;font-size:0.78rem;cursor:pointer;font-family:inherit;">✗ Mark Failed</button>
+      <button onclick="cwrMark('pk','todo')" style="padding:5px 14px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:#475569;font-size:0.78rem;cursor:pointer;font-family:inherit;">↺ Reset</button>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         PHASE 4 — DATA INTEGRITY (BONUS)
+    ═══════════════════════════════════════════════════════════════ -->
+    <div style="display:flex;align-items:center;gap:14px;margin:2.5rem 0 1.5rem;">
+      <div style="flex:1;height:1px;background:#1e293b;"></div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="background:#4a1942;color:#f0abfc;font-size:0.7rem;font-weight:700;padding:4px 14px;border-radius:999px;letter-spacing:0.5px;white-space:nowrap;">PHASE 4 · DATA INTEGRITY — BONUS</span>
+        <span style="color:#475569;font-size:0.78rem;">~45 min · for faster teams</span>
+      </div>
+      <div style="flex:1;height:1px;background:#1e293b;"></div>
+    </div>
+    <div style="background:#2a0f2a;border:1px solid #4a1942;border-radius:8px;padding:12px 16px;margin-bottom:1.5rem;">
+      <div style="color:#f0abfc;font-weight:600;font-size:0.82rem;margin-bottom:4px;">🏆 Bonus Phase — for teams who finish Phases 1-3 early</div>
+      <div style="color:#475569;font-size:0.75rem;line-height:1.6;">Phase 4 covers transaction savepoints and check constraints — two foundational data integrity tools. Completing both Puzzles L and M puts your team in a strong position to win the session leaderboard.</div>
+    </div>
+
+    <!-- Puzzle L -->
+    <div id="cwr-puzzle-l" style="scroll-margin-top:80px;"></div>
+    <h3>Puzzle L &nbsp;<span style="font-size:0.75rem;font-weight:500;color:#475569;">Transaction Management &amp; Savepoints</span> <span style="font-size:0.72rem;color:#f0abfc;font-weight:600;">~20 min</span></h3>
+    <div class="callout concept">
+      <div class="callout-title">Concept: Savepoints</div>
+      <p>A SAVEPOINT creates a rollback point within an open transaction. <code>ROLLBACK TO SAVEPOINT sp1</code> undoes all changes since <code>SAVEPOINT sp1</code> but keeps the transaction open. You can then continue with more work and <code>COMMIT</code>. This is essential for long transactions where one step might fail but earlier steps should be preserved.</p>
+    </div>
+    <p>Demonstrate partial rollback: insert a beneficiary, create a savepoint, insert an invalid disbursement, roll back to savepoint, commit. Only the beneficiary should remain.</p>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">SQL — full sequence</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre>BEGIN;
+
+INSERT INTO cwr.beneficiaries(full_name, national_id, zone_id)
+VALUES ('Zainab Musa', 'NIN-TXN-001', 2)
+RETURNING beneficiary_id;
+
+<span class="hl">SAVEPOINT sp1;</span>
+
+INSERT INTO cwr.disbursements(beneficiary_id, program_id, amount, zone_id)
+VALUES (currval('cwr.beneficiaries_beneficiary_id_seq'), 1, 99999.00, 2);
+
+<span class="cmt">-- Simulate an error — roll back only the disbursement</span>
+<span class="hl">ROLLBACK TO SAVEPOINT sp1;</span>
+
+COMMIT;  <span class="cmt">-- beneficiary is saved; disbursement is gone</span>
+
+SELECT beneficiary_id, full_name FROM cwr.beneficiaries WHERE national_id = 'NIN-TXN-001';</pre>
+    </div>
+    <div class="task-box">
+      <strong>Your task:</strong> Click <strong>▶ Open</strong> on Puzzle L. Run to validate, then execute in psql. Confirm the beneficiary row exists but no matching disbursement row was created.
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+      <button id="cwr-markbtn-pl" onclick="cwrMark('pl','done')" style="padding:5px 14px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#94a3b8;font-size:0.78rem;cursor:pointer;font-family:inherit;">✅ Mark Complete</button>
+      <button onclick="cwrMark('pl','fail')" style="padding:5px 14px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#94a3b8;font-size:0.78rem;cursor:pointer;font-family:inherit;">✗ Mark Failed</button>
+      <button onclick="cwrMark('pl','todo')" style="padding:5px 14px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:#475569;font-size:0.78rem;cursor:pointer;font-family:inherit;">↺ Reset</button>
+    </div>
+
+    <!-- Puzzle M -->
+    <div id="cwr-puzzle-m" style="scroll-margin-top:80px;"></div>
+    <h3>Puzzle M &nbsp;<span style="font-size:0.75rem;font-weight:500;color:#475569;">Check Constraints &amp; Data Validation</span> <span style="font-size:0.72rem;color:#f0abfc;font-weight:600;">~25 min</span></h3>
+    <div class="callout concept">
+      <div class="callout-title">Concept: CHECK Constraints</div>
+      <p>CHECK constraints enforce business rules at the database layer — no application code needed. <code>ALTER TABLE t ADD CONSTRAINT name CHECK (condition)</code>. PostgreSQL verifies the constraint against all existing rows before adding it (fails if any row violates). For temporal constraints: <code>disbursement_date &lt;= CURRENT_DATE</code> prevents back-dating.</p>
+    </div>
+    <p>Add two CHECK constraints to <code>cwr.disbursements</code>: amount must be positive, date cannot be future. Then verify the constraints reject invalid data using a DO block with exception handling.</p>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">SQL — full sequence</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre>ALTER TABLE cwr.disbursements
+    ADD CONSTRAINT <span class="hl">chk_amount_positive</span>
+    CHECK (amount > 0);
+
+ALTER TABLE cwr.disbursements
+    ADD CONSTRAINT <span class="hl">chk_date_not_future</span>
+    CHECK (disbursement_date <= CURRENT_DATE);
+
+<span class="cmt">-- Verify: this insert should be rejected</span>
+DO $$
+BEGIN
+    INSERT INTO cwr.disbursements(beneficiary_id, program_id, amount, zone_id)
+    VALUES (1, 1, -500.00, 1);
+EXCEPTION WHEN check_violation THEN
+    RAISE NOTICE 'OK: negative amount correctly rejected — %', SQLERRM;
+END;
+$$;</pre>
+    </div>
+    <div class="task-box">
+      <strong>Your task:</strong> Click <strong>▶ Open</strong> on Puzzle M — the final puzzle. Run to validate, then execute in psql. The NOTICE message confirms your constraints are active. Run <code>\d cwr.disbursements</code> to see both constraints listed.
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+      <button id="cwr-markbtn-pm" onclick="cwrMark('pm','done')" style="padding:5px 14px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#94a3b8;font-size:0.78rem;cursor:pointer;font-family:inherit;">✅ Mark Complete</button>
+      <button onclick="cwrMark('pm','fail')" style="padding:5px 14px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#94a3b8;font-size:0.78rem;cursor:pointer;font-family:inherit;">✗ Mark Failed</button>
+      <button onclick="cwrMark('pm','todo')" style="padding:5px 14px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:#475569;font-size:0.78rem;cursor:pointer;font-family:inherit;">↺ Reset</button>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
          VERIFICATION SUITE
     ═══════════════════════════════════════════════════════════════ -->
     <h3 style="margin-top:2.5rem;">
       Verification Suite
-      <span style="display:inline-block;margin-left:10px;padding:2px 10px;border-radius:999px;background:#0ea5e9;color:#fff;font-size:0.72rem;font-weight:700;vertical-align:middle;">Run after all 4 phases</span>
+      <span style="display:inline-block;margin-left:10px;padding:2px 10px;border-radius:999px;background:#0ea5e9;color:#fff;font-size:0.72rem;font-weight:700;vertical-align:middle;">Run after all phases</span>
     </h3>
 
     <div class="callout info">
