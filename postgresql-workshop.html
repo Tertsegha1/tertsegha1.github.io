@@ -4576,6 +4576,1519 @@ done</pre>
     <div id="quiz-d5"></div>
   </div>
 
+  <!-- MINI PROJECT START -->
+  <div class="section">
+    <div class="section-header"><div class="section-icon si-green">🏛</div><h2>Mini Project — Community Welfare Register (CWR)</h2></div>
+
+    <div class="callout info">
+      <div class="callout-title">Morning Activity &nbsp;·&nbsp; Self-Guided &nbsp;·&nbsp; 09:00 – 13:00</div>
+      The <strong>Community Welfare Register (CWR)</strong> is a sister system to the NSR. It tracks welfare beneficiaries across Nigeria's geopolitical zones and records cash disbursements. The <strong>advanced infrastructure is already built for you</strong> — partitioned tables, materialized views, monitoring views, and an operations dashboard. Your task is to wire in the <strong>security layer</strong> (RBAC, RLS, audit trigger), write three <strong>monitoring queries</strong> that power the dashboard, and produce the <strong>backup commands</strong> for DR. Work through the four phases in order — each builds on the previous one.
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         DASHBOARD
+    ═══════════════════════════════════════════════════════════════ -->
+    <h3 style="margin-top:2rem;">CWR Operations Dashboard</h3>
+    <p style="color:var(--text-muted,#64748b);font-size:0.92rem;margin-bottom:1rem;">The monitoring infrastructure is pre-built using the Phase 1 materialized view and monitoring views. As you complete each phase, the audit feed and health panel will reflect your live database. Click any <strong>SQL ▾</strong> button to see the query that powers each panel.</p>
+
+    <div id="cwr-dashboard" style="background:#0d1929;border:1px solid #1e293b;border-radius:12px;overflow:hidden;font-family:system-ui,sans-serif;font-size:14px;margin-bottom:2.5rem;">
+
+      <!-- Header -->
+      <div style="background:linear-gradient(90deg,#0f2744,#1a3a6b);padding:11px 20px;display:flex;justify-content:space-between;align-items:center;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:1.1rem;">🏛</span>
+          <span style="color:#e2e8f0;font-weight:700;font-size:0.9rem;letter-spacing:0.5px;">CWR OPERATIONS DASHBOARD</span>
+          <span style="background:#22c55e;color:#fff;font-size:0.62rem;padding:1px 8px;border-radius:999px;font-weight:700;letter-spacing:0.5px;margin-left:4px;">SEED DATA LOADED</span>
+        </div>
+        <div style="color:#64748b;font-size:0.78rem;">29 Jun 2026 &nbsp;·&nbsp; lab_nsr</div>
+      </div>
+
+      <!-- KPI Row -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#1e293b;">
+        <div style="background:#0d1929;padding:16px 18px;">
+          <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Beneficiaries</div>
+          <div style="color:#e2e8f0;font-size:2rem;font-weight:700;line-height:1.1;">6</div>
+          <div style="color:#22c55e;font-size:0.73rem;margin-top:3px;">↑ 6 active</div>
+          <div style="margin-top:8px;"><button onclick="var e=document.getElementById('d-sql1');e.style.display=e.style.display==='none'?'block':'none'" style="background:none;border:1px solid #334155;color:#64748b;font-size:0.63rem;padding:2px 8px;border-radius:4px;cursor:pointer;font-family:inherit;">SQL ▾</button></div>
+          <div id="d-sql1" style="display:none;margin-top:6px;background:#071120;border-radius:5px;padding:7px 9px;font-family:monospace;font-size:0.68rem;color:#7dd3fc;line-height:1.6;">SELECT SUM(total_beneficiaries)<br>FROM cwr.mv_zone_stats;</div>
+        </div>
+        <div style="background:#0d1929;padding:16px 18px;">
+          <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Active Zones</div>
+          <div style="color:#e2e8f0;font-size:2rem;font-weight:700;line-height:1.1;">3</div>
+          <div style="color:#22c55e;font-size:0.73rem;margin-top:3px;">NC · SW · NE</div>
+          <div style="margin-top:8px;"><button onclick="var e=document.getElementById('d-sql2');e.style.display=e.style.display==='none'?'block':'none'" style="background:none;border:1px solid #334155;color:#64748b;font-size:0.63rem;padding:2px 8px;border-radius:4px;cursor:pointer;font-family:inherit;">SQL ▾</button></div>
+          <div id="d-sql2" style="display:none;margin-top:6px;background:#071120;border-radius:5px;padding:7px 9px;font-family:monospace;font-size:0.68rem;color:#7dd3fc;line-height:1.6;">SELECT COUNT(*)<br>FROM cwr.mv_zone_stats<br>WHERE active_beneficiaries > 0;</div>
+        </div>
+        <div style="background:#0d1929;padding:16px 18px;">
+          <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Total Disbursed</div>
+          <div style="color:#e2e8f0;font-size:2rem;font-weight:700;line-height:1.1;">₦55K</div>
+          <div style="color:#22c55e;font-size:0.73rem;margin-top:3px;">2 payments processed</div>
+          <div style="margin-top:8px;"><button onclick="var e=document.getElementById('d-sql3');e.style.display=e.style.display==='none'?'block':'none'" style="background:none;border:1px solid #334155;color:#64748b;font-size:0.63rem;padding:2px 8px;border-radius:4px;cursor:pointer;font-family:inherit;">SQL ▾</button></div>
+          <div id="d-sql3" style="display:none;margin-top:6px;background:#071120;border-radius:5px;padding:7px 9px;font-family:monospace;font-size:0.68rem;color:#7dd3fc;line-height:1.6;">SELECT SUM(total_disbursed)<br>FROM cwr.mv_zone_stats;</div>
+        </div>
+        <div style="background:#0d1929;padding:16px 18px;">
+          <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Pending Alerts</div>
+          <div style="color:#f59e0b;font-size:2rem;font-weight:700;line-height:1.1;">1</div>
+          <div style="color:#f59e0b;font-size:0.73rem;margin-top:3px;">1 failed disbursement</div>
+          <div style="margin-top:8px;"><button onclick="var e=document.getElementById('d-sql4');e.style.display=e.style.display==='none'?'block':'none'" style="background:none;border:1px solid #334155;color:#64748b;font-size:0.63rem;padding:2px 8px;border-radius:4px;cursor:pointer;font-family:inherit;">SQL ▾</button></div>
+          <div id="d-sql4" style="display:none;margin-top:6px;background:#071120;border-radius:5px;padding:7px 9px;font-family:monospace;font-size:0.68rem;color:#7dd3fc;line-height:1.6;">SELECT SUM(failed_disbursements)<br>FROM cwr.mv_zone_stats;</div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#1e293b;margin-top:1px;">
+
+        <!-- Zone Welfare Bar Chart -->
+        <div style="background:#0d1929;padding:18px 20px;">
+          <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">Zone Avg Welfare Score &nbsp;<span style="color:#334155;font-weight:400;">(out of 100)</span></div>
+          <div style="margin-bottom:12px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+              <span style="color:#cbd5e1;font-size:0.78rem;font-weight:600;">NC — North Central</span>
+              <span style="color:#60a5fa;font-size:0.78rem;font-weight:700;">70.25</span>
+            </div>
+            <div style="background:#1e293b;border-radius:4px;height:9px;overflow:hidden;"><div style="background:linear-gradient(90deg,#2563eb,#60a5fa);width:70.25%;height:100%;border-radius:4px;"></div></div>
+            <div style="color:#475569;font-size:0.68rem;margin-top:3px;">2 beneficiaries &nbsp;·&nbsp; ₦25,000 disbursed</div>
+          </div>
+          <div style="margin-bottom:12px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+              <span style="color:#cbd5e1;font-size:0.78rem;font-weight:600;">SW — South West</span>
+              <span style="color:#60a5fa;font-size:0.78rem;font-weight:700;">68.50</span>
+            </div>
+            <div style="background:#1e293b;border-radius:4px;height:9px;overflow:hidden;"><div style="background:linear-gradient(90deg,#2563eb,#60a5fa);width:68.5%;height:100%;border-radius:4px;"></div></div>
+            <div style="color:#475569;font-size:0.68rem;margin-top:3px;">2 beneficiaries &nbsp;·&nbsp; ₦30,000 disbursed</div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+              <span style="color:#cbd5e1;font-size:0.78rem;font-weight:600;">NE — North East</span>
+              <span style="color:#a78bfa;font-size:0.78rem;font-weight:700;">76.70</span>
+            </div>
+            <div style="background:#1e293b;border-radius:4px;height:9px;overflow:hidden;"><div style="background:linear-gradient(90deg,#7c3aed,#a78bfa);width:76.7%;height:100%;border-radius:4px;"></div></div>
+            <div style="color:#475569;font-size:0.68rem;margin-top:3px;">2 beneficiaries &nbsp;·&nbsp; ₦25,000 pending</div>
+          </div>
+          <div style="margin-top:12px;padding-top:10px;border-top:1px solid #1e293b;color:#334155;font-size:0.67rem;">Powered by <code style="color:#7dd3fc;font-size:0.67rem;">cwr.mv_zone_stats</code> — refresh after Phase 2</div>
+        </div>
+
+        <!-- Disbursement Donut Chart -->
+        <div style="background:#0d1929;padding:18px 20px;">
+          <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">Disbursement Pipeline &nbsp;<span style="color:#334155;font-weight:400;">(4 total)</span></div>
+          <div style="display:flex;align-items:center;gap:20px;">
+            <svg width="120" height="120" viewBox="0 0 120 120" style="flex-shrink:0;">
+              <circle cx="60" cy="60" r="45" fill="none" stroke="#1e293b" stroke-width="22"/>
+              <!-- Processed: 50% of 282.74 = 141.37 -->
+              <circle cx="60" cy="60" r="45" fill="none" stroke="#22c55e" stroke-width="22"
+                      stroke-dasharray="141.37 282.74" stroke-dashoffset="0"
+                      transform="rotate(-90 60 60)"/>
+              <!-- Pending: 25% = 70.69, starts at 141.37 -->
+              <circle cx="60" cy="60" r="45" fill="none" stroke="#f59e0b" stroke-width="22"
+                      stroke-dasharray="70.69 282.74" stroke-dashoffset="-141.37"
+                      transform="rotate(-90 60 60)"/>
+              <!-- Failed: 25% = 70.69, starts at 212.06 -->
+              <circle cx="60" cy="60" r="45" fill="none" stroke="#ef4444" stroke-width="22"
+                      stroke-dasharray="70.69 282.74" stroke-dashoffset="-212.06"
+                      transform="rotate(-90 60 60)"/>
+              <text x="60" y="56" text-anchor="middle" fill="#e2e8f0" font-size="20" font-weight="700" font-family="system-ui">4</text>
+              <text x="60" y="70" text-anchor="middle" fill="#64748b" font-size="8.5" font-family="system-ui">payments</text>
+            </svg>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px;">
+                <div style="width:11px;height:11px;background:#22c55e;border-radius:3px;flex-shrink:0;"></div>
+                <div><div style="color:#cbd5e1;font-size:0.78rem;font-weight:600;">Processed</div><div style="color:#475569;font-size:0.7rem;">2 · ₦55,000</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px;">
+                <div style="width:11px;height:11px;background:#f59e0b;border-radius:3px;flex-shrink:0;"></div>
+                <div><div style="color:#cbd5e1;font-size:0.78rem;font-weight:600;">Pending</div><div style="color:#475569;font-size:0.7rem;">1 · ₦25,000</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:11px;height:11px;background:#ef4444;border-radius:3px;flex-shrink:0;"></div>
+                <div><div style="color:#cbd5e1;font-size:0.78rem;font-weight:600;">Failed</div><div style="color:#475569;font-size:0.7rem;">1 · ₦20,000</div></div>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:12px;padding-top:10px;border-top:1px solid #1e293b;color:#334155;font-size:0.67rem;">Puzzle D-2 will power this chart with a live query</div>
+        </div>
+      </div>
+
+      <!-- Bottom Row: Audit Feed + System Health -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#1e293b;margin-top:1px;">
+
+        <!-- Audit Feed -->
+        <div style="background:#0d1929;padding:18px 20px;">
+          <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Recent Audit Events</div>
+          <div style="background:#071120;border-radius:8px;padding:14px;min-height:90px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;">
+            <span style="font-size:1.4rem;">🔒</span>
+            <div style="color:#475569;font-size:0.78rem;text-align:center;">Audit trigger not yet installed</div>
+            <div style="color:#334155;font-size:0.7rem;text-align:center;">Complete Phase 2 Puzzle C to activate</div>
+          </div>
+          <div style="margin-top:8px;color:#334155;font-size:0.67rem;">Live: <code style="color:#7dd3fc;font-size:0.67rem;">SELECT * FROM cwr.audit_log ORDER BY log_time DESC LIMIT 10</code></div>
+        </div>
+
+        <!-- System Health -->
+        <div style="background:#0d1929;padding:18px 20px;">
+          <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">System Health</div>
+          <div style="display:flex;flex-direction:column;gap:7px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#071120;border-radius:5px;">
+              <span style="color:#94a3b8;font-size:0.78rem;">Active Sessions</span>
+              <span style="display:flex;align-items:center;gap:5px;"><span style="width:7px;height:7px;background:#22c55e;border-radius:50%;display:inline-block;flex-shrink:0;"></span><span style="color:#22c55e;font-size:0.76rem;font-weight:600;">1 connected</span></span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#071120;border-radius:5px;">
+              <span style="color:#94a3b8;font-size:0.78rem;">Lock Contention</span>
+              <span style="display:flex;align-items:center;gap:5px;"><span style="width:7px;height:7px;background:#22c55e;border-radius:50%;display:inline-block;flex-shrink:0;"></span><span style="color:#22c55e;font-size:0.76rem;font-weight:600;">No waits</span></span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#071120;border-radius:5px;">
+              <span style="color:#94a3b8;font-size:0.78rem;">WAL Status</span>
+              <span style="display:flex;align-items:center;gap:5px;"><span style="width:7px;height:7px;background:#22c55e;border-radius:50%;display:inline-block;flex-shrink:0;"></span><span style="color:#22c55e;font-size:0.76rem;font-weight:600;">Archiving OK</span></span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#071120;border-radius:5px;">
+              <span style="color:#94a3b8;font-size:0.78rem;">Last Backup</span>
+              <span style="display:flex;align-items:center;gap:5px;"><span style="width:7px;height:7px;background:#f59e0b;border-radius:50%;display:inline-block;flex-shrink:0;"></span><span style="color:#f59e0b;font-size:0.76rem;font-weight:600;">Phase 4 Puzzle E</span></span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#071120;border-radius:5px;">
+              <span style="color:#94a3b8;font-size:0.78rem;">MV Last Refresh</span>
+              <span style="display:flex;align-items:center;gap:5px;"><span style="width:7px;height:7px;background:#f59e0b;border-radius:50%;display:inline-block;flex-shrink:0;"></span><span style="color:#f59e0b;font-size:0.76rem;font-weight:600;">Manual required</span></span>
+            </div>
+          </div>
+          <div style="margin-top:8px;color:#334155;font-size:0.67rem;">Views: <code style="color:#7dd3fc;font-size:0.67rem;">cwr.v_active_sessions</code> &amp; <code style="color:#7dd3fc;font-size:0.67rem;">cwr.v_lock_monitor</code></div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div style="background:#071120;padding:9px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;border-top:1px solid #1e293b;">
+        <div style="color:#334155;font-size:0.67rem;">After completing the puzzles, run: <code style="color:#7dd3fc;font-size:0.67rem;">REFRESH MATERIALIZED VIEW CONCURRENTLY cwr.mv_zone_stats;</code></div>
+        <div style="display:flex;gap:14px;"><span style="color:#334155;font-size:0.67rem;">● Partitioning: active (2024–future)</span><span style="color:#334155;font-size:0.67rem;">● pg_cron: Linux only</span></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         ARCHITECTURE
+    ═══════════════════════════════════════════════════════════════ -->
+    <h3 style="margin-top:2rem;">System Architecture</h3>
+
+    <div style="overflow-x:auto;padding-bottom:8px;margin-bottom:2rem;">
+      <div style="display:flex;align-items:flex-start;gap:0;min-width:700px;">
+
+        <!-- zones box -->
+        <div style="border:1.5px solid #3b82f6;border-radius:8px;overflow:hidden;min-width:130px;">
+          <div style="background:#1e3a5f;padding:6px 10px;font-size:0.72rem;font-weight:700;color:#7dd3fc;text-align:center;">cwr.zones</div>
+          <div style="padding:7px 10px;font-size:0.7rem;background:#071120;line-height:1.8;">
+            <div style="color:#f59e0b;">🔑 zone_id</div>
+            <div style="color:#cbd5e1;">zone_code</div>
+            <div style="color:#cbd5e1;">zone_name</div>
+          </div>
+        </div>
+
+        <!-- arrow -->
+        <div style="display:flex;align-items:center;padding:0 6px;margin-top:28px;color:#475569;font-size:1rem;">→ 1:N</div>
+
+        <!-- communities box -->
+        <div style="border:1.5px solid #3b82f6;border-radius:8px;overflow:hidden;min-width:145px;">
+          <div style="background:#1e3a5f;padding:6px 10px;font-size:0.72rem;font-weight:700;color:#7dd3fc;text-align:center;">cwr.communities</div>
+          <div style="padding:7px 10px;font-size:0.7rem;background:#071120;line-height:1.8;">
+            <div style="color:#f59e0b;">🔑 community_id</div>
+            <div style="color:#7dd3fc;">🔗 zone_id</div>
+            <div style="color:#cbd5e1;">community_code</div>
+            <div style="color:#cbd5e1;">community_name</div>
+          </div>
+        </div>
+
+        <!-- arrow -->
+        <div style="display:flex;align-items:center;padding:0 6px;margin-top:28px;color:#475569;font-size:1rem;">→ 1:N</div>
+
+        <!-- beneficiaries box -->
+        <div style="border:1.5px solid #22c55e;border-radius:8px;overflow:hidden;min-width:155px;position:relative;">
+          <div style="background:#14532d;padding:6px 10px;font-size:0.72rem;font-weight:700;color:#4ade80;text-align:center;">cwr.beneficiaries ⬅ trigger</div>
+          <div style="padding:7px 10px;font-size:0.7rem;background:#071120;line-height:1.8;">
+            <div style="color:#f59e0b;">🔑 beneficiary_id</div>
+            <div style="color:#7dd3fc;">🔗 community_id</div>
+            <div style="color:#cbd5e1;">beneficiary_code</div>
+            <div style="color:#cbd5e1;">full_name</div>
+            <div style="color:#cbd5e1;">welfare_score</div>
+            <div style="color:#cbd5e1;">is_active</div>
+          </div>
+        </div>
+
+        <!-- arrow -->
+        <div style="display:flex;align-items:center;padding:0 6px;margin-top:28px;color:#475569;font-size:1rem;">→ 1:N</div>
+
+        <!-- disbursements box -->
+        <div style="border:1.5px solid #8b5cf6;border-radius:8px;overflow:hidden;min-width:160px;">
+          <div style="background:#2e1065;padding:6px 10px;font-size:0.72rem;font-weight:700;color:#c4b5fd;text-align:center;">cwr.disbursements ⚡ partitioned</div>
+          <div style="padding:7px 10px;font-size:0.7rem;background:#071120;line-height:1.8;">
+            <div style="color:#f59e0b;">🔑 disbursement_id</div>
+            <div style="color:#f59e0b;">🔑 disbursement_date <span style="color:#8b5cf6;font-size:0.62rem;">partition key</span></div>
+            <div style="color:#7dd3fc;">🔗 beneficiary_id</div>
+            <div style="color:#cbd5e1;">amount_ngn</div>
+            <div style="color:#cbd5e1;">status</div>
+            <div style="color:#cbd5e1;">processed_by</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Audit log below, linked to beneficiaries -->
+      <div style="display:flex;padding-left:430px;margin-top:6px;align-items:flex-start;gap:0;min-width:700px;">
+        <div style="display:flex;flex-direction:column;align-items:center;margin-right:6px;">
+          <div style="color:#475569;font-size:0.7rem;">↑ AFTER INSERT/UPDATE/DELETE</div>
+        </div>
+        <div style="border:1.5px solid #ef4444;border-radius:8px;overflow:hidden;min-width:155px;">
+          <div style="background:#450a0a;padding:6px 10px;font-size:0.72rem;font-weight:700;color:#fca5a5;text-align:center;">cwr.audit_log 📋</div>
+          <div style="padding:7px 10px;font-size:0.7rem;background:#071120;line-height:1.8;">
+            <div style="color:#f59e0b;">🔑 log_id</div>
+            <div style="color:#cbd5e1;">log_time</div>
+            <div style="color:#cbd5e1;">role_name</div>
+            <div style="color:#cbd5e1;">table_name</div>
+            <div style="color:#cbd5e1;">action</div>
+            <div style="color:#cbd5e1;">row_data <span style="color:#f59e0b;font-size:0.62rem;">JSONB</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         PHASE 1 — DATABASE FOUNDATION
+    ═══════════════════════════════════════════════════════════════ -->
+    <h3 style="margin-top:0.5rem;">
+      Phase 1 — Database Foundation
+      <span style="display:inline-block;margin-left:10px;padding:2px 10px;border-radius:999px;background:#22c55e;color:#fff;font-size:0.72rem;font-weight:700;vertical-align:middle;">Advanced · Provided — run as-is</span>
+    </h3>
+
+    <div class="callout tip">
+      <div class="callout-title">What Phase 1 builds for you</div>
+      Three scripts build the entire data layer. Run them in order as a superuser in <code>lab_nsr</code>. Each introduces an advanced PostgreSQL pattern you have seen in the lectures but not yet built from scratch: <strong>table partitioning</strong> (automatic query routing by year), <strong>materialized views</strong> (pre-computed dashboard aggregates), and <strong>monitoring views</strong> (wrappers around <code>pg_stat_*</code> system catalogs).
+    </div>
+
+    <!-- 1A: Enhanced Schema with Partitioning -->
+    <h4 style="margin-top:1.5rem;color:var(--text-secondary,#94a3b8);">1A — Enhanced Schema &amp; Seed Data <span style="font-weight:400;font-size:0.8rem;">(partitioned disbursements)</span></h4>
+
+    <div class="callout warning" style="margin-bottom:0.8rem;">
+      <div class="callout-title">Key difference from a plain CREATE TABLE</div>
+      The <code>cwr.disbursements</code> table uses <code>PARTITION BY RANGE (disbursement_date)</code>. PostgreSQL requires the partition key to be part of the PRIMARY KEY — so the PK is <code>(disbursement_id, disbursement_date)</code>, not just <code>disbursement_id</code>. Every INSERT is automatically routed to the correct annual child table. The parent table itself holds no rows.
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">sql – run as superuser in lab_nsr</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cmt">-- ─────────────────────────────────────────────────────────────────
+-- CWR 1A · Enhanced Schema with Table Partitioning
+-- ─────────────────────────────────────────────────────────────────</span>
+
+<span class="kw">DROP SCHEMA IF EXISTS</span> cwr <span class="kw">CASCADE</span>;
+<span class="kw">CREATE SCHEMA</span> cwr;
+
+<span class="kw">CREATE TABLE</span> cwr.zones (
+    zone_id    <span class="typ">SERIAL</span>   <span class="kw">PRIMARY KEY</span>,
+    zone_code  <span class="typ">CHAR(2)</span>  <span class="kw">NOT NULL UNIQUE</span>,
+    zone_name  <span class="typ">TEXT</span>     <span class="kw">NOT NULL</span>
+);
+
+<span class="kw">CREATE TABLE</span> cwr.communities (
+    community_id    <span class="typ">SERIAL</span>  <span class="kw">PRIMARY KEY</span>,
+    community_code  <span class="typ">TEXT</span>    <span class="kw">NOT NULL UNIQUE</span>,
+    zone_id         <span class="typ">INT</span>     <span class="kw">NOT NULL REFERENCES</span> cwr.zones(zone_id),
+    community_name  <span class="typ">TEXT</span>    <span class="kw">NOT NULL</span>
+);
+
+<span class="kw">CREATE TABLE</span> cwr.beneficiaries (
+    beneficiary_id    <span class="typ">BIGSERIAL</span>     <span class="kw">PRIMARY KEY</span>,
+    beneficiary_code  <span class="typ">TEXT</span>          <span class="kw">NOT NULL UNIQUE</span>,
+    community_id      <span class="typ">INT</span>           <span class="kw">NOT NULL REFERENCES</span> cwr.communities(community_id),
+    full_name         <span class="typ">TEXT</span>          <span class="kw">NOT NULL</span>,
+    welfare_score     <span class="typ">NUMERIC(5,2)</span>,
+    enrolment_date    <span class="typ">DATE</span>          <span class="kw">NOT NULL DEFAULT</span> <span class="fn">CURRENT_DATE</span>,
+    is_active         <span class="typ">BOOLEAN</span>       <span class="kw">NOT NULL DEFAULT</span> <span class="kw">TRUE</span>,
+    updated_at        <span class="typ">TIMESTAMPTZ</span>   <span class="kw">NOT NULL DEFAULT</span> <span class="fn">now</span>()
+);
+
+<span class="cmt">-- Disbursements: RANGE partitioned by year
+-- Partition key (disbursement_date) must be part of PRIMARY KEY</span>
+<span class="kw">CREATE TABLE</span> cwr.disbursements (
+    disbursement_id    <span class="typ">BIGSERIAL</span>,
+    beneficiary_id     <span class="typ">BIGINT</span>         <span class="kw">NOT NULL</span>,
+    amount_ngn         <span class="typ">NUMERIC(12,2)</span>  <span class="kw">NOT NULL</span>,
+    disbursement_date  <span class="typ">DATE</span>           <span class="kw">NOT NULL</span>,
+    status             <span class="typ">TEXT</span>           <span class="kw">NOT NULL DEFAULT</span> <span class="str">'pending'</span>
+                           <span class="kw">CHECK</span> (status <span class="kw">IN</span> (<span class="str">'pending'</span>, <span class="str">'processed'</span>, <span class="str">'failed'</span>)),
+    processed_by       <span class="typ">TEXT</span>,
+    created_at         <span class="typ">TIMESTAMPTZ</span>    <span class="kw">NOT NULL DEFAULT</span> <span class="fn">now</span>(),
+    <span class="kw">PRIMARY KEY</span> (disbursement_id, disbursement_date)
+) <span class="kw">PARTITION BY RANGE</span> (disbursement_date);
+
+<span class="cmt">-- Annual child partitions — PostgreSQL routes INSERTs automatically</span>
+<span class="kw">CREATE TABLE</span> cwr.disbursements_2024 <span class="kw">PARTITION OF</span> cwr.disbursements
+    <span class="kw">FOR VALUES FROM</span> (<span class="str">'2024-01-01'</span>) <span class="kw">TO</span> (<span class="str">'2025-01-01'</span>);
+<span class="kw">CREATE TABLE</span> cwr.disbursements_2025 <span class="kw">PARTITION OF</span> cwr.disbursements
+    <span class="kw">FOR VALUES FROM</span> (<span class="str">'2025-01-01'</span>) <span class="kw">TO</span> (<span class="str">'2026-01-01'</span>);
+<span class="kw">CREATE TABLE</span> cwr.disbursements_2026 <span class="kw">PARTITION OF</span> cwr.disbursements
+    <span class="kw">FOR VALUES FROM</span> (<span class="str">'2026-01-01'</span>) <span class="kw">TO</span> (<span class="str">'2027-01-01'</span>);
+<span class="kw">CREATE TABLE</span> cwr.disbursements_future <span class="kw">PARTITION OF</span> cwr.disbursements
+    <span class="kw">DEFAULT</span>;
+
+<span class="kw">CREATE TABLE</span> cwr.audit_log (
+    log_id      <span class="typ">BIGSERIAL</span>    <span class="kw">PRIMARY KEY</span>,
+    log_time    <span class="typ">TIMESTAMPTZ</span>  <span class="kw">NOT NULL DEFAULT</span> <span class="fn">now</span>(),
+    role_name   <span class="typ">TEXT</span>         <span class="kw">NOT NULL DEFAULT</span> <span class="fn">session_user</span>,
+    table_name  <span class="typ">TEXT</span>         <span class="kw">NOT NULL</span>,
+    action      <span class="typ">TEXT</span>         <span class="kw">NOT NULL</span>,
+    row_data    <span class="typ">JSONB</span>
+);
+
+<span class="cmt">-- ── Seed data ──────────────────────────────────────────────────</span>
+<span class="kw">INSERT INTO</span> cwr.zones (zone_code, zone_name) <span class="kw">VALUES</span>
+    (<span class="str">'NC'</span>, <span class="str">'North Central'</span>), (<span class="str">'SW'</span>, <span class="str">'South West'</span>), (<span class="str">'NE'</span>, <span class="str">'North East'</span>);
+
+<span class="kw">INSERT INTO</span> cwr.communities (community_code, zone_id, community_name) <span class="kw">VALUES</span>
+    (<span class="str">'NC-001'</span>, <span class="num">1</span>, <span class="str">'Bwari Community'</span>),  (<span class="str">'NC-002'</span>, <span class="num">1</span>, <span class="str">'Kuje Settlement'</span>),
+    (<span class="str">'SW-001'</span>, <span class="num">2</span>, <span class="str">'Agege Ward'</span>),       (<span class="str">'SW-002'</span>, <span class="num">2</span>, <span class="str">'Ibadan Central'</span>),
+    (<span class="str">'NE-001'</span>, <span class="num">3</span>, <span class="str">'Maiduguri North'</span>),  (<span class="str">'NE-002'</span>, <span class="num">3</span>, <span class="str">'Damaturu West'</span>);
+
+<span class="kw">INSERT INTO</span> cwr.beneficiaries
+    (beneficiary_code, community_id, full_name, welfare_score, enrolment_date) <span class="kw">VALUES</span>
+    (<span class="str">'BEN-NC-001'</span>, <span class="num">1</span>, <span class="str">'Amina Bello'</span>,      <span class="num">72.50</span>, <span class="str">'2024-01-15'</span>),
+    (<span class="str">'BEN-NC-002'</span>, <span class="num">2</span>, <span class="str">'Chukwuemeka Obi'</span>,  <span class="num">68.00</span>, <span class="str">'2024-02-03'</span>),
+    (<span class="str">'BEN-SW-001'</span>, <span class="num">3</span>, <span class="str">'Folake Adeyemi'</span>,   <span class="num">81.25</span>, <span class="str">'2024-01-20'</span>),
+    (<span class="str">'BEN-SW-002'</span>, <span class="num">4</span>, <span class="str">'Babatunde Lawal'</span>,  <span class="num">55.75</span>, <span class="str">'2024-03-10'</span>),
+    (<span class="str">'BEN-NE-001'</span>, <span class="num">5</span>, <span class="str">'Fatima Musa'</span>,      <span class="num">90.00</span>, <span class="str">'2024-01-08'</span>),
+    (<span class="str">'BEN-NE-002'</span>, <span class="num">6</span>, <span class="str">'Ibrahim Yusuf'</span>,    <span class="num">63.40</span>, <span class="str">'2024-02-28'</span>);
+
+<span class="cmt">-- INSERTs go to disbursements_2024 automatically (date in 2024 range)</span>
+<span class="kw">INSERT INTO</span> cwr.disbursements
+    (beneficiary_id, amount_ngn, disbursement_date, status, processed_by) <span class="kw">VALUES</span>
+    (<span class="num">1</span>, <span class="num">25000.00</span>, <span class="str">'2024-03-01'</span>, <span class="str">'processed'</span>, <span class="str">'officer_nc'</span>),
+    (<span class="num">3</span>, <span class="num">30000.00</span>, <span class="str">'2024-03-01'</span>, <span class="str">'processed'</span>, <span class="str">'officer_sw'</span>),
+    (<span class="num">5</span>, <span class="num">25000.00</span>, <span class="str">'2024-03-01'</span>, <span class="str">'pending'</span>,   <span class="kw">NULL</span>),
+    (<span class="num">2</span>, <span class="num">20000.00</span>, <span class="str">'2024-04-01'</span>, <span class="str">'failed'</span>,    <span class="str">'officer_nc'</span>);
+
+<span class="cmt">-- Verify partition routing:
+-- SELECT tableoid::regclass, status, disbursement_date
+-- FROM cwr.disbursements;</span></pre>
+    </div>
+
+    <!-- 1B: Materialized View + Indexes -->
+    <h4 style="margin-top:1.5rem;color:var(--text-secondary,#94a3b8);">1B — Materialized View &amp; Performance Indexes <span style="font-weight:400;font-size:0.8rem;">(powers the dashboard)</span></h4>
+
+    <div class="callout info" style="margin-bottom:0.8rem;">
+      <div class="callout-title">Why a materialized view instead of a regular view?</div>
+      A regular view runs its query on every SELECT — with six JOINs across large welfare tables this becomes expensive. A materialized view stores the result on disk and is refreshed on demand. The dashboard reads from <code>cwr.mv_zone_stats</code> in microseconds instead of scanning all base tables. Run <code>REFRESH MATERIALIZED VIEW CONCURRENTLY cwr.mv_zone_stats;</code> after any bulk data change.
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">sql – run as superuser in lab_nsr</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cmt">-- ─────────────────────────────────────────────────────────────────
+-- CWR 1B · Materialized View and Composite Indexes
+-- ─────────────────────────────────────────────────────────────────</span>
+
+<span class="cmt">-- Composite indexes for common query patterns in the security layer</span>
+<span class="kw">CREATE INDEX</span> idx_beneficiaries_community_active
+    <span class="kw">ON</span> cwr.beneficiaries (community_id, is_active)
+    <span class="kw">WHERE</span> is_active = <span class="kw">TRUE</span>;
+
+<span class="kw">CREATE INDEX</span> idx_disbursements_date_status
+    <span class="kw">ON</span> cwr.disbursements (disbursement_date <span class="kw">DESC</span>, status);
+
+<span class="kw">CREATE INDEX</span> idx_audit_log_time_table
+    <span class="kw">ON</span> cwr.audit_log (log_time <span class="kw">DESC</span>, table_name);
+
+<span class="cmt">-- Materialized view: pre-aggregated zone statistics
+-- This is what the dashboard reads — 6 JOINs computed once, cached on disk</span>
+<span class="kw">CREATE MATERIALIZED VIEW</span> cwr.mv_zone_stats <span class="kw">AS</span>
+<span class="kw">SELECT</span>
+    z.zone_code,
+    z.zone_name,
+    <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> b.beneficiary_id)                                        <span class="kw">AS</span> total_beneficiaries,
+    <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> b.beneficiary_id) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> b.is_active)            <span class="kw">AS</span> active_beneficiaries,
+    <span class="fn">ROUND</span>(<span class="fn">AVG</span>(b.welfare_score), <span class="num">2</span>)                                          <span class="kw">AS</span> avg_welfare_score,
+    <span class="fn">COALESCE</span>(<span class="fn">SUM</span>(d.amount_ngn) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> d.status = <span class="str">'processed'</span>), <span class="num">0</span>) <span class="kw">AS</span> total_disbursed,
+    <span class="fn">COUNT</span>(d.disbursement_id)     <span class="kw">FILTER</span> (<span class="kw">WHERE</span> d.status = <span class="str">'pending'</span>)     <span class="kw">AS</span> pending_disbursements,
+    <span class="fn">COUNT</span>(d.disbursement_id)     <span class="kw">FILTER</span> (<span class="kw">WHERE</span> d.status = <span class="str">'failed'</span>)      <span class="kw">AS</span> failed_disbursements
+<span class="kw">FROM</span>  cwr.zones z
+<span class="kw">LEFT  JOIN</span> cwr.communities   c <span class="kw">ON</span> c.zone_id        = z.zone_id
+<span class="kw">LEFT  JOIN</span> cwr.beneficiaries b <span class="kw">ON</span> b.community_id   = c.community_id
+<span class="kw">LEFT  JOIN</span> cwr.disbursements d <span class="kw">ON</span> d.beneficiary_id = b.beneficiary_id
+<span class="kw">GROUP  BY</span> z.zone_id, z.zone_code, z.zone_name
+<span class="kw">ORDER  BY</span> z.zone_code;
+
+<span class="kw">CREATE UNIQUE INDEX</span> idx_mv_zone_stats_code <span class="kw">ON</span> cwr.mv_zone_stats (zone_code);
+
+<span class="cmt">-- Initial population — must run before the dashboard can read data</span>
+<span class="kw">REFRESH MATERIALIZED VIEW</span> cwr.mv_zone_stats;
+
+<span class="cmt">-- Verify:
+-- SELECT zone_code, total_beneficiaries, avg_welfare_score, total_disbursed
+-- FROM cwr.mv_zone_stats;</span></pre>
+    </div>
+
+    <!-- 1C: Monitoring Infrastructure -->
+    <h4 style="margin-top:1.5rem;color:var(--text-secondary,#94a3b8);">1C — Monitoring Infrastructure <span style="font-weight:400;font-size:0.8rem;">(dashboard health panel)</span></h4>
+
+    <div class="callout info" style="margin-bottom:0.8rem;">
+      <div class="callout-title">Why wrap pg_stat_* in views?</div>
+      Application roles should never query system catalogs directly — the schema changes between PostgreSQL versions and the privilege model is complex. By wrapping <code>pg_stat_activity</code>, <code>pg_locks</code>, and <code>pg_stat_bgwriter</code> in schema views, you control exactly which columns are exposed, and you can update the view definition without changing application code.
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">sql – run as superuser in lab_nsr</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cmt">-- ─────────────────────────────────────────────────────────────────
+-- CWR 1C · Monitoring Infrastructure
+-- ─────────────────────────────────────────────────────────────────</span>
+
+<span class="cmt">-- Monitoring role — read-only access to pg_stat_* catalogs</span>
+<span class="kw">DROP ROLE IF EXISTS</span> cwr_monitor;
+<span class="kw">CREATE ROLE</span> cwr_monitor <span class="kw">WITH LOGIN</span>;
+<span class="kw">GRANT CONNECT ON DATABASE</span> lab_nsr <span class="kw">TO</span> cwr_monitor;
+<span class="kw">GRANT USAGE ON SCHEMA</span> cwr <span class="kw">TO</span> cwr_monitor;
+<span class="kw">GRANT SELECT ON ALL TABLES IN SCHEMA</span> cwr <span class="kw">TO</span> cwr_monitor;
+<span class="kw">GRANT</span> pg_monitor <span class="kw">TO</span> cwr_monitor;   <span class="cmt">-- PG10+ built-in monitoring super-role</span>
+
+<span class="cmt">-- View: active sessions (System Health panel — Active Sessions card)</span>
+<span class="kw">CREATE OR REPLACE VIEW</span> cwr.v_active_sessions <span class="kw">AS</span>
+<span class="kw">SELECT</span>
+    pid,
+    usename           <span class="kw">AS</span> role_name,
+    application_name,
+    state,
+    wait_event_type,
+    wait_event,
+    query_start,
+    <span class="fn">now</span>() - query_start  <span class="kw">AS</span> duration,
+    <span class="fn">LEFT</span>(query, <span class="num">100</span>)    <span class="kw">AS</span> query_snippet
+<span class="kw">FROM</span>  pg_stat_activity
+<span class="kw">WHERE</span> datname = <span class="fn">current_database</span>()
+  <span class="kw">AND</span>  pid <> <span class="fn">pg_backend_pid</span>()
+<span class="kw">ORDER  BY</span> query_start;
+
+<span class="cmt">-- View: lock contention (System Health panel — Lock Contention card)</span>
+<span class="kw">CREATE OR REPLACE VIEW</span> cwr.v_lock_monitor <span class="kw">AS</span>
+<span class="kw">SELECT</span>
+    blocked.pid              <span class="kw">AS</span> blocked_pid,
+    blocked.usename          <span class="kw">AS</span> blocked_user,
+    blocking.pid             <span class="kw">AS</span> blocking_pid,
+    blocking.usename         <span class="kw">AS</span> blocking_user,
+    <span class="fn">LEFT</span>(blocked.query, <span class="num">80</span>) <span class="kw">AS</span> blocked_query,
+    <span class="fn">now</span>() - blocked.query_start  <span class="kw">AS</span> wait_duration
+<span class="kw">FROM</span>  pg_stat_activity  blocked
+<span class="kw">JOIN</span>  pg_stat_activity  blocking
+      <span class="kw">ON</span>  blocking.pid = <span class="fn">ANY</span>(<span class="fn">pg_blocking_pids</span>(blocked.pid))
+<span class="kw">WHERE</span> <span class="fn">cardinality</span>(<span class="fn">pg_blocking_pids</span>(blocked.pid)) > <span class="num">0</span>;
+
+<span class="cmt">-- View: WAL and checkpoint health</span>
+<span class="kw">CREATE OR REPLACE VIEW</span> cwr.v_wal_health <span class="kw">AS</span>
+<span class="kw">SELECT</span>
+    <span class="fn">pg_size_pretty</span>(<span class="fn">pg_wal_lsn_diff</span>(<span class="fn">pg_current_wal_lsn</span>(), <span class="str">'0/0'</span>::pg_lsn))  <span class="kw">AS</span> total_wal_generated,
+    checkpoints_timed,
+    checkpoints_req,
+    <span class="fn">ROUND</span>(checkpoint_write_time / <span class="num">1000.0</span>, <span class="num">1</span>)   <span class="kw">AS</span> checkpoint_write_secs,
+    <span class="fn">ROUND</span>(checkpoint_sync_time  / <span class="num">1000.0</span>, <span class="num">1</span>)   <span class="kw">AS</span> checkpoint_sync_secs,
+    buffers_checkpoint,
+    buffers_clean,
+    buffers_backend
+<span class="kw">FROM</span>  pg_stat_bgwriter;
+
+<span class="cmt">-- ── pg_cron nightly digest ──────────────────────────────────────
+-- pg_cron is a Linux extension and is NOT available on the Windows
+-- EnterpriseDB build. The block below shows what you would configure
+-- on a production Linux server. Leave it commented out here.
+--
+-- SELECT cron.schedule('nightly-cwr-digest', '0 6 * * *', $$
+--     INSERT INTO cwr.audit_log (role_name, table_name, action, row_data)
+--     SELECT 'pg_cron', 'cwr', 'NIGHTLY_DIGEST',
+--            jsonb_build_object(
+--                'date',         CURRENT_DATE - 1,
+--                'total_events', COUNT(*),
+--                'by_action',    jsonb_object_agg(action, cnt)
+--            )
+--     FROM (
+--         SELECT action, COUNT(*) AS cnt
+--         FROM cwr.audit_log
+--         WHERE log_time >= CURRENT_DATE - 1 AND log_time < CURRENT_DATE
+--         GROUP BY action
+--     ) s;
+-- $$);</span></pre>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         PHASE 2 — SECURITY LAYER
+    ═══════════════════════════════════════════════════════════════ -->
+    <h3 style="margin-top:2.5rem;">
+      Phase 2 — Security Layer
+      <span style="display:inline-block;margin-left:10px;padding:2px 10px;border-radius:999px;background:#f97316;color:#fff;font-size:0.72rem;font-weight:700;vertical-align:middle;">Puzzles A · B · C — your turn</span>
+    </h3>
+
+    <!-- Puzzle A: RBAC -->
+    <h4 style="margin-top:1.5rem;">
+      Puzzle A — RBAC
+      <span style="display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;background:#22c55e;color:#fff;font-size:0.7rem;font-weight:700;vertical-align:middle;">Elementary</span>
+    </h4>
+
+    <p>The scaffold below creates three roles and grants most of their privileges. Three lines are <strong>missing</strong> — find the <code>-- YOUR TASK</code> comment and add them before running the block.</p>
+
+    <div class="callout tip">
+      <div class="callout-title">What the three missing lines must do</div>
+      <ol style="margin:0.4rem 0 0 1.2rem;padding:0;line-height:1.9;">
+        <li><strong>cwr_zone_officer</strong> must be able to <em>update</em> disbursement records (mark payments as processed or failed) — but only on <code>cwr.disbursements</code>.</li>
+        <li><strong>cwr_data_entry</strong> must be able to <em>insert</em> new beneficiaries — but only on <code>cwr.beneficiaries</code>.</li>
+        <li><code>cwr.audit_log</code> must be append-only — no role, not even <code>cwr_admin</code> (who has BYPASSRLS), should be able to delete audit records. Write two <code>REVOKE DELETE</code> statements.</li>
+      </ol>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">sql – complete the YOUR TASK section, then run</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cmt">-- CWR PUZZLE A · RBAC — add the 3 missing lines, then run</span>
+
+<span class="kw">DROP ROLE IF EXISTS</span> cwr_admin, cwr_zone_officer, cwr_data_entry;
+
+<span class="kw">CREATE ROLE</span> cwr_admin        <span class="kw">WITH LOGIN BYPASSRLS</span>;
+<span class="kw">CREATE ROLE</span> cwr_zone_officer <span class="kw">WITH LOGIN</span>;
+<span class="kw">CREATE ROLE</span> cwr_data_entry   <span class="kw">WITH LOGIN</span>;
+
+<span class="kw">GRANT USAGE ON SCHEMA</span> cwr <span class="kw">TO</span> cwr_admin, cwr_zone_officer, cwr_data_entry;
+
+<span class="kw">GRANT ALL ON ALL TABLES    IN SCHEMA</span> cwr <span class="kw">TO</span> cwr_admin;
+<span class="kw">GRANT ALL ON ALL SEQUENCES IN SCHEMA</span> cwr <span class="kw">TO</span> cwr_admin;
+
+<span class="kw">GRANT SELECT ON ALL TABLES IN SCHEMA</span> cwr <span class="kw">TO</span> cwr_zone_officer;
+
+<span class="kw">GRANT SELECT ON</span> cwr.beneficiaries, cwr.communities, cwr.zones <span class="kw">TO</span> cwr_data_entry;
+<span class="kw">GRANT USAGE  ON SEQUENCE</span> cwr.beneficiaries_beneficiary_id_seq <span class="kw">TO</span> cwr_data_entry;
+
+<span class="cmt">-- ─── YOUR TASK: add the 3 missing lines here ─────────────────</span></pre>
+    </div>
+
+    <div class="answer-area">Write your 3 missing GRANT / REVOKE lines here</div>
+
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button class="btn-toggle-answer instructor-block instructor-only" onclick="toggleAnswer('ans-mp-pa',this)">▼ Show Answer</button>
+    </div>
+    <div class="answer-reveal" id="ans-mp-pa">
+      <div class="callout tip"><div class="callout-title">Complete Answer — Instructor Only</div>BYPASSRLS skips RLS policies but does NOT bypass explicit privilege revocations. Revoking DELETE from both PUBLIC and cwr_admin ensures the audit log is truly append-only for every role in the system.</div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – 3 missing lines</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">GRANT UPDATE ON</span> cwr.disbursements  <span class="kw">TO</span> cwr_zone_officer;
+<span class="kw">GRANT INSERT ON</span> cwr.beneficiaries  <span class="kw">TO</span> cwr_data_entry;
+<span class="kw">REVOKE DELETE ON</span> cwr.audit_log <span class="kw">FROM PUBLIC</span>;
+<span class="kw">REVOKE DELETE ON</span> cwr.audit_log <span class="kw">FROM</span> cwr_admin;</pre>
+      </div>
+    </div>
+
+    <!-- Puzzle B: RLS -->
+    <h4 style="margin-top:2rem;">
+      Puzzle B — Row-Level Security
+      <span style="display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;background:#f97316;color:#fff;font-size:0.7rem;font-weight:700;vertical-align:middle;">Intermediate</span>
+    </h4>
+
+    <p>Zone officers and data entry staff must only see — and only insert — beneficiaries belonging to their own zone. The zone is communicated via the session GUC <code>app.zone_code</code>. Complete both policy clauses below.</p>
+
+    <div class="callout tip">
+      <div class="callout-title">Hint — the join pattern from the NSR</div>
+      On the NSR you joined <code>nsr.households → nsr.lgas → nsr.states</code> to reach a <code>state_code</code>. The CWR pattern is identical: <code>cwr.beneficiaries → cwr.communities → cwr.zones</code> to reach <code>zone_code</code>. Read it with <code>current_setting('app.zone_code', TRUE)</code> — the second argument <code>TRUE</code> means "return NULL rather than raise an error if the GUC is not set" (safe for sessions that have not set a zone).
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">sql – write the USING and WITH CHECK clauses, then run</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cmt">-- CWR PUZZLE B · RLS — write USING and WITH CHECK before running</span>
+
+<span class="kw">ALTER TABLE</span> cwr.beneficiaries <span class="kw">ENABLE ROW LEVEL SECURITY</span>;
+
+<span class="kw">DROP POLICY IF EXISTS</span> cwr_zone_policy <span class="kw">ON</span> cwr.beneficiaries;
+
+<span class="kw">CREATE POLICY</span> cwr_zone_policy <span class="kw">ON</span> cwr.beneficiaries
+    <span class="kw">FOR ALL</span>
+    <span class="kw">TO</span> cwr_data_entry, cwr_zone_officer
+    <span class="kw">USING</span> (
+        <span class="cmt">-- YOUR TASK: EXISTS subquery through cwr.communities → cwr.zones
+        -- compare zone_code to current_setting('app.zone_code', TRUE)</span>
+    )
+    <span class="kw">WITH CHECK</span> (
+        <span class="cmt">-- YOUR TASK: same logic as USING</span>
+    );</pre>
+    </div>
+
+    <div class="answer-area">Write your USING and WITH CHECK clauses here</div>
+
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button class="btn-toggle-answer instructor-block instructor-only" onclick="toggleAnswer('ans-mp-pb',this)">▼ Show Answer</button>
+    </div>
+    <div class="answer-reveal" id="ans-mp-pb">
+      <div class="callout tip"><div class="callout-title">Complete Answer — Instructor Only</div>USING controls which rows are visible (SELECT/UPDATE/DELETE). WITH CHECK controls which rows can be written (INSERT/UPDATE). Making them identical prevents a data-entry clerk from inserting a beneficiary into a community they cannot read back — a write-only injection that would be invisible to the inserting user but visible to other zones.</div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – complete policy</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">ALTER TABLE</span> cwr.beneficiaries <span class="kw">ENABLE ROW LEVEL SECURITY</span>;
+<span class="kw">DROP POLICY IF EXISTS</span> cwr_zone_policy <span class="kw">ON</span> cwr.beneficiaries;
+<span class="kw">CREATE POLICY</span> cwr_zone_policy <span class="kw">ON</span> cwr.beneficiaries
+    <span class="kw">FOR ALL TO</span> cwr_data_entry, cwr_zone_officer
+    <span class="kw">USING</span> (
+        <span class="kw">EXISTS</span> (
+            <span class="kw">SELECT</span> <span class="num">1</span>
+            <span class="kw">FROM</span>  cwr.communities c
+            <span class="kw">JOIN</span>  cwr.zones       z <span class="kw">ON</span> z.zone_id = c.zone_id
+            <span class="kw">WHERE</span> c.community_id = cwr.beneficiaries.community_id
+              <span class="kw">AND</span>  z.zone_code   = <span class="fn">current_setting</span>(<span class="str">'app.zone_code'</span>, <span class="kw">TRUE</span>)
+        )
+    )
+    <span class="kw">WITH CHECK</span> (
+        <span class="kw">EXISTS</span> (
+            <span class="kw">SELECT</span> <span class="num">1</span>
+            <span class="kw">FROM</span>  cwr.communities c
+            <span class="kw">JOIN</span>  cwr.zones       z <span class="kw">ON</span> z.zone_id = c.zone_id
+            <span class="kw">WHERE</span> c.community_id = cwr.beneficiaries.community_id
+              <span class="kw">AND</span>  z.zone_code   = <span class="fn">current_setting</span>(<span class="str">'app.zone_code'</span>, <span class="kw">TRUE</span>)
+        )
+    );</pre>
+      </div>
+    </div>
+
+    <!-- Puzzle C: Audit Trigger -->
+    <h4 style="margin-top:2rem;">
+      Puzzle C — Audit Trigger
+      <span style="display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;background:#f97316;color:#fff;font-size:0.7rem;font-weight:700;vertical-align:middle;">Intermediate</span>
+    </h4>
+
+    <p>The function shell and trigger wire-up are provided. Fill in the two <code>-- YOUR TASK</code> sections: build <code>v_row_data</code> and write the INSERT into <code>cwr.audit_log</code>.</p>
+
+    <div class="callout tip">
+      <div class="callout-title">Hint — look at what you built on Day 3</div>
+      Open <code>nsr.fn_audit_log()</code>. The structure is identical — only the schema name changes. Two important rules: (1) use <code>session_user</code> not <code>current_user</code> — inside SECURITY DEFINER, <code>current_user</code> returns the function owner (postgres), not the caseworker making the change; (2) for UPDATE, wrap OLD and NEW inside <code>jsonb_build_object('old', …, 'new', …)</code> so the Phase 3 forensic function can read the before and after values field by field.
+    </div>
+
+    <div class="callout warning" style="margin-bottom:0.8rem;">
+      <div class="callout-title">Why SECURITY DEFINER?</div>
+      <code>cwr_data_entry</code> has no INSERT privilege on <code>cwr.audit_log</code> — and it should not. SECURITY DEFINER means the trigger runs as its owner (a superuser), so it can write to the audit table regardless of the calling role's privileges. This is the standard pattern for immutable audit logs.
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">sql – fill in the two YOUR TASK sections, then run</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cmt">-- CWR PUZZLE C · Audit Trigger — fill in the YOUR TASK sections</span>
+
+<span class="kw">CREATE OR REPLACE FUNCTION</span> cwr.fn_audit_log()
+<span class="kw">RETURNS TRIGGER LANGUAGE</span> plpgsql <span class="kw">SECURITY DEFINER</span>
+<span class="kw">AS</span> $func$
+<span class="kw">DECLARE</span>
+    v_row_data <span class="typ">JSONB</span>;
+<span class="kw">BEGIN</span>
+    <span class="cmt">-- YOUR TASK 1: build v_row_data based on TG_OP
+    -- DELETE  → flat JSONB of OLD row  (row_to_json(OLD)::JSONB)
+    -- INSERT  → flat JSONB of NEW row
+    -- UPDATE  → jsonb_build_object('old', row_to_json(OLD)::JSONB,
+    --                              'new', row_to_json(NEW)::JSONB)</span>
+
+
+
+    <span class="cmt">-- YOUR TASK 2: INSERT one row into cwr.audit_log
+    -- Columns: role_name, table_name, action, row_data
+    -- Use session_user for role_name (not current_user — why?)</span>
+
+
+
+    <span class="kw">RETURN</span> <span class="fn">COALESCE</span>(<span class="kw">NEW</span>, <span class="kw">OLD</span>);
+<span class="kw">END</span>;
+$func$;
+
+<span class="kw">DROP TRIGGER IF EXISTS</span> trg_audit_beneficiaries <span class="kw">ON</span> cwr.beneficiaries;
+<span class="kw">CREATE TRIGGER</span> trg_audit_beneficiaries
+    <span class="kw">AFTER INSERT OR UPDATE OR DELETE ON</span> cwr.beneficiaries
+    <span class="kw">FOR EACH ROW EXECUTE FUNCTION</span> cwr.fn_audit_log();</pre>
+    </div>
+
+    <div class="answer-area">Write your completed function body here</div>
+
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button class="btn-toggle-answer instructor-block instructor-only" onclick="toggleAnswer('ans-mp-pc',this)">▼ Show Answer</button>
+    </div>
+    <div class="answer-reveal" id="ans-mp-pc">
+      <div class="callout tip"><div class="callout-title">Complete Answer — Instructor Only</div>RETURN COALESCE(NEW, OLD) handles DELETE cleanly — on DELETE, NEW is NULL, so COALESCE returns OLD, satisfying the AFTER trigger protocol without a separate RETURN NULL branch.</div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – complete trigger function</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">CREATE OR REPLACE FUNCTION</span> cwr.fn_audit_log()
+<span class="kw">RETURNS TRIGGER LANGUAGE</span> plpgsql <span class="kw">SECURITY DEFINER</span>
+<span class="kw">AS</span> $func$
+<span class="kw">DECLARE</span>
+    v_row_data <span class="typ">JSONB</span>;
+<span class="kw">BEGIN</span>
+    <span class="kw">IF</span> TG_OP = <span class="str">'DELETE'</span> <span class="kw">THEN</span>
+        v_row_data := <span class="fn">row_to_json</span>(<span class="kw">OLD</span>)::<span class="typ">JSONB</span>;
+    <span class="kw">ELSIF</span> TG_OP = <span class="str">'INSERT'</span> <span class="kw">THEN</span>
+        v_row_data := <span class="fn">row_to_json</span>(<span class="kw">NEW</span>)::<span class="typ">JSONB</span>;
+    <span class="kw">ELSE</span>
+        v_row_data := <span class="fn">jsonb_build_object</span>(
+            <span class="str">'old'</span>, <span class="fn">row_to_json</span>(<span class="kw">OLD</span>)::<span class="typ">JSONB</span>,
+            <span class="str">'new'</span>, <span class="fn">row_to_json</span>(<span class="kw">NEW</span>)::<span class="typ">JSONB</span>
+        );
+    <span class="kw">END IF</span>;
+
+    <span class="kw">INSERT INTO</span> cwr.audit_log (role_name, table_name, action, row_data)
+    <span class="kw">VALUES</span> (
+        <span class="fn">session_user</span>,
+        TG_TABLE_SCHEMA || <span class="str">'.'</span> || TG_TABLE_NAME,
+        TG_OP,
+        v_row_data
+    );
+
+    <span class="kw">RETURN</span> <span class="fn">COALESCE</span>(<span class="kw">NEW</span>, <span class="kw">OLD</span>);
+<span class="kw">END</span>;
+$func$;
+
+<span class="kw">DROP TRIGGER IF EXISTS</span> trg_audit_beneficiaries <span class="kw">ON</span> cwr.beneficiaries;
+<span class="kw">CREATE TRIGGER</span> trg_audit_beneficiaries
+    <span class="kw">AFTER INSERT OR UPDATE OR DELETE ON</span> cwr.beneficiaries
+    <span class="kw">FOR EACH ROW EXECUTE FUNCTION</span> cwr.fn_audit_log();</pre>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         PHASE 3 — MONITORING & OBSERVABILITY
+    ═══════════════════════════════════════════════════════════════ -->
+    <h3 style="margin-top:2.5rem;">
+      Phase 3 — Monitoring &amp; Observability
+      <span style="display:inline-block;margin-left:10px;padding:2px 10px;border-radius:999px;background:#8b5cf6;color:#fff;font-size:0.72rem;font-weight:700;vertical-align:middle;">1 provided · Puzzle D your turn</span>
+    </h3>
+
+    <!-- 3A: Pre-built forensic function -->
+    <h4 style="margin-top:1.5rem;color:var(--text-secondary,#94a3b8);">Pre-built: Forensic Beneficiary Timeline Function <span style="font-weight:400;font-size:0.8rem;">(Advanced)</span></h4>
+
+    <div class="callout info" style="margin-bottom:0.8rem;">
+      <div class="callout-title">What this function does</div>
+      After Puzzle C is active, every change to <code>cwr.beneficiaries</code> is stored as a JSONB blob in <code>cwr.audit_log</code>. This forensic function unpacks that blob row by row — one output row <em>per changed field</em> — so you can reconstruct the exact before and after values for any individual field change. It uses two advanced patterns: <code>CROSS JOIN LATERAL</code> to expand JSONB keys dynamically, and the same COALESCE shape-detection trick from Day 3 Query 4.
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">sql – run as superuser in lab_nsr</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cmt">-- ─────────────────────────────────────────────────────────────────
+-- CWR 3A · Forensic Beneficiary Timeline — Advanced · Provided
+-- ─────────────────────────────────────────────────────────────────</span>
+
+<span class="kw">CREATE OR REPLACE FUNCTION</span> cwr.fn_beneficiary_timeline(p_beneficiary_code <span class="typ">TEXT</span>)
+<span class="kw">RETURNS TABLE</span> (
+    event_time   <span class="typ">TIMESTAMPTZ</span>,
+    role_name    <span class="typ">TEXT</span>,
+    action       <span class="typ">TEXT</span>,
+    field        <span class="typ">TEXT</span>,
+    old_value    <span class="typ">TEXT</span>,
+    new_value    <span class="typ">TEXT</span>
+)
+<span class="kw">LANGUAGE</span> sql <span class="kw">STABLE SECURITY DEFINER AS</span> $$
+    <span class="kw">SELECT</span>
+        al.log_time,
+        al.role_name,
+        al.action,
+        k.key                                               <span class="kw">AS</span> field,
+        <span class="kw">CASE</span> al.action
+            <span class="kw">WHEN</span> <span class="str">'DELETE'</span> <span class="kw">THEN</span> al.row_data          ->> k.key
+            <span class="kw">WHEN</span> <span class="str">'INSERT'</span> <span class="kw">THEN</span> <span class="kw">NULL</span>
+            <span class="kw">WHEN</span> <span class="str">'UPDATE'</span> <span class="kw">THEN</span> al.row_data -> <span class="str">'old'</span> ->> k.key
+        <span class="kw">END</span>                                                <span class="kw">AS</span> old_value,
+        <span class="kw">CASE</span> al.action
+            <span class="kw">WHEN</span> <span class="str">'DELETE'</span> <span class="kw">THEN</span> <span class="kw">NULL</span>
+            <span class="kw">WHEN</span> <span class="str">'INSERT'</span> <span class="kw">THEN</span> al.row_data          ->> k.key
+            <span class="kw">WHEN</span> <span class="str">'UPDATE'</span> <span class="kw">THEN</span> al.row_data -> <span class="str">'new'</span> ->> k.key
+        <span class="kw">END</span>                                                <span class="kw">AS</span> new_value
+    <span class="kw">FROM</span>  cwr.audit_log al
+    <span class="kw">CROSS JOIN LATERAL</span> (
+        <span class="kw">SELECT</span> key
+        <span class="kw">FROM</span>   <span class="fn">jsonb_each_text</span>(
+            <span class="kw">CASE</span> al.action
+                <span class="kw">WHEN</span> <span class="str">'UPDATE'</span> <span class="kw">THEN</span> al.row_data -> <span class="str">'new'</span>
+                <span class="kw">ELSE</span>               al.row_data
+            <span class="kw">END</span>
+        )
+    ) k(key)
+    <span class="kw">WHERE</span> al.table_name = <span class="str">'cwr.beneficiaries'</span>
+      <span class="kw">AND</span>   <span class="fn">COALESCE</span>(
+                al.row_data          ->> <span class="str">'beneficiary_code'</span>,
+                al.row_data -> <span class="str">'new'</span> ->> <span class="str">'beneficiary_code'</span>
+            ) = p_beneficiary_code
+    <span class="kw">ORDER  BY</span> al.log_time, k.key;
+$$;
+
+<span class="cmt">-- Usage (run after Puzzle C and making a test change):
+-- SELECT * FROM cwr.fn_beneficiary_timeline('BEN-NC-001');</span></pre>
+    </div>
+
+    <!-- Puzzle D: Three monitoring queries -->
+    <h4 style="margin-top:2rem;">
+      Puzzle D — Three Monitoring Queries
+      <span style="display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;background:#f97316;color:#fff;font-size:0.7rem;font-weight:700;vertical-align:middle;">Intermediate</span>
+    </h4>
+
+    <p>Each query below powers one panel in the dashboard health view. Write each SQL query from the scaffold — then test it in psql. The expected columns and filters are described in each task.</p>
+
+    <!-- D-1 -->
+    <div style="border-left:3px solid #8b5cf6;padding-left:16px;margin:1.2rem 0;">
+      <div style="font-weight:700;color:#c4b5fd;margin-bottom:6px;">D-1 &nbsp;·&nbsp; Active connections by role</div>
+      <p style="font-size:0.9rem;margin:0 0 8px;">Query <code>pg_stat_activity</code>. Show: <code>usename</code>, <code>state</code>, <code>COUNT(*) AS connections</code>. Filter: current database only (<code>datname = current_database()</code>), exclude the session running the query (<code>pid &lt;&gt; pg_backend_pid()</code>). Group by <code>usename, state</code>. Order by <code>connections DESC</code>.</p>
+      <div class="answer-area">Write D-1 here</div>
+      <div style="margin-top:6px;"><button class="btn-toggle-answer instructor-block instructor-only" onclick="toggleAnswer('ans-mp-pd1',this)">▼ Show Answer</button></div>
+      <div class="answer-reveal" id="ans-mp-pd1">
+        <div class="code-block" style="margin-top:8px;">
+          <div class="code-header"><span class="code-lang">sql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="kw">SELECT</span> usename, state, <span class="fn">COUNT</span>(*) <span class="kw">AS</span> connections
+<span class="kw">FROM</span>   pg_stat_activity
+<span class="kw">WHERE</span>  datname = <span class="fn">current_database</span>()
+  <span class="kw">AND</span>   pid <> <span class="fn">pg_backend_pid</span>()
+<span class="kw">GROUP  BY</span> usename, state
+<span class="kw">ORDER  BY</span> connections <span class="kw">DESC</span>;</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- D-2 -->
+    <div style="border-left:3px solid #8b5cf6;padding-left:16px;margin:1.2rem 0;">
+      <div style="font-weight:700;color:#c4b5fd;margin-bottom:6px;">D-2 &nbsp;·&nbsp; Table bloat detection</div>
+      <p style="font-size:0.9rem;margin:0 0 8px;">Query <code>pg_stat_user_tables</code>. Show: <code>relname AS table_name</code>, <code>n_live_tup</code>, <code>n_dead_tup</code>, and <code>dead_ratio_pct</code> = <code>ROUND(n_dead_tup::NUMERIC / (n_live_tup + n_dead_tup) * 100, 2)</code>. Filter: <code>schemaname = 'cwr'</code> and <code>(n_live_tup + n_dead_tup) &gt; 0</code> (avoid division by zero on empty tables). Order by <code>dead_ratio_pct DESC</code>.</p>
+      <div class="answer-area">Write D-2 here</div>
+      <div style="margin-top:6px;"><button class="btn-toggle-answer instructor-block instructor-only" onclick="toggleAnswer('ans-mp-pd2',this)">▼ Show Answer</button></div>
+      <div class="answer-reveal" id="ans-mp-pd2">
+        <div class="code-block" style="margin-top:8px;">
+          <div class="code-header"><span class="code-lang">sql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="kw">SELECT</span> relname                                                                  <span class="kw">AS</span> table_name,
+       n_live_tup,
+       n_dead_tup,
+       <span class="fn">ROUND</span>(n_dead_tup::<span class="typ">NUMERIC</span> / (n_live_tup + n_dead_tup) * <span class="num">100</span>, <span class="num">2</span>)       <span class="kw">AS</span> dead_ratio_pct
+<span class="kw">FROM</span>   pg_stat_user_tables
+<span class="kw">WHERE</span>  schemaname = <span class="str">'cwr'</span>
+  <span class="kw">AND</span>   (n_live_tup + n_dead_tup) > <span class="num">0</span>
+<span class="kw">ORDER  BY</span> dead_ratio_pct <span class="kw">DESC</span>;</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- D-3 -->
+    <div style="border-left:3px solid #8b5cf6;padding-left:16px;margin:1.2rem 0;">
+      <div style="font-weight:700;color:#c4b5fd;margin-bottom:6px;">D-3 &nbsp;·&nbsp; Unused index detection</div>
+      <p style="font-size:0.9rem;margin:0 0 8px;">Query <code>pg_stat_user_indexes</code>. Show: <code>indexrelname AS index_name</code>, <code>relname AS table_name</code>, <code>idx_scan</code>, <code>pg_size_pretty(pg_relation_size(indexrelid)) AS index_size</code>, and a <code>CASE</code> that labels <code>idx_scan = 0</code> as <code>'⚠ Never used'</code> and others as <code>'✓ Active'</code>. Filter: <code>schemaname = 'cwr'</code>. Order by <code>idx_scan ASC</code> (unused indexes first) then <code>pg_relation_size(indexrelid) DESC</code> (biggest waste first).</p>
+      <div class="answer-area">Write D-3 here</div>
+      <div style="margin-top:6px;"><button class="btn-toggle-answer instructor-block instructor-only" onclick="toggleAnswer('ans-mp-pd3',this)">▼ Show Answer</button></div>
+      <div class="answer-reveal" id="ans-mp-pd3">
+        <div class="code-block" style="margin-top:8px;">
+          <div class="code-header"><span class="code-lang">sql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="kw">SELECT</span> indexrelname                                              <span class="kw">AS</span> index_name,
+       relname                                                  <span class="kw">AS</span> table_name,
+       idx_scan,
+       <span class="fn">pg_size_pretty</span>(<span class="fn">pg_relation_size</span>(indexrelid))            <span class="kw">AS</span> index_size,
+       <span class="kw">CASE WHEN</span> idx_scan = <span class="num">0</span> <span class="kw">THEN</span> <span class="str">'⚠ Never used'</span> <span class="kw">ELSE</span> <span class="str">'✓ Active'</span> <span class="kw">END</span>  <span class="kw">AS</span> status
+<span class="kw">FROM</span>   pg_stat_user_indexes
+<span class="kw">WHERE</span>  schemaname = <span class="str">'cwr'</span>
+<span class="kw">ORDER  BY</span> idx_scan <span class="kw">ASC</span>, <span class="fn">pg_relation_size</span>(indexrelid) <span class="kw">DESC</span>;</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         PHASE 4 — BACKUP & DR
+    ═══════════════════════════════════════════════════════════════ -->
+    <h3 style="margin-top:2.5rem;">
+      Phase 4 — Backup &amp; Disaster Recovery
+      <span style="display:inline-block;margin-left:10px;padding:2px 10px;border-radius:999px;background:#f97316;color:#fff;font-size:0.72rem;font-weight:700;vertical-align:middle;">Puzzle E — write from scratch</span>
+    </h3>
+
+    <p>No scaffold is provided for this phase. Using what you practised on Day 3, write all commands from memory.</p>
+
+    <div class="callout info">
+      <div class="callout-title">Task — three things to produce</div>
+      <ol style="margin:0.4rem 0 0 1.2rem;padding:0;line-height:1.9;">
+        <li>A <strong>pg_dump</strong> command: custom-format backup of only the <code>cwr</code> schema from <code>lab_nsr</code> → <code>C:\temp\cwr_backup.dump</code>.</li>
+        <li>A <strong>schema-only pg_dump</strong>: structure without data → <code>C:\temp\cwr_schema_only.dump</code> (useful for DR: restore structure first, then load clean data).</li>
+        <li>A <strong>pg_restore</strong> command: restore the full backup into a new database called <code>lab_cwr_test</code>. Add the flag that suppresses "role does not exist" warnings.</li>
+      </ol>
+    </div>
+
+    <div class="callout tip">
+      <div class="callout-title">Key flags reminder</div>
+      <table style="border-collapse:collapse;width:100%;font-size:0.88rem;">
+        <thead><tr style="border-bottom:1px solid var(--border-color,#e2e8f0);">
+          <th style="text-align:left;padding:4px 12px 4px 0;">Flag</th>
+          <th style="text-align:left;padding:4px 0;">Meaning</th>
+        </tr></thead>
+        <tbody>
+          <tr><td style="padding:4px 12px 4px 0;font-family:monospace;">-n cwr</td><td>Dump only the cwr schema</td></tr>
+          <tr><td style="padding:4px 12px 4px 0;font-family:monospace;">-F c</td><td>Custom format (compressed, selective restore)</td></tr>
+          <tr><td style="padding:4px 12px 4px 0;font-family:monospace;">--schema-only</td><td>Structure (DDL) only — no row data</td></tr>
+          <tr><td style="padding:4px 12px 4px 0;font-family:monospace;">-d dbname</td><td>Target database (pg_restore)</td></tr>
+          <tr><td style="padding:4px 12px 4px 0;font-family:monospace;">--no-privileges</td><td>Skip GRANT/REVOKE — avoids role-not-found errors</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="answer-area">Write your pg_dump and pg_restore commands here</div>
+
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button class="btn-toggle-answer instructor-block instructor-only" onclick="toggleAnswer('ans-mp-pe',this)">▼ Show Answer</button>
+    </div>
+    <div class="answer-reveal" id="ans-mp-pe">
+      <div class="callout tip"><div class="callout-title">Complete Answer — Instructor Only</div>The schema-only dump is a valuable DR asset separate from the data dump: it lets you rebuild the database structure in a new cluster before restoring data, which avoids FK constraint violations during a partial restore. Run the Puzzle A RBAC block in lab_cwr_test afterwards to recreate roles and grants.</div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">bash – run in terminal, not in psql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt"># Task 1: Full backup — data + structure, custom format</span>
+pg_dump -U postgres -d lab_nsr -n cwr -F c -f C:\temp\cwr_backup.dump
+
+<span class="cmt"># Task 2: Schema-only backup — DDL without any row data</span>
+pg_dump -U postgres -d lab_nsr -n cwr -F c --schema-only -f C:\temp\cwr_schema_only.dump
+
+<span class="cmt"># First create the target database (inside psql):
+# CREATE DATABASE lab_cwr_test;
+
+# Task 3: Restore full backup — suppress role-not-found warnings</span>
+pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.dump</pre>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         VERIFICATION SUITE
+    ═══════════════════════════════════════════════════════════════ -->
+    <h3 style="margin-top:2.5rem;">
+      Verification Suite
+      <span style="display:inline-block;margin-left:10px;padding:2px 10px;border-radius:999px;background:#0ea5e9;color:#fff;font-size:0.72rem;font-weight:700;vertical-align:middle;">Run after all 4 phases</span>
+    </h3>
+
+    <div class="callout info">
+      <div class="callout-title">How to use this block</div>
+      Run each numbered check in order. The expected output is shown in the comment below each query. If a check fails, re-examine the phase whose number matches the check before continuing — later checks depend on earlier phases being correct.
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">sql – verification suite</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cmt">-- ════════════════════════════════════════════════════════════════
+-- CWR VERIFICATION SUITE — 8 checks
+-- ════════════════════════════════════════════════════════════════</span>
+
+<span class="cmt">-- CHECK 1 · Phase 1A — partitioned tables exist ────────────────</span>
+<span class="kw">SELECT</span> tablename
+<span class="kw">FROM</span>   pg_tables
+<span class="kw">WHERE</span>  schemaname = <span class="str">'cwr'</span>
+<span class="kw">ORDER  BY</span> tablename;
+<span class="cmt">-- Expected: audit_log, beneficiaries, communities,
+--           disbursements_2024, disbursements_2025, disbursements_2026,
+--           disbursements_future, zones</span>
+
+<span class="cmt">-- CHECK 2 · Phase 1B — materialized view populated ─────────────</span>
+<span class="kw">SELECT</span> zone_code, total_beneficiaries, avg_welfare_score, total_disbursed
+<span class="kw">FROM</span>   cwr.mv_zone_stats
+<span class="kw">ORDER  BY</span> zone_code;
+<span class="cmt">-- Expected: NC(2, 70.25, 25000)  SW(2, 68.50, 30000)  NE(2, 76.70, 0)</span>
+
+<span class="cmt">-- CHECK 3 · Phase 2A — RBAC grants ─────────────────────────────</span>
+<span class="kw">SELECT</span> grantee, table_name, privilege_type
+<span class="kw">FROM</span>   information_schema.role_table_grants
+<span class="kw">WHERE</span>  grantee <span class="kw">LIKE</span> <span class="str">'cwr%'</span>
+  <span class="kw">AND</span>   table_schema = <span class="str">'cwr'</span>
+<span class="kw">ORDER  BY</span> grantee, table_name, privilege_type;
+<span class="cmt">-- Expected rows include:
+--   cwr_data_entry  | beneficiaries | INSERT
+--   cwr_zone_officer| disbursements | UPDATE</span>
+
+<span class="cmt">-- CHECK 4 · Phase 2B — RLS restricts by zone ───────────────────</span>
+<span class="kw">SET ROLE</span> cwr_data_entry;
+<span class="kw">SET</span> app.zone_code = <span class="str">'SW'</span>;
+<span class="kw">SELECT</span> <span class="fn">COUNT</span>(*) <span class="kw">AS</span> visible_beneficiaries <span class="kw">FROM</span> cwr.beneficiaries;
+<span class="cmt">-- Expected: 2 (BEN-SW-001 and BEN-SW-002 only)</span>
+<span class="kw">RESET ROLE</span>;
+
+<span class="cmt">-- CHECK 5 · Phase 2C — audit trigger fires on INSERT ───────────</span>
+<span class="kw">INSERT INTO</span> cwr.beneficiaries
+    (beneficiary_code, community_id, full_name, welfare_score, enrolment_date)
+<span class="kw">VALUES</span>
+    (<span class="str">'VERIFY-001'</span>, <span class="num">1</span>, <span class="str">'Verification User'</span>, <span class="num">50.00</span>, <span class="fn">CURRENT_DATE</span>);
+
+<span class="kw">SELECT</span> log_time, role_name, action,
+       row_data ->> <span class="str">'beneficiary_code'</span> <span class="kw">AS</span> code
+<span class="kw">FROM</span>   cwr.audit_log
+<span class="kw">ORDER  BY</span> log_id <span class="kw">DESC LIMIT</span> <span class="num">1</span>;
+<span class="cmt">-- Expected: action='INSERT', code='VERIFY-001'</span>
+
+<span class="cmt">-- CHECK 6 · Phase 2C — audit trigger fires on UPDATE ───────────</span>
+<span class="kw">UPDATE</span> cwr.beneficiaries
+<span class="kw">SET</span>    welfare_score = <span class="num">75.00</span>
+<span class="kw">WHERE</span>  beneficiary_code = <span class="str">'VERIFY-001'</span>;
+
+<span class="kw">SELECT</span> action,
+       row_data -> <span class="str">'old'</span> ->> <span class="str">'welfare_score'</span> <span class="kw">AS</span> score_before,
+       row_data -> <span class="str">'new'</span> ->> <span class="str">'welfare_score'</span> <span class="kw">AS</span> score_after
+<span class="kw">FROM</span>   cwr.audit_log
+<span class="kw">ORDER  BY</span> log_id <span class="kw">DESC LIMIT</span> <span class="num">1</span>;
+<span class="cmt">-- Expected: action='UPDATE', score_before='50.00', score_after='75.00'</span>
+
+<span class="cmt">-- CHECK 7 · Phase 3 — forensic function expands rows ───────────</span>
+<span class="kw">SELECT</span> event_time, action, field, old_value, new_value
+<span class="kw">FROM</span>   cwr.fn_beneficiary_timeline(<span class="str">'VERIFY-001'</span>)
+<span class="kw">ORDER  BY</span> event_time, field;
+<span class="cmt">-- Expected: INSERT rows (old_value=NULL for all fields)
+--           then UPDATE row for welfare_score (old=50.00, new=75.00)</span>
+
+<span class="cmt">-- CHECK 8 · Phase 4 — backup file exists ───────────────────────</span>
+\! dir C:\temp\cwr_backup.dump
+<span class="cmt">-- Expected: non-zero file size</span></pre>
+    </div>
+
+  </div>
+  <!-- MINI PROJECT END -->
+    <h3 style="margin-top:2rem;">
+      Piece 1 — Schema &amp; Seed Data
+      <span style="display:inline-block;margin-left:10px;padding:2px 10px;border-radius:999px;background:#22c55e;color:#fff;font-size:0.75rem;font-weight:700;vertical-align:middle;">Provided — run as-is</span>
+    </h3>
+
+    <div class="callout tip">
+      <div class="callout-title">Instructions</div>
+      Copy the block below into <strong>psql</strong> (connected to <code>lab_nsr</code> as a superuser) and run it. It creates the <code>cwr</code> schema, all five tables, and loads enough seed data to test every subsequent piece. You do <strong>not</strong> need to change anything here.
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">sql – run as superuser in lab_nsr</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cmt">-- ────────────────────────────────────────────────────────────────
+-- CWR PIECE 1 · Schema, Tables, and Seed Data
+-- Run as superuser in lab_nsr. No changes needed.
+-- ────────────────────────────────────────────────────────────────</span>
+
+<span class="kw">DROP SCHEMA IF EXISTS</span> cwr <span class="kw">CASCADE</span>;
+<span class="kw">CREATE SCHEMA</span> cwr;
+
+<span class="cmt">-- ── Zones ──────────────────────────────────────────────────────</span>
+<span class="kw">CREATE TABLE</span> cwr.zones (
+    zone_id    <span class="typ">SERIAL</span>    <span class="kw">PRIMARY KEY</span>,
+    zone_code  <span class="typ">CHAR(2)</span>   <span class="kw">NOT NULL UNIQUE</span>,
+    zone_name  <span class="typ">TEXT</span>      <span class="kw">NOT NULL</span>
+);
+
+<span class="cmt">-- ── Communities ────────────────────────────────────────────────</span>
+<span class="kw">CREATE TABLE</span> cwr.communities (
+    community_id    <span class="typ">SERIAL</span>  <span class="kw">PRIMARY KEY</span>,
+    community_code  <span class="typ">TEXT</span>    <span class="kw">NOT NULL UNIQUE</span>,
+    zone_id         <span class="typ">INT</span>     <span class="kw">NOT NULL REFERENCES</span> cwr.zones(zone_id),
+    community_name  <span class="typ">TEXT</span>    <span class="kw">NOT NULL</span>
+);
+
+<span class="cmt">-- ── Beneficiaries ──────────────────────────────────────────────</span>
+<span class="kw">CREATE TABLE</span> cwr.beneficiaries (
+    beneficiary_id    <span class="typ">BIGSERIAL</span>     <span class="kw">PRIMARY KEY</span>,
+    beneficiary_code  <span class="typ">TEXT</span>          <span class="kw">NOT NULL UNIQUE</span>,
+    community_id      <span class="typ">INT</span>           <span class="kw">NOT NULL REFERENCES</span> cwr.communities(community_id),
+    full_name         <span class="typ">TEXT</span>          <span class="kw">NOT NULL</span>,
+    welfare_score     <span class="typ">NUMERIC(5,2)</span>,
+    enrolment_date    <span class="typ">DATE</span>          <span class="kw">NOT NULL DEFAULT</span> <span class="fn">CURRENT_DATE</span>,
+    is_active         <span class="typ">BOOLEAN</span>       <span class="kw">NOT NULL DEFAULT</span> <span class="kw">TRUE</span>
+);
+
+<span class="cmt">-- ── Disbursements ──────────────────────────────────────────────</span>
+<span class="kw">CREATE TABLE</span> cwr.disbursements (
+    disbursement_id    <span class="typ">BIGSERIAL</span>      <span class="kw">PRIMARY KEY</span>,
+    beneficiary_id     <span class="typ">BIGINT</span>         <span class="kw">NOT NULL REFERENCES</span> cwr.beneficiaries(beneficiary_id),
+    amount_ngn         <span class="typ">NUMERIC(12,2)</span>  <span class="kw">NOT NULL</span>,
+    disbursement_date  <span class="typ">DATE</span>           <span class="kw">NOT NULL</span>,
+    status             <span class="typ">TEXT</span>           <span class="kw">NOT NULL DEFAULT</span> <span class="str">'pending'</span>
+                           <span class="kw">CHECK</span> (status <span class="kw">IN</span> (<span class="str">'pending'</span>, <span class="str">'processed'</span>, <span class="str">'failed'</span>)),
+    processed_by       <span class="typ">TEXT</span>
+);
+
+<span class="cmt">-- ── Audit Log ──────────────────────────────────────────────────</span>
+<span class="kw">CREATE TABLE</span> cwr.audit_log (
+    log_id      <span class="typ">BIGSERIAL</span>     <span class="kw">PRIMARY KEY</span>,
+    log_time    <span class="typ">TIMESTAMPTZ</span>   <span class="kw">NOT NULL DEFAULT</span> <span class="fn">now</span>(),
+    role_name   <span class="typ">TEXT</span>          <span class="kw">NOT NULL DEFAULT</span> <span class="fn">session_user</span>,
+    table_name  <span class="typ">TEXT</span>          <span class="kw">NOT NULL</span>,
+    action      <span class="typ">TEXT</span>          <span class="kw">NOT NULL</span>,
+    row_data    <span class="typ">JSONB</span>
+);
+
+<span class="cmt">-- ── Seed: Zones ────────────────────────────────────────────────</span>
+<span class="kw">INSERT INTO</span> cwr.zones (zone_code, zone_name) <span class="kw">VALUES</span>
+    (<span class="str">'NC'</span>, <span class="str">'North Central'</span>),
+    (<span class="str">'SW'</span>, <span class="str">'South West'</span>),
+    (<span class="str">'NE'</span>, <span class="str">'North East'</span>);
+
+<span class="cmt">-- ── Seed: Communities (2 per zone) ─────────────────────────────</span>
+<span class="kw">INSERT INTO</span> cwr.communities (community_code, zone_id, community_name) <span class="kw">VALUES</span>
+    (<span class="str">'NC-001'</span>, <span class="num">1</span>, <span class="str">'Bwari Community'</span>),
+    (<span class="str">'NC-002'</span>, <span class="num">1</span>, <span class="str">'Kuje Settlement'</span>),
+    (<span class="str">'SW-001'</span>, <span class="num">2</span>, <span class="str">'Agege Ward'</span>),
+    (<span class="str">'SW-002'</span>, <span class="num">2</span>, <span class="str">'Ibadan Central'</span>),
+    (<span class="str">'NE-001'</span>, <span class="num">3</span>, <span class="str">'Maiduguri North'</span>),
+    (<span class="str">'NE-002'</span>, <span class="num">3</span>, <span class="str">'Damaturu West'</span>);
+
+<span class="cmt">-- ── Seed: Beneficiaries (2 per zone) ───────────────────────────</span>
+<span class="kw">INSERT INTO</span> cwr.beneficiaries
+    (beneficiary_code, community_id, full_name, welfare_score, enrolment_date) <span class="kw">VALUES</span>
+    (<span class="str">'BEN-NC-001'</span>, <span class="num">1</span>, <span class="str">'Amina Bello'</span>,      <span class="num">72.50</span>, <span class="str">'2024-01-15'</span>),
+    (<span class="str">'BEN-NC-002'</span>, <span class="num">2</span>, <span class="str">'Chukwuemeka Obi'</span>,  <span class="num">68.00</span>, <span class="str">'2024-02-03'</span>),
+    (<span class="str">'BEN-SW-001'</span>, <span class="num">3</span>, <span class="str">'Folake Adeyemi'</span>,   <span class="num">81.25</span>, <span class="str">'2024-01-20'</span>),
+    (<span class="str">'BEN-SW-002'</span>, <span class="num">4</span>, <span class="str">'Babatunde Lawal'</span>,  <span class="num">55.75</span>, <span class="str">'2024-03-10'</span>),
+    (<span class="str">'BEN-NE-001'</span>, <span class="num">5</span>, <span class="str">'Fatima Musa'</span>,      <span class="num">90.00</span>, <span class="str">'2024-01-08'</span>),
+    (<span class="str">'BEN-NE-002'</span>, <span class="num">6</span>, <span class="str">'Ibrahim Yusuf'</span>,    <span class="num">63.40</span>, <span class="str">'2024-02-28'</span>);
+
+<span class="cmt">-- ── Seed: Disbursements ─────────────────────────────────────────</span>
+<span class="kw">INSERT INTO</span> cwr.disbursements
+    (beneficiary_id, amount_ngn, disbursement_date, status, processed_by) <span class="kw">VALUES</span>
+    (<span class="num">1</span>, <span class="num">25000.00</span>, <span class="str">'2024-03-01'</span>, <span class="str">'processed'</span>, <span class="str">'officer_nc'</span>),
+    (<span class="num">3</span>, <span class="num">30000.00</span>, <span class="str">'2024-03-01'</span>, <span class="str">'processed'</span>, <span class="str">'officer_sw'</span>),
+    (<span class="num">5</span>, <span class="num">25000.00</span>, <span class="str">'2024-03-01'</span>, <span class="str">'pending'</span>,   <span class="kw">NULL</span>),
+    (<span class="num">2</span>, <span class="num">20000.00</span>, <span class="str">'2024-04-01'</span>, <span class="str">'failed'</span>,    <span class="str">'officer_nc'</span>);</pre>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         PIECE 2 — RBAC
+    ════════════════════════════════════════════════════════════════ -->
+    <h3 style="margin-top:2.5rem;">
+      Piece 2 — RBAC
+      <span style="display:inline-block;margin-left:10px;padding:2px 10px;border-radius:999px;background:#f97316;color:#fff;font-size:0.75rem;font-weight:700;vertical-align:middle;">Partial — complete the missing lines</span>
+    </h3>
+
+    <p>The RBAC scaffolding below creates three roles and grants most of their privileges. Three lines are <strong>missing</strong>. Find the <code>-- YOUR TASK</code> comment and add them before running the block.</p>
+
+    <div class="callout tip">
+      <div class="callout-title">Hint — what the three missing lines must achieve</div>
+      <ol style="margin:0.4rem 0 0 1.2rem;padding:0;line-height:1.9;">
+        <li><strong>cwr_zone_officer</strong> needs to <em>update</em> disbursement records (e.g. to mark a payment as processed) — but only on <code>cwr.disbursements</code>.</li>
+        <li><strong>cwr_data_entry</strong> needs to <em>insert</em> new beneficiaries — but only on <code>cwr.beneficiaries</code>.</li>
+        <li>The <code>cwr.audit_log</code> table must be append-only — no role, not even <code>cwr_admin</code>, should be able to delete audit records. Write two <code>REVOKE DELETE</code> statements.</li>
+      </ol>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">sql – complete the YOUR TASK section, then run</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cmt">-- ────────────────────────────────────────────────────────────────
+-- CWR PIECE 2 · RBAC
+-- Complete the 3 missing lines before running.
+-- ────────────────────────────────────────────────────────────────</span>
+
+<span class="kw">DROP ROLE IF EXISTS</span> cwr_admin;
+<span class="kw">DROP ROLE IF EXISTS</span> cwr_zone_officer;
+<span class="kw">DROP ROLE IF EXISTS</span> cwr_data_entry;
+
+<span class="kw">CREATE ROLE</span> cwr_admin        <span class="kw">WITH LOGIN BYPASSRLS</span>;
+<span class="kw">CREATE ROLE</span> cwr_zone_officer <span class="kw">WITH LOGIN</span>;
+<span class="kw">CREATE ROLE</span> cwr_data_entry   <span class="kw">WITH LOGIN</span>;
+
+<span class="kw">GRANT USAGE ON SCHEMA</span> cwr <span class="kw">TO</span> cwr_admin, cwr_zone_officer, cwr_data_entry;
+
+<span class="kw">GRANT ALL ON ALL TABLES    IN SCHEMA</span> cwr <span class="kw">TO</span> cwr_admin;
+<span class="kw">GRANT ALL ON ALL SEQUENCES IN SCHEMA</span> cwr <span class="kw">TO</span> cwr_admin;
+
+<span class="kw">GRANT SELECT ON ALL TABLES IN SCHEMA</span> cwr <span class="kw">TO</span> cwr_zone_officer;
+
+<span class="kw">GRANT SELECT ON</span> cwr.beneficiaries, cwr.communities, cwr.zones <span class="kw">TO</span> cwr_data_entry;
+<span class="kw">GRANT USAGE  ON SEQUENCE</span> cwr.beneficiaries_beneficiary_id_seq <span class="kw">TO</span> cwr_data_entry;
+
+<span class="cmt">-- ─────────────────────────────────────────────────────────────
+-- YOUR TASK: add the 3 missing lines here
+-- ─────────────────────────────────────────────────────────────</span></pre>
+    </div>
+
+    <div class="answer-area">Write your 3 missing lines here</div>
+
+    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+      <button class="btn-toggle-answer instructor-block instructor-only" onclick="toggleAnswer('ans-mp-p2',this)">▼ Show Complete Answer</button>
+    </div>
+    <div class="answer-reveal" id="ans-mp-p2">
+      <div class="callout tip"><div class="callout-title">Complete Answer — Instructor Only</div>The three lines implement least-privilege exactly: zone officer gets <code>UPDATE</code> on disbursements only; data entry gets <code>INSERT</code> on beneficiaries only; and <code>DELETE</code> is revoked twice — from <code>PUBLIC</code> (which covers all roles by default) and explicitly from <code>cwr_admin</code>, because <code>BYPASSRLS</code> does not bypass explicit privilege revocations.</div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – the 3 missing lines</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Line 1: zone officer can mark disbursements as processed/failed</span>
+<span class="kw">GRANT UPDATE ON</span> cwr.disbursements <span class="kw">TO</span> cwr_zone_officer;
+
+<span class="cmt">-- Line 2: data entry can register new beneficiaries</span>
+<span class="kw">GRANT INSERT ON</span> cwr.beneficiaries <span class="kw">TO</span> cwr_data_entry;
+
+<span class="cmt">-- Line 3: audit_log is append-only — no deletes, ever</span>
+<span class="kw">REVOKE DELETE ON</span> cwr.audit_log <span class="kw">FROM PUBLIC</span>;
+<span class="kw">REVOKE DELETE ON</span> cwr.audit_log <span class="kw">FROM</span> cwr_admin;</pre>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         PIECE 3 — ROW-LEVEL SECURITY
+    ════════════════════════════════════════════════════════════════ -->
+    <h3 style="margin-top:2.5rem;">
+      Piece 3 — Row-Level Security
+      <span style="display:inline-block;margin-left:10px;padding:2px 10px;border-radius:999px;background:#f97316;color:#fff;font-size:0.75rem;font-weight:700;vertical-align:middle;">Partial — complete the missing lines</span>
+    </h3>
+
+    <p>Zone officers and data entry staff must only see — and only insert — beneficiaries belonging to their own zone. The zone is communicated via the session GUC <code>app.zone_code</code>. Complete both clauses of the policy below.</p>
+
+    <div class="callout tip">
+      <div class="callout-title">Hint — the join pattern you already know</div>
+      <code>nsr.households</code> has no <code>state_code</code> column — you joined through <code>nsr.lgas</code> to reach <code>nsr.states</code>. The situation here is identical: <code>cwr.beneficiaries</code> has no <code>zone_code</code> column, so join through <code>cwr.communities</code> to reach <code>cwr.zones</code>. Retrieve the session zone with <code>current_setting('app.zone_code', TRUE)</code> — the <code>TRUE</code> means "return NULL rather than error if the GUC is not set."
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">sql – complete both clauses, then run</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cmt">-- ────────────────────────────────────────────────────────────────
+-- CWR PIECE 3 · Row-Level Security
+-- Complete the USING and WITH CHECK clauses before running.
+-- ────────────────────────────────────────────────────────────────</span>
+
+<span class="kw">ALTER TABLE</span> cwr.beneficiaries <span class="kw">ENABLE ROW LEVEL SECURITY</span>;
+
+<span class="kw">DROP POLICY IF EXISTS</span> cwr_zone_policy <span class="kw">ON</span> cwr.beneficiaries;
+
+<span class="kw">CREATE POLICY</span> cwr_zone_policy <span class="kw">ON</span> cwr.beneficiaries
+    <span class="kw">FOR ALL</span>
+    <span class="kw">TO</span> cwr_data_entry, cwr_zone_officer
+    <span class="kw">USING</span> (
+        <span class="cmt">-- YOUR TASK: write the USING clause
+        -- beneficiaries has no zone_code column — join through cwr.communities
+        -- use current_setting('app.zone_code', TRUE) for the session zone</span>
+    )
+    <span class="kw">WITH CHECK</span> (
+        <span class="cmt">-- YOUR TASK: same logic as USING</span>
+    );</pre>
+    </div>
+
+    <div class="answer-area">Write your USING and WITH CHECK clauses here</div>
+
+    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+      <button class="btn-toggle-answer instructor-block instructor-only" onclick="toggleAnswer('ans-mp-p3',this)">▼ Show Complete Answer</button>
+    </div>
+    <div class="answer-reveal" id="ans-mp-p3">
+      <div class="callout tip"><div class="callout-title">Complete Answer — Instructor Only</div>Both clauses use the same <code>EXISTS</code> sub-select. <code>USING</code> governs SELECT/UPDATE/DELETE visibility; <code>WITH CHECK</code> governs INSERT/UPDATE write permission. Making them identical ensures a user can only insert a beneficiary into a community they can also read — preventing blind-write attacks where an out-of-zone record is silently accepted.</div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – complete policy</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">ALTER TABLE</span> cwr.beneficiaries <span class="kw">ENABLE ROW LEVEL SECURITY</span>;
+
+<span class="kw">DROP POLICY IF EXISTS</span> cwr_zone_policy <span class="kw">ON</span> cwr.beneficiaries;
+
+<span class="kw">CREATE POLICY</span> cwr_zone_policy <span class="kw">ON</span> cwr.beneficiaries
+    <span class="kw">FOR ALL</span>
+    <span class="kw">TO</span> cwr_data_entry, cwr_zone_officer
+    <span class="kw">USING</span> (
+        <span class="kw">EXISTS</span> (
+            <span class="kw">SELECT</span> <span class="num">1</span>
+            <span class="kw">FROM</span>  cwr.communities c
+            <span class="kw">JOIN</span>  cwr.zones       z <span class="kw">ON</span> z.zone_id = c.zone_id
+            <span class="kw">WHERE</span> c.community_id = cwr.beneficiaries.community_id
+              <span class="kw">AND</span>   z.zone_code   = <span class="fn">current_setting</span>(<span class="str">'app.zone_code'</span>, <span class="kw">TRUE</span>)
+        )
+    )
+    <span class="kw">WITH CHECK</span> (
+        <span class="kw">EXISTS</span> (
+            <span class="kw">SELECT</span> <span class="num">1</span>
+            <span class="kw">FROM</span>  cwr.communities c
+            <span class="kw">JOIN</span>  cwr.zones       z <span class="kw">ON</span> z.zone_id = c.zone_id
+            <span class="kw">WHERE</span> c.community_id = cwr.beneficiaries.community_id
+              <span class="kw">AND</span>   z.zone_code   = <span class="fn">current_setting</span>(<span class="str">'app.zone_code'</span>, <span class="kw">TRUE</span>)
+        )
+    );</pre>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         PIECE 4 — AUDIT TRIGGER
+    ════════════════════════════════════════════════════════════════ -->
+    <h3 style="margin-top:2.5rem;">
+      Piece 4 — Audit Trigger
+      <span style="display:inline-block;margin-left:10px;padding:2px 10px;border-radius:999px;background:#f97316;color:#fff;font-size:0.75rem;font-weight:700;vertical-align:middle;">Partial — complete the missing lines</span>
+    </h3>
+
+    <p>The function signature, DECLARE block, and trigger wire-up are provided. Fill in the two <code>-- YOUR TASK</code> sections: building <code>v_row_data</code> and inserting into <code>cwr.audit_log</code>.</p>
+
+    <div class="callout tip">
+      <div class="callout-title">Hint — look at what you built on Day 3</div>
+      Open <code>nsr.fn_audit_log()</code> from Day 3. The logic is identical — only the schema name changes. Two important details: (1) use <code>session_user</code>, not <code>current_user</code> — inside a <code>SECURITY DEFINER</code> function, <code>current_user</code> returns the function owner (postgres), not the caseworker who made the change; (2) for UPDATE, wrap OLD and NEW inside <code>jsonb_build_object('old', …, 'new', …)</code> so reviewers can see exactly what changed.
+    </div>
+
+    <div class="callout warning">
+      <div class="callout-title">Why SECURITY DEFINER?</div>
+      <code>cwr_data_entry</code> has no INSERT privilege on <code>cwr.audit_log</code> — and it should not. <code>SECURITY DEFINER</code> means the trigger runs as its owner (a superuser), so it can write to the audit table regardless of what the calling role is permitted to do. This is the standard pattern for append-only audit logs.
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">sql – fill in the two YOUR TASK sections, then run</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cmt">-- ────────────────────────────────────────────────────────────────
+-- CWR PIECE 4 · Audit Trigger
+-- Fill in the two YOUR TASK sections before running.
+-- ────────────────────────────────────────────────────────────────</span>
+
+<span class="kw">CREATE OR REPLACE FUNCTION</span> cwr.fn_audit_log()
+<span class="kw">RETURNS TRIGGER LANGUAGE</span> plpgsql <span class="kw">SECURITY DEFINER</span>
+<span class="kw">AS</span> $func$
+<span class="kw">DECLARE</span>
+    v_row_data <span class="typ">JSONB</span>;
+<span class="kw">BEGIN</span>
+
+    <span class="cmt">-- YOUR TASK: build v_row_data based on TG_OP
+    -- DELETE  → flat JSONB of OLD row
+    -- INSERT  → flat JSONB of NEW row
+    -- UPDATE  → jsonb_build_object('old', ..., 'new', ...)</span>
+
+
+
+    <span class="cmt">-- YOUR TASK: INSERT one row into cwr.audit_log
+    -- Columns: role_name, table_name, action, row_data
+    -- Use session_user — not current_user (why?)</span>
+
+
+
+    <span class="kw">RETURN</span> <span class="fn">COALESCE</span>(<span class="kw">NEW</span>, <span class="kw">OLD</span>);
+<span class="kw">END</span>;
+$func$;
+
+<span class="kw">DROP TRIGGER IF EXISTS</span> trg_audit_beneficiaries <span class="kw">ON</span> cwr.beneficiaries;
+<span class="kw">CREATE TRIGGER</span> trg_audit_beneficiaries
+    <span class="kw">AFTER INSERT OR UPDATE OR DELETE ON</span> cwr.beneficiaries
+    <span class="kw">FOR EACH ROW EXECUTE FUNCTION</span> cwr.fn_audit_log();</pre>
+    </div>
+
+    <div class="answer-area">Write your completed function body here</div>
+
+    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+      <button class="btn-toggle-answer instructor-block instructor-only" onclick="toggleAnswer('ans-mp-p4',this)">▼ Show Complete Answer</button>
+    </div>
+    <div class="answer-reveal" id="ans-mp-p4">
+      <div class="callout tip"><div class="callout-title">Complete Answer — Instructor Only</div>The IF/ELSIF chain maps TG_OP to the correct JSONB shape. <code>RETURN COALESCE(NEW, OLD)</code> handles DELETE cleanly: on DELETE, NEW is NULL, so this returns OLD — satisfying the trigger protocol without a separate NULL-return branch.</div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – complete trigger function</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">CREATE OR REPLACE FUNCTION</span> cwr.fn_audit_log()
+<span class="kw">RETURNS TRIGGER LANGUAGE</span> plpgsql <span class="kw">SECURITY DEFINER</span>
+<span class="kw">AS</span> $func$
+<span class="kw">DECLARE</span>
+    v_row_data <span class="typ">JSONB</span>;
+<span class="kw">BEGIN</span>
+    <span class="kw">IF</span> TG_OP = <span class="str">'DELETE'</span> <span class="kw">THEN</span>
+        v_row_data := <span class="fn">row_to_json</span>(<span class="kw">OLD</span>)::<span class="typ">JSONB</span>;
+    <span class="kw">ELSIF</span> TG_OP = <span class="str">'INSERT'</span> <span class="kw">THEN</span>
+        v_row_data := <span class="fn">row_to_json</span>(<span class="kw">NEW</span>)::<span class="typ">JSONB</span>;
+    <span class="kw">ELSE</span>
+        v_row_data := <span class="fn">jsonb_build_object</span>(
+            <span class="str">'old'</span>, <span class="fn">row_to_json</span>(<span class="kw">OLD</span>)::<span class="typ">JSONB</span>,
+            <span class="str">'new'</span>, <span class="fn">row_to_json</span>(<span class="kw">NEW</span>)::<span class="typ">JSONB</span>
+        );
+    <span class="kw">END IF</span>;
+
+    <span class="kw">INSERT INTO</span> cwr.audit_log (role_name, table_name, action, row_data)
+    <span class="kw">VALUES</span> (
+        <span class="fn">session_user</span>,
+        TG_TABLE_SCHEMA || <span class="str">'.'</span> || TG_TABLE_NAME,
+        TG_OP,
+        v_row_data
+    );
+
+    <span class="kw">RETURN</span> <span class="fn">COALESCE</span>(<span class="kw">NEW</span>, <span class="kw">OLD</span>);
+<span class="kw">END</span>;
+$func$;
+
+<span class="kw">DROP TRIGGER IF EXISTS</span> trg_audit_beneficiaries <span class="kw">ON</span> cwr.beneficiaries;
+<span class="kw">CREATE TRIGGER</span> trg_audit_beneficiaries
+    <span class="kw">AFTER INSERT OR UPDATE OR DELETE ON</span> cwr.beneficiaries
+    <span class="kw">FOR EACH ROW EXECUTE FUNCTION</span> cwr.fn_audit_log();</pre>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         PIECE 5 — BACKUP & RESTORE
+    ════════════════════════════════════════════════════════════════ -->
+    <h3 style="margin-top:2.5rem;">
+      Piece 5 — Backup &amp; Restore
+      <span style="display:inline-block;margin-left:10px;padding:2px 10px;border-radius:999px;background:#3b82f6;color:#fff;font-size:0.75rem;font-weight:700;vertical-align:middle;">Write from scratch</span>
+    </h3>
+
+    <p>No scaffold is provided for this piece. Using what you practised on Day 3, write the commands from memory.</p>
+
+    <div class="callout info">
+      <div class="callout-title">Task</div>
+      <ol style="margin:0.4rem 0 0 1.2rem;padding:0;line-height:1.9;">
+        <li>Write the <strong>pg_dump</strong> command to create a custom-format backup of <strong>only the <code>cwr</code> schema</strong> from the database <code>lab_nsr</code>. Save to <code>C:\temp\cwr_backup.dump</code>.</li>
+        <li>Create a new database called <code>lab_cwr_test</code> (in psql).</li>
+        <li>Write the <strong>pg_restore</strong> command to restore the backup into <code>lab_cwr_test</code>.</li>
+      </ol>
+    </div>
+
+    <div class="callout tip">
+      <div class="callout-title">Hint — key flags</div>
+      <table style="border-collapse:collapse;width:100%;font-size:0.9rem;">
+        <thead><tr style="border-bottom:1px solid var(--border-color,#e2e8f0);">
+          <th style="text-align:left;padding:4px 12px 4px 0;">Flag</th>
+          <th style="text-align:left;padding:4px 0;">Meaning</th>
+        </tr></thead>
+        <tbody>
+          <tr><td style="padding:4px 12px 4px 0;font-family:monospace;">-n cwr</td><td>Dump only the cwr schema</td></tr>
+          <tr><td style="padding:4px 12px 4px 0;font-family:monospace;">-F c</td><td>Custom format — compressed, supports selective restore</td></tr>
+          <tr><td style="padding:4px 12px 4px 0;font-family:monospace;">-f path</td><td>Output file path</td></tr>
+          <tr><td style="padding:4px 12px 4px 0;font-family:monospace;">-d dbname</td><td>Target database (pg_restore)</td></tr>
+          <tr><td style="padding:4px 12px 4px 0;font-family:monospace;">--no-privileges</td><td>Skip GRANT/REVOKE — avoids role-not-found warnings</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="answer-area">Write your pg_dump and pg_restore commands here</div>
+
+    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+      <button class="btn-toggle-answer instructor-block instructor-only" onclick="toggleAnswer('ans-mp-p5',this)">▼ Show Complete Answer</button>
+    </div>
+    <div class="answer-reveal" id="ans-mp-p5">
+      <div class="callout tip"><div class="callout-title">Complete Answer — Instructor Only</div><code>--no-privileges</code> on pg_restore skips GRANT/REVOKE statements — this avoids "role does not exist" warnings when the cwr roles have not yet been created in the target cluster. Run the Piece 2 RBAC block in <code>lab_cwr_test</code> afterwards to restore privileges properly.</div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">bash – run in terminal, not in psql</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt"># Step 1: Backup cwr schema only — custom format</span>
+pg_dump -U postgres -d lab_nsr -n cwr -F c -f C:\temp\cwr_backup.dump
+
+<span class="cmt"># Step 2: Create target database (run this inside psql)</span>
+<span class="cmt"># CREATE DATABASE lab_cwr_test;</span>
+
+<span class="cmt"># Step 3: Restore — skip grants to avoid role-not-found warnings</span>
+pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.dump</pre>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         VERIFICATION SUITE
+    ════════════════════════════════════════════════════════════════ -->
+    <h3 style="margin-top:2.5rem;">
+      Verification Suite
+      <span style="display:inline-block;margin-left:10px;padding:2px 10px;border-radius:999px;background:#8b5cf6;color:#fff;font-size:0.75rem;font-weight:700;vertical-align:middle;">Run after all 5 pieces</span>
+    </h3>
+
+    <div class="callout info">
+      <div class="callout-title">How to use this block</div>
+      Run each numbered check in order. Each one corresponds to a piece. If a check fails, re-examine the relevant piece before moving on — later checks depend on earlier pieces being correct.
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">sql – verification suite</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cmt">-- ════════════════════════════════════════════════════════════════
+-- CWR VERIFICATION SUITE
+-- Expected results are shown in comments.
+-- ════════════════════════════════════════════════════════════════</span>
+
+<span class="cmt">-- ── CHECK 1 · Piece 1 — tables exist and contain seed data ─────</span>
+<span class="kw">SELECT</span> <span class="str">'cwr.zones'</span>         <span class="kw">AS</span> tbl, <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> cwr.zones         <span class="kw">UNION ALL</span>
+<span class="kw">SELECT</span> <span class="str">'cwr.communities'</span>   <span class="kw">AS</span> tbl, <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> cwr.communities   <span class="kw">UNION ALL</span>
+<span class="kw">SELECT</span> <span class="str">'cwr.beneficiaries'</span> <span class="kw">AS</span> tbl, <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> cwr.beneficiaries <span class="kw">UNION ALL</span>
+<span class="kw">SELECT</span> <span class="str">'cwr.disbursements'</span> <span class="kw">AS</span> tbl, <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> cwr.disbursements <span class="kw">UNION ALL</span>
+<span class="kw">SELECT</span> <span class="str">'cwr.audit_log'</span>     <span class="kw">AS</span> tbl, <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> cwr.audit_log;
+<span class="cmt">-- Expected: 3 · 6 · 6 · 4 · 0  (audit_log is empty until Check 4)</span>
+
+<span class="cmt">-- ── CHECK 2 · Piece 2 — grants exist ───────────────────────────</span>
+<span class="kw">SELECT</span> grantee,
+       table_schema || <span class="str">'.'</span> || table_name <span class="kw">AS</span> tbl,
+       privilege_type
+<span class="kw">FROM</span>  information_schema.role_table_grants
+<span class="kw">WHERE</span> grantee <span class="kw">LIKE</span> <span class="str">'cwr%'</span>
+  <span class="kw">AND</span> table_schema = <span class="str">'cwr'</span>
+<span class="kw">ORDER BY</span> grantee, tbl, privilege_type;
+<span class="cmt">-- Expected: cwr_zone_officer → UPDATE on cwr.disbursements
+--           cwr_data_entry  → INSERT on cwr.beneficiaries</span>
+
+<span class="cmt">-- ── CHECK 3 · Piece 3 — RLS restricts by zone ──────────────────</span>
+<span class="kw">SET ROLE</span> cwr_data_entry;
+<span class="kw">SET</span> app.zone_code = <span class="str">'NC'</span>;
+<span class="kw">SELECT</span> <span class="fn">COUNT</span>(*) <span class="kw">AS</span> visible_beneficiaries <span class="kw">FROM</span> cwr.beneficiaries;
+<span class="cmt">-- Expected: 2  (BEN-NC-001 and BEN-NC-002 only)</span>
+<span class="kw">RESET ROLE</span>;
+
+<span class="cmt">-- ── CHECK 4 · Piece 4 — audit trigger fires on INSERT ───────────</span>
+<span class="kw">INSERT INTO</span> cwr.beneficiaries
+    (beneficiary_code, community_id, full_name, welfare_score, enrolment_date)
+<span class="kw">VALUES</span>
+    (<span class="str">'BEN-TEST-001'</span>, <span class="num">1</span>, <span class="str">'Verification Test'</span>, <span class="num">99.99</span>, <span class="fn">CURRENT_DATE</span>);
+
+<span class="kw">SELECT</span> log_time, role_name, table_name, action,
+       row_data ->> <span class="str">'beneficiary_code'</span> <span class="kw">AS</span> beneficiary_code
+<span class="kw">FROM</span>  cwr.audit_log
+<span class="kw">ORDER BY</span> log_id <span class="kw">DESC LIMIT</span> <span class="num">1</span>;
+<span class="cmt">-- Expected: action = 'INSERT', beneficiary_code = 'BEN-TEST-001'</span>
+
+<span class="cmt">-- ── CHECK 5 · Piece 5 — backup file exists ──────────────────────</span>
+<span class="cmt">-- Run this psql meta-command (not SQL — note the backslash):</span>
+\! dir C:\temp\cwr_backup.dump
+<span class="cmt">-- Expected: file listing with a non-zero size</span></pre>
+    </div>
+
+  </div>
+  <!-- MINI PROJECT END -->
+
   <div class="callout important">
     <div class="callout-title">Rules</div>
     This is a self-directed practical assessment. Dr Anande is not in the room this morning and joins at 14:00. A proctor is present from 10:00 but cannot answer technical questions. Work individually — do not work with a neighbour. Partial and incomplete answers are valuable — they show the instructor exactly where to focus the remaining days.
