@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>CWR Instructor Monitor — Live</title>
+  <script src="/firebase-config.js"></script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{background:#060e1a;color:#e2e8f0;font-family:system-ui,-apple-system,sans-serif;font-size:14px;min-height:100vh;}
+
+    /* ── Header ── */
+    #hdr{background:#0d1929;border-bottom:1px solid #1e293b;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;}
+    #hdr-left{display:flex;align-items:center;gap:12px;}
+    #hdr-left .logo{font-size:1.4rem;}
+    #hdr-title{font-weight:700;font-size:0.95rem;letter-spacing:0.4px;color:#e2e8f0;}
+    #hdr-sub{font-size:0.72rem;color:#475569;}
+    #live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;margin-right:5px;animation:pulse 2s infinite;}
+    @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.35;};}
+    #status-pill{font-size:0.7rem;padding:3px 10px;border-radius:999px;border:1px solid #334155;color:#64748b;}
+    #status-pill.connected{border-color:#22c55e;color:#4ade80;}
+    #status-pill.error{border-color:#ef4444;color:#fca5a5;}
+
+    /* ── Stats bar ── */
+    #stats{display:flex;gap:16px;padding:14px 24px;border-bottom:1px solid #1e293b;flex-wrap:wrap;}
+    .stat-card{background:#0d1929;border:1px solid #1e293b;border-radius:8px;padding:10px 18px;min-width:110px;}
+    .stat-val{font-size:1.6rem;font-weight:700;line-height:1;color:#e2e8f0;}
+    .stat-lbl{font-size:0.68rem;color:#475569;text-transform:uppercase;letter-spacing:0.8px;margin-top:3px;}
+    .stat-card.green .stat-val{color:#4ade80;}
+    .stat-card.amber .stat-val{color:#fbbf24;}
+    .stat-card.red   .stat-val{color:#f87171;}
+
+    /* ── Progress bar ── */
+    #prog-wrap{padding:12px 24px;border-bottom:1px solid #1e293b;}
+    #prog-label{font-size:0.7rem;color:#475569;margin-bottom:6px;}
+    #prog-track{background:#1e293b;border-radius:999px;height:6px;overflow:hidden;}
+    #prog-fill{background:linear-gradient(90deg,#2563eb,#22c55e);height:100%;border-radius:999px;transition:width 0.6s ease;width:0%;}
+
+    /* ── Table ── */
+    #tbl-wrap{overflow-x:auto;padding:16px 24px;}
+    table{width:100%;border-collapse:collapse;min-width:640px;}
+    thead th{background:#0d1929;padding:8px 12px;text-align:center;font-size:0.67rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;border-bottom:1px solid #1e293b;white-space:nowrap;}
+    thead th:first-child{text-align:left;width:180px;}
+    tbody tr{border-bottom:1px solid #0f172a;transition:background 0.15s;}
+    tbody tr:hover{background:#0d1929;}
+    tbody td{padding:10px 12px;text-align:center;font-size:0.82rem;}
+    tbody td:first-child{text-align:left;}
+
+    /* ── Participant name cell ── */
+    .p-name{font-weight:600;color:#e2e8f0;}
+    .p-time{font-size:0.65rem;color:#475569;margin-top:2px;}
+    .p-row-new{animation:flash 1.5s ease;}
+    @keyframes flash{0%{background:#1e3a2a;}100%{background:transparent;};}
+
+    /* ── Status dots ── */
+    .dot{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:0.75rem;font-weight:700;}
+    .dot-done{background:#14532d;color:#4ade80;border:1px solid #22c55e;}
+    .dot-fail{background:#450a0a;color:#fca5a5;border:1px solid #ef4444;}
+    .dot-todo{background:#1e293b;color:#475569;border:1px solid #334155;}
+
+    /* ── Score badge ── */
+    .score{font-weight:700;font-size:0.85rem;}
+    .score-6{color:#4ade80;}
+    .score-hi{color:#86efac;}
+    .score-mid{color:#fbbf24;}
+    .score-lo{color:#f87171;}
+    .score-0{color:#475569;}
+
+    /* ── Row indicator ── */
+    .row-bar{display:inline-block;width:4px;height:28px;border-radius:2px;vertical-align:middle;margin-right:8px;}
+
+    /* ── Config error ── */
+    #config-error{display:none;padding:40px 24px;text-align:center;}
+    #config-error h2{color:#f87171;font-size:1.1rem;margin-bottom:10px;}
+    #config-error p{color:#64748b;font-size:0.85rem;line-height:1.7;max-width:540px;margin:0 auto;}
+    #config-error code{background:#0d1929;border:1px solid #1e293b;padding:2px 7px;border-radius:4px;font-size:0.82rem;color:#7dd3fc;}
+
+    /* ── Empty state ── */
+    #empty{display:none;padding:60px 24px;text-align:center;color:#334155;font-size:0.9rem;}
+    #empty .icon{font-size:2.5rem;margin-bottom:12px;}
+
+    /* ── Footer ── */
+    #footer{padding:12px 24px;color:#334155;font-size:0.68rem;border-top:1px solid #1e293b;margin-top:8px;}
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<div id="hdr">
+  <div id="hdr-left">
+    <span class="logo">🏛</span>
+    <div>
+      <div id="hdr-title">CWR INSTRUCTOR MONITOR</div>
+      <div id="hdr-sub">Community Welfare Register · Mini Project</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <span id="live-dot"></span>
+    <span id="status-pill">Connecting…</span>
+    <button onclick="location.reload()" style="background:none;border:1px solid #1e293b;color:#475569;font-size:0.7rem;padding:3px 10px;border-radius:4px;cursor:pointer;font-family:inherit;">⟳ Refresh</button>
+    <a href="/postgresql-workshop.html" style="font-size:0.7rem;padding:3px 10px;border-radius:4px;border:1px solid #1e293b;color:#64748b;text-decoration:none;">← Workshop</a>
+  </div>
+</div>
+
+<!-- Stats bar -->
+<div id="stats">
+  <div class="stat-card"><div id="s-total" class="stat-val">—</div><div class="stat-lbl">Participants</div></div>
+  <div class="stat-card green"><div id="s-complete" class="stat-val">—</div><div class="stat-lbl">All 6 done</div></div>
+  <div class="stat-card amber"><div id="s-progress" class="stat-val">—</div><div class="stat-lbl">In progress</div></div>
+  <div class="stat-card red"><div id="s-stuck" class="stat-val">—</div><div class="stat-lbl">Not started</div></div>
+  <div class="stat-card" style="margin-left:auto;"><div id="s-avg" class="stat-val">—</div><div class="stat-lbl">Avg puzzles</div></div>
+</div>
+
+<!-- Overall progress bar -->
+<div id="prog-wrap">
+  <div id="prog-label">Class completion — 0 of 0 puzzles solved</div>
+  <div id="prog-track"><div id="prog-fill"></div></div>
+</div>
+
+<!-- Config error (shown when Firebase not configured) -->
+<div id="config-error">
+  <h2>Firebase not configured</h2>
+  <p>
+    Open <code>firebase-config.js</code> in the portfolio site folder, replace the <code>databaseURL</code>
+    placeholder with your Firebase Realtime Database URL, then commit and push.<br><br>
+    Instructions are in the comments at the top of that file.
+  </p>
+</div>
+
+<!-- Empty state (configured but no participants yet) -->
+<div id="empty">
+  <div class="icon">⏳</div>
+  <div>Waiting for participants…</div>
+  <div style="font-size:0.75rem;margin-top:6px;color:#475569;">Participants appear here as soon as they mark their first puzzle complete.</div>
+</div>
+
+<!-- Participant table -->
+<div id="tbl-wrap" style="display:none;">
+  <table>
+    <thead>
+      <tr>
+        <th style="text-align:left;">Participant</th>
+        <th title="Phase 1 Foundation">P1</th>
+        <th title="Puzzle A — RBAC">A</th>
+        <th title="Puzzle B — RLS">B</th>
+        <th title="Puzzle C — Audit Trigger">C</th>
+        <th title="Puzzle D — Monitoring">D</th>
+        <th title="Puzzle E — Backup & DR">E</th>
+        <th>Score</th>
+      </tr>
+    </thead>
+    <tbody id="participants"></tbody>
+  </table>
+</div>
+
+<div id="footer" id="footer">
+  Auto-refreshes every 4 s via Firebase Realtime Database · <span id="last-update">—</span>
+</div>
+
+<script>
+(function(){
+  var KEYS=['p1','pa','pb','pc','pd','pe'];
+  var LABELS=['P1','A','B','C','D','E'];
+  var participants={};
+  var timerHandle=null;
+
+  /* ── Config check ── */
+  if(!window.CWR_FIREBASE || !window.CWR_FIREBASE.databaseURL ||
+     window.CWR_FIREBASE.databaseURL.includes('REPLACE')){
+    document.getElementById('config-error').style.display='block';
+    document.getElementById('stats').style.display='none';
+    document.getElementById('prog-wrap').style.display='none';
+    setStatus('error','Not configured');
+    return;
+  }
+
+  var DB=window.CWR_FIREBASE.databaseURL;
+
+  /* ── SSE real-time connection ── */
+  function connect(){
+    var es=new EventSource(DB+'/cwr_workshop.json');
+
+    es.addEventListener('put',function(e){
+      try{
+        var msg=JSON.parse(e.data);
+        if(msg.path==='/'&&msg.data){
+          // Full snapshot
+          participants={};
+          Object.keys(msg.data).forEach(function(k){
+            participants[k]=msg.data[k];
+          });
+        } else if(msg.path&&msg.data){
+          // Single participant update
+          var key=msg.path.replace(/^\//,'');
+          participants[key]=msg.data;
+          flashRow(key);
+        } else if(msg.path&&msg.data===null){
+          var key=msg.path.replace(/^\//,'');
+          delete participants[key];
+        }
+        render();
+        setStatus('connected','Live');
+      }catch(err){}
+    });
+
+    es.addEventListener('patch',function(e){
+      try{
+        var msg=JSON.parse(e.data);
+        if(msg.data){
+          Object.keys(msg.data).forEach(function(k){
+            participants[k]=msg.data[k];
+            flashRow(k);
+          });
+          render();
+          setStatus('connected','Live');
+        }
+      }catch(err){}
+    });
+
+    es.addEventListener('keep-alive',function(){
+      setStatus('connected','Live');
+    });
+
+    es.onerror=function(){
+      setStatus('error','Connection lost — retrying');
+      es.close();
+      setTimeout(connect,5000);
+    };
+  }
+
+  /* ── Fallback polling (every 4 s) ── */
+  function poll(){
+    fetch(DB+'/cwr_workshop.json')
+      .then(function(r){return r.json();})
+      .then(function(data){
+        participants={};
+        if(data&&typeof data==='object'){
+          Object.keys(data).forEach(function(k){participants[k]=data[k];});
+        }
+        render();
+        setStatus('connected','Live');
+      })
+      .catch(function(){setStatus('error','Fetch error');});
+  }
+
+  /* ── Render ── */
+  var flashSet={};
+  function flashRow(key){flashSet[key]=Date.now();}
+
+  function render(){
+    var keys=Object.keys(participants).sort(function(a,b){
+      // Sort by score desc, then name asc
+      var sa=score(participants[a]), sb=score(participants[b]);
+      if(sb!==sa)return sb-sa;
+      return (participants[a].name||a).localeCompare(participants[b].name||b);
+    });
+
+    var tbody=document.getElementById('participants');
+    var tblWrap=document.getElementById('tbl-wrap');
+    var empty=document.getElementById('empty');
+
+    if(!keys.length){
+      tblWrap.style.display='none';
+      empty.style.display='block';
+      updateStats([]);
+      return;
+    }
+    empty.style.display='none';
+    tblWrap.style.display='block';
+
+    var rows=keys.map(function(k){
+      var p=participants[k];
+      var pz=p.puzzles||{};
+      var s=score(p);
+      var isNew=(flashSet[k]&&(Date.now()-flashSet[k])<2000);
+      delete flashSet[k];
+
+      var dotCells=KEYS.map(function(pk){
+        var st=pz[pk]||'todo';
+        var cls={done:'dot-done',fail:'dot-fail',todo:'dot-todo'}[st];
+        var ic ={done:'✓',fail:'✗',todo:'○'}[st];
+        return '<td><span class="dot '+cls+'">'+ic+'</span></td>';
+      }).join('');
+
+      var barColor=s>=5?'#22c55e':s>=3?'#fbbf24':'#ef4444';
+      var scoreClass=s===6?'score-6':s>=4?'score-hi':s>=2?'score-mid':s>=1?'score-lo':'score-0';
+
+      var ts=p.updated?relTime(p.updated):'—';
+
+      return '<tr'+(isNew?' class="p-row-new"':'')+'>'+
+        '<td>'+
+          '<span class="row-bar" style="background:'+barColor+';"></span>'+
+          '<span class="p-name">'+(p.name||k)+'</span>'+
+          '<div class="p-time">'+ts+'</div>'+
+        '</td>'+
+        dotCells+
+        '<td><span class="score '+scoreClass+'">'+s+'/6</span></td>'+
+      '</tr>';
+    });
+    tbody.innerHTML=rows.join('');
+
+    updateStats(keys.map(function(k){return participants[k];}));
+    document.getElementById('last-update').textContent='Last update: '+new Date().toLocaleTimeString();
+  }
+
+  function score(p){
+    var pz=(p&&p.puzzles)||{};
+    return KEYS.filter(function(k){return pz[k]==='done';}).length;
+  }
+
+  function updateStats(list){
+    var total=list.length;
+    var complete=list.filter(function(p){return score(p)===6;}).length;
+    var notStarted=list.filter(function(p){return score(p)===0;}).length;
+    var inProgress=total-complete-notStarted;
+    var totalPossible=total*6;
+    var totalDone=list.reduce(function(a,p){return a+score(p);},0);
+    var avg=total?Math.round((totalDone/total)*10)/10:0;
+    var pct=totalPossible?Math.round((totalDone/totalPossible)*100):0;
+
+    document.getElementById('s-total').textContent=total||'—';
+    document.getElementById('s-complete').textContent=complete||'—';
+    document.getElementById('s-progress').textContent=inProgress||'—';
+    document.getElementById('s-stuck').textContent=notStarted||'—';
+    document.getElementById('s-avg').textContent=total?(avg+'/6'):'—';
+
+    document.getElementById('prog-fill').style.width=pct+'%';
+    document.getElementById('prog-label').textContent=
+      'Class completion — '+totalDone+' of '+totalPossible+' puzzles solved ('+pct+'%)';
+  }
+
+  function relTime(iso){
+    try{
+      var diff=Math.floor((Date.now()-new Date(iso).getTime())/1000);
+      if(diff<10)return 'just now';
+      if(diff<60)return diff+'s ago';
+      if(diff<3600)return Math.floor(diff/60)+'m ago';
+      return Math.floor(diff/3600)+'h ago';
+    }catch(e){return iso;}
+  }
+
+  function setStatus(cls,text){
+    var pill=document.getElementById('status-pill');
+    pill.className=''; pill.classList.add(cls);
+    pill.textContent=text;
+  }
+
+  /* ── Start: try SSE, poll as backup every 4s ── */
+  try{
+    connect();
+  }catch(e){
+    // SSE not supported — fall back to polling only
+  }
+  // Polling as redundant fallback (catches SSE gaps)
+  timerHandle=setInterval(poll,4000);
+
+  // Relative-time refresh
+  setInterval(function(){render();},30000);
+
+})();
+</script>
+
+</body>
+</html>

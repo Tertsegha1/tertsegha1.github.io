@@ -4591,20 +4591,80 @@ done</pre>
     <h3 style="margin-top:2rem;">CWR Operations Dashboard</h3>
     <p style="color:var(--text-muted,#64748b);font-size:0.92rem;margin-bottom:1rem;">The monitoring infrastructure is pre-built using the Phase 1 materialized view and monitoring views. As you complete each phase, the audit feed and health panel will reflect your live database. Click any <strong>SQL ▾</strong> button to see the query that powers each panel.</p>
 
+    <script src="/firebase-config.js"></script>
     <script>
     (function(){
       var PHASES=[
-        {key:'p1', label:'Phase 1 · Foundation', anchor:'cwr-phase1'},
-        {key:'pa', label:'A · RBAC',             anchor:'cwr-puzzle-a'},
-        {key:'pb', label:'B · RLS',              anchor:'cwr-puzzle-b'},
-        {key:'pc', label:'C · Audit Trigger',    anchor:'cwr-puzzle-c'},
-        {key:'pd', label:'D · Monitoring',       anchor:'cwr-puzzle-d'},
-        {key:'pe', label:'E · Backup &amp; DR',  anchor:'cwr-puzzle-e'}
+        {key:'p1',label:'Phase 1 · Foundation',anchor:'cwr-phase1'},
+        {key:'pa',label:'A · RBAC',            anchor:'cwr-puzzle-a'},
+        {key:'pb',label:'B · RLS',             anchor:'cwr-puzzle-b'},
+        {key:'pc',label:'C · Audit Trigger',   anchor:'cwr-puzzle-c'},
+        {key:'pd',label:'D · Monitoring',      anchor:'cwr-puzzle-d'},
+        {key:'pe',label:'E · Backup & DR',     anchor:'cwr-puzzle-e'}
       ];
       function gs(k){return localStorage.getItem('cwr_'+k)||'todo';}
-      window.cwrMark=function(k,s){localStorage.setItem('cwr_'+k,s);cwrRefresh();};
+      function fbOk(){return window.CWR_FIREBASE&&window.CWR_FIREBASE.databaseURL&&!window.CWR_FIREBASE.databaseURL.includes('REPLACE');}
+
+      /* ── Firebase REST sync ──────────────────────────────────── */
+      function syncFb(){
+        if(!fbOk())return;
+        var name=localStorage.getItem('cwr_participant_name');
+        if(!name)return;
+        var key=name.replace(/[^a-zA-Z0-9_-]/g,'_').toLowerCase().slice(0,40);
+        var data={name:name,updated:new Date().toISOString(),puzzles:{}};
+        PHASES.forEach(function(p){data.puzzles[p.key]=gs(p.key);});
+        fetch(window.CWR_FIREBASE.databaseURL+'/cwr_workshop/'+key+'.json',{
+          method:'PUT',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify(data)
+        }).catch(function(){});
+      }
+
+      /* ── Public API ──────────────────────────────────────────── */
+      window.cwrMark=function(k,s){
+        if(fbOk()&&!localStorage.getItem('cwr_participant_name')){
+          window._cwrPending={k:k,s:s};
+          var m=document.getElementById('cwr-name-modal');
+          if(m){m.style.display='flex';}
+          setTimeout(function(){var i=document.getElementById('cwr-name-input');if(i)i.focus();},50);
+          return;
+        }
+        localStorage.setItem('cwr_'+k,s);
+        cwrRefresh();
+        syncFb();
+      };
+
+      window.cwrSetName=function(){
+        var inp=document.getElementById('cwr-name-input');
+        var name=inp?inp.value.trim():'';
+        if(!name){if(inp)inp.style.borderColor='#ef4444';return;}
+        localStorage.setItem('cwr_participant_name',name);
+        var m=document.getElementById('cwr-name-modal');if(m)m.style.display='none';
+        updateBadge();
+        if(window._cwrPending){
+          var p=window._cwrPending;window._cwrPending=null;
+          localStorage.setItem('cwr_'+p.k,p.s);cwrRefresh();
+        }
+        syncFb();
+      };
+
       window.cwrJump=function(a){var e=document.getElementById(a);if(e)e.scrollIntoView({behavior:'smooth',block:'start'});};
-      window.cwrReset=function(){PHASES.forEach(function(p){localStorage.removeItem('cwr_'+p.key);});cwrRefresh();};
+
+      window.cwrReset=function(){
+        if(!confirm('Reset all puzzle progress?'))return;
+        PHASES.forEach(function(p){localStorage.removeItem('cwr_'+p.key);});
+        cwrRefresh();syncFb();
+      };
+
+      function updateBadge(){
+        var name=localStorage.getItem('cwr_participant_name');
+        var b=document.getElementById('cwr-participant-badge');
+        if(!b)return;
+        if(name){b.textContent='👤 '+name;b.style.color='#7dd3fc';}
+        else if(fbOk()){b.textContent='👤 Not registered';b.style.color='#f59e0b';}
+        else{b.style.display='none';}
+      }
+
+      /* ── UI refresh ──────────────────────────────────────────── */
       function cwrRefresh(){
         PHASES.forEach(function(p){
           var s=gs(p.key);
@@ -4614,8 +4674,8 @@ done</pre>
             var bc={todo:'#334155',done:'#22c55e',fail:'#ef4444'}[s]||'#334155';
             var ic={todo:'○',done:'✓',fail:'✗'}[s]||'○';
             var tc={todo:'#94a3b8',done:'#4ade80',fail:'#fca5a5'}[s]||'#94a3b8';
-            pill.style.background=bg; pill.style.borderColor=bc; pill.style.color=tc;
-            var si=pill.querySelector('.cpill-icon'); if(si)si.textContent=ic;
+            pill.style.background=bg;pill.style.borderColor=bc;pill.style.color=tc;
+            var si=pill.querySelector('.cpill-icon');if(si)si.textContent=ic;
           }
           var btn=document.getElementById('cwr-markbtn-'+p.key);
           if(btn){
@@ -4624,35 +4684,49 @@ done</pre>
             else{btn.style.background='#0f172a';btn.style.borderColor='#475569';btn.style.color='#94a3b8';btn.innerHTML='✅ Mark Complete';}
           }
         });
-        // Health rows
-        [['pa','RBAC'],['pb','RLS'],['pc','Audit Trigger'],['pd','Monitoring'],['pe','Backup']].forEach(function(r){
+        [['pa','🔑 RBAC'],['pb','🛡 RLS'],['pc','📋 Audit Trigger'],['pd','📊 Monitoring'],['pe','💾 Backup']].forEach(function(r){
           var dot=document.getElementById('cwr-dot-'+r[0]);
           var lbl=document.getElementById('cwr-hlabel-'+r[0]);
           var s=gs(r[0]);
           var clr={todo:'#f59e0b',done:'#22c55e',fail:'#ef4444'}[s]||'#f59e0b';
           var txt={todo:'Not started',done:'✓ Complete',fail:'✗ Failed — revisit'}[s]||'Not started';
-          if(dot){dot.style.background=clr;}
+          if(dot)dot.style.background=clr;
           if(lbl){lbl.style.color=clr;lbl.textContent=txt;}
         });
-        // Audit feed
         var feed=document.getElementById('cwr-audit-feed');
         if(feed){
           var s=gs('pc');
           if(s==='done'){
-            feed.innerHTML='<div style="padding:10px 12px;"><div style="color:#4ade80;font-weight:600;font-size:0.8rem;margin-bottom:6px;">✓ Audit Trigger Active</div>'+
-              '<div style="color:#64748b;font-size:0.72rem;margin-bottom:6px;">Run this in psql to see live events:</div>'+
-              '<div style="font-family:monospace;font-size:0.68rem;color:#7dd3fc;background:#071120;padding:7px 9px;border-radius:4px;line-height:1.7;">SELECT log_time, role_name, action,<br>&nbsp;&nbsp;LEFT(row_data::text,60) AS data<br>FROM cwr.audit_log<br>ORDER BY log_time DESC LIMIT 10;</div></div>';
-          } else if(s==='fail'){
-            feed.innerHTML='<div style="padding:14px;text-align:center;"><span style="font-size:1.3rem;">⚠️</span><div style="color:#fca5a5;font-size:0.78rem;margin-top:6px;">Trigger install failed</div><div style="color:#334155;font-size:0.7rem;margin-top:4px;">Go back to Puzzle C and fix the error</div></div>';
-          } else {
+            feed.innerHTML='<div style="padding:10px 12px;"><div style="color:#4ade80;font-weight:600;font-size:0.8rem;margin-bottom:6px;">✓ Audit Trigger Active</div><div style="color:#64748b;font-size:0.72rem;margin-bottom:6px;">Run this in psql to see live events:</div><div style="font-family:monospace;font-size:0.68rem;color:#7dd3fc;background:#071120;padding:7px 9px;border-radius:4px;line-height:1.7;">SELECT log_time, role_name, action,<br>&nbsp;&nbsp;LEFT(row_data::text,60) AS data<br>FROM cwr.audit_log<br>ORDER BY log_time DESC LIMIT 10;</div></div>';
+          }else if(s==='fail'){
+            feed.innerHTML='<div style="padding:14px;text-align:center;"><span style="font-size:1.3rem;">⚠️</span><div style="color:#fca5a5;font-size:0.78rem;margin-top:6px;">Trigger install failed</div><div style="color:#334155;font-size:0.7rem;margin-top:4px;">Go back to Puzzle C</div></div>';
+          }else{
             feed.innerHTML='<div style="padding:14px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;"><span style="font-size:1.4rem;">🔒</span><div style="color:#475569;font-size:0.78rem;">Audit trigger not yet installed</div><div style="color:#334155;font-size:0.7rem;"><button onclick="cwrJump(\'cwr-puzzle-c\')" style="background:none;border:1px solid #334155;color:#7dd3fc;font-size:0.7rem;padding:3px 10px;border-radius:4px;cursor:pointer;font-family:inherit;">→ Go to Puzzle C</button></div></div>';
           }
         }
+        updateBadge();
       }
       if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',cwrRefresh);}
       else{cwrRefresh();}
     })();
     </script>
+
+    <!-- Participant Name Modal (shown on first Mark Complete if Firebase is configured) -->
+    <div id="cwr-name-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.82);z-index:9999;align-items:center;justify-content:center;">
+      <div style="background:#0d1929;border:1px solid #334155;border-radius:14px;padding:32px 28px;max-width:380px;width:90%;box-shadow:0 30px 60px rgba(0,0,0,0.5);text-align:center;font-family:system-ui,sans-serif;">
+        <div style="font-size:2rem;margin-bottom:10px;">🏛</div>
+        <h3 style="color:#e2e8f0;margin:0 0 6px;font-size:1.05rem;">CWR Mini Project</h3>
+        <p style="color:#64748b;font-size:0.85rem;margin:0 0 20px;line-height:1.5;">Enter your name so your instructor can track your progress live on the monitoring dashboard.</p>
+        <input id="cwr-name-input" type="text" placeholder="Your full name"
+          style="width:100%;padding:10px 12px;background:#071120;border:1.5px solid #334155;border-radius:7px;color:#e2e8f0;font-size:0.95rem;font-family:inherit;box-sizing:border-box;outline:none;"
+          onkeydown="if(event.key==='Enter')cwrSetName()" />
+        <button onclick="cwrSetName()"
+          style="margin-top:10px;width:100%;padding:11px;background:#2563eb;color:#fff;border:none;border-radius:7px;font-size:0.92rem;font-weight:600;cursor:pointer;font-family:inherit;">
+          Start Workshop →
+        </button>
+        <div style="color:#334155;font-size:0.7rem;margin-top:12px;">Only your name and puzzle completion status is shared with your instructor.</div>
+      </div>
+    </div>
 
     <div id="cwr-dashboard" style="background:#0d1929;border:1px solid #1e293b;border-radius:12px;overflow:hidden;font-family:system-ui,sans-serif;font-size:14px;margin-bottom:2.5rem;">
 
@@ -4664,8 +4738,10 @@ done</pre>
           <span id="cwr-header-badge" style="background:#22c55e;color:#fff;font-size:0.62rem;padding:1px 8px;border-radius:999px;font-weight:700;letter-spacing:0.5px;margin-left:4px;">SEED DATA LOADED</span>
         </div>
         <div style="display:flex;align-items:center;gap:10px;">
+          <span id="cwr-participant-badge" style="font-size:0.72rem;font-weight:600;color:#f59e0b;"></span>
           <button onclick="cwrReset()" title="Reset all puzzle progress" style="background:none;border:1px solid #334155;color:#475569;font-size:0.65rem;padding:2px 8px;border-radius:4px;cursor:pointer;font-family:inherit;">↺ Reset</button>
           <div style="color:#64748b;font-size:0.78rem;">29 Jun 2026 &nbsp;·&nbsp; lab_nsr</div>
+          <a href="/cwr-instructor.html" target="_blank" class="instructor-block instructor-only" style="font-size:0.65rem;padding:2px 10px;border-radius:4px;border:1px solid #7c3aed;color:#a78bfa;text-decoration:none;white-space:nowrap;">Instructor →</a>
         </div>
       </div>
 
