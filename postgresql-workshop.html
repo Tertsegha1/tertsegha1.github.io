@@ -3519,15 +3519,17 @@ $$;
       <p><strong>pgAudit</strong> is a PostgreSQL extension that logs every DDL and DML statement to the server log, capturing the SQL text, the role that ran it, and the object it touched. It works at the <em>statement</em> level rather than the row level — complementary to, not a replacement for, the trigger-based <code>audit_log</code>.</p>
 
       <div class="callout warning" style="margin-bottom:12px">
-        <div class="callout-title">pgAudit requires OS-level installation before any SQL steps</div>
-        Unlike most PostgreSQL extensions, pgAudit must be installed at the operating system level <em>and</em> preloaded at server startup before <code>CREATE EXTENSION</code> will work. Follow Steps 1–3 below outside psql first.
+        <div class="callout-title">pgAudit is not yet available for PostgreSQL 18 — read-through exercise</div>
+        pgAudit releases lag one or two versions behind PostgreSQL. As of June 2026, <strong>no pgAudit build exists for PostgreSQL 18</strong> — it does not appear in Stack Builder and <code>CREATE EXTENSION pgaudit</code> will return <em>"extension not available"</em>.<br><br>
+        <strong>What to do:</strong> Read through Steps 1–6 below to understand how pgAudit works and how it would be configured in a production NSR environment. You do not need to run these commands today. The trigger-based <code>audit_log</code> you built in the previous section is the primary forensic tool — pgAudit is supplementary.<br><br>
+        When pgAudit support for PostgreSQL 18 is released, Step 1 will be: open Stack Builder → Add-ons, tools and utilities → tick pgAudit.
       </div>
 
-      <p><strong>Step 1 — Install the pgAudit package (run outside psql, in a terminal or installer)</strong></p>
+      <p><strong>Step 1 — Install the pgAudit package (OS-level, outside psql)</strong></p>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">shell – OS-level install (choose your platform)</span></div>
-        <pre><span class="cmt">-- Windows (EnterpriseDB installer)</span>
-<span class="cmt">-- 1. Open Stack Builder from the Start menu (installed with PostgreSQL)</span>
+        <pre><span class="cmt">-- Windows (EnterpriseDB installer — once pgAudit supports your PostgreSQL version)</span>
+<span class="cmt">-- 1. Open Stack Builder from the Start menu</span>
 <span class="cmt">-- 2. Select your PostgreSQL instance → Next</span>
 <span class="cmt">-- 3. Expand "Add-ons, tools and utilities" → tick pgAudit → Install</span>
 <span class="cmt">-- 4. Complete the wizard — no restart yet</span>
