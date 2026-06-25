@@ -3024,13 +3024,22 @@ paid_households <span class="kw">AS</span> (
       </div>
 
       <h4 style="margin:16px 0 6px">Phase 5 — Supervisor role tests</h4>
+      <div class="callout warning" style="margin-bottom:8px">
+        <div class="callout-title">If Step 8 gives "permission denied for table households" — run this first as postgres</div>
+        <code>BYPASSRLS</code> skips RLS <em>policies</em> but does not grant table <em>privileges</em> — those are two independent layers. The supervisor still needs an explicit <code>GRANT SELECT</code>:
+        <div style="margin-top:8px"><code style="display:block;background:var(--code-bg);color:var(--code-text);padding:8px 12px;border-radius:6px;font-size:0.82rem">RESET ROLE;
+GRANT SELECT ON ALL TABLES IN SCHEMA nsr TO nsr_supervisor;
+GRANT UPDATE ON nsr.payments TO nsr_supervisor;</code></div>
+        Then re-run Step 8. This is already included in the Intermediate RBAC setup block above — only needed here if you created roles before that block was updated.
+      </div>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">sql – supervisor tests (steps 8–10)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
         <pre><span class="cmt">-- STEP 8: Switch to supervisor — BYPASSRLS means no state filter</span>
 <span class="kw">SET ROLE</span> nsr_supervisor;
 <span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.households;
 <span class="cmt">-- Expected: total row count across ALL states (no SET app.state_code needed)</span>
-<span class="cmt">-- The supervisor's BYPASSRLS attribute skips every RLS policy on every table</span>
+<span class="cmt">-- BYPASSRLS skips every RLS policy — supervisor sees all rows regardless of lga_id</span>
+<span class="cmt">-- Important: BYPASSRLS does NOT grant table privileges — SELECT must still be granted explicitly</span>
 
 <span class="cmt">-- STEP 9: Supervisor can UPDATE payments — caseworker could not</span>
 <span class="kw">UPDATE</span> nsr.payments <span class="kw">SET</span> status = <span class="str">'processed'</span> <span class="kw">WHERE</span> payment_id = <span class="num">1</span>;
