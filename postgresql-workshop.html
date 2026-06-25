@@ -3912,15 +3912,28 @@ done</pre>
       <p>Logical backups capture a snapshot in time. WAL archiving continuously ships WAL segment files to a safe location so you can recover to <em>any point</em> between backups — not just the moment the backup was taken. This is essential for a payment system where even one hour of lost transactions is unacceptable.</p>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">conf – postgresql.conf settings for WAL archiving</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-        <pre><span class="cmt"># Enable WAL archiving (add to postgresql.conf, then restart)</span>
-wal_level        = replica          <span class="cmt"># minimum for archiving</span>
-archive_mode     = on
-archive_command  = 'cp %p /var/lib/pgsql/archive/%f'
-                                    <span class="cmt"># %p = full path of WAL file, %f = filename</span>
-                                    <span class="cmt"># production: use rsync/s3 instead of cp</span>
+        <pre><span class="cmt"># Step 1: Create the archive directory before enabling archiving</span>
+<span class="cmt"># Linux/macOS:  mkdir -p /var/lib/pgsql/archive</span>
+<span class="cmt"># Windows:      mkdir C:\pgarchive</span>
+<span class="cmt"># The archive_command will fail silently if this directory does not exist.</span>
 
-<span class="cmt"># Verify archiving is working</span>
-<span class="cmt">-- In psql:</span>
+<span class="cmt"># Step 2: Add these lines to postgresql.conf, then restart PostgreSQL</span>
+wal_level        = replica          <span class="cmt"># minimum level required for archiving</span>
+archive_mode     = on
+<span class="cmt"># Linux/macOS archive_command:</span>
+archive_command  = <span class="str">'cp %p /var/lib/pgsql/archive/%f'</span>
+<span class="cmt"># Windows archive_command (use copy, quote paths to handle spaces):</span>
+<span class="cmt"># archive_command = 'copy "%p" "C:\\pgarchive\\%f"'</span>
+                                    <span class="cmt"># %p = full path of the WAL file</span>
+                                    <span class="cmt"># %f = filename only</span>
+                                    <span class="cmt"># production: use rsync or an S3 CLI instead of cp/copy</span></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – verify WAL archiving is working (run in psql)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Run after restarting PostgreSQL with WAL archiving enabled</span>
+<span class="cmt">-- archived_count increments as WAL segments are copied to the archive directory</span>
+<span class="cmt">-- failed_count > 0 means the archive_command is erroring — check the server log</span>
 <span class="kw">SELECT</span> archived_count, failed_count, last_archived_wal, last_archived_time
 <span class="kw">FROM</span>  pg_stat_archiver;</pre>
       </div>
