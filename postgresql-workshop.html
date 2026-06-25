@@ -4586,6 +4586,273 @@ done</pre>
     </div>
 
     <!-- ══════════════════════════════════════════════════════════════
+         PARTICIPANT BRIEF
+    ═══════════════════════════════════════════════════════════════ -->
+    <h3 style="margin-top:2rem;">📋 Participant Brief &amp; Step-by-Step Guide</h3>
+
+    <!-- Overview card -->
+    <div style="background:#0d1929;border:1px solid #1e293b;border-radius:10px;padding:20px 22px;margin-bottom:18px;">
+      <div style="color:#7dd3fc;font-weight:700;font-size:0.88rem;margin-bottom:10px;letter-spacing:0.3px;">🎯 What You Are Building</div>
+      <p style="color:#94a3b8;font-size:0.85rem;line-height:1.75;margin:0;">
+        You are the <strong style="color:#e2e8f0;">Lead Database Engineer</strong> for the Community Welfare Register (CWR) — a system that tracks welfare beneficiaries and cash disbursements across Nigeria's geopolitical zones.
+        The data layer has been built for you (partitioned tables, materialized views, monitoring views).
+        Your job is to <strong style="color:#e2e8f0;">complete the five missing security and operational layers</strong> that make the system production-ready.
+        Every puzzle you complete updates the live dashboard above — both yours and your instructor's.
+      </p>
+    </div>
+
+    <!-- How to use the editor -->
+    <div style="background:#071120;border:1px solid #1e293b;border-radius:10px;padding:20px 22px;margin-bottom:18px;">
+      <div style="color:#fbbf24;font-weight:700;font-size:0.88rem;margin-bottom:12px;">🖥 How to Use the Integrated Editor</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div>
+          <div style="color:#e2e8f0;font-size:0.8rem;font-weight:600;margin-bottom:6px;">Opening a puzzle</div>
+          <ol style="color:#94a3b8;font-size:0.78rem;line-height:1.9;padding-left:18px;margin:0;">
+            <li>Scroll to the <strong>Puzzle Status</strong> panel inside the dashboard below</li>
+            <li>Click the blue <strong>▶ Open</strong> button next to any incomplete puzzle</li>
+            <li>A full-screen editor opens with the task description, hints, and starter code pre-loaded</li>
+          </ol>
+        </div>
+        <div>
+          <div style="color:#e2e8f0;font-size:0.8rem;font-weight:600;margin-bottom:6px;">Completing a puzzle</div>
+          <ol style="color:#94a3b8;font-size:0.78rem;line-height:1.9;padding-left:18px;margin:0;">
+            <li>Read the <strong>Task</strong> and <strong>Hints</strong> panels on the left</li>
+            <li>Edit the starter SQL in the code editor (Tab key indents)</li>
+            <li>Click <strong>▶ Run</strong> — the terminal panel shows the result</li>
+            <li>If it passes, the puzzle auto-marks ✓ Complete on the dashboard</li>
+            <li>If it fails, the error tells you exactly what is missing — fix and re-run</li>
+          </ol>
+        </div>
+      </div>
+      <div style="margin-top:14px;background:#0d1929;border-radius:6px;padding:10px 14px;font-size:0.76rem;color:#64748b;line-height:1.7;">
+        <strong style="color:#94a3b8;">Important:</strong> The editor validates your SQL structure — it checks that you have included the required commands (e.g. <code style="color:#7dd3fc;">CREATE ROLE</code>, <code style="color:#7dd3fc;">GRANT</code>, <code style="color:#7dd3fc;">CREATE POLICY</code>).
+        After the editor marks it complete, <strong>copy the SQL and run it in your local psql session</strong> connected to <code style="color:#7dd3fc;">lab_nsr</code> to actually apply it to your database.
+        The dashboard will show your progress live to your instructor.
+      </div>
+    </div>
+
+    <!-- Step-by-step guide -->
+    <div style="color:#e2e8f0;font-weight:700;font-size:0.9rem;margin-bottom:14px;">📌 Step-by-Step: All Five Puzzles</div>
+
+    <!-- Phase 1 -->
+    <div style="background:#0d1929;border:1px solid #1e293b;border-left:3px solid #3b82f6;border-radius:8px;padding:16px 20px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <span style="background:#1e3a5f;color:#7dd3fc;font-size:0.65rem;font-weight:700;padding:2px 9px;border-radius:999px;letter-spacing:0.5px;">PHASE 1</span>
+        <span style="color:#e2e8f0;font-weight:700;font-size:0.85rem;">Foundation Schema — Verify Your Setup</span>
+      </div>
+      <p style="color:#94a3b8;font-size:0.8rem;line-height:1.7;margin:0 0 10px;">The foundation was pre-built for you using three scripts provided below the dashboard. Your only task here is to <strong>confirm the schema exists</strong> in your database.</p>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span style="background:#1e3a5f;color:#7dd3fc;font-size:0.7rem;font-weight:700;padding:1px 7px;border-radius:4px;flex-shrink:0;margin-top:1px;">1</span>
+          <span style="color:#94a3b8;font-size:0.78rem;line-height:1.6;">Open psql and connect: <code style="color:#7dd3fc;">\c lab_nsr</code></span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span style="background:#1e3a5f;color:#7dd3fc;font-size:0.7rem;font-weight:700;padding:1px 7px;border-radius:4px;flex-shrink:0;margin-top:1px;">2</span>
+          <span style="color:#94a3b8;font-size:0.78rem;line-height:1.6;">Scroll down to the Phase 1 scripts and run all three blocks in order (Foundation → Materialized View → Monitoring Views)</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span style="background:#1e3a5f;color:#7dd3fc;font-size:0.7rem;font-weight:700;padding:1px 7px;border-radius:4px;flex-shrink:0;margin-top:1px;">3</span>
+          <span style="color:#94a3b8;font-size:0.78rem;line-height:1.6;">Click <strong>▶ Open</strong> on Phase 1 in the dashboard — run the verification SELECT — if 5 rows appear, click ▶ Run to mark it complete</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Puzzle A -->
+    <div style="background:#0d1929;border:1px solid #1e293b;border-left:3px solid #8b5cf6;border-radius:8px;padding:16px 20px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <span style="background:#2d1b69;color:#a78bfa;font-size:0.65rem;font-weight:700;padding:2px 9px;border-radius:999px;letter-spacing:0.5px;">PUZZLE A</span>
+        <span style="color:#e2e8f0;font-weight:700;font-size:0.85rem;">RBAC — Role-Based Access Control</span>
+        <span style="color:#475569;font-size:0.72rem;">~10 min</span>
+      </div>
+      <p style="color:#94a3b8;font-size:0.8rem;line-height:1.7;margin:0 0 10px;">Create two roles that restrict what different users can do in the CWR database. Think of roles as <em>job titles</em> — an analyst reads data, a caseworker can update it.</p>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span style="background:#2d1b69;color:#a78bfa;font-size:0.7rem;font-weight:700;padding:1px 7px;border-radius:4px;flex-shrink:0;margin-top:1px;">1</span>
+          <span style="color:#94a3b8;font-size:0.78rem;line-height:1.6;">Click <strong>▶ Open</strong> on Puzzle A in the dashboard. Read the Task panel — you need to create <code style="color:#7dd3fc;">cwr_analyst</code> (SELECT only) and <code style="color:#7dd3fc;">cwr_caseworker</code> (SELECT + INSERT + UPDATE)</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span style="background:#2d1b69;color:#a78bfa;font-size:0.7rem;font-weight:700;padding:1px 7px;border-radius:4px;flex-shrink:0;margin-top:1px;">2</span>
+          <span style="color:#94a3b8;font-size:0.78rem;line-height:1.6;">The starter code is pre-filled. Check it matches the task requirements, adjust if needed (e.g. ensure the correct tables are granted to <code style="color:#7dd3fc;">cwr_caseworker</code>)</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span style="background:#2d1b69;color:#a78bfa;font-size:0.7rem;font-weight:700;padding:1px 7px;border-radius:4px;flex-shrink:0;margin-top:1px;">3</span>
+          <span style="color:#94a3b8;font-size:0.78rem;line-height:1.6;">Click <strong>▶ Run</strong>. On success, copy the SQL to psql and execute it. Verify with: <code style="color:#7dd3fc;">\du cwr_analyst</code> and <code style="color:#7dd3fc;">\du cwr_caseworker</code></span>
+        </div>
+      </div>
+      <div style="background:#071120;border-radius:5px;padding:9px 12px;font-size:0.73rem;color:#64748b;line-height:1.6;">
+        <strong style="color:#a78bfa;">Key concept:</strong> <code style="color:#7dd3fc;">GRANT USAGE ON SCHEMA</code> gives a role permission to see inside the schema.
+        Without it, even <code style="color:#7dd3fc;">GRANT SELECT ON TABLE</code> will fail with "permission denied for schema cwr".
+        Always grant schema USAGE first, then object-level privileges.
+      </div>
+    </div>
+
+    <!-- Puzzle B -->
+    <div style="background:#0d1929;border:1px solid #1e293b;border-left:3px solid #0ea5e9;border-radius:8px;padding:16px 20px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <span style="background:#0c2a3d;color:#38bdf8;font-size:0.65rem;font-weight:700;padding:2px 9px;border-radius:999px;letter-spacing:0.5px;">PUZZLE B</span>
+        <span style="color:#e2e8f0;font-weight:700;font-size:0.85rem;">RLS — Row-Level Security</span>
+        <span style="color:#475569;font-size:0.72rem;">~15 min</span>
+      </div>
+      <p style="color:#94a3b8;font-size:0.8rem;line-height:1.7;margin:0 0 10px;">RLS makes rows invisible based on who is querying. A caseworker in Zone NE should never see beneficiaries from Zone SW — even if they run <code style="color:#7dd3fc;">SELECT * FROM cwr.beneficiaries</code>.</p>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span style="background:#0c2a3d;color:#38bdf8;font-size:0.7rem;font-weight:700;padding:1px 7px;border-radius:4px;flex-shrink:0;margin-top:1px;">1</span>
+          <span style="color:#94a3b8;font-size:0.78rem;line-height:1.6;">Click <strong>▶ Open</strong> on Puzzle B. You need two things: <code style="color:#7dd3fc;">ALTER TABLE ... ENABLE ROW LEVEL SECURITY</code> then <code style="color:#7dd3fc;">CREATE POLICY</code></span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span style="background:#0c2a3d;color:#38bdf8;font-size:0.7rem;font-weight:700;padding:1px 7px;border-radius:4px;flex-shrink:0;margin-top:1px;">2</span>
+          <span style="color:#94a3b8;font-size:0.78rem;line-height:1.6;">The policy uses <code style="color:#7dd3fc;">current_setting('app.current_zone', true)</code> — this reads a session-level variable set by the application layer. The <code style="color:#7dd3fc;">true</code> means "return NULL if not set" (no error)</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span style="background:#0c2a3d;color:#38bdf8;font-size:0.7rem;font-weight:700;padding:1px 7px;border-radius:4px;flex-shrink:0;margin-top:1px;">3</span>
+          <span style="color:#94a3b8;font-size:0.78rem;line-height:1.6;">Click <strong>▶ Run</strong>. To test in psql after copying: <code style="color:#7dd3fc;">SET app.current_zone = 'NE';</code> then <code style="color:#7dd3fc;">SELECT * FROM cwr.beneficiaries;</code> as cwr_caseworker — you should only see NE rows</span>
+        </div>
+      </div>
+      <div style="background:#071120;border-radius:5px;padding:9px 12px;font-size:0.73rem;color:#64748b;line-height:1.6;">
+        <strong style="color:#38bdf8;">Key concept:</strong> The superuser (postgres) bypasses RLS by default.
+        To test policies, you must connect as the restricted role:
+        <code style="color:#7dd3fc;">SET ROLE cwr_caseworker;</code> then query. Use <code style="color:#7dd3fc;">RESET ROLE;</code> to go back.
+      </div>
+    </div>
+
+    <!-- Puzzle C -->
+    <div style="background:#0d1929;border:1px solid #1e293b;border-left:3px solid #22c55e;border-radius:8px;padding:16px 20px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <span style="background:#052e16;color:#4ade80;font-size:0.65rem;font-weight:700;padding:2px 9px;border-radius:999px;letter-spacing:0.5px;">PUZZLE C</span>
+        <span style="color:#e2e8f0;font-weight:700;font-size:0.85rem;">Audit Trigger — Change Data Capture</span>
+        <span style="color:#475569;font-size:0.72rem;">~20 min</span>
+      </div>
+      <p style="color:#94a3b8;font-size:0.8rem;line-height:1.7;margin:0 0 10px;">An audit trigger is a database function that fires automatically on every INSERT, UPDATE, and DELETE — recording who changed what, and when. This is the most complex puzzle: it involves writing a PL/pgSQL function <em>and</em> attaching it as a trigger.</p>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span style="background:#052e16;color:#4ade80;font-size:0.7rem;font-weight:700;padding:1px 7px;border-radius:4px;flex-shrink:0;margin-top:1px;">1</span>
+          <span style="color:#94a3b8;font-size:0.78rem;line-height:1.6;">Click <strong>▶ Open</strong> on Puzzle C. The starter code is complete — read through it carefully and understand each part before making changes</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span style="background:#052e16;color:#4ade80;font-size:0.7rem;font-weight:700;padding:1px 7px;border-radius:4px;flex-shrink:0;margin-top:1px;">2</span>
+          <span style="color:#94a3b8;font-size:0.78rem;line-height:1.6;"><strong>Part 1 — the function:</strong> Must return <code style="color:#7dd3fc;">TRIGGER</code>, use <code style="color:#7dd3fc;">SECURITY DEFINER</code>, capture <code style="color:#7dd3fc;">session_user</code>, insert into <code style="color:#7dd3fc;">cwr.audit_log</code>, and handle all three operations (INSERT/UPDATE/DELETE) with correct JSONB shapes</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span style="background:#052e16;color:#4ade80;font-size:0.7rem;font-weight:700;padding:1px 7px;border-radius:4px;flex-shrink:0;margin-top:1px;">3</span>
+          <span style="color:#94a3b8;font-size:0.78rem;line-height:1.6;"><strong>Part 2 — the trigger:</strong> Must fire <code style="color:#7dd3fc;">AFTER INSERT OR UPDATE OR DELETE</code> on <code style="color:#7dd3fc;">cwr.beneficiaries FOR EACH ROW</code></span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span style="background:#052e16;color:#4ade80;font-size:0.7rem;font-weight:700;padding:1px 7px;border-radius:4px;flex-shrink:0;margin-top:1px;">4</span>
+          <span style="color:#94a3b8;font-size:0.78rem;line-height:1.6;">Click <strong>▶ Run</strong>. After copying to psql, test it: <code style="color:#7dd3fc;">UPDATE cwr.beneficiaries SET status = 'active' WHERE beneficiary_code = 'BEN001';</code> then <code style="color:#7dd3fc;">SELECT * FROM cwr.audit_log;</code> — you should see an entry</span>
+        </div>
+      </div>
+      <div style="background:#071120;border-radius:5px;padding:9px 12px;font-size:0.73rem;color:#64748b;line-height:1.6;">
+        <strong style="color:#4ade80;">Key concept:</strong> Use <code style="color:#7dd3fc;">session_user</code> (not <code style="color:#7dd3fc;">current_user</code>) inside a SECURITY DEFINER function.
+        Inside SECURITY DEFINER, <code style="color:#7dd3fc;">current_user</code> returns the <em>function owner</em> (postgres), not the caller.
+        <code style="color:#7dd3fc;">session_user</code> always returns the original authenticated user — giving you an accurate audit trail.
+      </div>
+    </div>
+
+    <!-- Puzzle D -->
+    <div style="background:#0d1929;border:1px solid #1e293b;border-left:3px solid #f59e0b;border-radius:8px;padding:16px 20px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <span style="background:#3d2200;color:#fbbf24;font-size:0.65rem;font-weight:700;padding:2px 9px;border-radius:999px;letter-spacing:0.5px;">PUZZLE D</span>
+        <span style="color:#e2e8f0;font-weight:700;font-size:0.85rem;">Monitoring — System Performance Access</span>
+        <span style="color:#475569;font-size:0.72rem;">~10 min</span>
+      </div>
+      <p style="color:#94a3b8;font-size:0.8rem;line-height:1.7;margin:0 0 10px;">The monitoring views were built in Phase 1. Now you need to grant the monitoring role the right access, and refresh the materialized view so the dashboard shows current data.</p>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span style="background:#3d2200;color:#fbbf24;font-size:0.7rem;font-weight:700;padding:1px 7px;border-radius:4px;flex-shrink:0;margin-top:1px;">1</span>
+          <span style="color:#94a3b8;font-size:0.78rem;line-height:1.6;">Click <strong>▶ Open</strong> on Puzzle D. Three things needed: <code style="color:#7dd3fc;">GRANT pg_monitor TO cwr_monitor</code>, then <code style="color:#7dd3fc;">GRANT SELECT</code> on all three monitoring views, then <code style="color:#7dd3fc;">REFRESH MATERIALIZED VIEW CONCURRENTLY</code></span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span style="background:#3d2200;color:#fbbf24;font-size:0.7rem;font-weight:700;padding:1px 7px;border-radius:4px;flex-shrink:0;margin-top:1px;">2</span>
+          <span style="color:#94a3b8;font-size:0.78rem;line-height:1.6;">The starter code is correct — click <strong>▶ Run</strong> directly. The optional <code style="color:#7dd3fc;">SELECT FROM mv_zone_stats</code> at the bottom verifies the MV was refreshed</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span style="background:#3d2200;color:#fbbf24;font-size:0.7rem;font-weight:700;padding:1px 7px;border-radius:4px;flex-shrink:0;margin-top:1px;">3</span>
+          <span style="color:#94a3b8;font-size:0.78rem;line-height:1.6;">After copying to psql: set the session role and test a monitoring view: <code style="color:#7dd3fc;">SET ROLE cwr_monitor; SELECT * FROM cwr.v_active_sessions;</code></span>
+        </div>
+      </div>
+      <div style="background:#071120;border-radius:5px;padding:9px 12px;font-size:0.73rem;color:#64748b;line-height:1.6;">
+        <strong style="color:#fbbf24;">Key concept:</strong> <code style="color:#7dd3fc;">REFRESH MATERIALIZED VIEW CONCURRENTLY</code> updates the view without locking reads.
+        Without <code style="color:#7dd3fc;">CONCURRENTLY</code>, the whole view is locked during refresh — acceptable for small datasets, a problem in production.
+        CONCURRENTLY requires a unique index, which was created on <code style="color:#7dd3fc;">mv_zone_stats</code> in Phase 1.
+      </div>
+    </div>
+
+    <!-- Puzzle E -->
+    <div style="background:#0d1929;border:1px solid #1e293b;border-left:3px solid #ef4444;border-radius:8px;padding:16px 20px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <span style="background:#450a0a;color:#fca5a5;font-size:0.65rem;font-weight:700;padding:2px 9px;border-radius:999px;letter-spacing:0.5px;">PUZZLE E</span>
+        <span style="color:#e2e8f0;font-weight:700;font-size:0.85rem;">Backup &amp; Disaster Recovery</span>
+        <span style="color:#475569;font-size:0.72rem;">~10 min</span>
+      </div>
+      <p style="color:#94a3b8;font-size:0.8rem;line-height:1.7;margin:0 0 10px;">Write the pg_dump and pg_restore commands to protect the CWR data. This is the simplest puzzle technically — the skill here is knowing the right flags and their order.</p>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span style="background:#450a0a;color:#fca5a5;font-size:0.7rem;font-weight:700;padding:1px 7px;border-radius:4px;flex-shrink:0;margin-top:1px;">1</span>
+          <span style="color:#94a3b8;font-size:0.78rem;line-height:1.6;">Click <strong>▶ Open</strong> on Puzzle E. You need: a <code style="color:#7dd3fc;">pg_dump</code> with <code style="color:#7dd3fc;">-n cwr -F c</code>, a <code style="color:#7dd3fc;">createdb</code> for the restore target, and a <code style="color:#7dd3fc;">pg_restore</code> with <code style="color:#7dd3fc;">--no-privileges</code></span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span style="background:#450a0a;color:#fca5a5;font-size:0.7rem;font-weight:700;padding:1px 7px;border-radius:4px;flex-shrink:0;margin-top:1px;">2</span>
+          <span style="color:#94a3b8;font-size:0.78rem;line-height:1.6;">The starter commands are correct — review the flags, then click <strong>▶ Run</strong>. The verification lines at the bottom compare row counts between source and restored database</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span style="background:#450a0a;color:#fca5a5;font-size:0.7rem;font-weight:700;padding:1px 7px;border-radius:4px;flex-shrink:0;margin-top:1px;">3</span>
+          <span style="color:#94a3b8;font-size:0.78rem;line-height:1.6;">Run the commands in a <strong>Windows Command Prompt</strong> (not psql) — pg_dump and pg_restore are command-line tools. Ensure <code style="color:#7dd3fc;">C:\temp\</code> exists first: <code style="color:#7dd3fc;">mkdir C:\temp</code></span>
+        </div>
+      </div>
+      <div style="background:#071120;border-radius:5px;padding:9px 12px;font-size:0.73rem;color:#64748b;line-height:1.6;">
+        <strong style="color:#fca5a5;">Key concept:</strong> <code style="color:#7dd3fc;">-F c</code> (custom format) is the recommended format for production backups — it is compressed, supports parallel restore (<code style="color:#7dd3fc;">-j 4</code>), and can restore individual tables.
+        <code style="color:#7dd3fc;">-F p</code> (plain text) is human-readable but large. Use <code style="color:#7dd3fc;">-F c</code> for anything that needs to be reliable.
+      </div>
+    </div>
+
+    <!-- Completion + tips -->
+    <div style="background:#052e16;border:1px solid #166534;border-radius:10px;padding:18px 22px;margin-bottom:20px;">
+      <div style="color:#4ade80;font-weight:700;font-size:0.88rem;margin-bottom:10px;">✅ When All Puzzles Are Complete</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div>
+          <div style="color:#86efac;font-size:0.78rem;font-weight:600;margin-bottom:6px;">Your dashboard should show:</div>
+          <ul style="color:#4ade80;font-size:0.76rem;line-height:1.9;padding-left:18px;margin:0;">
+            <li>All 6 progress pills glowing green</li>
+            <li>All Puzzle Status rows showing ✓ Complete</li>
+            <li>Audit Feed showing live psql query (unlocked after Puzzle C)</li>
+            <li>Health dots all green</li>
+          </ul>
+        </div>
+        <div>
+          <div style="color:#86efac;font-size:0.78rem;font-weight:600;margin-bottom:6px;">Run a final end-to-end test:</div>
+          <div style="font-family:monospace;font-size:0.7rem;color:#4ade80;background:#071120;border-radius:5px;padding:9px 11px;line-height:1.8;">-- As postgres in psql:<br>SET ROLE cwr_caseworker;<br>SET app.current_zone = 'NE';<br>SELECT * FROM cwr.beneficiaries;<br>-- Should return only NE rows<br><br>UPDATE cwr.beneficiaries<br>  SET status = 'active'<br>  WHERE zone_code = 'NE';<br>SELECT * FROM cwr.audit_log<br>  ORDER BY log_time DESC LIMIT 3;</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Common errors -->
+    <div style="background:#0d1929;border:1px solid #1e293b;border-radius:10px;padding:18px 22px;margin-bottom:24px;">
+      <div style="color:#f59e0b;font-weight:700;font-size:0.88rem;margin-bottom:12px;">⚠ Common Errors &amp; Fixes</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;background:#071120;border-radius:6px;overflow:hidden;">
+          <div style="padding:9px 12px;border-right:1px solid #1e293b;"><code style="color:#fca5a5;font-size:0.73rem;">ERROR: role "cwr_analyst" already exists</code></div>
+          <div style="padding:9px 12px;color:#94a3b8;font-size:0.73rem;line-height:1.5;">Drop and recreate: <code style="color:#7dd3fc;">DROP ROLE IF EXISTS cwr_analyst; DROP ROLE IF EXISTS cwr_caseworker;</code> then re-run Puzzle A</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;background:#071120;border-radius:6px;overflow:hidden;">
+          <div style="padding:9px 12px;border-right:1px solid #1e293b;"><code style="color:#fca5a5;font-size:0.73rem;">ERROR: permission denied for schema cwr</code></div>
+          <div style="padding:9px 12px;color:#94a3b8;font-size:0.73rem;line-height:1.5;">You forgot <code style="color:#7dd3fc;">GRANT USAGE ON SCHEMA cwr TO &lt;role&gt;</code> — schema USAGE must be granted before table grants</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;background:#071120;border-radius:6px;overflow:hidden;">
+          <div style="padding:9px 12px;border-right:1px solid #1e293b;"><code style="color:#fca5a5;font-size:0.73rem;">ERROR: new row violates row-level security policy</code></div>
+          <div style="padding:9px 12px;color:#94a3b8;font-size:0.73rem;line-height:1.5;">You are connected as cwr_caseworker but have not set the zone variable. Run: <code style="color:#7dd3fc;">SET app.current_zone = 'NE';</code></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;background:#071120;border-radius:6px;overflow:hidden;">
+          <div style="padding:9px 12px;border-right:1px solid #1e293b;"><code style="color:#fca5a5;font-size:0.73rem;">ERROR: relation "cwr.audit_log" does not exist</code></div>
+          <div style="padding:9px 12px;color:#94a3b8;font-size:0.73rem;line-height:1.5;">Phase 1 scripts were not run. Go to the Phase 1 section below and run all three script blocks first</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;background:#071120;border-radius:6px;overflow:hidden;">
+          <div style="padding:9px 12px;border-right:1px solid #1e293b;"><code style="color:#fca5a5;font-size:0.73rem;">pg_dump: command not found</code></div>
+          <div style="padding:9px 12px;color:#94a3b8;font-size:0.73rem;line-height:1.5;">Run pg_dump from Command Prompt (not psql). Full path: <code style="color:#7dd3fc;">"C:\Program Files\PostgreSQL\18\bin\pg_dump"</code></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
          DASHBOARD
     ═══════════════════════════════════════════════════════════════ -->
     <h3 style="margin-top:2rem;">CWR Operations Dashboard</h3>
