@@ -3817,29 +3817,36 @@ psql -U postgres -d lab_nsr_test -c "SELECT COUNT(*) FROM nsr.households;"</pre>
         <tr><td><code>--no-acl</code></td><td>Omits GRANT/REVOKE statements.</td><td>Restoring to a fresh environment where you will re-grant manually</td></tr>
         <tr><td><code>-j N</code> (pg_restore)</td><td>Parallel restore using N worker processes.</td><td>Any custom or directory format restore on a multi-core server</td></tr>
       </table>
+      <div class="callout info" style="margin-bottom:12px">
+        <div class="callout-title">Windows users — two things to know before running these commands</div>
+        <strong>1. Paths:</strong> Replace <code>/tmp/</code> with <code>C:\temp\</code> (create the folder first with <code>mkdir C:\temp</code>).<br>
+        <strong>2. The verification loop at the bottom</strong> uses bash syntax (<code>for … do … done</code>) and will not run in PowerShell or cmd. Run it in <strong>Git Bash</strong> (comes with Git for Windows — right-click a folder and choose <em>Git Bash Here</em>), or use the SQL alternative in the restore integrity checks section below instead.
+      </div>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">bash – pg_dump and pg_restore in practice</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
         <pre><span class="cmt"># Schema-only dump — capture the DDL without any data</span>
-pg_dump -U postgres -d lab_nsr -n nsr -s -F c -f /tmp/nsr_schema.dump
+pg_dump -U postgres -d lab_nsr -n nsr -s -F c -f C:\temp\nsr_schema.dump
 
 <span class="cmt"># Full nsr schema backup with data (custom format, compressed)</span>
-pg_dump -U postgres -d lab_nsr -n nsr -F c -f /tmp/nsr_full.dump
+pg_dump -U postgres -d lab_nsr -n nsr -F c -f C:\temp\nsr_full.dump
 
 <span class="cmt"># Inspect what is inside a custom-format dump before restoring</span>
-pg_restore -l /tmp/nsr_full.dump
+pg_restore -l C:\temp\nsr_full.dump
 
 <span class="cmt"># Restore to a fresh database — parallel (4 workers)</span>
+<span class="cmt"># --no-privileges skips GRANT/REVOKE — avoids "role does not exist" warnings</span>
 createdb -U postgres lab_nsr_restore
-pg_restore -U postgres -d lab_nsr_restore -F c -j 4 /tmp/nsr_full.dump
+pg_restore -U postgres -d lab_nsr_restore --no-privileges -F c -j 4 C:\temp\nsr_full.dump
 
 <span class="cmt"># Restore a single table only (selective restore from a full dump)</span>
-pg_restore -U postgres -d lab_nsr_restore -F c \
-  -t households /tmp/nsr_full.dump
+<span class="cmt"># -n specifies the schema, -t specifies the table name</span>
+pg_restore -U postgres -d lab_nsr_restore --no-privileges -F c -n nsr -t households C:\temp\nsr_full.dump
 
 <span class="cmt"># Data-only restore (schema already exists in the target)</span>
-pg_restore -U postgres -d lab_nsr_restore -F c -a /tmp/nsr_full.dump
+pg_restore -U postgres -d lab_nsr_restore -F c -a C:\temp\nsr_full.dump
 
 <span class="cmt"># Verify restore: compare row counts across every NSR table</span>
+<span class="cmt"># Run this in Git Bash (not PowerShell) — uses bash for/do/done syntax</span>
 for tbl in states lgas households individuals payments audit_log; do
   orig=$(psql -U postgres -d lab_nsr         -tAc "SELECT COUNT(*) FROM nsr.$tbl")
   rest=$(psql -U postgres -d lab_nsr_restore  -tAc "SELECT COUNT(*) FROM nsr.$tbl")
