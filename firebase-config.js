@@ -16,5 +16,5 @@
 // The only data stored is participant names + which puzzles they marked complete/failed.
 
 var CWR_FIREBASE = {
-  databaseURL: "https://REPLACE_YOUR_PROJECT-default-rtdb.firebaseio.com"
+  databaseURL: "https://auktie2026-postgresql-workshop-default-rtdb.europe-west1.firebasedatabase.app"
 };
