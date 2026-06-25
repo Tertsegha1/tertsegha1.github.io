@@ -4591,6 +4591,69 @@ done</pre>
     <h3 style="margin-top:2rem;">CWR Operations Dashboard</h3>
     <p style="color:var(--text-muted,#64748b);font-size:0.92rem;margin-bottom:1rem;">The monitoring infrastructure is pre-built using the Phase 1 materialized view and monitoring views. As you complete each phase, the audit feed and health panel will reflect your live database. Click any <strong>SQL ▾</strong> button to see the query that powers each panel.</p>
 
+    <script>
+    (function(){
+      var PHASES=[
+        {key:'p1', label:'Phase 1 · Foundation', anchor:'cwr-phase1'},
+        {key:'pa', label:'A · RBAC',             anchor:'cwr-puzzle-a'},
+        {key:'pb', label:'B · RLS',              anchor:'cwr-puzzle-b'},
+        {key:'pc', label:'C · Audit Trigger',    anchor:'cwr-puzzle-c'},
+        {key:'pd', label:'D · Monitoring',       anchor:'cwr-puzzle-d'},
+        {key:'pe', label:'E · Backup &amp; DR',  anchor:'cwr-puzzle-e'}
+      ];
+      function gs(k){return localStorage.getItem('cwr_'+k)||'todo';}
+      window.cwrMark=function(k,s){localStorage.setItem('cwr_'+k,s);cwrRefresh();};
+      window.cwrJump=function(a){var e=document.getElementById(a);if(e)e.scrollIntoView({behavior:'smooth',block:'start'});};
+      window.cwrReset=function(){PHASES.forEach(function(p){localStorage.removeItem('cwr_'+p.key);});cwrRefresh();};
+      function cwrRefresh(){
+        PHASES.forEach(function(p){
+          var s=gs(p.key);
+          var pill=document.getElementById('cwr-pill-'+p.key);
+          if(pill){
+            var bg={todo:'#1e293b',done:'#14532d',fail:'#450a0a'}[s]||'#1e293b';
+            var bc={todo:'#334155',done:'#22c55e',fail:'#ef4444'}[s]||'#334155';
+            var ic={todo:'○',done:'✓',fail:'✗'}[s]||'○';
+            var tc={todo:'#94a3b8',done:'#4ade80',fail:'#fca5a5'}[s]||'#94a3b8';
+            pill.style.background=bg; pill.style.borderColor=bc; pill.style.color=tc;
+            var si=pill.querySelector('.cpill-icon'); if(si)si.textContent=ic;
+          }
+          var btn=document.getElementById('cwr-markbtn-'+p.key);
+          if(btn){
+            if(s==='done'){btn.style.background='#14532d';btn.style.borderColor='#22c55e';btn.style.color='#4ade80';btn.innerHTML='✓ Marked Complete';}
+            else if(s==='fail'){btn.style.background='#450a0a';btn.style.borderColor='#ef4444';btn.style.color='#fca5a5';btn.innerHTML='✗ Marked Failed';}
+            else{btn.style.background='#0f172a';btn.style.borderColor='#475569';btn.style.color='#94a3b8';btn.innerHTML='✅ Mark Complete';}
+          }
+        });
+        // Health rows
+        [['pa','RBAC'],['pb','RLS'],['pc','Audit Trigger'],['pd','Monitoring'],['pe','Backup']].forEach(function(r){
+          var dot=document.getElementById('cwr-dot-'+r[0]);
+          var lbl=document.getElementById('cwr-hlabel-'+r[0]);
+          var s=gs(r[0]);
+          var clr={todo:'#f59e0b',done:'#22c55e',fail:'#ef4444'}[s]||'#f59e0b';
+          var txt={todo:'Not started',done:'✓ Complete',fail:'✗ Failed — revisit'}[s]||'Not started';
+          if(dot){dot.style.background=clr;}
+          if(lbl){lbl.style.color=clr;lbl.textContent=txt;}
+        });
+        // Audit feed
+        var feed=document.getElementById('cwr-audit-feed');
+        if(feed){
+          var s=gs('pc');
+          if(s==='done'){
+            feed.innerHTML='<div style="padding:10px 12px;"><div style="color:#4ade80;font-weight:600;font-size:0.8rem;margin-bottom:6px;">✓ Audit Trigger Active</div>'+
+              '<div style="color:#64748b;font-size:0.72rem;margin-bottom:6px;">Run this in psql to see live events:</div>'+
+              '<div style="font-family:monospace;font-size:0.68rem;color:#7dd3fc;background:#071120;padding:7px 9px;border-radius:4px;line-height:1.7;">SELECT log_time, role_name, action,<br>&nbsp;&nbsp;LEFT(row_data::text,60) AS data<br>FROM cwr.audit_log<br>ORDER BY log_time DESC LIMIT 10;</div></div>';
+          } else if(s==='fail'){
+            feed.innerHTML='<div style="padding:14px;text-align:center;"><span style="font-size:1.3rem;">⚠️</span><div style="color:#fca5a5;font-size:0.78rem;margin-top:6px;">Trigger install failed</div><div style="color:#334155;font-size:0.7rem;margin-top:4px;">Go back to Puzzle C and fix the error</div></div>';
+          } else {
+            feed.innerHTML='<div style="padding:14px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;"><span style="font-size:1.4rem;">🔒</span><div style="color:#475569;font-size:0.78rem;">Audit trigger not yet installed</div><div style="color:#334155;font-size:0.7rem;"><button onclick="cwrJump(\'cwr-puzzle-c\')" style="background:none;border:1px solid #334155;color:#7dd3fc;font-size:0.7rem;padding:3px 10px;border-radius:4px;cursor:pointer;font-family:inherit;">→ Go to Puzzle C</button></div></div>';
+          }
+        }
+      }
+      if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',cwrRefresh);}
+      else{cwrRefresh();}
+    })();
+    </script>
+
     <div id="cwr-dashboard" style="background:#0d1929;border:1px solid #1e293b;border-radius:12px;overflow:hidden;font-family:system-ui,sans-serif;font-size:14px;margin-bottom:2.5rem;">
 
       <!-- Header -->
@@ -4598,9 +4661,23 @@ done</pre>
         <div style="display:flex;align-items:center;gap:10px;">
           <span style="font-size:1.1rem;">🏛</span>
           <span style="color:#e2e8f0;font-weight:700;font-size:0.9rem;letter-spacing:0.5px;">CWR OPERATIONS DASHBOARD</span>
-          <span style="background:#22c55e;color:#fff;font-size:0.62rem;padding:1px 8px;border-radius:999px;font-weight:700;letter-spacing:0.5px;margin-left:4px;">SEED DATA LOADED</span>
+          <span id="cwr-header-badge" style="background:#22c55e;color:#fff;font-size:0.62rem;padding:1px 8px;border-radius:999px;font-weight:700;letter-spacing:0.5px;margin-left:4px;">SEED DATA LOADED</span>
         </div>
-        <div style="color:#64748b;font-size:0.78rem;">29 Jun 2026 &nbsp;·&nbsp; lab_nsr</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button onclick="cwrReset()" title="Reset all puzzle progress" style="background:none;border:1px solid #334155;color:#475569;font-size:0.65rem;padding:2px 8px;border-radius:4px;cursor:pointer;font-family:inherit;">↺ Reset</button>
+          <div style="color:#64748b;font-size:0.78rem;">29 Jun 2026 &nbsp;·&nbsp; lab_nsr</div>
+        </div>
+      </div>
+
+      <!-- Puzzle Tracker Strip -->
+      <div style="background:#071120;padding:10px 16px;display:flex;gap:7px;flex-wrap:wrap;align-items:center;border-bottom:1px solid #1e293b;">
+        <span style="color:#475569;font-size:0.67rem;text-transform:uppercase;letter-spacing:0.8px;flex-shrink:0;margin-right:2px;">Progress:</span>
+        <button id="cwr-pill-p1" onclick="cwrJump('cwr-phase1')" style="display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:999px;border:1px solid #334155;background:#1e293b;color:#94a3b8;font-size:0.7rem;cursor:pointer;font-family:inherit;"><span class="cpill-icon">○</span> Phase 1 · Foundation</button>
+        <button id="cwr-pill-pa" onclick="cwrJump('cwr-puzzle-a')" style="display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:999px;border:1px solid #334155;background:#1e293b;color:#94a3b8;font-size:0.7rem;cursor:pointer;font-family:inherit;"><span class="cpill-icon">○</span> A · RBAC</button>
+        <button id="cwr-pill-pb" onclick="cwrJump('cwr-puzzle-b')" style="display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:999px;border:1px solid #334155;background:#1e293b;color:#94a3b8;font-size:0.7rem;cursor:pointer;font-family:inherit;"><span class="cpill-icon">○</span> B · RLS</button>
+        <button id="cwr-pill-pc" onclick="cwrJump('cwr-puzzle-c')" style="display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:999px;border:1px solid #334155;background:#1e293b;color:#94a3b8;font-size:0.7rem;cursor:pointer;font-family:inherit;"><span class="cpill-icon">○</span> C · Audit Trigger</button>
+        <button id="cwr-pill-pd" onclick="cwrJump('cwr-puzzle-d')" style="display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:999px;border:1px solid #334155;background:#1e293b;color:#94a3b8;font-size:0.7rem;cursor:pointer;font-family:inherit;"><span class="cpill-icon">○</span> D · Monitoring</button>
+        <button id="cwr-pill-pe" onclick="cwrJump('cwr-puzzle-e')" style="display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:999px;border:1px solid #334155;background:#1e293b;color:#94a3b8;font-size:0.7rem;cursor:pointer;font-family:inherit;"><span class="cpill-icon">○</span> E · Backup &amp; DR</button>
       </div>
 
       <!-- KPI Row -->
@@ -4714,40 +4791,38 @@ done</pre>
         <!-- Audit Feed -->
         <div style="background:#0d1929;padding:18px 20px;">
           <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Recent Audit Events</div>
-          <div style="background:#071120;border-radius:8px;padding:14px;min-height:90px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;">
-            <span style="font-size:1.4rem;">🔒</span>
-            <div style="color:#475569;font-size:0.78rem;text-align:center;">Audit trigger not yet installed</div>
-            <div style="color:#334155;font-size:0.7rem;text-align:center;">Complete Phase 2 Puzzle C to activate</div>
+          <div id="cwr-audit-feed" style="background:#071120;border-radius:8px;min-height:90px;">
+            <div style="padding:14px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;"><span style="font-size:1.4rem;">🔒</span><div style="color:#475569;font-size:0.78rem;">Audit trigger not yet installed</div><div style="color:#334155;font-size:0.7rem;"><button onclick="cwrJump('cwr-puzzle-c')" style="background:none;border:1px solid #334155;color:#7dd3fc;font-size:0.7rem;padding:3px 10px;border-radius:4px;cursor:pointer;font-family:inherit;">→ Go to Puzzle C</button></div></div>
           </div>
-          <div style="margin-top:8px;color:#334155;font-size:0.67rem;">Live: <code style="color:#7dd3fc;font-size:0.67rem;">SELECT * FROM cwr.audit_log ORDER BY log_time DESC LIMIT 10</code></div>
+          <div style="margin-top:8px;color:#334155;font-size:0.67rem;">Live query: <code style="color:#7dd3fc;font-size:0.67rem;">SELECT * FROM cwr.audit_log ORDER BY log_time DESC LIMIT 10</code></div>
         </div>
 
         <!-- System Health -->
         <div style="background:#0d1929;padding:18px 20px;">
-          <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">System Health</div>
+          <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Puzzle Status</div>
           <div style="display:flex;flex-direction:column;gap:7px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#071120;border-radius:5px;">
-              <span style="color:#94a3b8;font-size:0.78rem;">Active Sessions</span>
-              <span style="display:flex;align-items:center;gap:5px;"><span style="width:7px;height:7px;background:#22c55e;border-radius:50%;display:inline-block;flex-shrink:0;"></span><span style="color:#22c55e;font-size:0.76rem;font-weight:600;">1 connected</span></span>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#071120;border-radius:5px;cursor:pointer;" onclick="cwrJump('cwr-puzzle-a')">
+              <span style="color:#94a3b8;font-size:0.78rem;">🔑 Puzzle A · RBAC</span>
+              <span style="display:flex;align-items:center;gap:5px;"><span id="cwr-dot-pa" style="width:7px;height:7px;background:#f59e0b;border-radius:50%;display:inline-block;flex-shrink:0;"></span><span id="cwr-hlabel-pa" style="color:#f59e0b;font-size:0.76rem;font-weight:600;">Not started</span></span>
             </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#071120;border-radius:5px;">
-              <span style="color:#94a3b8;font-size:0.78rem;">Lock Contention</span>
-              <span style="display:flex;align-items:center;gap:5px;"><span style="width:7px;height:7px;background:#22c55e;border-radius:50%;display:inline-block;flex-shrink:0;"></span><span style="color:#22c55e;font-size:0.76rem;font-weight:600;">No waits</span></span>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#071120;border-radius:5px;cursor:pointer;" onclick="cwrJump('cwr-puzzle-b')">
+              <span style="color:#94a3b8;font-size:0.78rem;">🛡 Puzzle B · RLS</span>
+              <span style="display:flex;align-items:center;gap:5px;"><span id="cwr-dot-pb" style="width:7px;height:7px;background:#f59e0b;border-radius:50%;display:inline-block;flex-shrink:0;"></span><span id="cwr-hlabel-pb" style="color:#f59e0b;font-size:0.76rem;font-weight:600;">Not started</span></span>
             </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#071120;border-radius:5px;">
-              <span style="color:#94a3b8;font-size:0.78rem;">WAL Status</span>
-              <span style="display:flex;align-items:center;gap:5px;"><span style="width:7px;height:7px;background:#22c55e;border-radius:50%;display:inline-block;flex-shrink:0;"></span><span style="color:#22c55e;font-size:0.76rem;font-weight:600;">Archiving OK</span></span>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#071120;border-radius:5px;cursor:pointer;" onclick="cwrJump('cwr-puzzle-c')">
+              <span style="color:#94a3b8;font-size:0.78rem;">📋 Puzzle C · Audit Trigger</span>
+              <span style="display:flex;align-items:center;gap:5px;"><span id="cwr-dot-pc" style="width:7px;height:7px;background:#f59e0b;border-radius:50%;display:inline-block;flex-shrink:0;"></span><span id="cwr-hlabel-pc" style="color:#f59e0b;font-size:0.76rem;font-weight:600;">Not started</span></span>
             </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#071120;border-radius:5px;">
-              <span style="color:#94a3b8;font-size:0.78rem;">Last Backup</span>
-              <span style="display:flex;align-items:center;gap:5px;"><span style="width:7px;height:7px;background:#f59e0b;border-radius:50%;display:inline-block;flex-shrink:0;"></span><span style="color:#f59e0b;font-size:0.76rem;font-weight:600;">Phase 4 Puzzle E</span></span>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#071120;border-radius:5px;cursor:pointer;" onclick="cwrJump('cwr-puzzle-d')">
+              <span style="color:#94a3b8;font-size:0.78rem;">📊 Puzzle D · Monitoring</span>
+              <span style="display:flex;align-items:center;gap:5px;"><span id="cwr-dot-pd" style="width:7px;height:7px;background:#f59e0b;border-radius:50%;display:inline-block;flex-shrink:0;"></span><span id="cwr-hlabel-pd" style="color:#f59e0b;font-size:0.76rem;font-weight:600;">Not started</span></span>
             </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#071120;border-radius:5px;">
-              <span style="color:#94a3b8;font-size:0.78rem;">MV Last Refresh</span>
-              <span style="display:flex;align-items:center;gap:5px;"><span style="width:7px;height:7px;background:#f59e0b;border-radius:50%;display:inline-block;flex-shrink:0;"></span><span style="color:#f59e0b;font-size:0.76rem;font-weight:600;">Manual required</span></span>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#071120;border-radius:5px;cursor:pointer;" onclick="cwrJump('cwr-puzzle-e')">
+              <span style="color:#94a3b8;font-size:0.78rem;">💾 Puzzle E · Backup &amp; DR</span>
+              <span style="display:flex;align-items:center;gap:5px;"><span id="cwr-dot-pe" style="width:7px;height:7px;background:#f59e0b;border-radius:50%;display:inline-block;flex-shrink:0;"></span><span id="cwr-hlabel-pe" style="color:#f59e0b;font-size:0.76rem;font-weight:600;">Not started</span></span>
             </div>
           </div>
-          <div style="margin-top:8px;color:#334155;font-size:0.67rem;">Views: <code style="color:#7dd3fc;font-size:0.67rem;">cwr.v_active_sessions</code> &amp; <code style="color:#7dd3fc;font-size:0.67rem;">cwr.v_lock_monitor</code></div>
+          <div style="margin-top:8px;color:#334155;font-size:0.67rem;">Click any row to jump to that puzzle</div>
         </div>
       </div>
 
@@ -4846,7 +4921,7 @@ done</pre>
     <!-- ══════════════════════════════════════════════════════════════
          PHASE 1 — DATABASE FOUNDATION
     ═══════════════════════════════════════════════════════════════ -->
-    <h3 style="margin-top:0.5rem;">
+    <h3 id="cwr-phase1" style="margin-top:0.5rem;scroll-margin-top:80px;">
       Phase 1 — Database Foundation
       <span style="display:inline-block;margin-left:10px;padding:2px 10px;border-radius:999px;background:#22c55e;color:#fff;font-size:0.72rem;font-weight:700;vertical-align:middle;">Advanced · Provided — run as-is</span>
     </h3>
@@ -5103,6 +5178,16 @@ done</pre>
 -- $$);</span></pre>
     </div>
 
+    <div style="margin-top:1rem;padding:14px 16px;background:#071120;border-radius:8px;border:1px solid #1e293b;">
+      <div style="color:#94a3b8;font-size:0.78rem;font-weight:600;margin-bottom:8px;">✔ Phase 1 Quick Verify</div>
+      <div style="font-family:monospace;font-size:0.72rem;color:#7dd3fc;background:#0d1929;padding:8px 10px;border-radius:5px;line-height:1.8;margin-bottom:10px;">SELECT tablename FROM pg_tables WHERE schemaname='cwr' ORDER BY 1;<br>-- Expected: 8 rows including disbursements_2024 … disbursements_future<br>SELECT zone_code, total_beneficiaries, avg_welfare_score FROM cwr.mv_zone_stats;<br>-- Expected: NC 70.25 / SW 68.50 / NE 76.70<br>SELECT * FROM cwr.v_active_sessions;<br>-- Expected: your current session</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button id="cwr-markbtn-p1" onclick="cwrMark('p1','done')" style="padding:5px 14px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#94a3b8;font-size:0.78rem;cursor:pointer;font-family:inherit;">✅ Mark Complete</button>
+        <button onclick="cwrMark('p1','fail')" style="padding:5px 14px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#94a3b8;font-size:0.78rem;cursor:pointer;font-family:inherit;">✗ Mark Failed</button>
+        <button onclick="cwrMark('p1','todo')" style="padding:5px 14px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:#475569;font-size:0.78rem;cursor:pointer;font-family:inherit;">↺ Reset</button>
+      </div>
+    </div>
+
     <!-- ══════════════════════════════════════════════════════════════
          PHASE 2 — SECURITY LAYER
     ═══════════════════════════════════════════════════════════════ -->
@@ -5112,7 +5197,7 @@ done</pre>
     </h3>
 
     <!-- Puzzle A: RBAC -->
-    <h4 style="margin-top:1.5rem;">
+    <h4 id="cwr-puzzle-a" style="margin-top:1.5rem;scroll-margin-top:80px;">
       Puzzle A — RBAC
       <span style="display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;background:#22c55e;color:#fff;font-size:0.7rem;font-weight:700;vertical-align:middle;">Elementary</span>
     </h4>
@@ -5153,6 +5238,16 @@ done</pre>
 
     <div class="answer-area">Write your 3 missing GRANT / REVOKE lines here</div>
 
+    <div style="margin-top:12px;padding:14px 16px;background:#071120;border-radius:8px;border:1px solid #1e293b;">
+      <div style="color:#94a3b8;font-size:0.78rem;font-weight:600;margin-bottom:8px;">✔ Puzzle A Quick Verify — run in psql after adding your lines</div>
+      <div style="font-family:monospace;font-size:0.72rem;color:#7dd3fc;background:#0d1929;padding:8px 10px;border-radius:5px;line-height:1.8;margin-bottom:10px;">SELECT grantee, table_name, privilege_type<br>FROM   information_schema.role_table_grants<br>WHERE  grantee LIKE 'cwr%' AND table_schema='cwr'<br>ORDER  BY grantee, table_name, privilege_type;<br>-- Expected rows include:<br>-- cwr_data_entry  | beneficiaries | INSERT<br>-- cwr_zone_officer| disbursements | UPDATE</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button id="cwr-markbtn-pa" onclick="cwrMark('pa','done')" style="padding:5px 14px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#94a3b8;font-size:0.78rem;cursor:pointer;font-family:inherit;">✅ Mark Complete</button>
+        <button onclick="cwrMark('pa','fail')" style="padding:5px 14px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#94a3b8;font-size:0.78rem;cursor:pointer;font-family:inherit;">✗ Mark Failed</button>
+        <button onclick="cwrMark('pa','todo')" style="padding:5px 14px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:#475569;font-size:0.78rem;cursor:pointer;font-family:inherit;">↺ Reset</button>
+      </div>
+    </div>
+
     <div style="display:flex;gap:8px;margin-top:8px;">
       <button class="btn-toggle-answer instructor-block instructor-only" onclick="toggleAnswer('ans-mp-pa',this)">▼ Show Answer</button>
     </div>
@@ -5168,7 +5263,7 @@ done</pre>
     </div>
 
     <!-- Puzzle B: RLS -->
-    <h4 style="margin-top:2rem;">
+    <h4 id="cwr-puzzle-b" style="margin-top:2rem;scroll-margin-top:80px;">
       Puzzle B — Row-Level Security
       <span style="display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;background:#f97316;color:#fff;font-size:0.7rem;font-weight:700;vertical-align:middle;">Intermediate</span>
     </h4>
@@ -5201,6 +5296,16 @@ done</pre>
     </div>
 
     <div class="answer-area">Write your USING and WITH CHECK clauses here</div>
+
+    <div style="margin-top:12px;padding:14px 16px;background:#071120;border-radius:8px;border:1px solid #1e293b;">
+      <div style="color:#94a3b8;font-size:0.78rem;font-weight:600;margin-bottom:8px;">✔ Puzzle B Quick Verify — run in psql after creating the policy</div>
+      <div style="font-family:monospace;font-size:0.72rem;color:#7dd3fc;background:#0d1929;padding:8px 10px;border-radius:5px;line-height:1.8;margin-bottom:10px;">SET ROLE cwr_data_entry;<br>SET app.zone_code = 'SW';<br>SELECT COUNT(*) AS visible FROM cwr.beneficiaries;<br>-- Expected: 2  (BEN-SW-001 and BEN-SW-002 only)<br>RESET ROLE;</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button id="cwr-markbtn-pb" onclick="cwrMark('pb','done')" style="padding:5px 14px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#94a3b8;font-size:0.78rem;cursor:pointer;font-family:inherit;">✅ Mark Complete</button>
+        <button onclick="cwrMark('pb','fail')" style="padding:5px 14px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#94a3b8;font-size:0.78rem;cursor:pointer;font-family:inherit;">✗ Mark Failed</button>
+        <button onclick="cwrMark('pb','todo')" style="padding:5px 14px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:#475569;font-size:0.78rem;cursor:pointer;font-family:inherit;">↺ Reset</button>
+      </div>
+    </div>
 
     <div style="display:flex;gap:8px;margin-top:8px;">
       <button class="btn-toggle-answer instructor-block instructor-only" onclick="toggleAnswer('ans-mp-pb',this)">▼ Show Answer</button>
@@ -5235,7 +5340,7 @@ done</pre>
     </div>
 
     <!-- Puzzle C: Audit Trigger -->
-    <h4 style="margin-top:2rem;">
+    <h4 id="cwr-puzzle-c" style="margin-top:2rem;scroll-margin-top:80px;">
       Puzzle C — Audit Trigger
       <span style="display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;background:#f97316;color:#fff;font-size:0.7rem;font-weight:700;vertical-align:middle;">Intermediate</span>
     </h4>
@@ -5287,6 +5392,16 @@ $func$;
     </div>
 
     <div class="answer-area">Write your completed function body here</div>
+
+    <div style="margin-top:12px;padding:14px 16px;background:#071120;border-radius:8px;border:1px solid #1e293b;">
+      <div style="color:#94a3b8;font-size:0.78rem;font-weight:600;margin-bottom:8px;">✔ Puzzle C Quick Verify — the trigger fires on INSERT and UPDATE</div>
+      <div style="font-family:monospace;font-size:0.72rem;color:#7dd3fc;background:#0d1929;padding:8px 10px;border-radius:5px;line-height:1.8;margin-bottom:10px;">INSERT INTO cwr.beneficiaries(beneficiary_code,community_id,full_name,welfare_score,enrolment_date)<br>VALUES ('VERIFY-001',1,'Test User',50.00,CURRENT_DATE);<br><br>SELECT action, row_data->>'beneficiary_code' AS code<br>FROM cwr.audit_log ORDER BY log_id DESC LIMIT 1;<br>-- Expected: action='INSERT'  code='VERIFY-001'<br><br>-- Marking complete activates the Audit Feed panel in the dashboard ↑</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button id="cwr-markbtn-pc" onclick="cwrMark('pc','done')" style="padding:5px 14px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#94a3b8;font-size:0.78rem;cursor:pointer;font-family:inherit;">✅ Mark Complete</button>
+        <button onclick="cwrMark('pc','fail')" style="padding:5px 14px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#94a3b8;font-size:0.78rem;cursor:pointer;font-family:inherit;">✗ Mark Failed</button>
+        <button onclick="cwrMark('pc','todo')" style="padding:5px 14px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:#475569;font-size:0.78rem;cursor:pointer;font-family:inherit;">↺ Reset</button>
+      </div>
+    </div>
 
     <div style="display:flex;gap:8px;margin-top:8px;">
       <button class="btn-toggle-answer instructor-block instructor-only" onclick="toggleAnswer('ans-mp-pc',this)">▼ Show Answer</button>
@@ -5401,7 +5516,7 @@ $$;
     </div>
 
     <!-- Puzzle D: Three monitoring queries -->
-    <h4 style="margin-top:2rem;">
+    <h4 id="cwr-puzzle-d" style="margin-top:2rem;scroll-margin-top:80px;">
       Puzzle D — Three Monitoring Queries
       <span style="display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;background:#f97316;color:#fff;font-size:0.7rem;font-weight:700;vertical-align:middle;">Intermediate</span>
     </h4>
@@ -5469,6 +5584,16 @@ $$;
       </div>
     </div>
 
+    <div style="margin-top:1rem;padding:14px 16px;background:#071120;border-radius:8px;border:1px solid #1e293b;">
+      <div style="color:#94a3b8;font-size:0.78rem;font-weight:600;margin-bottom:8px;">✔ Puzzle D Quick Verify — all three queries should return results</div>
+      <div style="font-family:monospace;font-size:0.72rem;color:#7dd3fc;background:#0d1929;padding:8px 10px;border-radius:5px;line-height:1.8;margin-bottom:10px;">-- D-1: should show your current session<br>SELECT usename, state, COUNT(*) AS connections FROM pg_stat_activity<br>WHERE datname=current_database() AND pid&lt;&gt;pg_backend_pid() GROUP BY 1,2;<br><br>-- D-2: should list cwr tables (n_live_tup may be 0 before ANALYZE)<br>SELECT relname, n_live_tup, n_dead_tup FROM pg_stat_user_tables WHERE schemaname='cwr';<br><br>-- D-3: should list the indexes created in Phase 1B<br>SELECT indexrelname, idx_scan FROM pg_stat_user_indexes WHERE schemaname='cwr';</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button id="cwr-markbtn-pd" onclick="cwrMark('pd','done')" style="padding:5px 14px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#94a3b8;font-size:0.78rem;cursor:pointer;font-family:inherit;">✅ Mark Complete</button>
+        <button onclick="cwrMark('pd','fail')" style="padding:5px 14px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#94a3b8;font-size:0.78rem;cursor:pointer;font-family:inherit;">✗ Mark Failed</button>
+        <button onclick="cwrMark('pd','todo')" style="padding:5px 14px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:#475569;font-size:0.78rem;cursor:pointer;font-family:inherit;">↺ Reset</button>
+      </div>
+    </div>
+
     <!-- ══════════════════════════════════════════════════════════════
          PHASE 4 — BACKUP & DR
     ═══════════════════════════════════════════════════════════════ -->
@@ -5477,7 +5602,7 @@ $$;
       <span style="display:inline-block;margin-left:10px;padding:2px 10px;border-radius:999px;background:#f97316;color:#fff;font-size:0.72rem;font-weight:700;vertical-align:middle;">Puzzle E — write from scratch</span>
     </h3>
 
-    <p>No scaffold is provided for this phase. Using what you practised on Day 3, write all commands from memory.</p>
+    <p id="cwr-puzzle-e" style="scroll-margin-top:80px;">No scaffold is provided for this phase. Using what you practised on Day 3, write all commands from memory.</p>
 
     <div class="callout info">
       <div class="callout-title">Task — three things to produce</div>
@@ -5506,6 +5631,16 @@ $$;
     </div>
 
     <div class="answer-area">Write your pg_dump and pg_restore commands here</div>
+
+    <div style="margin-top:12px;padding:14px 16px;background:#071120;border-radius:8px;border:1px solid #1e293b;">
+      <div style="color:#94a3b8;font-size:0.78rem;font-weight:600;margin-bottom:8px;">✔ Puzzle E Quick Verify — confirm the backup file was created</div>
+      <div style="font-family:monospace;font-size:0.72rem;color:#7dd3fc;background:#0d1929;padding:8px 10px;border-radius:5px;line-height:1.8;margin-bottom:10px;">-- Run inside psql to check the file exists:<br>\! dir C:\temp\cwr_backup.dump<br>-- Expected: file listing with non-zero size<br><br>-- Then verify the restore worked (in a new psql connection to lab_cwr_test):<br>SELECT schemaname, tablename FROM pg_tables WHERE schemaname='cwr' ORDER BY 1;<br>-- Expected: same 8 tables as lab_nsr</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button id="cwr-markbtn-pe" onclick="cwrMark('pe','done')" style="padding:5px 14px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#94a3b8;font-size:0.78rem;cursor:pointer;font-family:inherit;">✅ Mark Complete</button>
+        <button onclick="cwrMark('pe','fail')" style="padding:5px 14px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#94a3b8;font-size:0.78rem;cursor:pointer;font-family:inherit;">✗ Mark Failed</button>
+        <button onclick="cwrMark('pe','todo')" style="padding:5px 14px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:#475569;font-size:0.78rem;cursor:pointer;font-family:inherit;">↺ Reset</button>
+      </div>
+    </div>
 
     <div style="display:flex;gap:8px;margin-top:8px;">
       <button class="btn-toggle-answer instructor-block instructor-only" onclick="toggleAnswer('ans-mp-pe',this)">▼ Show Answer</button>
