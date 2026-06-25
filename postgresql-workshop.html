@@ -3409,14 +3409,15 @@ GRANT UPDATE ON nsr.payments TO nsr_supervisor;</code></div>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">sql – audit log table</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
         <pre><span class="kw">CREATE TABLE</span> nsr.audit_log (
-  log_id       <span class="typ">BIGSERIAL</span>   <span class="kw">PRIMARY KEY</span>,
-  log_time     <span class="typ">TIMESTAMPTZ</span> <span class="kw">NOT NULL DEFAULT now()</span>,
-  role_name    <span class="typ">TEXT</span>        <span class="kw">NOT NULL DEFAULT</span> <span class="fn">current_user</span>,
-  table_name   <span class="typ">TEXT</span>        <span class="kw">NOT NULL</span>,
-  action       <span class="typ">TEXT</span>        <span class="kw">NOT NULL</span>,
-  row_data     <span class="typ">JSONB</span>,
-  query_text   <span class="typ">TEXT</span>
+  log_id     <span class="typ">BIGSERIAL</span>   <span class="kw">PRIMARY KEY</span>,
+  log_time   <span class="typ">TIMESTAMPTZ</span> <span class="kw">NOT NULL DEFAULT</span> <span class="fn">now</span>(),
+  role_name  <span class="typ">TEXT</span>        <span class="kw">NOT NULL DEFAULT</span> <span class="fn">session_user</span>,
+  table_name <span class="typ">TEXT</span>        <span class="kw">NOT NULL</span>,
+  action     <span class="typ">TEXT</span>        <span class="kw">NOT NULL</span>,
+  row_data   <span class="typ">JSONB</span>
 );
+<span class="cmt">-- session_user is used (not current_user) because inside a SECURITY DEFINER trigger</span>
+<span class="cmt">-- current_user returns the function owner (postgres), not the role that made the change</span>
 
 <span class="cmt">-- Make it append-only (even owner cannot delete)</span>
 <span class="kw">REVOKE DELETE ON</span> nsr.audit_log <span class="kw">FROM</span> PUBLIC;
@@ -3459,18 +3460,21 @@ GRANT UPDATE ON nsr.payments TO nsr_supervisor;</code></div>
     );
   <span class="kw">END IF</span>;
 
-  <span class="kw">INSERT INTO</span> nsr.audit_log (table_name, action, row_data)
-  <span class="kw">VALUES</span> (TG_TABLE_SCHEMA || <span class="str">'.'</span> || TG_TABLE_NAME, TG_OP, v_row_data);
+  <span class="cmt">-- Always pass session_user explicitly — do NOT rely on the column DEFAULT</span>
+  <span class="cmt">-- Inside SECURITY DEFINER, current_user = function owner (postgres), not the caller</span>
+  <span class="cmt">-- session_user always holds the original authenticated role</span>
+  <span class="kw">INSERT INTO</span> nsr.audit_log (role_name, table_name, action, row_data)
+  <span class="kw">VALUES</span> (<span class="fn">session_user</span>, TG_TABLE_SCHEMA || <span class="str">'.'</span> || TG_TABLE_NAME, TG_OP, v_row_data);
 
-  <span class="cmt">-- AFTER triggers must return NULL for row-level triggers</span>
-  <span class="cmt">-- BEFORE triggers return NEW (to allow/modify the operation)</span>
-  <span class="kw">RETURN NULL</span>;
+  <span class="cmt">-- AFTER triggers: return value is ignored by PostgreSQL</span>
+  <span class="cmt">-- Convention: return NEW for INSERT/UPDATE, OLD for DELETE</span>
+  <span class="kw">RETURN COALESCE</span>(NEW, OLD);
 <span class="kw">END</span>;
 $$;
 
 <span class="cmt">-- Step 2: Attach the trigger to nsr.households</span>
-<span class="cmt">-- AFTER ensures the row is already committed before we log it</span>
-<span class="cmt">-- FOR EACH ROW fires once per changed row (not once per statement)</span>
+<span class="cmt">-- DROP IF EXISTS makes this block safe to re-run</span>
+<span class="kw">DROP TRIGGER IF EXISTS</span> trg_audit_households <span class="kw">ON</span> nsr.households;
 <span class="kw">CREATE TRIGGER</span> trg_audit_households
 <span class="kw">AFTER INSERT OR UPDATE OR DELETE ON</span> nsr.households
 <span class="kw">FOR EACH ROW EXECUTE FUNCTION</span> nsr.fn_audit_log();
@@ -4624,33 +4628,32 @@ done</pre>
       <div class="callout tip"><div class="callout-title">Model Answer</div></div>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">sql – trigger function + trigger</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-        <pre><span class="cmt">-- Trigger function</span>
+        <pre><span class="cmt">-- Trigger function (matches nsr.audit_log schema: role_name, table_name, action, row_data)</span>
 <span class="kw">CREATE OR REPLACE FUNCTION</span> nsr.fn_audit_households()
 <span class="kw">RETURNS TRIGGER</span>
 <span class="kw">LANGUAGE</span> plpgsql
 <span class="kw">SECURITY DEFINER</span>
 <span class="kw">AS</span> $$
 <span class="kw">BEGIN</span>
-  <span class="kw">INSERT INTO</span> nsr.audit_log
-    (role_name, table_name, action, row_data, query_text)
+  <span class="kw">INSERT INTO</span> nsr.audit_log (role_name, table_name, action, row_data)
   <span class="kw">VALUES</span> (
-    <span class="fn">current_user</span>,
-    <span class="str">'nsr.households'</span>,
-    TG_OP,                          <span class="cmt">-- 'INSERT', 'UPDATE', or 'DELETE'</span>
+    <span class="fn">session_user</span>,                   <span class="cmt">-- session_user, not current_user (SECURITY DEFINER context)</span>
+    TG_TABLE_SCHEMA || <span class="str">'.'</span> || TG_TABLE_NAME,
+    TG_OP,
     <span class="kw">CASE</span>
       <span class="kw">WHEN</span> TG_OP = <span class="str">'DELETE'</span> <span class="kw">THEN</span> <span class="fn">to_jsonb</span>(OLD)
-      <span class="kw">ELSE</span>                       <span class="fn">to_jsonb</span>(NEW)
-    <span class="kw">END</span>,
-    <span class="fn">current_query</span>()
+      <span class="kw">WHEN</span> TG_OP = <span class="str">'INSERT'</span>  <span class="kw">THEN</span> <span class="fn">to_jsonb</span>(NEW)
+      <span class="kw">ELSE</span> <span class="fn">jsonb_build_object</span>(<span class="str">'old'</span>, <span class="fn">to_jsonb</span>(OLD), <span class="str">'new'</span>, <span class="fn">to_jsonb</span>(NEW))
+    <span class="kw">END</span>
   );
-  <span class="kw">RETURN</span> <span class="kw">COALESCE</span>(NEW, OLD);
+  <span class="kw">RETURN COALESCE</span>(NEW, OLD);
 <span class="kw">END</span>;
 $$;
 
-<span class="cmt">-- Attach trigger (fires after each row change)</span>
+<span class="cmt">-- Attach trigger (DROP IF EXISTS makes re-runs safe)</span>
+<span class="kw">DROP TRIGGER IF EXISTS</span> trg_audit_households <span class="kw">ON</span> nsr.households;
 <span class="kw">CREATE TRIGGER</span> trg_audit_households
-<span class="kw">AFTER INSERT OR UPDATE OR DELETE</span>
-<span class="kw">ON</span> nsr.households
+<span class="kw">AFTER INSERT OR UPDATE OR DELETE ON</span> nsr.households
 <span class="kw">FOR EACH ROW EXECUTE FUNCTION</span> nsr.fn_audit_households();
 
 <span class="cmt">-- Test</span>
