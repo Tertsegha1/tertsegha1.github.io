@@ -10510,6 +10510,28 @@ function initPlatform() {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
+  // Auto-instructor mode via URL param (?mode=instructor) — used by cwr-instructor.html link
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('mode') === 'instructor') {
+    currentUser = 'INST';
+    state = loadState('INST');
+    localStorage.setItem('auktie_current_user', 'INST');
+    document.getElementById('user-label').textContent = 'Instructor';
+    document.getElementById('mode-toggle').style.display = '';
+    document.getElementById('login-overlay').classList.add('hidden');
+    initPlatform();
+    // Navigate to mini project (day5) and optionally scroll to dashboard or brief
+    showPage('day5');
+    const hash = window.location.hash;
+    if (hash) {
+      setTimeout(function() {
+        const el = document.querySelector(hash);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 300);
+    }
+    return;
+  }
+
   const saved = localStorage.getItem('auktie_current_user');
   if (saved) {
     // Resume session — skip both screens
