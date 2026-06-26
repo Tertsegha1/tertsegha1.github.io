@@ -74,11 +74,20 @@
     .th-phase{background:#071120;font-size:0.55rem;color:#334155;padding:3px 4px;letter-spacing:0.3px;}
 
     /* ── Team leaderboard ── */
-    #team-bar{display:flex;gap:16px;padding:12px 24px;border-bottom:1px solid #1e293b;flex-wrap:wrap;}
-    .team-card{background:#0d1929;border-radius:8px;padding:10px 18px;min-width:200px;display:flex;align-items:center;gap:14px;}
+    #team-bar{display:flex;gap:16px;padding:12px 24px;border-bottom:1px solid #1e293b;flex-wrap:wrap;align-items:center;}
+    .team-card{background:#0d1929;border-radius:8px;padding:10px 18px;min-width:200px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:transform 0.12s,box-shadow 0.12s;}
+    .team-card:hover{transform:translateY(-1px);box-shadow:0 4px 18px rgba(0,0,0,0.4);}
+    .team-card.active-filter{box-shadow:0 0 0 2px #fff2,0 4px 18px rgba(0,0,0,0.4);}
     .team-card .team-score{font-size:1.5rem;font-weight:700;}
     .team-card .team-info{font-size:0.7rem;color:#475569;}
     .team-card .team-name{font-size:0.82rem;font-weight:600;margin-bottom:2px;}
+
+    /* ── Filter banner ── */
+    #filter-banner{display:none;padding:8px 24px;background:#0a1628;border-bottom:1px solid #1e293b;display:flex;align-items:center;gap:10px;}
+    #filter-banner.show{display:flex;}
+    #filter-banner-text{font-size:0.78rem;font-weight:600;}
+    #filter-clear{background:none;border:1px solid #334155;color:#64748b;font-size:0.7rem;padding:3px 10px;border-radius:4px;cursor:pointer;font-family:inherit;margin-left:auto;}
+    #filter-clear:hover{border-color:#64748b;color:#94a3b8;}
 
     /* ── Row indicator ── */
     .row-bar{display:inline-block;width:4px;height:28px;border-radius:2px;vertical-align:middle;margin-right:8px;}
@@ -128,8 +137,8 @@
 
 <!-- Team leaderboard -->
 <div id="team-bar">
-  <div style="color:#475569;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;align-self:center;margin-right:4px;">Team Scores</div>
-  <div class="team-card" style="border:1px solid #1d4ed8;">
+  <div style="color:#475569;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;margin-right:4px;">Team Scores &nbsp;<span style="font-weight:400;text-transform:none;letter-spacing:0;">· click to filter</span></div>
+  <div class="team-card" id="team-card-A" style="border:1px solid #1d4ed8;" onclick="filterTeam('A')" title="Click to view Team A only">
     <span style="font-size:1.6rem;">🔵</span>
     <div>
       <div class="team-name" style="color:#7dd3fc;">Team A &nbsp;<span style="font-weight:400;color:#475569;font-size:0.7rem;">Murtala Mohammed</span></div>
@@ -139,7 +148,7 @@
       </div>
     </div>
   </div>
-  <div class="team-card" style="border:1px solid #b45309;">
+  <div class="team-card" id="team-card-B" style="border:1px solid #b45309;" onclick="filterTeam('B')" title="Click to view Team B only">
     <span style="font-size:1.6rem;">🟠</span>
     <div>
       <div class="team-name" style="color:#fbbf24;">Team B &nbsp;<span style="font-weight:400;color:#475569;font-size:0.7rem;">Adeyinka Ismail Adisa</span></div>
@@ -149,7 +158,13 @@
       </div>
     </div>
   </div>
-  <div id="team-leader" style="align-self:center;font-size:0.78rem;color:#475569;margin-left:8px;"></div>
+  <div id="team-leader" style="font-size:0.78rem;color:#475569;"></div>
+</div>
+
+<!-- Filter banner (shown when a team filter is active) -->
+<div id="filter-banner">
+  <span id="filter-banner-text"></span>
+  <button id="filter-clear" onclick="filterTeam(null)">✕ Show All</button>
 </div>
 
 <!-- Overall progress bar -->
@@ -219,6 +234,29 @@
   var MAX=KEYS.length;
   var participants={};
   var timerHandle=null;
+  var activeTeamFilter=null;
+
+  /* ── Team filter ── */
+  window.filterTeam=function(team){
+    activeTeamFilter=team;
+    var cardA=document.getElementById('team-card-A');
+    var cardB=document.getElementById('team-card-B');
+    var banner=document.getElementById('filter-banner');
+    var bannerText=document.getElementById('filter-banner-text');
+    if(cardA)cardA.classList.toggle('active-filter',team==='A');
+    if(cardB)cardB.classList.toggle('active-filter',team==='B');
+    if(team){
+      var label=team==='A'
+        ?'🔵 Showing Team A only — Murtala Mohammed'
+        :'🟠 Showing Team B only — Adeyinka Ismail Adisa';
+      if(bannerText)bannerText.textContent=label;
+      if(bannerText)bannerText.style.color=team==='A'?'#7dd3fc':'#fbbf24';
+      if(banner){banner.classList.add('show');banner.style.display='flex';}
+    } else {
+      if(banner){banner.classList.remove('show');banner.style.display='none';}
+    }
+    render();
+  };
 
   /* ── Config check ── */
   if(!window.CWR_FIREBASE || !window.CWR_FIREBASE.databaseURL ||
@@ -304,7 +342,10 @@
   function flashRow(key){flashSet[key]=Date.now();}
 
   function render(){
-    var keys=Object.keys(participants).sort(function(a,b){
+    var keys=Object.keys(participants).filter(function(k){
+      if(!activeTeamFilter)return true;
+      return (participants[k].team||'')=== activeTeamFilter;
+    }).sort(function(a,b){
       // Sort by score desc, then name asc
       var sa=score(participants[a]), sb=score(participants[b]);
       if(sb!==sa)return sb-sa;
