@@ -5038,6 +5038,10 @@ done</pre>
         updateBadge();
       }
       function checkShowWelcome(){
+        // Never show the participant modal when in instructor mode
+        if(document.body.classList.contains('instructor-mode'))return;
+        if(new URLSearchParams(window.location.search).get('mode')==='instructor')return;
+        if(localStorage.getItem('auktie_current_user')==='INST')return;
         var name=localStorage.getItem('cwr_participant_name');
         var team=localStorage.getItem('cwr_team');
         if(!name||!team){
