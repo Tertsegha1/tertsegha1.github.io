@@ -8517,6 +8517,42 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
     ════════════════════════════════════════════════════════════ -->
     <div class="tab-panel" id="tab-d6-miniproject">
 
+      <!-- Registration / identity banner -->
+      <div id="d6mp-reg-panel" style="background:#071120;border:1px solid #1e3a5f;border-radius:10px;padding:16px 18px;margin-bottom:14px;">
+        <div id="d6mp-registered" style="display:none;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:1rem;">👤</span>
+            <span id="d6mp-badge-text" style="font-weight:700;font-size:0.88rem;"></span>
+          </div>
+          <button onclick="d6mpShowReg()" style="background:none;border:1px solid #334155;color:#475569;font-size:0.72rem;padding:3px 10px;border-radius:5px;cursor:pointer;font-family:inherit;">Change</button>
+        </div>
+        <div id="d6mp-unregistered">
+          <div style="font-size:0.72rem;color:#64748b;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;">Join a Team to Start</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+            <button id="d6mp-team-btn-A" onclick="d6mpPickTeam('A')"
+              style="background:#071120;border:1.5px solid #334155;color:#475569;border-radius:8px;padding:12px 10px;cursor:pointer;font-family:inherit;text-align:left;transition:all 0.15s;">
+              <div style="font-size:1.1rem;margin-bottom:4px;">🔵</div>
+              <div style="font-size:0.8rem;font-weight:700;color:#94a3b8;">Team A</div>
+              <div style="font-size:0.68rem;color:#475569;">Led by Murtala Mohammed</div>
+            </button>
+            <button id="d6mp-team-btn-B" onclick="d6mpPickTeam('B')"
+              style="background:#071120;border:1.5px solid #334155;color:#475569;border-radius:8px;padding:12px 10px;cursor:pointer;font-family:inherit;text-align:left;transition:all 0.15s;">
+              <div style="font-size:1.1rem;margin-bottom:4px;">🟠</div>
+              <div style="font-size:0.8rem;font-weight:700;color:#94a3b8;">Team B</div>
+              <div style="font-size:0.68rem;color:#475569;">Led by Adeyinka Ismail Adisa</div>
+            </button>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <input id="d6mp-name-input" type="text" placeholder="Your full name e.g. Amaka Okafor"
+              style="flex:1;padding:9px 12px;background:#0d1929;border:1.5px solid #334155;border-radius:7px;color:#e2e8f0;font-size:0.88rem;font-family:inherit;outline:none;box-sizing:border-box;"
+              onkeydown="if(event.key==='Enter')d6mpRegister()" />
+            <button onclick="d6mpRegister()"
+              style="padding:9px 18px;background:#2563eb;color:#fff;border:none;border-radius:7px;font-size:0.88rem;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;">Join →</button>
+          </div>
+          <div id="d6mp-reg-error" style="display:none;color:#ef4444;font-size:0.72rem;margin-top:6px;"></div>
+        </div>
+      </div>
+
       <!-- Project header -->
       <div style="background:linear-gradient(135deg,#0d1929 0%,#080e18 100%);border:1px solid #1e3a5f;border-radius:12px;padding:22px 24px;margin-bottom:20px;">
         <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;">
@@ -8825,6 +8861,50 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
         </div>
       </div>
 
+      <!-- ── INSTRUCTOR MONITORING DASHBOARD (instructor-only) ── -->
+      <div class="instructor-block instructor-only" style="margin-top:24px;">
+        <div style="background:#0d1929;border:1.5px solid #7c3aed;border-radius:12px;overflow:hidden;">
+          <!-- Dashboard header -->
+          <div style="background:linear-gradient(90deg,#1a0a3d,#0f172a);padding:12px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:1rem;">📊</span>
+              <span style="color:#e2e8f0;font-weight:700;font-size:0.88rem;letter-spacing:0.5px;">LIVE TEAM MONITOR — Day 6 Mini Project</span>
+              <span id="d6dash-live-dot" style="width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block;animation:pulse 2s infinite;"></span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span id="d6dash-last-update" style="color:#475569;font-size:0.72rem;"></span>
+              <button onclick="d6dashFetch()" style="background:none;border:1px solid #7c3aed;color:#a78bfa;font-size:0.72rem;padding:3px 10px;border-radius:5px;cursor:pointer;font-family:inherit;">↺ Refresh</button>
+            </div>
+          </div>
+          <!-- Team score cards -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#1e1b4b;padding:0;">
+            <div id="d6dash-team-a" style="background:#0a0f1a;padding:14px 16px;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                <span style="font-size:1rem;">🔵</span>
+                <span style="font-weight:700;color:#7dd3fc;font-size:0.88rem;">Team A</span>
+                <span id="d6dash-score-a" style="margin-left:auto;background:#1e3a5f;color:#7dd3fc;font-size:0.72rem;font-weight:700;padding:2px 10px;border-radius:999px;">0 pts</span>
+              </div>
+              <div id="d6dash-members-a" style="font-size:0.78rem;color:#475569;">Loading…</div>
+            </div>
+            <div id="d6dash-team-b" style="background:#0a0f1a;padding:14px 16px;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                <span style="font-size:1rem;">🟠</span>
+                <span style="font-weight:700;color:#fbbf24;font-size:0.88rem;">Team B</span>
+                <span id="d6dash-score-b" style="margin-left:auto;background:#3d2200;color:#fbbf24;font-size:0.72rem;font-weight:700;padding:2px 10px;border-radius:999px;">0 pts</span>
+              </div>
+              <div id="d6dash-members-b" style="font-size:0.78rem;color:#475569;">Loading…</div>
+            </div>
+          </div>
+          <!-- Puzzle legend -->
+          <div style="background:#071120;padding:8px 16px;display:flex;gap:16px;flex-wrap:wrap;border-top:1px solid #1e1b4b;">
+            <span style="font-size:0.68rem;color:#475569;">Legend:</span>
+            <span style="font-size:0.68rem;color:#22c55e;">✅ Done</span>
+            <span style="font-size:0.68rem;color:#334155;">○ Not yet</span>
+            <span style="font-size:0.68rem;color:#64748b;">P1=EXPLAIN · P2=Diagnose · P3=Index · P4=Verify · P5=Partition · P6=Monitor</span>
+          </div>
+        </div>
+      </div>
+
     </div><!-- end tab-d6-miniproject -->
 
   </div>
@@ -8832,21 +8912,108 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
 
 <script>
 (function(){
-  var KEY = 'd6mp_v1';
+  var KEY   = 'd6mp_v1';
   var TOTAL = 6;
+  var PUZZLES = ['p1','p2','p3','p4','p5','p6'];
+  var PUZZLE_LABELS = {p1:'P1',p2:'P2',p3:'P3',p4:'P4',p5:'P5',p6:'P6'};
+  var _selectedTeam = null;
+  var _dashTimer = null;
 
+  /* ── localStorage helpers ─────────────────────────────── */
   function getP() { try { return JSON.parse(localStorage.getItem(KEY)||'{}'); } catch(e){ return {}; } }
   function saveP(d) { try { localStorage.setItem(KEY, JSON.stringify(d)); } catch(e){} }
+  function getName() { return localStorage.getItem('cwr_participant_name')||''; }
+  function getTeam() { return localStorage.getItem('cwr_team')||''; }
 
+  /* ── Firebase helpers ─────────────────────────────────── */
+  function fbOk() { return window.CWR_FIREBASE && window.CWR_FIREBASE.databaseURL && !window.CWR_FIREBASE.databaseURL.includes('REPLACE'); }
+  function fbUrl(path) { return window.CWR_FIREBASE.databaseURL + path; }
+
+  function d6mpSyncFb() {
+    if (!fbOk()) return;
+    var name = getName(); if (!name) return;
+    var team = getTeam();
+    var safeKey = name.replace(/[^a-zA-Z0-9_-]/g,'_').toLowerCase().slice(0,40);
+    var p = getP();
+    var puzzles = {};
+    PUZZLES.forEach(function(k){ puzzles[k] = p[k]||'todo'; });
+    fetch(fbUrl('/d6_workshop/'+safeKey+'.json'), {
+      method:'PUT', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({name:name, team:team, updated:new Date().toISOString(), puzzles:puzzles})
+    }).catch(function(){});
+  }
+
+  /* ── Registration UI ──────────────────────────────────── */
+  window.d6mpPickTeam = function(t) {
+    _selectedTeam = t;
+    ['A','B'].forEach(function(x){
+      var btn = document.getElementById('d6mp-team-btn-'+x);
+      if (!btn) return;
+      var sel = (x===t);
+      btn.style.borderColor = sel ? (x==='A'?'#2563eb':'#d97706') : '#334155';
+      btn.style.background  = sel ? (x==='A'?'#0f2a4a':'#3d2200') : '#071120';
+    });
+  };
+
+  window.d6mpRegister = function() {
+    var err = document.getElementById('d6mp-reg-error');
+    if (!_selectedTeam) {
+      if (err) { err.textContent='Please select a team first.'; err.style.display='block'; } return;
+    }
+    var inp = document.getElementById('d6mp-name-input');
+    var name = inp ? inp.value.trim() : '';
+    if (!name) {
+      if (inp) inp.style.borderColor='#ef4444';
+      if (err) { err.textContent='Please enter your name.'; err.style.display='block'; } return;
+    }
+    localStorage.setItem('cwr_participant_name', name);
+    localStorage.setItem('cwr_team', _selectedTeam);
+    updateRegBanner();
+    d6mpSyncFb();
+  };
+
+  window.d6mpShowReg = function() {
+    var reg = document.getElementById('d6mp-registered');
+    var unreg = document.getElementById('d6mp-unregistered');
+    if (reg) reg.style.display = 'none';
+    if (unreg) unreg.style.display = 'block';
+    var t = getTeam();
+    if (t) { _selectedTeam=t; d6mpPickTeam(t); }
+    var inp = document.getElementById('d6mp-name-input');
+    if (inp) inp.value = getName();
+  };
+
+  function updateRegBanner() {
+    var name = getName(); var team = getTeam();
+    var reg   = document.getElementById('d6mp-registered');
+    var unreg = document.getElementById('d6mp-unregistered');
+    var badge = document.getElementById('d6mp-badge-text');
+    if (name && team) {
+      if (reg)   { reg.style.display = 'flex'; }
+      if (unreg) { unreg.style.display = 'none'; }
+      if (badge) {
+        var clr = team==='A' ? '#7dd3fc' : '#fbbf24';
+        badge.innerHTML = '<span style="color:'+clr+'">Team '+team+'</span> &nbsp;·&nbsp; <span style="color:#e2e8f0;">'+name+'</span>';
+      }
+    } else {
+      if (reg)   { reg.style.display = 'none'; }
+      if (unreg) { unreg.style.display = 'block'; }
+      if (team) { _selectedTeam=team; d6mpPickTeam(team); }
+      var inp = document.getElementById('d6mp-name-input');
+      if (inp && name) inp.value = name;
+    }
+  }
+
+  /* ── Progress refresh ─────────────────────────────────── */
   function refresh() {
     var p = getP(); var done = 0;
     for (var i = 1; i <= TOTAL; i++) {
       var isDone = p['p'+i] === 'done';
       if (isDone) done++;
-      var dot = document.getElementById('d6mp-dot-'+i);
+      var dot   = document.getElementById('d6mp-dot-'+i);
       var badge = document.getElementById('d6mp-dot-'+i+'-badge');
-      var btn = document.getElementById('d6mp-btn-'+i);
-      if (dot) { dot.textContent = 'P'+i+' '+(isDone?'✅':'○'); dot.style.color = isDone?'#22c55e':'#475569'; }
+      var btn   = document.getElementById('d6mp-btn-'+i);
+      if (dot)   { dot.textContent = 'P'+i+' '+(isDone?'✅':'○'); dot.style.color = isDone?'#22c55e':'#475569'; }
       if (badge) badge.textContent = isDone ? '✅' : '';
       if (btn && isDone) {
         btn.textContent = '✅ Completed'; btn.style.background = '#14532d';
@@ -8860,40 +9027,121 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
     if (lbl) lbl.textContent = done+' / '+TOTAL+' complete';
   }
 
+  /* ── Public puzzle API ────────────────────────────────── */
   window.d6mpInput = function(n) {
-    var ta = document.getElementById('d6mp-code-'+n);
+    var ta  = document.getElementById('d6mp-code-'+n);
     var btn = document.getElementById('d6mp-btn-'+n);
     if (!ta || !btn) return;
-    var p = getP();
-    if (p['p'+n] === 'done') return;
+    var p = getP(); if (p['p'+n]==='done') return;
     var ok = ta.value.trim().length >= 8;
     btn.disabled = !ok;
-    btn.style.opacity = ok ? '1' : '0.45';
-    btn.style.cursor = ok ? 'pointer' : 'not-allowed';
-    btn.style.color = ok ? '#e2e8f0' : '#475569';
-    btn.style.borderColor = ok ? '#3b82f6' : '#475569';
-    btn.style.background = ok ? '#1e3a5f' : '#0f172a';
+    btn.style.opacity     = ok ? '1'         : '0.45';
+    btn.style.cursor      = ok ? 'pointer'   : 'not-allowed';
+    btn.style.color       = ok ? '#e2e8f0'   : '#475569';
+    btn.style.borderColor = ok ? '#3b82f6'   : '#475569';
+    btn.style.background  = ok ? '#1e3a5f'   : '#0f172a';
   };
 
   window.d6mpMark = function(n) {
-    var p = getP(); p['p'+n]='done'; saveP(p); refresh();
+    var p = getP(); p['p'+n]='done'; saveP(p); refresh(); d6mpSyncFb();
   };
 
   window.d6mpReset = function(n) {
     var p = getP(); p['p'+n]='todo'; saveP(p);
-    var ta = document.getElementById('d6mp-code-'+n);
+    var ta  = document.getElementById('d6mp-code-'+n);
     var btn = document.getElementById('d6mp-btn-'+n);
-    if (ta) ta.value = '';
+    if (ta)  ta.value = '';
     if (btn) {
       btn.textContent='✅ Mark Complete'; btn.disabled=true;
       btn.style.opacity='0.45'; btn.style.cursor='not-allowed';
       btn.style.color='#475569'; btn.style.borderColor='#475569'; btn.style.background='#0f172a';
     }
-    refresh();
+    refresh(); d6mpSyncFb();
   };
 
-  if (document.readyState==='loading') { document.addEventListener('DOMContentLoaded', refresh); }
-  else { refresh(); }
+  /* ── Instructor live dashboard ────────────────────────── */
+  window.d6dashFetch = function() {
+    if (!fbOk()) {
+      renderDash(null); return;
+    }
+    fetch(fbUrl('/d6_workshop.json'))
+      .then(function(r){ return r.json(); })
+      .then(function(data){ renderDash(data); })
+      .catch(function(){ renderDash(null); });
+  };
+
+  function renderDash(data) {
+    var ts = document.getElementById('d6dash-last-update');
+    if (ts) ts.textContent = 'Updated ' + new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+    var teamsData = {A:[], B:[]};
+    if (data && typeof data === 'object') {
+      Object.keys(data).forEach(function(k){
+        var p = data[k];
+        if (!p || !p.name) return;
+        var t = (p.team==='A'||p.team==='B') ? p.team : 'A';
+        teamsData[t].push(p);
+      });
+    }
+
+    ['A','B'].forEach(function(t){
+      var members = teamsData[t];
+      var totalDone = 0;
+      var membersEl = document.getElementById('d6dash-members-'+t.toLowerCase());
+      var scoreEl   = document.getElementById('d6dash-score-'+t.toLowerCase());
+      if (!membersEl) return;
+
+      if (members.length === 0) {
+        membersEl.innerHTML = '<span style="color:#334155;font-size:0.75rem;">No participants yet</span>';
+        if (scoreEl) scoreEl.textContent = '0 pts';
+        return;
+      }
+
+      var rows = members.map(function(p){
+        var pz = p.puzzles || {};
+        var done = PUZZLES.filter(function(k){ return pz[k]==='done'; }).length;
+        totalDone += done;
+        var dots = PUZZLES.map(function(k,i){
+          var isDone = pz[k]==='done';
+          return '<span title="'+PUZZLE_LABELS[k]+'" style="display:inline-block;width:18px;height:18px;border-radius:50%;background:'+(isDone?'#14532d':'#1e293b')+';border:1px solid '+(isDone?'#22c55e':'#334155')+';font-size:0.6rem;text-align:center;line-height:18px;color:'+(isDone?'#22c55e':'#475569')+';">'+(isDone?'✓':(i+1))+'</span>';
+        }).join('');
+        return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #0d1929;">'
+          +'<span style="color:#94a3b8;font-size:0.78rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escHtml(p.name)+'</span>'
+          +'<div style="display:flex;gap:3px;flex-shrink:0;">'+dots+'</div>'
+          +'<span style="color:#64748b;font-size:0.68rem;flex-shrink:0;">'+done+'/6</span>'
+          +'</div>';
+      }).join('');
+
+      membersEl.innerHTML = rows;
+      if (scoreEl) scoreEl.textContent = totalDone + ' pts';
+    });
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  /* ── Init ─────────────────────────────────────────────── */
+  function init() {
+    updateRegBanner();
+    refresh();
+    /* Start instructor dashboard polling if in instructor mode */
+    if (document.body && document.body.classList.contains('instructor-mode')) {
+      window.d6dashFetch();
+      _dashTimer = setInterval(window.d6dashFetch, 15000);
+    }
+    /* Also fetch when the mini project tab is clicked */
+    var mpBtn = document.querySelector('[onclick*="d6-miniproject"]');
+    if (mpBtn) {
+      mpBtn.addEventListener('click', function(){
+        updateRegBanner(); refresh();
+        if (document.body.classList.contains('instructor-mode')) window.d6dashFetch();
+      });
+    }
+  }
+
+  if (document.readyState==='loading') { document.addEventListener('DOMContentLoaded', init); }
+  else { init(); }
 })();
 </script>
 
