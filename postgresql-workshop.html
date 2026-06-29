@@ -7955,6 +7955,7 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
     <button class="tab-btn" onclick="switchTab(this,'d6tabs','d6-partition')">Partitioning</button>
     <button class="tab-btn" onclick="switchTab(this,'d6tabs','d6-monitor')">Monitoring</button>
     <button class="tab-btn" onclick="switchTab(this,'d6tabs','d6-exercises')">Exercises</button>
+    <button class="tab-btn" onclick="switchTab(this,'d6tabs','d6-miniproject')" style="background:linear-gradient(135deg,#1e3a5f,#1e1b4b);color:#7dd3fc;border-color:#3b82f6;">🏛 Mini Project</button>
   </div>
 
   <div id="d6tabs">
@@ -8508,8 +8509,391 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
         </div>
       </div>
     </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         DAY 6 MINI PROJECT — NSR PERFORMANCE AUDIT
+    ════════════════════════════════════════════════════════════ -->
+    <div class="tab-panel" id="tab-d6-miniproject">
+
+      <!-- Project header -->
+      <div style="background:linear-gradient(135deg,#0d1929 0%,#080e18 100%);border:1px solid #1e3a5f;border-radius:12px;padding:22px 24px;margin-bottom:20px;">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;">
+          <span style="font-size:1.6rem;">🏛</span>
+          <div>
+            <div style="font-size:1.1rem;font-weight:700;color:#7dd3fc;letter-spacing:0.02em;">NSR Performance Audit — Mini Project</div>
+            <div style="font-size:0.8rem;color:#64748b;margin-top:2px;">Day 6 · Performance Tuning &amp; Database Optimisation · ~100 min</div>
+          </div>
+        </div>
+        <p style="color:#94a3b8;font-size:0.88rem;margin:0 0 16px 0;">The NSR database has grown to 50,000+ households across six states. The operations team is reporting that the household eligibility report now takes over 40 seconds and the monthly disbursement export is timing out. Your task: diagnose each bottleneck using execution plans, apply the correct fix, verify improvement with system views, and leave a monitoring baseline for the DBA team.</p>
+        <!-- Progress bar -->
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+          <div style="flex:1;background:#071120;border-radius:999px;height:8px;overflow:hidden;">
+            <div id="d6mp-bar" style="height:100%;background:linear-gradient(90deg,#0ea5e9,#6366f1);border-radius:999px;width:0%;transition:width 0.5s;"></div>
+          </div>
+          <span id="d6mp-label" style="color:#7dd3fc;font-size:0.78rem;font-weight:600;white-space:nowrap;">0 / 6 complete</span>
+        </div>
+        <!-- Puzzle status dots -->
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+          <span style="font-size:0.75rem;color:#64748b;">Progress:</span>
+          <span id="d6mp-dot-1" style="font-size:0.78rem;color:#475569;">P1 ○</span>
+          <span id="d6mp-dot-2" style="font-size:0.78rem;color:#475569;">P2 ○</span>
+          <span id="d6mp-dot-3" style="font-size:0.78rem;color:#475569;">P3 ○</span>
+          <span id="d6mp-dot-4" style="font-size:0.78rem;color:#475569;">P4 ○</span>
+          <span id="d6mp-dot-5" style="font-size:0.78rem;color:#475569;">P5 ○</span>
+          <span id="d6mp-dot-6" style="font-size:0.78rem;color:#475569;">P6 ○</span>
+        </div>
+        <!-- Phase grid -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+          <div style="background:#071120;border-radius:8px;padding:10px;text-align:center;border-top:2px solid #3b82f6;">
+            <div style="font-size:0.68rem;color:#60a5fa;font-weight:700;letter-spacing:0.06em;margin-bottom:3px;">PHASE 1</div>
+            <div style="font-size:0.82rem;font-weight:600;color:#e2e8f0;">EXPLAIN ANALYZE</div>
+            <div style="font-size:0.72rem;color:#475569;">Puzzles 1–2 · ~25 min</div>
+          </div>
+          <div style="background:#071120;border-radius:8px;padding:10px;text-align:center;border-top:2px solid #8b5cf6;">
+            <div style="font-size:0.68rem;color:#a78bfa;font-weight:700;letter-spacing:0.06em;margin-bottom:3px;">PHASE 2</div>
+            <div style="font-size:0.82rem;font-weight:600;color:#e2e8f0;">Indexing</div>
+            <div style="font-size:0.72rem;color:#475569;">Puzzles 3–4 · ~30 min</div>
+          </div>
+          <div style="background:#071120;border-radius:8px;padding:10px;text-align:center;border-top:2px solid #10b981;">
+            <div style="font-size:0.68rem;color:#34d399;font-weight:700;letter-spacing:0.06em;margin-bottom:3px;">PHASE 3</div>
+            <div style="font-size:0.82rem;font-weight:600;color:#e2e8f0;">Partitioning</div>
+            <div style="font-size:0.72rem;color:#475569;">Puzzle 5 · ~25 min</div>
+          </div>
+          <div style="background:#071120;border-radius:8px;padding:10px;text-align:center;border-top:2px solid #f97316;">
+            <div style="font-size:0.68rem;color:#fb923c;font-weight:700;letter-spacing:0.06em;margin-bottom:3px;">PHASE 4</div>
+            <div style="font-size:0.82rem;font-weight:600;color:#e2e8f0;">Monitoring</div>
+            <div style="font-size:0.72rem;color:#475569;">Puzzle 6 · ~20 min</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PHASE 1 ─────────────────────────────────────────── -->
+      <div style="display:flex;align-items:center;gap:12px;margin:24px 0 16px;">
+        <div style="height:1px;flex:1;background:linear-gradient(90deg,#1e3a5f,transparent);"></div>
+        <div style="background:#1e3a5f;color:#60a5fa;font-size:0.72rem;font-weight:700;letter-spacing:0.1em;padding:4px 14px;border-radius:999px;">PHASE 1 · EXPLAIN ANALYZE</div>
+        <div style="height:1px;flex:1;background:linear-gradient(90deg,transparent,#1e3a5f);"></div>
+      </div>
+
+      <!-- Puzzle 1 -->
+      <div id="d6mp-puzzle-1" style="border:1px solid #1e3a5f;border-radius:10px;padding:18px;margin-bottom:14px;background:#080e18;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <span style="background:#1e3a5f;color:#60a5fa;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:999px;">Puzzle 1</span>
+          <span style="font-weight:700;color:#e2e8f0;font-size:0.95rem;">Read the Execution Plan</span>
+          <span id="d6mp-dot-1-badge" style="margin-left:auto;font-size:0.9rem;"></span>
+        </div>
+        <div class="callout concept" style="margin-bottom:12px;">
+          <div class="callout-title">Your task</div>
+          <p style="margin:0;">Run <code>EXPLAIN (ANALYZE, BUFFERS)</code> on the slow eligibility query below. In the code area, write: (a) what scan type is used on <code>nsr.households</code>, (b) the estimated vs actual rows, and (c) the total execution time in ms.</p>
+        </div>
+        <div class="code-block" style="margin-bottom:12px;">
+          <div class="code-header"><span class="code-lang">sql – starter: run this in psql first</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="cmt">-- Run this BEFORE creating any indexes and note the plan</span>
+<span class="kw">EXPLAIN</span> (<span class="kw">ANALYZE</span>, <span class="kw">BUFFERS</span>)
+<span class="kw">SELECT</span>
+    h.household_code,
+    h.head_name,
+    l.lga_name,
+    s.state_name,
+    h.pmt_score
+<span class="kw">FROM</span>   nsr.households  h
+<span class="kw">JOIN</span>   nsr.lgas        l <span class="kw">ON</span> l.lga_id    = h.lga_id
+<span class="kw">JOIN</span>   nsr.states      s <span class="kw">ON</span> s.state_id  = l.state_id
+<span class="kw">WHERE</span>  h.pmt_score &lt; <span class="num">25</span>
+  <span class="kw">AND</span>  h.is_active = <span class="kw">TRUE</span>
+<span class="kw">ORDER BY</span> h.pmt_score;</pre>
+        </div>
+        <label style="display:block;font-size:0.8rem;color:#94a3b8;margin-bottom:6px;">✏ Write your findings here — type to unlock the Mark Complete button:</label>
+        <textarea id="d6mp-code-1" oninput="d6mpInput(1)" placeholder="e.g. Seq Scan on households — estimated rows: 156, actual rows: 203, execution time: 847ms ..." style="width:100%;min-height:90px;background:#0d1929;border:1px solid #1e3a5f;border-radius:6px;color:#e2e8f0;font-family:monospace;font-size:0.82rem;padding:10px;resize:vertical;box-sizing:border-box;outline:none;"></textarea>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+          <button id="d6mp-btn-1" onclick="d6mpMark(1)" disabled style="padding:6px 18px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#475569;font-size:0.82rem;cursor:not-allowed;opacity:0.45;font-family:inherit;transition:all 0.2s;">✅ Mark Complete</button>
+          <button onclick="d6mpReset(1)" style="padding:6px 12px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:#475569;font-size:0.78rem;cursor:pointer;font-family:inherit;">↺ Reset</button>
+        </div>
+      </div>
+
+      <!-- Puzzle 2 -->
+      <div id="d6mp-puzzle-2" style="border:1px solid #1e3a5f;border-radius:10px;padding:18px;margin-bottom:14px;background:#080e18;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <span style="background:#1e3a5f;color:#60a5fa;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:999px;">Puzzle 2</span>
+          <span style="font-weight:700;color:#e2e8f0;font-size:0.95rem;">Diagnose the Bottleneck</span>
+          <span id="d6mp-dot-2-badge" style="margin-left:auto;font-size:0.9rem;"></span>
+        </div>
+        <div class="callout concept" style="margin-bottom:12px;">
+          <div class="callout-title">Your task</div>
+          <p style="margin:0;">Using the plan output from Puzzle 1, answer these three questions in the box below:<br>
+          <strong>(a)</strong> Why is a sequential scan expensive on a large table?<br>
+          <strong>(b)</strong> What does the <code>Buffers: shared hit=X read=Y</code> line tell you about disk vs cache activity?<br>
+          <strong>(c)</strong> Which column(s) in the WHERE clause would benefit most from an index, and what type of index would you choose?</p>
+        </div>
+        <label style="display:block;font-size:0.8rem;color:#94a3b8;margin-bottom:6px;">✏ Write your answers here:</label>
+        <textarea id="d6mp-code-2" oninput="d6mpInput(2)" placeholder="(a) A seq scan reads every page in the table regardless of selectivity...&#10;(b) shared hit = pages served from RAM, read = pages fetched from disk...&#10;(c) pmt_score + is_active — a partial B-tree index..." style="width:100%;min-height:110px;background:#0d1929;border:1px solid #1e3a5f;border-radius:6px;color:#e2e8f0;font-family:monospace;font-size:0.82rem;padding:10px;resize:vertical;box-sizing:border-box;outline:none;"></textarea>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+          <button id="d6mp-btn-2" onclick="d6mpMark(2)" disabled style="padding:6px 18px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#475569;font-size:0.82rem;cursor:not-allowed;opacity:0.45;font-family:inherit;transition:all 0.2s;">✅ Mark Complete</button>
+          <button onclick="d6mpReset(2)" style="padding:6px 12px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:#475569;font-size:0.78rem;cursor:pointer;font-family:inherit;">↺ Reset</button>
+        </div>
+      </div>
+
+      <!-- ── PHASE 2 ─────────────────────────────────────────── -->
+      <div style="display:flex;align-items:center;gap:12px;margin:24px 0 16px;">
+        <div style="height:1px;flex:1;background:linear-gradient(90deg,#2d1b69,transparent);"></div>
+        <div style="background:#2d1b69;color:#a78bfa;font-size:0.72rem;font-weight:700;letter-spacing:0.1em;padding:4px 14px;border-radius:999px;">PHASE 2 · INDEXING</div>
+        <div style="height:1px;flex:1;background:linear-gradient(90deg,transparent,#2d1b69);"></div>
+      </div>
+
+      <!-- Puzzle 3 -->
+      <div id="d6mp-puzzle-3" style="border:1px solid #2d1b69;border-radius:10px;padding:18px;margin-bottom:14px;background:#080e18;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <span style="background:#2d1b69;color:#a78bfa;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:999px;">Puzzle 3</span>
+          <span style="font-weight:700;color:#e2e8f0;font-size:0.95rem;">Create a Partial Index</span>
+          <span id="d6mp-dot-3-badge" style="margin-left:auto;font-size:0.9rem;"></span>
+        </div>
+        <div class="callout concept" style="margin-bottom:12px;">
+          <div class="callout-title">Your task</div>
+          <p style="margin:0;">The eligibility query always filters on <code>is_active = TRUE</code> and <code>pmt_score &lt; 25</code>. Create a <strong>partial B-tree index</strong> on <code>nsr.households</code> that covers only active households, ordered by <code>pmt_score</code>. A partial index is smaller and faster than a full-table index because it excludes rows that will never match the WHERE clause.</p>
+        </div>
+        <div class="code-block" style="margin-bottom:12px;">
+          <div class="code-header"><span class="code-lang">sql – hint: partial index syntax</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="cmt">-- General form of a partial index:</span>
+<span class="kw">CREATE INDEX</span> index_name
+<span class="kw">ON</span> schema.table (column)
+<span class="kw">WHERE</span> filter_condition;</pre>
+        </div>
+        <label style="display:block;font-size:0.8rem;color:#94a3b8;margin-bottom:6px;">✏ Write and run your CREATE INDEX statement:</label>
+        <textarea id="d6mp-code-3" oninput="d6mpInput(3)" placeholder="CREATE INDEX idx_..." style="width:100%;min-height:90px;background:#0d1929;border:1px solid #2d1b69;border-radius:6px;color:#e2e8f0;font-family:monospace;font-size:0.82rem;padding:10px;resize:vertical;box-sizing:border-box;outline:none;"></textarea>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+          <button id="d6mp-btn-3" onclick="d6mpMark(3)" disabled style="padding:6px 18px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#475569;font-size:0.82rem;cursor:not-allowed;opacity:0.45;font-family:inherit;transition:all 0.2s;">✅ Mark Complete</button>
+          <button onclick="d6mpReset(3)" style="padding:6px 12px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:#475569;font-size:0.78rem;cursor:pointer;font-family:inherit;">↺ Reset</button>
+        </div>
+      </div>
+
+      <!-- Puzzle 4 -->
+      <div id="d6mp-puzzle-4" style="border:1px solid #2d1b69;border-radius:10px;padding:18px;margin-bottom:14px;background:#080e18;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <span style="background:#2d1b69;color:#a78bfa;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:999px;">Puzzle 4</span>
+          <span style="font-weight:700;color:#e2e8f0;font-size:0.95rem;">Verify the Index is Used</span>
+          <span id="d6mp-dot-4-badge" style="margin-left:auto;font-size:0.9rem;"></span>
+        </div>
+        <div class="callout concept" style="margin-bottom:12px;">
+          <div class="callout-title">Your task</div>
+          <p style="margin:0;">Re-run the EXPLAIN (ANALYZE, BUFFERS) query from Puzzle 1. Then query <code>pg_stat_user_indexes</code> to confirm the new index exists. In the box below, record: (a) the new scan type shown in the plan, (b) the new execution time, and (c) the <code>idx_scan</code> count from pg_stat_user_indexes after running the query once.</p>
+        </div>
+        <div class="code-block" style="margin-bottom:12px;">
+          <div class="code-header"><span class="code-lang">sql – verify index usage</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="cmt">-- Check the index was created and is being used</span>
+<span class="kw">SELECT</span> indexrelname, idx_scan, idx_tup_read,
+       <span class="fn">pg_size_pretty</span>(<span class="fn">pg_relation_size</span>(indexrelid)) <span class="kw">AS</span> index_size
+<span class="kw">FROM</span>   pg_stat_user_indexes
+<span class="kw">WHERE</span>  relname = <span class="str">'households'</span>
+<span class="kw">ORDER BY</span> idx_scan <span class="kw">DESC</span>;</pre>
+        </div>
+        <label style="display:block;font-size:0.8rem;color:#94a3b8;margin-bottom:6px;">✏ Paste your EXPLAIN output and index stats here:</label>
+        <textarea id="d6mp-code-4" oninput="d6mpInput(4)" placeholder="New plan: Index Scan using idx_... execution time: 2.3ms&#10;pg_stat_user_indexes: idx_scan=1, index_size=48 kB..." style="width:100%;min-height:100px;background:#0d1929;border:1px solid #2d1b69;border-radius:6px;color:#e2e8f0;font-family:monospace;font-size:0.82rem;padding:10px;resize:vertical;box-sizing:border-box;outline:none;"></textarea>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+          <button id="d6mp-btn-4" onclick="d6mpMark(4)" disabled style="padding:6px 18px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#475569;font-size:0.82rem;cursor:not-allowed;opacity:0.45;font-family:inherit;transition:all 0.2s;">✅ Mark Complete</button>
+          <button onclick="d6mpReset(4)" style="padding:6px 12px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:#475569;font-size:0.78rem;cursor:pointer;font-family:inherit;">↺ Reset</button>
+        </div>
+      </div>
+
+      <!-- ── PHASE 3 ─────────────────────────────────────────── -->
+      <div style="display:flex;align-items:center;gap:12px;margin:24px 0 16px;">
+        <div style="height:1px;flex:1;background:linear-gradient(90deg,#064e3b,transparent);"></div>
+        <div style="background:#064e3b;color:#34d399;font-size:0.72rem;font-weight:700;letter-spacing:0.1em;padding:4px 14px;border-radius:999px;">PHASE 3 · PARTITIONING</div>
+        <div style="height:1px;flex:1;background:linear-gradient(90deg,transparent,#064e3b);"></div>
+      </div>
+
+      <!-- Puzzle 5 -->
+      <div id="d6mp-puzzle-5" style="border:1px solid #064e3b;border-radius:10px;padding:18px;margin-bottom:14px;background:#080e18;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <span style="background:#064e3b;color:#34d399;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:999px;">Puzzle 5</span>
+          <span style="font-weight:700;color:#e2e8f0;font-size:0.95rem;">Partition the Payments Table by Year</span>
+          <span id="d6mp-dot-5-badge" style="margin-left:auto;font-size:0.9rem;"></span>
+        </div>
+        <div class="callout concept" style="margin-bottom:12px;">
+          <div class="callout-title">Your task</div>
+          <p style="margin:0;">The monthly disbursement export scans the entire <code>nsr.payments</code> table even when filtering by a single year. Create a range-partitioned version called <code>nsr.payments_by_year</code>, partitioned on <code>payment_date</code>, with three child partitions: 2024, 2025, and 2026. Then insert one test row into the 2025 partition and confirm which partition it landed in using <code>tableoid::regclass</code>.</p>
+        </div>
+        <div class="code-block" style="margin-bottom:12px;">
+          <div class="code-header"><span class="code-lang">sql – hint: partition template</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="cmt">-- Parent table (no data stored here)</span>
+<span class="kw">CREATE TABLE</span> schema.parent_table (
+    col1  <span class="typ">BIGSERIAL</span>,
+    col2  <span class="typ">NUMERIC</span>(<span class="num">12</span>,<span class="num">2</span>),
+    dated <span class="typ">DATE</span> <span class="kw">NOT NULL</span>
+) <span class="kw">PARTITION BY RANGE</span> (dated);
+
+<span class="cmt">-- Child partition</span>
+<span class="kw">CREATE TABLE</span> schema.child_2025
+    <span class="kw">PARTITION OF</span> schema.parent_table
+    <span class="kw">FOR VALUES FROM</span> (<span class="str">'2025-01-01'</span>) <span class="kw">TO</span> (<span class="str">'2026-01-01'</span>);
+
+<span class="cmt">-- Verify which partition a row went to</span>
+<span class="kw">SELECT</span> tableoid::regclass <span class="kw">AS</span> partition_name, * <span class="kw">FROM</span> schema.parent_table <span class="kw">LIMIT</span> <span class="num">5</span>;</pre>
+        </div>
+        <label style="display:block;font-size:0.8rem;color:#94a3b8;margin-bottom:6px;">✏ Write your CREATE TABLE, partition, and INSERT statements here:</label>
+        <textarea id="d6mp-code-5" oninput="d6mpInput(5)" placeholder="CREATE TABLE nsr.payments_by_year (&#10;  ...&#10;) PARTITION BY RANGE (payment_date);&#10;&#10;CREATE TABLE nsr.payments_2024 PARTITION OF ..." style="width:100%;min-height:130px;background:#0d1929;border:1px solid #064e3b;border-radius:6px;color:#e2e8f0;font-family:monospace;font-size:0.82rem;padding:10px;resize:vertical;box-sizing:border-box;outline:none;"></textarea>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+          <button id="d6mp-btn-5" onclick="d6mpMark(5)" disabled style="padding:6px 18px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#475569;font-size:0.82rem;cursor:not-allowed;opacity:0.45;font-family:inherit;transition:all 0.2s;">✅ Mark Complete</button>
+          <button onclick="d6mpReset(5)" style="padding:6px 12px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:#475569;font-size:0.78rem;cursor:pointer;font-family:inherit;">↺ Reset</button>
+        </div>
+      </div>
+
+      <!-- ── PHASE 4 ─────────────────────────────────────────── -->
+      <div style="display:flex;align-items:center;gap:12px;margin:24px 0 16px;">
+        <div style="height:1px;flex:1;background:linear-gradient(90deg,#431407,transparent);"></div>
+        <div style="background:#431407;color:#fb923c;font-size:0.72rem;font-weight:700;letter-spacing:0.1em;padding:4px 14px;border-radius:999px;">PHASE 4 · MONITORING</div>
+        <div style="height:1px;flex:1;background:linear-gradient(90deg,transparent,#431407);"></div>
+      </div>
+
+      <!-- Puzzle 6 -->
+      <div id="d6mp-puzzle-6" style="border:1px solid #431407;border-radius:10px;padding:18px;margin-bottom:14px;background:#080e18;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <span style="background:#431407;color:#fb923c;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:999px;">Puzzle 6</span>
+          <span style="font-weight:700;color:#e2e8f0;font-size:0.95rem;">Build a Monitoring Snapshot</span>
+          <span id="d6mp-dot-6-badge" style="margin-left:auto;font-size:0.9rem;"></span>
+        </div>
+        <div class="callout concept" style="margin-bottom:12px;">
+          <div class="callout-title">Your task</div>
+          <p style="margin:0;">Write three monitoring queries and record the results in the box below. The DBA team will use these as a performance baseline before the next enumeration round:<br>
+          <strong>(a)</strong> Cache hit ratio for <code>lab_nsr</code> using <code>pg_stat_database</code> — alert if below 99%.<br>
+          <strong>(b)</strong> Top 3 tables by dead-tuple ratio using <code>pg_stat_user_tables</code> — alert if dead_pct above 20%.<br>
+          <strong>(c)</strong> Index efficiency for the <code>nsr</code> schema using <code>pg_stat_user_indexes</code> — list any index with <code>idx_scan = 0</code> as a candidate for removal.</p>
+        </div>
+        <div class="code-block" style="margin-bottom:12px;">
+          <div class="code-header"><span class="code-lang">sql – views to use</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="cmt">-- (a) Cache hit ratio</span>
+<span class="kw">SELECT</span> datname,
+       <span class="fn">ROUND</span>(blks_hit * <span class="num">100.0</span> / <span class="fn">NULLIF</span>(blks_hit + blks_read, <span class="num">0</span>), <span class="num">2</span>) <span class="kw">AS</span> cache_hit_pct
+<span class="kw">FROM</span>   pg_stat_database
+<span class="kw">WHERE</span>  datname = <span class="fn">current_database</span>();
+
+<span class="cmt">-- (b) Table bloat</span>
+<span class="kw">SELECT</span> relname,
+       n_live_tup, n_dead_tup,
+       <span class="fn">ROUND</span>(n_dead_tup * <span class="num">100.0</span> / <span class="fn">NULLIF</span>(n_live_tup + n_dead_tup, <span class="num">0</span>), <span class="num">1</span>) <span class="kw">AS</span> dead_pct
+<span class="kw">FROM</span>   pg_stat_user_tables
+<span class="kw">WHERE</span>  schemaname = <span class="str">'nsr'</span>
+<span class="kw">ORDER BY</span> dead_pct <span class="kw">DESC NULLS LAST LIMIT</span> <span class="num">3</span>;
+
+<span class="cmt">-- (c) Unused indexes</span>
+<span class="kw">SELECT</span> relname, indexrelname, idx_scan,
+       <span class="kw">CASE WHEN</span> idx_scan = <span class="num">0</span> <span class="kw">THEN</span> <span class="str">'⚠ Candidate for removal'</span> <span class="kw">ELSE</span> <span class="str">'✓ Active'</span> <span class="kw">END</span> <span class="kw">AS</span> status
+<span class="kw">FROM</span>   pg_stat_user_indexes
+<span class="kw">WHERE</span>  schemaname = <span class="str">'nsr'</span>
+<span class="kw">ORDER BY</span> idx_scan <span class="kw">ASC</span>;</pre>
+        </div>
+        <label style="display:block;font-size:0.8rem;color:#94a3b8;margin-bottom:6px;">✏ Run all three queries and paste your results + any observations here:</label>
+        <textarea id="d6mp-code-6" oninput="d6mpInput(6)" placeholder="(a) cache_hit_pct = 99.7% — healthy&#10;(b) households: 0 dead tuples (autovacuum up to date)&#10;(c) idx_households_active_low_pmt: idx_scan=1 — Active..." style="width:100%;min-height:120px;background:#0d1929;border:1px solid #431407;border-radius:6px;color:#e2e8f0;font-family:monospace;font-size:0.82rem;padding:10px;resize:vertical;box-sizing:border-box;outline:none;"></textarea>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+          <button id="d6mp-btn-6" onclick="d6mpMark(6)" disabled style="padding:6px 18px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#475569;font-size:0.82rem;cursor:not-allowed;opacity:0.45;font-family:inherit;transition:all 0.2s;">✅ Mark Complete</button>
+          <button onclick="d6mpReset(6)" style="padding:6px 12px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:#475569;font-size:0.78rem;cursor:pointer;font-family:inherit;">↺ Reset</button>
+        </div>
+      </div>
+
+      <!-- Verification suite -->
+      <div style="background:#0d1929;border:1px solid #1e3a5f;border-radius:10px;padding:16px 18px;margin-top:8px;">
+        <div style="font-size:0.82rem;font-weight:700;color:#7dd3fc;margin-bottom:10px;">✔ Final Verification — run after all 6 puzzles</div>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">sql – verification suite</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="cmt">-- 1. Confirm partial index exists on households</span>
+<span class="kw">SELECT</span> indexrelname, <span class="fn">pg_size_pretty</span>(<span class="fn">pg_relation_size</span>(indexrelid)) <span class="kw">AS</span> size
+<span class="kw">FROM</span>   pg_stat_user_indexes
+<span class="kw">WHERE</span>  relname = <span class="str">'households'</span>;
+<span class="cmt">-- Expected: at least one index returned for households</span>
+
+<span class="cmt">-- 2. Confirm partitioned table exists with 3 child partitions</span>
+<span class="kw">SELECT</span> child.relname <span class="kw">AS</span> partition
+<span class="kw">FROM</span>   pg_inherits
+<span class="kw">JOIN</span>   pg_class parent <span class="kw">ON</span> parent.oid  = pg_inherits.inhparent
+<span class="kw">JOIN</span>   pg_class child  <span class="kw">ON</span> child.oid   = pg_inherits.inhrelid
+<span class="kw">WHERE</span>  parent.relname = <span class="str">'payments_by_year'</span>;
+<span class="cmt">-- Expected: payments_2024, payments_2025, payments_2026</span>
+
+<span class="cmt">-- 3. Confirm pg_stat_statements is loaded</span>
+<span class="kw">SHOW</span> shared_preload_libraries;
+<span class="cmt">-- Expected: pg_stat_statements</span>
+
+<span class="cmt">-- 4. Full monitoring snapshot</span>
+<span class="kw">SELECT</span>
+    <span class="fn">ROUND</span>(blks_hit * <span class="num">100.0</span> / <span class="fn">NULLIF</span>(blks_hit + blks_read, <span class="num">0</span>), <span class="num">2</span>) <span class="kw">AS</span> cache_hit_pct,
+    xact_commit,
+    xact_rollback,
+    deadlocks
+<span class="kw">FROM</span> pg_stat_database
+<span class="kw">WHERE</span> datname = <span class="fn">current_database</span>();
+<span class="cmt">-- Expected: cache_hit_pct ≥ 99, deadlocks = 0</span></pre>
+        </div>
+      </div>
+
+    </div><!-- end tab-d6-miniproject -->
+
   </div>
 </div><!-- end day6 -->
+
+<script>
+(function(){
+  var KEY = 'd6mp_v1';
+  var TOTAL = 6;
+
+  function getP() { try { return JSON.parse(localStorage.getItem(KEY)||'{}'); } catch(e){ return {}; } }
+  function saveP(d) { try { localStorage.setItem(KEY, JSON.stringify(d)); } catch(e){} }
+
+  function refresh() {
+    var p = getP(); var done = 0;
+    for (var i = 1; i <= TOTAL; i++) {
+      var isDone = p['p'+i] === 'done';
+      if (isDone) done++;
+      var dot = document.getElementById('d6mp-dot-'+i);
+      var badge = document.getElementById('d6mp-dot-'+i+'-badge');
+      var btn = document.getElementById('d6mp-btn-'+i);
+      if (dot) { dot.textContent = 'P'+i+' '+(isDone?'✅':'○'); dot.style.color = isDone?'#22c55e':'#475569'; }
+      if (badge) badge.textContent = isDone ? '✅' : '';
+      if (btn && isDone) {
+        btn.textContent = '✅ Completed'; btn.style.background = '#14532d';
+        btn.style.color = '#bbf7d0'; btn.style.borderColor = '#166534';
+        btn.style.opacity = '1'; btn.style.cursor = 'default'; btn.disabled = false;
+      }
+    }
+    var bar = document.getElementById('d6mp-bar');
+    var lbl = document.getElementById('d6mp-label');
+    if (bar) bar.style.width = (done*100/TOTAL)+'%';
+    if (lbl) lbl.textContent = done+' / '+TOTAL+' complete';
+  }
+
+  window.d6mpInput = function(n) {
+    var ta = document.getElementById('d6mp-code-'+n);
+    var btn = document.getElementById('d6mp-btn-'+n);
+    if (!ta || !btn) return;
+    var p = getP();
+    if (p['p'+n] === 'done') return;
+    var ok = ta.value.trim().length >= 8;
+    btn.disabled = !ok;
+    btn.style.opacity = ok ? '1' : '0.45';
+    btn.style.cursor = ok ? 'pointer' : 'not-allowed';
+    btn.style.color = ok ? '#e2e8f0' : '#475569';
+    btn.style.borderColor = ok ? '#3b82f6' : '#475569';
+    btn.style.background = ok ? '#1e3a5f' : '#0f172a';
+  };
+
+  window.d6mpMark = function(n) {
+    var p = getP(); p['p'+n]='done'; saveP(p); refresh();
+  };
+
+  window.d6mpReset = function(n) {
+    var p = getP(); p['p'+n]='todo'; saveP(p);
+    var ta = document.getElementById('d6mp-code-'+n);
+    var btn = document.getElementById('d6mp-btn-'+n);
+    if (ta) ta.value = '';
+    if (btn) {
+      btn.textContent='✅ Mark Complete'; btn.disabled=true;
+      btn.style.opacity='0.45'; btn.style.cursor='not-allowed';
+      btn.style.color='#475569'; btn.style.borderColor='#475569'; btn.style.background='#0f172a';
+    }
+    refresh();
+  };
+
+  if (document.readyState==='loading') { document.addEventListener('DOMContentLoaded', refresh); }
+  else { refresh(); }
+})();
+</script>
 
 
 <!-- ===== DAY 7 – ETL/ELT ===== -->
