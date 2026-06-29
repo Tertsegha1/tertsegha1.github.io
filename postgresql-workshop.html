@@ -8170,33 +8170,65 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
 
       <h3>Advanced — pg_stat_statements: Finding Your Worst Queries</h3>
       <p><code>pg_stat_statements</code> is a PostgreSQL extension that tracks cumulative execution statistics for every distinct SQL statement — total calls, total time, mean time, rows returned, cache hits. It answers the question that single-run EXPLAIN cannot: <em>"Which query is causing the most load over time?"</em></p>
-      <div class="callout warning" style="margin-bottom:10px">
-        <div class="callout-title">⚠ Required: load the module before CREATE EXTENSION</div>
-        <code>pg_stat_statements</code> is a <strong>shared library</strong> — it must be listed in <code>shared_preload_libraries</code> in <code>postgresql.conf</code> and PostgreSQL must be restarted <em>before</em> you can run <code>CREATE EXTENSION</code>. Running <code>CREATE EXTENSION</code> first gives the error: <em>pg_stat_statements must be loaded via "shared_preload_libraries"</em>.
-        <ol style="margin:8px 0 0 16px;padding:0;line-height:1.8">
-          <li>Find your config file in psql: &nbsp;<code>SHOW config_file;</code></li>
-          <li>Open that file and set (or append to the existing line):<br><code>shared_preload_libraries = 'pg_stat_statements'</code></li>
-          <li>Restart the service (PowerShell as Administrator):<br><code>Restart-Service -Name "postgresql-x64-18"</code></li>
-          <li>Reconnect to psql, then run <code>CREATE EXTENSION</code> below.</li>
-        </ol>
+
+      <!-- SETUP STEPS -->
+      <div style="background:#0d1929;border:1px solid #1e3a5f;border-radius:10px;padding:18px 20px;margin-bottom:14px;">
+        <div style="font-size:0.95rem;font-weight:700;color:#7dd3fc;margin-bottom:14px;letter-spacing:0.02em;">🛠 Setup — must be done before <code style="font-size:0.85rem;color:#93c5fd;">CREATE EXTENSION</code></div>
+        <p style="color:#94a3b8;font-size:0.85rem;margin:0 0 14px 0;"><code>pg_stat_statements</code> is a <strong style="color:#e2e8f0;">shared library</strong>, not a regular extension. It must be listed in <code>shared_preload_libraries</code> in <code>postgresql.conf</code> and PostgreSQL must be <strong style="color:#e2e8f0;">restarted</strong> before <code>CREATE EXTENSION</code> will work. Running <code>CREATE EXTENSION</code> without this gives: <em style="color:#fca5a5;">ERROR: pg_stat_statements must be loaded via "shared_preload_libraries"</em>.</p>
+
+        <!-- Instructor steps -->
+        <div style="background:#071120;border-left:3px solid #7c3aed;border-radius:0 6px 6px 0;padding:12px 14px;margin-bottom:12px;">
+          <div style="font-size:0.8rem;font-weight:700;color:#c4b5fd;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.06em;">👩‍🏫 Instructor — run these steps on your machine</div>
+          <div style="display:grid;gap:8px;">
+            <div style="display:flex;gap:10px;align-items:flex-start;">
+              <span style="min-width:22px;height:22px;background:#7c3aed;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:#fff;flex-shrink:0;">1</span>
+              <div style="color:#cbd5e1;font-size:0.84rem;"><strong style="color:#e2e8f0;">Find your config file</strong> — run in psql:<br><code style="background:#0d1929;padding:2px 6px;border-radius:4px;color:#7dd3fc;">SHOW config_file;</code><br><span style="color:#64748b;font-size:0.78rem;">Returns e.g. <code>C:/Program Files/PostgreSQL/18/data/postgresql.conf</code></span></div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:flex-start;">
+              <span style="min-width:22px;height:22px;background:#7c3aed;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:#fff;flex-shrink:0;">2</span>
+              <div style="color:#cbd5e1;font-size:0.84rem;"><strong style="color:#e2e8f0;">Open <code>postgresql.conf</code></strong> in Notepad (run Notepad <strong>as Administrator</strong>, then File → Open the path above).<br>Search for <code>shared_preload_libraries</code>. You will see it commented out:<br><code style="background:#0d1929;padding:2px 6px;border-radius:4px;color:#94a3b8;">#shared_preload_libraries = ''</code><br>Uncomment it and set it to:<br><code style="background:#0d1929;padding:2px 6px;border-radius:4px;color:#6ee7b7;">shared_preload_libraries = 'pg_stat_statements'</code><br>Save the file.</div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:flex-start;">
+              <span style="min-width:22px;height:22px;background:#7c3aed;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:#fff;flex-shrink:0;">3</span>
+              <div style="color:#cbd5e1;font-size:0.84rem;"><strong style="color:#e2e8f0;">Restart PostgreSQL</strong> — open <strong>PowerShell as Administrator</strong> and run:<br><code style="background:#0d1929;padding:2px 6px;border-radius:4px;color:#7dd3fc;">Restart-Service -Name "postgresql-x64-18"</code><br><span style="color:#64748b;font-size:0.78rem;">No output = success. The service will stop and restart within a few seconds.</span></div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:flex-start;">
+              <span style="min-width:22px;height:22px;background:#7c3aed;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:#fff;flex-shrink:0;">4</span>
+              <div style="color:#cbd5e1;font-size:0.84rem;"><strong style="color:#e2e8f0;">Verify and enable</strong> — reconnect to psql, then run:<br><code style="background:#0d1929;padding:2px 6px;border-radius:4px;color:#7dd3fc;">SHOW shared_preload_libraries;</code><br><span style="color:#64748b;font-size:0.78rem;">Expected: <code>pg_stat_statements</code> &nbsp;(not an empty row)</span><br><code style="background:#0d1929;padding:2px 6px;border-radius:4px;color:#7dd3fc;">CREATE EXTENSION IF NOT EXISTS pg_stat_statements;</code><br><span style="color:#64748b;font-size:0.78rem;">Expected: <code>CREATE EXTENSION</code></span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Participant steps -->
+        <div style="background:#071120;border-left:3px solid #0ea5e9;border-radius:0 6px 6px 0;padding:12px 14px;">
+          <div style="font-size:0.8rem;font-weight:700;color:#7dd3fc;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.06em;">👤 Participant — follow these steps on your laptop</div>
+          <div style="display:grid;gap:8px;">
+            <div style="display:flex;gap:10px;align-items:flex-start;">
+              <span style="min-width:22px;height:22px;background:#0369a1;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:#fff;flex-shrink:0;">1</span>
+              <div style="color:#cbd5e1;font-size:0.84rem;"><strong style="color:#e2e8f0;">Check if already configured</strong> — in psql:<br><code style="background:#0d1929;padding:2px 6px;border-radius:4px;color:#7dd3fc;">SHOW shared_preload_libraries;</code><br><span style="color:#64748b;font-size:0.78rem;">If it shows <code>pg_stat_statements</code> → skip to Step 4. If empty row → continue.</span></div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:flex-start;">
+              <span style="min-width:22px;height:22px;background:#0369a1;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:#fff;flex-shrink:0;">2</span>
+              <div style="color:#cbd5e1;font-size:0.84rem;"><strong style="color:#e2e8f0;">Get the config path</strong>:<br><code style="background:#0d1929;padding:2px 6px;border-radius:4px;color:#7dd3fc;">SHOW config_file;</code><br>Open that file in <strong>Notepad as Administrator</strong>. Find <code>shared_preload_libraries</code>, uncomment and set:<br><code style="background:#0d1929;padding:2px 6px;border-radius:4px;color:#6ee7b7;">shared_preload_libraries = 'pg_stat_statements'</code><br>Save.</div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:flex-start;">
+              <span style="min-width:22px;height:22px;background:#0369a1;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:#fff;flex-shrink:0;">3</span>
+              <div style="color:#cbd5e1;font-size:0.84rem;"><strong style="color:#e2e8f0;">Restart PostgreSQL</strong> — <strong>PowerShell as Administrator</strong>:<br><code style="background:#0d1929;padding:2px 6px;border-radius:4px;color:#7dd3fc;">Restart-Service -Name "postgresql-x64-18"</code><br>Then close and reopen psql.</div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:flex-start;">
+              <span style="min-width:22px;height:22px;background:#0369a1;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:#fff;flex-shrink:0;">4</span>
+              <div style="color:#cbd5e1;font-size:0.84rem;"><strong style="color:#e2e8f0;">Enable the extension</strong> (once, in your <code>lab_nsr</code> database):<br><code style="background:#0d1929;padding:2px 6px;border-radius:4px;color:#7dd3fc;">CREATE EXTENSION IF NOT EXISTS pg_stat_statements;</code><br><span style="color:#64748b;font-size:0.78rem;">Expected response: <code>CREATE EXTENSION</code> — you are now ready to run the queries below.</span></div>
+            </div>
+          </div>
+        </div>
       </div>
+
       <div class="code-block">
-        <div class="code-header"><span class="code-lang">sql – enable and query pg_stat_statements</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-        <pre><span class="cmt">-- Step 1: find your postgresql.conf path</span>
-<span class="kw">SHOW</span> config_file;
-<span class="cmt">-- e.g. C:/Program Files/PostgreSQL/18/data/postgresql.conf</span>
-
-<span class="cmt">-- Step 2: confirm shared_preload_libraries is set</span>
+        <div class="code-header"><span class="code-lang">sql – verify and query pg_stat_statements</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Verify the library is loaded (must show pg_stat_statements, not an empty row)</span>
 <span class="kw">SHOW</span> shared_preload_libraries;
-<span class="cmt">-- If you see an empty row:</span>
-<span class="cmt">--  shared_preload_libraries</span>
-<span class="cmt">-- --------------------------</span>
-<span class="cmt">-- (1 row)</span>
-<span class="cmt">-- → pg_stat_statements is NOT loaded. Follow the callout steps above,</span>
-<span class="cmt">--   restart the service, reconnect to psql, then continue from Step 3.</span>
-<span class="cmt">-- Expected after fix: pg_stat_statements</span>
 
-<span class="cmt">-- Step 3: create the extension (only works after the library is loaded)</span>
+<span class="cmt">-- Enable the extension (safe to re-run; does nothing if already enabled)</span>
 <span class="kw">CREATE EXTENSION IF NOT EXISTS</span> pg_stat_statements;
 
 <span class="cmt">-- Top 10 queries by total execution time</span>
