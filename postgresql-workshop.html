@@ -8029,7 +8029,7 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
 <span class="kw">EXPLAIN ANALYZE SELECT</span> * <span class="kw">FROM</span> nsr.households <span class="kw">WHERE</span> pmt_score &lt; <span class="num">30</span>;
 
 <span class="cmt">-- Confirm the index exists and is being used</span>
-<span class="kw">SELECT</span> indexname, idx_scan, idx_tup_read
+<span class="kw">SELECT</span> indexrelname, idx_scan, idx_tup_read
 <span class="kw">FROM</span>  pg_stat_user_indexes
 <span class="kw">WHERE</span> relname = <span class="str">'households'</span>;</pre>
       </div>
@@ -8059,7 +8059,7 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
 <span class="kw">ON</span> nsr.audit_log <span class="kw">USING</span> GIN (row_data);
 
 <span class="cmt">-- Check index usage</span>
-<span class="kw">SELECT</span> indexname, idx_scan, idx_tup_read
+<span class="kw">SELECT</span> indexrelname, idx_scan, idx_tup_read
 <span class="kw">FROM</span> pg_stat_user_indexes
 <span class="kw">WHERE</span> schemaname = <span class="str">'nsr'</span>
 <span class="kw">ORDER BY</span> idx_scan <span class="kw">DESC</span>;</pre>
