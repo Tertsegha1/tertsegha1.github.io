@@ -8255,6 +8255,66 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
 <span class="cmt">-- Reset statistics (do this after making index/config changes to start fresh)</span>
 <span class="kw">SELECT</span> <span class="fn">pg_stat_statements_reset</span>();</pre>
       </div>
+      <!-- TROUBLESHOOTING -->
+      <div style="background:#0d1929;border:1px solid #7f1d1d;border-radius:10px;padding:18px 20px;margin:14px 0;">
+        <div style="font-size:0.95rem;font-weight:700;color:#fca5a5;margin-bottom:14px;letter-spacing:0.02em;">🔧 Troubleshooting — if the service fails to start after editing postgresql.conf</div>
+
+        <!-- Problem 1 -->
+        <div style="margin-bottom:16px;">
+          <div style="font-weight:700;color:#fcd34d;font-size:0.85rem;margin-bottom:6px;">Problem 1 — Restart-Service fails with "Failed to start service"</div>
+          <p style="color:#94a3b8;font-size:0.84rem;margin:0 0 8px 0;"><code>Restart-Service</code> stops PostgreSQL first, then starts it. If the start fails, PostgreSQL is left <strong style="color:#e2e8f0;">stopped</strong> — use <code>Start-Service</code> instead of <code>Restart-Service</code> on a stopped service.</p>
+          <div class="code-block" style="margin:0">
+            <div class="code-header"><span class="code-lang">powershell – start a stopped service</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+            <pre>Start-Service -Name "postgresql-x64-18"</pre>
+          </div>
+        </div>
+
+        <!-- Problem 2 -->
+        <div style="margin-bottom:16px;">
+          <div style="font-weight:700;color:#fcd34d;font-size:0.85rem;margin-bottom:6px;">Problem 2 — Service starts then immediately stops, no new log entry</div>
+          <p style="color:#94a3b8;font-size:0.84rem;margin:0 0 8px 0;">PostgreSQL is crashing before it can open its log file. Use <code>pg_ctl</code> directly to print the error to the console:</p>
+          <div class="code-block" style="margin:0">
+            <div class="code-header"><span class="code-lang">powershell – pg_ctl direct start</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+            <pre>& "C:\Program Files\PostgreSQL\18\bin\pg_ctl.exe" start -D "C:\Program Files\PostgreSQL\18\data"</pre>
+          </div>
+          <p style="color:#94a3b8;font-size:0.84rem;margin:8px 0 0 0;">This prints the FATAL error directly. The most common output and fixes are below.</p>
+        </div>
+
+        <!-- Problem 3 -->
+        <div style="margin-bottom:16px;">
+          <div style="font-weight:700;color:#fcd34d;font-size:0.85rem;margin-bottom:6px;">Problem 3 — FATAL: could not access file "pgaudit": No such file or directory</div>
+          <p style="color:#94a3b8;font-size:0.84rem;margin:0 0 8px 0;">A previous <code>ALTER SYSTEM</code> command (used during Day 3 pgAudit setup) wrote <code>shared_preload_libraries = 'pgaudit'</code> to <code>postgresql.auto.conf</code>. This file <strong style="color:#fca5a5;">overrides postgresql.conf</strong> — so your edit to postgresql.conf has no effect while this entry exists.</p>
+          <div class="code-block" style="margin:0 0 8px 0">
+            <div class="code-header"><span class="code-lang">powershell – read postgresql.auto.conf</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+            <pre>Get-Content "C:\Program Files\PostgreSQL\18\data\postgresql.auto.conf"</pre>
+          </div>
+          <p style="color:#94a3b8;font-size:0.84rem;margin:0 0 8px 0;">If it shows <code>shared_preload_libraries = 'pgaudit'</code>, open the file in <strong style="color:#e2e8f0;">Notepad as Administrator</strong> and change it to:</p>
+          <div class="code-block" style="margin:0 0 8px 0">
+            <div class="code-header"><span class="code-lang">postgresql.auto.conf – correct value</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+            <pre>shared_preload_libraries = 'pg_stat_statements'</pre>
+          </div>
+          <p style="color:#64748b;font-size:0.8rem;margin:0;">Save the file, then run <code>Start-Service -Name "postgresql-x64-18"</code> again. <strong style="color:#94a3b8;">Why does this happen?</strong> <code>ALTER SYSTEM</code> writes to <code>postgresql.auto.conf</code>, not <code>postgresql.conf</code>. Settings in <code>postgresql.auto.conf</code> always win. Editing <code>postgresql.conf</code> alone is not enough if <code>postgresql.auto.conf</code> also sets the same parameter.</p>
+        </div>
+
+        <!-- Problem 4 -->
+        <div>
+          <div style="font-weight:700;color:#fcd34d;font-size:0.85rem;margin-bottom:6px;">Problem 4 — How to read the PostgreSQL log from PowerShell</div>
+          <div class="code-block" style="margin:0 0 6px 0">
+            <div class="code-header"><span class="code-lang">powershell – list log files by date</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+            <pre>Get-ChildItem "C:\Program Files\PostgreSQL\18\data\log\" | Sort-Object LastWriteTime | Format-Table Name, LastWriteTime</pre>
+          </div>
+          <div class="code-block" style="margin:0 0 6px 0">
+            <div class="code-header"><span class="code-lang">powershell – last 30 lines of newest log (runtime errors)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+            <pre>Get-Content (Get-ChildItem "C:\Program Files\PostgreSQL\18\data\log\" | Sort-Object LastWriteTime | Select-Object -Last 1).FullName | Select-Object -Last 30</pre>
+          </div>
+          <div class="code-block" style="margin:0">
+            <div class="code-header"><span class="code-lang">powershell – first 20 lines of newest log (startup errors)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+            <pre>Get-Content (Get-ChildItem "C:\Program Files\PostgreSQL\18\data\log\" | Sort-Object LastWriteTime | Select-Object -Last 1).FullName | Select-Object -First 20</pre>
+          </div>
+          <p style="color:#64748b;font-size:0.8rem;margin:8px 0 0 0;">Startup errors appear at the <strong style="color:#94a3b8;">top</strong> of a new log file. Runtime errors (wrong SQL, missing extensions) appear at the <strong style="color:#94a3b8;">bottom</strong> of the current log file.</p>
+        </div>
+      </div>
+
       <div class="callout info" style="margin-top:8px">
         <div class="callout-title">Workflow: from pg_stat_statements to a fix</div>
         <strong>Step 1</strong> — find the query with the highest total_exec_time. This is the one consuming the most cumulative server time, regardless of whether individual runs are slow. <strong>Step 2</strong> — copy the query text and run <code>EXPLAIN (ANALYZE, BUFFERS)</code> on it to see the plan. <strong>Step 3</strong> — identify the bottleneck node (highest actual time, or large actual rows vs estimated rows). <strong>Step 4</strong> — apply the fix: create a missing index, run ANALYZE to refresh statistics, or rewrite the query. <strong>Step 5</strong> — call <code>pg_stat_statements_reset()</code> and re-run for 24 hours to measure the improvement. For the NSR, add pg_stat_statements to <code>shared_preload_libraries</code> in postgresql.conf and enable it on day one of production — it costs very little and is invaluable for post-deployment performance investigations.
