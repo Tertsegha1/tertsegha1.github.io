@@ -494,6 +494,8 @@ body.instructor-mode .nav-item.instructor-block { display: flex; }
   border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all .15s;
 }
 .tab-btn.active { color: var(--brand); border-bottom-color: var(--brand); }
+.tab-btn-mini { background: #1e3a8a !important; color: #fff !important; border-radius: 6px 6px 0 0; margin-left: 6px; font-weight: 700 !important; }
+.tab-btn-mini.active { background: #2563eb !important; color: #fff !important; border-bottom-color: #93c5fd !important; box-shadow: 0 0 0 2px #93c5fd inset; }
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
 
@@ -7955,7 +7957,7 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
     <button class="tab-btn" onclick="switchTab(this,'d6tabs','d6-partition')">Partitioning</button>
     <button class="tab-btn" onclick="switchTab(this,'d6tabs','d6-monitor')">Monitoring</button>
     <button class="tab-btn" onclick="switchTab(this,'d6tabs','d6-exercises')">Exercises</button>
-    <button class="tab-btn" onclick="switchTab(this,'d6tabs','d6-miniproject')" style="background:linear-gradient(135deg,#1e3a5f,#1e1b4b);color:#7dd3fc;border-color:#3b82f6;">🏛 Mini Project</button>
+    <button class="tab-btn tab-btn-mini" onclick="switchTab(this,'d6tabs','d6-miniproject')">🏛 Mini Project</button>
   </div>
 
   <div id="d6tabs">
