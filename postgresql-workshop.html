@@ -8799,7 +8799,7 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
         <span id="d6mp-ed-phase" style="background:#1e3a5f;color:#7dd3fc;font-size:0.6rem;padding:1px 8px;border-radius:999px;font-weight:700;letter-spacing:0.5px;"></span>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
-        <button id="d6mp-run-btn" onclick="d6mpRun()" style="background:#2563eb;color:#fff;border:1px solid #2563eb;border-radius:6px;padding:6px 22px;font-size:0.84rem;font-weight:700;cursor:pointer;font-family:inherit;">&#9654; Run</button>
+        <button id="d6mp-run-btn" onclick="d6mpRun()" disabled style="background:#0f172a;color:#475569;border:1px solid #334155;border-radius:6px;padding:6px 22px;font-size:0.84rem;font-weight:700;cursor:not-allowed;font-family:inherit;opacity:0.5;">&#9654; Run</button>
         <button onclick="d6mpClose()" style="background:none;border:1px solid #334155;color:#64748b;border-radius:6px;padding:6px 12px;font-size:0.82rem;cursor:pointer;font-family:inherit;">&#10005; Close</button>
       </div>
     </div>
@@ -8809,6 +8809,8 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
         <div id="d6mp-ed-desc" style="color:#94a3b8;font-size:0.78rem;line-height:1.65;margin-bottom:14px;white-space:pre-wrap;"></div>
         <div style="font-size:0.61rem;color:#475569;text-transform:uppercase;letter-spacing:0.9px;margin-bottom:7px;font-weight:700;">Hints</div>
         <div id="d6mp-ed-hints" style="margin-bottom:14px;"></div>
+        <div style="font-size:0.61rem;color:#475569;text-transform:uppercase;letter-spacing:0.9px;margin-bottom:7px;font-weight:700;">Starter Query</div>
+        <pre id="d6mp-ed-starter" style="font-family:monospace;font-size:0.63rem;color:#94a3b8;background:#050c18;border:1px solid #1e293b;border-radius:5px;padding:9px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 14px 0;"></pre>
         <div style="font-size:0.61rem;color:#475569;text-transform:uppercase;letter-spacing:0.9px;margin-bottom:7px;font-weight:700;">Expected Output</div>
         <pre id="d6mp-ed-expected" style="font-family:monospace;font-size:0.65rem;color:#4ade80;background:#050c18;border:1px solid #1e293b;border-radius:5px;padding:9px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0;"></pre>
       </div>
@@ -8817,7 +8819,10 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
           <span style="font-size:0.67rem;color:#475569;font-family:monospace;">psql -U postgres -d lab_nsr</span>
           <button onclick="document.getElementById('d6mp-ed-code').value=''" style="background:none;border:none;color:#334155;font-size:0.67rem;cursor:pointer;font-family:inherit;padding:0;">Clear</button>
         </div>
-        <textarea id="d6mp-ed-code" style="flex:1;background:#050c18;color:#e2e8f0;border:none;padding:14px 16px;font-family:'Cascadia Code','Fira Code',Consolas,monospace;font-size:0.8rem;line-height:1.7;resize:none;outline:none;min-height:0;max-height:50%;" spellcheck="false" placeholder="-- Write your SQL here, then click Run"></textarea>
+        <textarea id="d6mp-ed-code" oninput="d6mpEditorInput()" style="flex:1;background:#050c18;color:#e2e8f0;border:none;padding:14px 16px;font-family:'Cascadia Code','Fira Code',Consolas,monospace;font-size:0.8rem;line-height:1.7;resize:none;outline:none;min-height:0;max-height:50%;" spellcheck="false" placeholder="-- Type your SQL here, then click ▶ Run&#10;-- The starter query is shown in the panel on the left"></textarea>
+        <div id="d6mp-type-hint" style="background:#0d1929;border-top:1px solid #1e293b;padding:6px 14px;font-size:0.72rem;color:#f59e0b;display:flex;align-items:center;gap:6px;flex-shrink:0;">
+          <span>&#9998;</span> Type your SQL query above to enable the Run button.
+        </div>
         <div style="background:#050c18;border-top:1px solid #1e293b;padding:5px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
           <span style="font-size:0.67rem;color:#475569;font-family:monospace;">Output</span>
           <button onclick="document.getElementById('d6mp-ed-terminal').innerHTML=''" style="background:none;border:none;color:#334155;font-size:0.67rem;cursor:pointer;font-family:inherit;padding:0;">Clear</button>
@@ -9028,12 +9033,44 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
       return '<div style="background:#071120;border-left:2px solid #2563eb;border-radius:0 4px 4px 0;padding:5px 8px;margin-bottom:5px;color:#7dd3fc;font-size:0.72rem;line-height:1.5;">'+esc(h)+'</div>';
     }).join('');
     document.getElementById('d6mp-ed-expected').textContent=pz.output.join('\n');
-    if(code&&code.dataset.key!==key){code.value=pz.starter;code.dataset.key=key;}
+    var starterEl=document.getElementById('d6mp-ed-starter');
+    if(starterEl)starterEl.textContent=pz.starter;
+    /* Always clear the editor — participant must type the query themselves */
+    if(code){code.value='';code.dataset.key=key;}
     if(term)term.innerHTML='';
     var isDone=(getP()[key]==='done');
-    if(rb){rb.style.background=isDone?'#14532d':'#2563eb';rb.style.borderColor=isDone?'#22c55e':'#2563eb';rb.textContent=isDone?'✓ Done — Re-run':'▶ Run';}
+    /* Reset Run button to disabled unless already done */
+    if(rb){
+      if(isDone){
+        rb.disabled=false;rb.style.opacity='1';rb.style.cursor='pointer';
+        rb.style.background='#14532d';rb.style.borderColor='#22c55e';rb.style.color='#bbf7d0';
+        rb.textContent='✓ Done — Re-run';
+      } else {
+        rb.disabled=true;rb.style.opacity='0.5';rb.style.cursor='not-allowed';
+        rb.style.background='#0f172a';rb.style.borderColor='#334155';rb.style.color='#475569';
+        rb.textContent='▶ Run';
+      }
+    }
+    var hint=document.getElementById('d6mp-type-hint');
+    if(hint)hint.style.display=isDone?'none':'flex';
     document.getElementById('d6mp-editor-modal').style.display='flex';
     setTimeout(function(){if(code)code.focus();},80);
+  };
+
+  window.d6mpEditorInput=function(){
+    var code=document.getElementById('d6mp-ed-code');
+    var rb=document.getElementById('d6mp-run-btn');
+    var hint=document.getElementById('d6mp-type-hint');
+    var hasCode=code&&code.value.trim().length>=4;
+    if(rb){
+      rb.disabled=!hasCode;
+      rb.style.opacity=hasCode?'1':'0.5';
+      rb.style.cursor=hasCode?'pointer':'not-allowed';
+      rb.style.background=hasCode?'#2563eb':'#0f172a';
+      rb.style.borderColor=hasCode?'#2563eb':'#334155';
+      rb.style.color=hasCode?'#fff':'#475569';
+    }
+    if(hint)hint.style.display=hasCode?'none':'flex';
   };
 
   window.d6mpClose=function(){
