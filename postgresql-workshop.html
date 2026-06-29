@@ -8177,7 +8177,7 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
         <p style="color:#94a3b8;font-size:0.85rem;margin:0 0 14px 0;"><code>pg_stat_statements</code> is a <strong style="color:#e2e8f0;">shared library</strong>, not a regular extension. It must be listed in <code>shared_preload_libraries</code> in <code>postgresql.conf</code> and PostgreSQL must be <strong style="color:#e2e8f0;">restarted</strong> before <code>CREATE EXTENSION</code> will work. Running <code>CREATE EXTENSION</code> without this gives: <em style="color:#fca5a5;">ERROR: pg_stat_statements must be loaded via "shared_preload_libraries"</em>.</p>
 
         <!-- Instructor steps -->
-        <div style="background:#071120;border-left:3px solid #7c3aed;border-radius:0 6px 6px 0;padding:12px 14px;margin-bottom:12px;">
+        <div class="instructor-block instructor-only" style="background:#071120;border-left:3px solid #7c3aed;border-radius:0 6px 6px 0;padding:12px 14px;margin-bottom:12px;">
           <div style="font-size:0.8rem;font-weight:700;color:#c4b5fd;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.06em;">👩‍🏫 Instructor — run these steps on your machine</div>
           <div style="display:grid;gap:8px;">
             <div style="display:flex;gap:10px;align-items:flex-start;">
