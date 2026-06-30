@@ -10214,7 +10214,7 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
         <p style="color:#94a3b8;font-size:0.88rem;margin:0;">Your honest feedback shapes how we run the remaining sessions. This takes about 2 minutes &mdash; five quick ratings, one pace check, one recommendation score, and a couple of short comments. Responses are shared with the programme team only.</p>
       </div>
 
-      <!-- Identity banner (reuses the same team/name as the mini project) -->
+      <!-- Identity banner — individual response, no team grouping -->
       <div id="d7fb-reg-panel" style="background:#071120;border:1px solid #1e3a5f;border-radius:10px;padding:16px 18px;margin-bottom:18px;">
         <div id="d7fb-registered" style="display:none;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
@@ -10225,16 +10225,6 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
         </div>
         <div id="d7fb-unregistered">
           <div style="font-size:0.72rem;color:#64748b;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;">Who is submitting this feedback?</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
-            <button id="d7fb-team-btn-A" onclick="d7fbPickTeam('A')" style="background:#071120;border:1.5px solid #334155;color:#94a3b8;border-radius:8px;padding:12px 10px;cursor:pointer;font-family:inherit;text-align:left;transition:all 0.15s;">
-              <div style="font-size:1.1rem;margin-bottom:4px;">&#128309;</div>
-              <div style="font-size:0.8rem;font-weight:700;color:#94a3b8;">Team A</div>
-            </button>
-            <button id="d7fb-team-btn-B" onclick="d7fbPickTeam('B')" style="background:#071120;border:1.5px solid #334155;color:#94a3b8;border-radius:8px;padding:12px 10px;cursor:pointer;font-family:inherit;text-align:left;transition:all 0.15s;">
-              <div style="font-size:1.1rem;margin-bottom:4px;">&#128992;</div>
-              <div style="font-size:0.8rem;font-weight:700;color:#94a3b8;">Team B</div>
-            </button>
-          </div>
           <div style="display:flex;gap:8px;">
             <input id="d7fb-name-input" type="text" placeholder="Your full name e.g. Amaka Okafor"
               style="flex:1;padding:9px 12px;background:#0d1929;border:1.5px solid #334155;border-radius:7px;color:#e2e8f0;font-size:0.88rem;font-family:inherit;outline:none;box-sizing:border-box;"
@@ -10401,7 +10391,6 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
 <script>
 (function(){
   var KEY='d7fb_v1';
-  var _selectedTeam=null;
   var _dashTimer=null;
   var ratingFields=['overall','clarity','miniproject','instructor','relevance'];
   var ratingLabels={overall:'Overall session',clarity:'Content clarity',miniproject:'Mini project usefulness',instructor:'Instructor support',relevance:'Relevance to role'};
@@ -10409,8 +10398,7 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
 
   function getR(){try{return JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){return{};}}
   function saveR(d){try{localStorage.setItem(KEY,JSON.stringify(d));}catch(e){}}
-  function getName(){return localStorage.getItem('cwr_participant_name')||'';}
-  function getTeam(){return localStorage.getItem('cwr_team')||'';}
+  function getName(){return localStorage.getItem('d7fb_participant_name')||'';}
   function fbOk(){return window.CWR_FIREBASE&&window.CWR_FIREBASE.databaseURL&&!window.CWR_FIREBASE.databaseURL.includes('REPLACE');}
   function fbUrl(path){return window.CWR_FIREBASE.databaseURL+path;}
   function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
@@ -10472,25 +10460,14 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
     });
   };
 
-  /* ── Registration (reuses cwr_participant_name / cwr_team) ── */
-  window.d7fbPickTeam=function(t){
-    _selectedTeam=t;
-    ['A','B'].forEach(function(x){
-      var btn=document.getElementById('d7fb-team-btn-'+x);if(!btn)return;
-      var sel=(x===t);
-      btn.style.borderColor=sel?(x==='A'?'#2563eb':'#d97706'):'#334155';
-      btn.style.background=sel?(x==='A'?'#0f2a4a':'#3d2200'):'#071120';
-    });
-  };
-
+  /* ── Registration — individual response, own identity key ── */
   window.d7fbRegister=function(){
     var err=document.getElementById('d7fb-reg-error');
-    if(!_selectedTeam){if(err){err.textContent='Please select a team first.';err.style.display='block';}return;}
     var inp=document.getElementById('d7fb-name-input');
     var name=inp?inp.value.trim():'';
     if(!name){if(inp)inp.style.borderColor='#ef4444';if(err){err.textContent='Please enter your name.';err.style.display='block';}return;}
-    localStorage.setItem('cwr_participant_name',name);
-    localStorage.setItem('cwr_team',_selectedTeam);
+    if(err) err.style.display='none';
+    localStorage.setItem('d7fb_participant_name',name);
     updateRegBanner();
   };
 
@@ -10499,38 +10476,33 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
     var unreg=document.getElementById('d7fb-unregistered');
     if(reg)reg.style.display='none';
     if(unreg)unreg.style.display='block';
-    var t=getTeam();if(t){_selectedTeam=t;d7fbPickTeam(t);}
     var inp=document.getElementById('d7fb-name-input');
     if(inp)inp.value=getName();
   };
 
   function updateRegBanner(){
-    var name=getName(),team=getTeam();
+    var name=getName();
     var reg=document.getElementById('d7fb-registered');
     var unreg=document.getElementById('d7fb-unregistered');
     var badge=document.getElementById('d7fb-badge-text');
-    if(name&&team){
+    if(name){
       if(reg)reg.style.display='flex';
       if(unreg)unreg.style.display='none';
       if(badge){
-        var clr=team==='A'?'#7dd3fc':'#fbbf24';
-        badge.innerHTML='<span style="color:'+clr+'">Team '+esc(team)+'</span> &nbsp;&middot;&nbsp; <span style="color:#e2e8f0;">'+esc(name)+'</span>';
+        badge.innerHTML='<span style="color:#e2e8f0;">'+esc(name)+'</span>';
       }
     }else{
       if(reg)reg.style.display='none';
       if(unreg)unreg.style.display='block';
-      var t=getTeam();if(t){_selectedTeam=t;d7fbPickTeam(t);}
-      var inp=document.getElementById('d7fb-name-input');
-      if(inp&&name)inp.value=name;
     }
   }
 
   /* ── Submit / Edit ────────────────────────────────────── */
   window.d7fbSubmit=function(){
     var errEl=document.getElementById('d7fb-submit-error');
-    var name=getName(), team=getTeam();
-    if(!name||!team){
-      if(errEl){errEl.textContent='Please enter your name and team above before submitting.';errEl.style.display='block';}
+    var name=getName();
+    if(!name){
+      if(errEl){errEl.textContent='Please enter your name above before submitting.';errEl.style.display='block';}
       return;
     }
     responses.well=document.getElementById('d7fb-well').value.trim();
@@ -10552,7 +10524,6 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
     if(errEl) errEl.style.display='none';
 
     responses.name=name;
-    responses.team=team;
     responses.submittedAt=new Date().toISOString();
     saveR(responses);
     d7fbSyncFb();
@@ -10679,9 +10650,8 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
       var items=all.filter(function(r){return r[field] && r[field].trim();});
       if(!items.length){ el.innerHTML='<span style="color:#94a3b8;font-size:0.78rem;">No comments yet</span>'; return; }
       el.innerHTML=items.map(function(r){
-        var clr=r.team==='A'?'#7dd3fc':'#fbbf24';
         return '<div style="background:#071120;border-left:3px solid '+accentColor+';border-radius:0 6px 6px 0;padding:8px 10px;">'
-          +'<div style="font-size:0.68rem;color:'+clr+';font-weight:700;margin-bottom:3px;">'+esc(r.name)+' &middot; Team '+esc(r.team)+'</div>'
+          +'<div style="font-size:0.68rem;color:#7dd3fc;font-weight:700;margin-bottom:3px;">'+esc(r.name)+'</div>'
           +'<div style="font-size:0.8rem;color:#e2e8f0;line-height:1.5;">'+esc(r[field])+'</div>'
           +'</div>';
       }).join('');
