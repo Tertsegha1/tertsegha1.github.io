@@ -9499,7 +9499,8 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
 );
 
 <span class="cmt">-- Step 2: Load the file (run in psql, not in SQL)</span>
-<span class="cmt">-- \COPY nsr.stg_raw FROM '/tmp/lga_data.csv' CSV HEADER</span>
+<span class="cmt">-- Windows path (one line — no line break allowed in \COPY):</span>
+<span class="cmt">-- \COPY nsr.stg_raw FROM 'C:/Users/terts/Downloads/lga_data.csv' CSV HEADER</span>
 
 <span class="cmt">-- Step 3: Inspect what arrived</span>
 <span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.stg_raw;
@@ -9527,18 +9528,14 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
       <h3>PostgreSQL-Native ETL Pattern</h3>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">sql – staging → target with validation</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-        <pre><span class="cmt">-- Step 1: Create staging table (no constraints)</span>
-<span class="kw">CREATE TABLE</span> nsr.stg_households (
-  household_code  <span class="typ">TEXT</span>,
-  state_name      <span class="typ">TEXT</span>,
-  lga_name        <span class="typ">TEXT</span>,
-  head_name       <span class="typ">TEXT</span>,
-  pmt_score       <span class="typ">TEXT</span>,
-  import_batch    <span class="typ">TEXT</span>
-);
+        <pre><span class="cmt">-- Step 1: Staging table already exists in lab_nsr with 4 columns.</span>
+<span class="cmt">-- Add the missing columns (IF NOT EXISTS is safe to re-run):</span>
+<span class="kw">ALTER TABLE</span> nsr.stg_households <span class="kw">ADD COLUMN IF NOT EXISTS</span> lga_name     <span class="typ">TEXT</span>;
+<span class="kw">ALTER TABLE</span> nsr.stg_households <span class="kw">ADD COLUMN IF NOT EXISTS</span> import_batch <span class="typ">TEXT</span>;
+<span class="kw">ALTER TABLE</span> nsr.stg_households <span class="kw">ADD COLUMN IF NOT EXISTS</span> loaded_at    <span class="typ">TIMESTAMPTZ</span> <span class="kw">DEFAULT now</span>();
 
-<span class="cmt">-- Step 2: Load from CSV</span>
-<span class="cmt">-- \COPY nsr.stg_households FROM '/tmp/nsr_raw.csv' CSV HEADER</span>
+<span class="cmt">-- Step 2: Load from CSV (\COPY must be on ONE line — no line break)</span>
+<span class="cmt">-- \COPY nsr.stg_households(household_code,state_name,lga_name,head_name,pmt_score,import_batch) FROM 'C:/Users/terts/Downloads/lga_data.csv' CSV HEADER</span>
 
 <span class="cmt">-- Step 3: Validate</span>
 <span class="kw">SELECT</span> <span class="str">'missing_code'</span> <span class="kw">AS</span> issue, <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> nsr.stg_households <span class="kw">WHERE</span> household_code <span class="kw">IS NULL</span>
@@ -10145,20 +10142,15 @@ $$;
             <div class="callout tip"><div class="callout-title">Full Solution</div></div>
             <div class="code-block">
               <div class="code-header"><span class="code-lang">sql – complete ETL pipeline</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-              <pre><span class="cmt">-- Step 1: Create staging table (no constraints — accept anything)</span>
-<span class="kw">CREATE TABLE IF NOT EXISTS</span> nsr.stg_households (
-  household_code  <span class="typ">TEXT</span>,
-  state_name      <span class="typ">TEXT</span>,
-  lga_name        <span class="typ">TEXT</span>,
-  head_name       <span class="typ">TEXT</span>,
-  pmt_score       <span class="typ">TEXT</span>,
-  import_batch    <span class="typ">TEXT</span>,
-  loaded_at       <span class="typ">TIMESTAMPTZ</span> <span class="kw">DEFAULT now</span>()
-);
+              <pre><span class="cmt">-- Step 1: stg_households exists in lab_nsr with 4 cols. Add missing columns:</span>
+<span class="kw">ALTER TABLE</span> nsr.stg_households <span class="kw">ADD COLUMN IF NOT EXISTS</span> lga_name     <span class="typ">TEXT</span>;
+<span class="kw">ALTER TABLE</span> nsr.stg_households <span class="kw">ADD COLUMN IF NOT EXISTS</span> import_batch <span class="typ">TEXT</span>;
+<span class="kw">ALTER TABLE</span> nsr.stg_households <span class="kw">ADD COLUMN IF NOT EXISTS</span> loaded_at    <span class="typ">TIMESTAMPTZ</span> <span class="kw">DEFAULT now</span>();
 
-<span class="cmt">-- Step 2: Load from CSV (run in psql, adjust path)</span>
-<span class="cmt">-- \COPY nsr.stg_households(household_code,state_name,lga_name,head_name,pmt_score,import_batch)</span>
-<span class="cmt">-- FROM '/tmp/nsr_raw.csv' CSV HEADER;</span>
+<span class="cmt">-- Verify: \d nsr.stg_households  (should now show 7 columns)</span>
+
+<span class="cmt">-- Step 2: Load from CSV (\COPY must be ONE line in psql — no line break)</span>
+<span class="cmt">-- \COPY nsr.stg_households(household_code,state_name,lga_name,head_name,pmt_score,import_batch) FROM 'C:/Users/terts/Downloads/lga_data.csv' CSV HEADER</span>
 
 <span class="cmt">-- Step 3: Comprehensive validation report</span>
 <span class="kw">SELECT</span> issue, <span class="fn">COUNT</span>(*) <span class="kw">AS</span> row_count
@@ -10312,16 +10304,10 @@ $$;
             <div class="callout tip"><div class="callout-title">Full Solution</div></div>
             <div class="code-block">
               <div class="code-header"><span class="code-lang">sql – complete idempotent ETL pipeline</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-              <pre><span class="cmt">-- Step 1: Create staging table (idempotent)</span>
-<span class="kw">CREATE TABLE IF NOT EXISTS</span> nsr.stg_households (
-  household_code  <span class="typ">TEXT</span>,
-  state_name      <span class="typ">TEXT</span>,
-  lga_name        <span class="typ">TEXT</span>,
-  head_name       <span class="typ">TEXT</span>,
-  pmt_score       <span class="typ">TEXT</span>,
-  import_batch    <span class="typ">TEXT</span>,
-  loaded_at       <span class="typ">TIMESTAMPTZ</span> <span class="kw">DEFAULT now</span>()
-);
+              <pre><span class="cmt">-- Step 1: Ensure staging table has all required columns (idempotent)</span>
+<span class="kw">ALTER TABLE</span> nsr.stg_households <span class="kw">ADD COLUMN IF NOT EXISTS</span> lga_name     <span class="typ">TEXT</span>;
+<span class="kw">ALTER TABLE</span> nsr.stg_households <span class="kw">ADD COLUMN IF NOT EXISTS</span> import_batch <span class="typ">TEXT</span>;
+<span class="kw">ALTER TABLE</span> nsr.stg_households <span class="kw">ADD COLUMN IF NOT EXISTS</span> loaded_at    <span class="typ">TIMESTAMPTZ</span> <span class="kw">DEFAULT now</span>();
 <span class="kw">TRUNCATE</span> nsr.stg_households; <span class="cmt">-- clear previous run</span>
 
 <span class="cmt">-- Step 2: Insert test data (simulating a CSV load)</span>
@@ -10413,13 +10399,11 @@ $$;
           <p>A re-enumeration of Nassarawa State produced the staging rows below. Using <code>pg_trgm</code>, write a query that identifies the two rows most likely to be the same household (same head-of-household, same LGA, slightly different spelling). Then write the quarantine INSERT that flags the lower-code duplicate for human review.</p>
           <div class="code-block">
             <div class="code-header"><span class="code-lang">sql – setup: insert test rows into staging</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-            <pre><span class="cmt">-- Setup: ensure pg_trgm is enabled and staging table exists</span>
+            <pre><span class="cmt">-- Setup: ensure pg_trgm is enabled; add missing columns to staging table</span>
 <span class="kw">CREATE EXTENSION IF NOT EXISTS</span> pg_trgm;
-<span class="kw">CREATE TABLE IF NOT EXISTS</span> nsr.stg_households (
-  household_code  <span class="typ">TEXT</span>, state_name <span class="typ">TEXT</span>, lga_name <span class="typ">TEXT</span>,
-  head_name <span class="typ">TEXT</span>, pmt_score <span class="typ">TEXT</span>, import_batch <span class="typ">TEXT</span>,
-  loaded_at <span class="typ">TIMESTAMPTZ</span> <span class="kw">DEFAULT now</span>()
-);
+<span class="kw">ALTER TABLE</span> nsr.stg_households <span class="kw">ADD COLUMN IF NOT EXISTS</span> lga_name     <span class="typ">TEXT</span>;
+<span class="kw">ALTER TABLE</span> nsr.stg_households <span class="kw">ADD COLUMN IF NOT EXISTS</span> import_batch <span class="typ">TEXT</span>;
+<span class="kw">ALTER TABLE</span> nsr.stg_households <span class="kw">ADD COLUMN IF NOT EXISTS</span> loaded_at    <span class="typ">TIMESTAMPTZ</span> <span class="kw">DEFAULT now</span>();
 <span class="kw">TRUNCATE</span> nsr.stg_households;
 <span class="kw">INSERT INTO</span> nsr.stg_households (household_code, state_name, lga_name, head_name, pmt_score, import_batch)
 <span class="kw">VALUES</span>
@@ -10608,7 +10592,10 @@ $$;
 <span class="kw">INSERT INTO</span> nsr.etl_watermarks (source_name)
 <span class="kw">VALUES</span> (<span class="str">&#39;stg_households&#39;</span>) <span class="kw">ON CONFLICT DO NOTHING</span>;
 
-<span class="cmt">-- Step 2: Seed staging with rows at two different timestamps</span>
+<span class="cmt">-- Step 2: Ensure staging table has required columns, then seed test rows</span>
+<span class="kw">ALTER TABLE</span> nsr.stg_households <span class="kw">ADD COLUMN IF NOT EXISTS</span> lga_name     <span class="typ">TEXT</span>;
+<span class="kw">ALTER TABLE</span> nsr.stg_households <span class="kw">ADD COLUMN IF NOT EXISTS</span> import_batch <span class="typ">TEXT</span>;
+<span class="kw">ALTER TABLE</span> nsr.stg_households <span class="kw">ADD COLUMN IF NOT EXISTS</span> loaded_at    <span class="typ">TIMESTAMPTZ</span> <span class="kw">DEFAULT now</span>();
 <span class="kw">INSERT INTO</span> nsr.stg_households
   (household_code, state_name, lga_name, head_name, pmt_score, import_batch, loaded_at)
 <span class="kw">VALUES</span>
@@ -12191,7 +12178,8 @@ max_members <span class="kw">AS</span> (
 );
 
 <span class="cmt">-- Step 2: Load the file (run in psql, not in SQL)</span>
-<span class="cmt">-- \COPY nsr.stg_raw FROM '/tmp/lga_data.csv' CSV HEADER</span>
+<span class="cmt">-- Windows path (one line — no line break allowed in \COPY):</span>
+<span class="cmt">-- \COPY nsr.stg_raw FROM 'C:/Users/terts/Downloads/lga_data.csv' CSV HEADER</span>
 
 <span class="cmt">-- Step 3: Inspect what arrived</span>
 <span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.stg_raw;
@@ -12219,18 +12207,14 @@ max_members <span class="kw">AS</span> (
       <h3>PostgreSQL-Native ETL Pattern</h3>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">sql – staging → target with validation</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-        <pre><span class="cmt">-- Step 1: Create staging table (no constraints)</span>
-<span class="kw">CREATE TABLE</span> nsr.stg_households (
-  household_code  <span class="typ">TEXT</span>,
-  state_name      <span class="typ">TEXT</span>,
-  lga_name        <span class="typ">TEXT</span>,
-  head_name       <span class="typ">TEXT</span>,
-  pmt_score       <span class="typ">TEXT</span>,
-  import_batch    <span class="typ">TEXT</span>
-);
+        <pre><span class="cmt">-- Step 1: Staging table already exists in lab_nsr with 4 columns.</span>
+<span class="cmt">-- Add the missing columns (IF NOT EXISTS is safe to re-run):</span>
+<span class="kw">ALTER TABLE</span> nsr.stg_households <span class="kw">ADD COLUMN IF NOT EXISTS</span> lga_name     <span class="typ">TEXT</span>;
+<span class="kw">ALTER TABLE</span> nsr.stg_households <span class="kw">ADD COLUMN IF NOT EXISTS</span> import_batch <span class="typ">TEXT</span>;
+<span class="kw">ALTER TABLE</span> nsr.stg_households <span class="kw">ADD COLUMN IF NOT EXISTS</span> loaded_at    <span class="typ">TIMESTAMPTZ</span> <span class="kw">DEFAULT now</span>();
 
-<span class="cmt">-- Step 2: Load from CSV</span>
-<span class="cmt">-- \COPY nsr.stg_households FROM '/tmp/nsr_raw.csv' CSV HEADER</span>
+<span class="cmt">-- Step 2: Load from CSV (\COPY must be on ONE line — no line break)</span>
+<span class="cmt">-- \COPY nsr.stg_households(household_code,state_name,lga_name,head_name,pmt_score,import_batch) FROM 'C:/Users/terts/Downloads/lga_data.csv' CSV HEADER</span>
 
 <span class="cmt">-- Step 3: Validate</span>
 <span class="kw">SELECT</span> <span class="str">'missing_code'</span> <span class="kw">AS</span> issue, <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> nsr.stg_households <span class="kw">WHERE</span> household_code <span class="kw">IS NULL</span>
@@ -12837,20 +12821,15 @@ $$;
             <div class="callout tip"><div class="callout-title">Full Solution</div></div>
             <div class="code-block">
               <div class="code-header"><span class="code-lang">sql – complete ETL pipeline</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-              <pre><span class="cmt">-- Step 1: Create staging table (no constraints — accept anything)</span>
-<span class="kw">CREATE TABLE IF NOT EXISTS</span> nsr.stg_households (
-  household_code  <span class="typ">TEXT</span>,
-  state_name      <span class="typ">TEXT</span>,
-  lga_name        <span class="typ">TEXT</span>,
-  head_name       <span class="typ">TEXT</span>,
-  pmt_score       <span class="typ">TEXT</span>,
-  import_batch    <span class="typ">TEXT</span>,
-  loaded_at       <span class="typ">TIMESTAMPTZ</span> <span class="kw">DEFAULT now</span>()
-);
+              <pre><span class="cmt">-- Step 1: stg_households exists in lab_nsr with 4 cols. Add missing columns:</span>
+<span class="kw">ALTER TABLE</span> nsr.stg_households <span class="kw">ADD COLUMN IF NOT EXISTS</span> lga_name     <span class="typ">TEXT</span>;
+<span class="kw">ALTER TABLE</span> nsr.stg_households <span class="kw">ADD COLUMN IF NOT EXISTS</span> import_batch <span class="typ">TEXT</span>;
+<span class="kw">ALTER TABLE</span> nsr.stg_households <span class="kw">ADD COLUMN IF NOT EXISTS</span> loaded_at    <span class="typ">TIMESTAMPTZ</span> <span class="kw">DEFAULT now</span>();
 
-<span class="cmt">-- Step 2: Load from CSV (run in psql, adjust path)</span>
-<span class="cmt">-- \COPY nsr.stg_households(household_code,state_name,lga_name,head_name,pmt_score,import_batch)</span>
-<span class="cmt">-- FROM '/tmp/nsr_raw.csv' CSV HEADER;</span>
+<span class="cmt">-- Verify: \d nsr.stg_households  (should now show 7 columns)</span>
+
+<span class="cmt">-- Step 2: Load from CSV (\COPY must be ONE line in psql — no line break)</span>
+<span class="cmt">-- \COPY nsr.stg_households(household_code,state_name,lga_name,head_name,pmt_score,import_batch) FROM 'C:/Users/terts/Downloads/lga_data.csv' CSV HEADER</span>
 
 <span class="cmt">-- Step 3: Comprehensive validation report</span>
 <span class="kw">SELECT</span> issue, <span class="fn">COUNT</span>(*) <span class="kw">AS</span> row_count
@@ -13004,16 +12983,10 @@ $$;
             <div class="callout tip"><div class="callout-title">Full Solution</div></div>
             <div class="code-block">
               <div class="code-header"><span class="code-lang">sql – complete idempotent ETL pipeline</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-              <pre><span class="cmt">-- Step 1: Create staging table (idempotent)</span>
-<span class="kw">CREATE TABLE IF NOT EXISTS</span> nsr.stg_households (
-  household_code  <span class="typ">TEXT</span>,
-  state_name      <span class="typ">TEXT</span>,
-  lga_name        <span class="typ">TEXT</span>,
-  head_name       <span class="typ">TEXT</span>,
-  pmt_score       <span class="typ">TEXT</span>,
-  import_batch    <span class="typ">TEXT</span>,
-  loaded_at       <span class="typ">TIMESTAMPTZ</span> <span class="kw">DEFAULT now</span>()
-);
+              <pre><span class="cmt">-- Step 1: Ensure staging table has all required columns (idempotent)</span>
+<span class="kw">ALTER TABLE</span> nsr.stg_households <span class="kw">ADD COLUMN IF NOT EXISTS</span> lga_name     <span class="typ">TEXT</span>;
+<span class="kw">ALTER TABLE</span> nsr.stg_households <span class="kw">ADD COLUMN IF NOT EXISTS</span> import_batch <span class="typ">TEXT</span>;
+<span class="kw">ALTER TABLE</span> nsr.stg_households <span class="kw">ADD COLUMN IF NOT EXISTS</span> loaded_at    <span class="typ">TIMESTAMPTZ</span> <span class="kw">DEFAULT now</span>();
 <span class="kw">TRUNCATE</span> nsr.stg_households; <span class="cmt">-- clear previous run</span>
 
 <span class="cmt">-- Step 2: Insert test data (simulating a CSV load)</span>
@@ -13105,13 +13078,11 @@ $$;
           <p>A re-enumeration of Nassarawa State produced the staging rows below. Using <code>pg_trgm</code>, write a query that identifies the two rows most likely to be the same household (same head-of-household, same LGA, slightly different spelling). Then write the quarantine INSERT that flags the lower-code duplicate for human review.</p>
           <div class="code-block">
             <div class="code-header"><span class="code-lang">sql – setup: insert test rows into staging</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-            <pre><span class="cmt">-- Setup: ensure pg_trgm is enabled and staging table exists</span>
+            <pre><span class="cmt">-- Setup: ensure pg_trgm is enabled; add missing columns to staging table</span>
 <span class="kw">CREATE EXTENSION IF NOT EXISTS</span> pg_trgm;
-<span class="kw">CREATE TABLE IF NOT EXISTS</span> nsr.stg_households (
-  household_code  <span class="typ">TEXT</span>, state_name <span class="typ">TEXT</span>, lga_name <span class="typ">TEXT</span>,
-  head_name <span class="typ">TEXT</span>, pmt_score <span class="typ">TEXT</span>, import_batch <span class="typ">TEXT</span>,
-  loaded_at <span class="typ">TIMESTAMPTZ</span> <span class="kw">DEFAULT now</span>()
-);
+<span class="kw">ALTER TABLE</span> nsr.stg_households <span class="kw">ADD COLUMN IF NOT EXISTS</span> lga_name     <span class="typ">TEXT</span>;
+<span class="kw">ALTER TABLE</span> nsr.stg_households <span class="kw">ADD COLUMN IF NOT EXISTS</span> import_batch <span class="typ">TEXT</span>;
+<span class="kw">ALTER TABLE</span> nsr.stg_households <span class="kw">ADD COLUMN IF NOT EXISTS</span> loaded_at    <span class="typ">TIMESTAMPTZ</span> <span class="kw">DEFAULT now</span>();
 <span class="kw">TRUNCATE</span> nsr.stg_households;
 <span class="kw">INSERT INTO</span> nsr.stg_households (household_code, state_name, lga_name, head_name, pmt_score, import_batch)
 <span class="kw">VALUES</span>
