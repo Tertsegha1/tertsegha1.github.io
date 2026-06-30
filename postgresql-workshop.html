@@ -9220,6 +9220,7 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
     <button class="tab-btn" onclick="switchTab(this,'d7tabs','d7-dedup')">Deduplication</button>
     <button class="tab-btn" onclick="switchTab(this,'d7tabs','d7-gov')">NDP Act &amp; Governance</button>
     <button class="tab-btn" onclick="switchTab(this,'d7tabs','d7-exercises')">Exercises</button>
+    <button class="tab-btn tab-btn-mini" onclick="switchTab(this,'d7tabs','d7-miniproject')">🏛 Mini Project</button>
   </div>
 
   <div id="d7tabs">
@@ -9691,6 +9692,667 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
         </div>
       </div>
     </div>
+    <div class="tab-panel" id="tab-d7-miniproject">
+
+      <!-- Registration / identity banner -->
+      <div id="d7mp-reg-panel" style="background:#071120;border:1px solid #1e3a5f;border-radius:10px;padding:16px 18px;margin-bottom:14px;">
+        <div id="d7mp-registered" style="display:none;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:1rem;">&#128100;</span>
+            <span id="d7mp-badge-text" style="font-weight:700;font-size:0.88rem;"></span>
+          </div>
+          <button onclick="d7mpShowReg()" style="background:none;border:1px solid #334155;color:#475569;font-size:0.72rem;padding:3px 10px;border-radius:5px;cursor:pointer;font-family:inherit;">Change</button>
+        </div>
+        <div id="d7mp-unregistered">
+          <div style="font-size:0.72rem;color:#64748b;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;">Join a Team to Start</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+            <button id="d7mp-team-btn-A" onclick="d7mpPickTeam('A')" style="background:#071120;border:1.5px solid #334155;color:#475569;border-radius:8px;padding:12px 10px;cursor:pointer;font-family:inherit;text-align:left;transition:all 0.15s;">
+              <div style="font-size:1.1rem;margin-bottom:4px;">&#128309;</div>
+              <div style="font-size:0.8rem;font-weight:700;color:#94a3b8;">Team A</div>
+              <div style="font-size:0.68rem;color:#475569;">Led by Murtala Mohammed</div>
+            </button>
+            <button id="d7mp-team-btn-B" onclick="d7mpPickTeam('B')" style="background:#071120;border:1.5px solid #334155;color:#475569;border-radius:8px;padding:12px 10px;cursor:pointer;font-family:inherit;text-align:left;transition:all 0.15s;">
+              <div style="font-size:1.1rem;margin-bottom:4px;">&#128992;</div>
+              <div style="font-size:0.8rem;font-weight:700;color:#94a3b8;">Team B</div>
+              <div style="font-size:0.68rem;color:#475569;">Led by Adeyinka Ismail Adisa</div>
+            </button>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <input id="d7mp-name-input" type="text" placeholder="Your full name e.g. Amaka Okafor"
+              style="flex:1;padding:9px 12px;background:#0d1929;border:1.5px solid #334155;border-radius:7px;color:#e2e8f0;font-size:0.88rem;font-family:inherit;outline:none;box-sizing:border-box;"
+              onkeydown="if(event.key==='Enter')d7mpRegister()" />
+            <button onclick="d7mpRegister()" style="padding:9px 18px;background:#2563eb;color:#fff;border:none;border-radius:7px;font-size:0.88rem;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;">Join &rarr;</button>
+          </div>
+          <div id="d7mp-reg-error" style="display:none;color:#ef4444;font-size:0.72rem;margin-top:6px;"></div>
+        </div>
+      </div>
+
+      <!-- Project header -->
+      <div style="background:linear-gradient(135deg,#0d1929 0%,#080e18 100%);border:1px solid #1e3a5f;border-radius:12px;padding:22px 24px;margin-bottom:20px;">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;">
+          <span style="font-size:1.6rem;">&#127963;</span>
+          <div>
+            <div style="font-size:1.1rem;font-weight:700;color:#7dd3fc;letter-spacing:0.02em;">NSR Onboarding Pipeline &#8212; Mini Project</div>
+            <div style="font-size:0.8rem;color:#64748b;margin-top:2px;">Day 7 &middot; ETL/ELT &amp; Data Governance &middot; ~110 min</div>
+          </div>
+        </div>
+        <p style="color:#94a3b8;font-size:0.88rem;margin:0 0 16px 0;">Adamawa State has just completed a new enumeration round: 5,000 household records arrive as a single CSV export from field tablets. Your task: build the full staging-to-production pipeline &#8212; validate, quarantine bad rows, deduplicate, load with an upsert, and leave an NDP Act-compliant audit trail. Every step must be idempotent and traceable.</p>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+          <div style="flex:1;background:#071120;border-radius:999px;height:8px;overflow:hidden;">
+            <div id="d7mp-bar" style="height:100%;background:linear-gradient(90deg,#0ea5e9,#6366f1);border-radius:999px;width:0%;transition:width 0.5s;"></div>
+          </div>
+          <span id="d7mp-label" style="color:#7dd3fc;font-size:0.78rem;font-weight:600;white-space:nowrap;">0 / 6 complete</span>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+          <span style="font-size:0.75rem;color:#64748b;">Progress:</span>
+          <span id="d7mp-dot-1" style="font-size:0.78rem;color:#475569;">P1 &#9675;</span>
+          <span id="d7mp-dot-2" style="font-size:0.78rem;color:#475569;">P2 &#9675;</span>
+          <span id="d7mp-dot-3" style="font-size:0.78rem;color:#475569;">P3 &#9675;</span>
+          <span id="d7mp-dot-4" style="font-size:0.78rem;color:#475569;">P4 &#9675;</span>
+          <span id="d7mp-dot-5" style="font-size:0.78rem;color:#475569;">P5 &#9675;</span>
+          <span id="d7mp-dot-6" style="font-size:0.78rem;color:#475569;">P6 &#9675;</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+          <div style="background:#071120;border-radius:8px;padding:10px;text-align:center;border-top:2px solid #3b82f6;">
+            <div style="font-size:0.68rem;color:#60a5fa;font-weight:700;letter-spacing:0.06em;margin-bottom:3px;">PHASE 1</div>
+            <div style="font-size:0.82rem;font-weight:600;color:#e2e8f0;">Extract &amp; Validate</div>
+            <div style="font-size:0.72rem;color:#475569;">P1&#8211;P2 &middot; ~35 min</div>
+          </div>
+          <div style="background:#071120;border-radius:8px;padding:10px;text-align:center;border-top:2px solid #8b5cf6;">
+            <div style="font-size:0.68rem;color:#a78bfa;font-weight:700;letter-spacing:0.06em;margin-bottom:3px;">PHASE 2</div>
+            <div style="font-size:0.82rem;font-weight:600;color:#e2e8f0;">Transform &amp; Load</div>
+            <div style="font-size:0.72rem;color:#475569;">P3&#8211;P4 &middot; ~40 min</div>
+          </div>
+          <div style="background:#071120;border-radius:8px;padding:10px;text-align:center;border-top:2px solid #10b981;">
+            <div style="font-size:0.68rem;color:#34d399;font-weight:700;letter-spacing:0.06em;margin-bottom:3px;">PHASE 3</div>
+            <div style="font-size:0.82rem;font-weight:600;color:#e2e8f0;">Governance &amp; Lineage</div>
+            <div style="font-size:0.72rem;color:#475569;">P5&#8211;P6 &middot; ~35 min</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PHASE 1 -->
+      <div style="display:flex;align-items:center;gap:12px;margin:24px 0 16px;">
+        <div style="height:1px;flex:1;background:linear-gradient(90deg,#1e3a5f,transparent);"></div>
+        <div style="background:#1e3a5f;color:#60a5fa;font-size:0.72rem;font-weight:700;letter-spacing:0.1em;padding:4px 14px;border-radius:999px;">PHASE 1 &middot; EXTRACT &amp; VALIDATE</div>
+        <div style="height:1px;flex:1;background:linear-gradient(90deg,transparent,#1e3a5f);"></div>
+      </div>
+
+      <div class="d7mp-card" id="d7mp-puzzle-1" style="border:1px solid #1e3a5f;border-radius:10px;padding:18px;margin-bottom:14px;background:#080e18;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <span style="background:#1e3a5f;color:#60a5fa;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:999px;">Puzzle 1</span>
+          <span style="font-weight:700;color:#e2e8f0;font-size:0.95rem;">Stage and Profile the Raw Data</span>
+          <span style="margin-left:auto;font-size:0.72rem;background:#1e3a5f;color:#60a5fa;padding:2px 8px;border-radius:999px;">Extract</span>
+        </div>
+        <div class="callout concept" style="margin-bottom:12px;">
+          <div class="callout-title">Your task</div>
+          <p style="margin:0;">Create <code>nsr.stg_adamawa</code> as an unconstrained staging table (every column <code>TEXT</code>), then write a single validation report query that counts each data quality issue: missing <code>household_code</code>, invalid <code>pmt_score</code>, missing <code>head_name</code>, unresolvable <code>lga_name</code>, and duplicate codes.</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:4px;flex-wrap:wrap;">
+          <span id="d7mp-status-1" style="font-size:0.82rem;color:#475569;flex:1;">&#9675; Not started</span>
+          <button onclick="d7mpOpen('p1')" id="d7mp-open-1" style="padding:7px 20px;border-radius:6px;border:1px solid #2563eb;background:#0f2a4a;color:#7dd3fc;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;">&#9654; Open SQL Editor</button>
+        </div>
+      </div>
+
+      <div class="d7mp-card" id="d7mp-puzzle-2" style="border:1px solid #1e3a5f;border-radius:10px;padding:18px;margin-bottom:14px;background:#080e18;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <span style="background:#1e3a5f;color:#60a5fa;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:999px;">Puzzle 2</span>
+          <span style="font-weight:700;color:#e2e8f0;font-size:0.95rem;">Quarantine Bad Rows</span>
+          <span style="margin-left:auto;font-size:0.72rem;background:#1e3a5f;color:#60a5fa;padding:2px 8px;border-radius:999px;">Extract</span>
+        </div>
+        <div class="callout concept" style="margin-bottom:12px;">
+          <div class="callout-title">Your task</div>
+          <p style="margin:0;">Create <code>nsr.stg_rejects</code> and insert every row from staging that fails at least one validation rule, together with a <code>reason</code> column explaining why. Never silently drop bad rows &#8212; they must be traceable for the field team to correct and resubmit.</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:4px;flex-wrap:wrap;">
+          <span id="d7mp-status-2" style="font-size:0.82rem;color:#475569;flex:1;">&#9675; Not started</span>
+          <button onclick="d7mpOpen('p2')" id="d7mp-open-2" style="padding:7px 20px;border-radius:6px;border:1px solid #2563eb;background:#0f2a4a;color:#7dd3fc;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;">&#9654; Open SQL Editor</button>
+        </div>
+      </div>
+
+      <!-- PHASE 2 -->
+      <div style="display:flex;align-items:center;gap:12px;margin:24px 0 16px;">
+        <div style="height:1px;flex:1;background:linear-gradient(90deg,#2d1b69,transparent);"></div>
+        <div style="background:#2d1b69;color:#a78bfa;font-size:0.72rem;font-weight:700;letter-spacing:0.1em;padding:4px 14px;border-radius:999px;">PHASE 2 &middot; TRANSFORM &amp; LOAD</div>
+        <div style="height:1px;flex:1;background:linear-gradient(90deg,transparent,#2d1b69);"></div>
+      </div>
+
+      <div class="d7mp-card" id="d7mp-puzzle-3" style="border:1px solid #2d1b69;border-radius:10px;padding:18px;margin-bottom:14px;background:#080e18;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <span style="background:#2d1b69;color:#a78bfa;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:999px;">Puzzle 3</span>
+          <span style="font-weight:700;color:#e2e8f0;font-size:0.95rem;">Deduplicate the Staging Set</span>
+          <span style="margin-left:auto;font-size:0.72rem;background:#2d1b69;color:#a78bfa;padding:2px 8px;border-radius:999px;">Transform</span>
+        </div>
+        <div class="callout concept" style="margin-bottom:12px;">
+          <div class="callout-title">Your task</div>
+          <p style="margin:0;">Field tablets re-submitted some households more than once. Write a <code>SELECT DISTINCT ON (household_code) ... ORDER BY household_code, loaded_at DESC</code> query that keeps only the most recently submitted version of each household.</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:4px;flex-wrap:wrap;">
+          <span id="d7mp-status-3" style="font-size:0.82rem;color:#475569;flex:1;">&#9675; Not started</span>
+          <button onclick="d7mpOpen('p3')" id="d7mp-open-3" style="padding:7px 20px;border-radius:6px;border:1px solid #7c3aed;background:#2d1b69;color:#c4b5fd;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;">&#9654; Open SQL Editor</button>
+        </div>
+      </div>
+
+      <div class="d7mp-card" id="d7mp-puzzle-4" style="border:1px solid #2d1b69;border-radius:10px;padding:18px;margin-bottom:14px;background:#080e18;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <span style="background:#2d1b69;color:#a78bfa;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:999px;">Puzzle 4</span>
+          <span style="font-weight:700;color:#e2e8f0;font-size:0.95rem;">Promote to Production with an Upsert</span>
+          <span style="margin-left:auto;font-size:0.72rem;background:#2d1b69;color:#a78bfa;padding:2px 8px;border-radius:999px;">Load</span>
+        </div>
+        <div class="callout concept" style="margin-bottom:12px;">
+          <div class="callout-title">Your task</div>
+          <p style="margin:0;">Wrap the load in <code>BEGIN ... COMMIT</code>. Insert the clean, deduplicated rows into <code>nsr.households</code> using <code>INSERT ... ON CONFLICT (household_code) DO UPDATE</code> so a re-enumeration refreshes existing rows instead of erroring or duplicating.</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:4px;flex-wrap:wrap;">
+          <span id="d7mp-status-4" style="font-size:0.82rem;color:#475569;flex:1;">&#9675; Not started</span>
+          <button onclick="d7mpOpen('p4')" id="d7mp-open-4" style="padding:7px 20px;border-radius:6px;border:1px solid #7c3aed;background:#2d1b69;color:#c4b5fd;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;">&#9654; Open SQL Editor</button>
+        </div>
+      </div>
+
+      <!-- PHASE 3 -->
+      <div style="display:flex;align-items:center;gap:12px;margin:24px 0 16px;">
+        <div style="height:1px;flex:1;background:linear-gradient(90deg,#064e3b,transparent);"></div>
+        <div style="background:#064e3b;color:#34d399;font-size:0.72rem;font-weight:700;letter-spacing:0.1em;padding:4px 14px;border-radius:999px;">PHASE 3 &middot; GOVERNANCE &amp; LINEAGE</div>
+        <div style="height:1px;flex:1;background:linear-gradient(90deg,transparent,#064e3b);"></div>
+      </div>
+
+      <div class="d7mp-card" id="d7mp-puzzle-5" style="border:1px solid #064e3b;border-radius:10px;padding:18px;margin-bottom:14px;background:#080e18;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <span style="background:#064e3b;color:#34d399;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:999px;">Puzzle 5</span>
+          <span style="font-weight:700;color:#e2e8f0;font-size:0.95rem;">Record an NDP Act-Compliant Lineage Entry</span>
+          <span style="margin-left:auto;font-size:0.72rem;background:#064e3b;color:#34d399;padding:2px 8px;border-radius:999px;">Governance</span>
+        </div>
+        <div class="callout concept" style="margin-bottom:12px;">
+          <div class="callout-title">Your task</div>
+          <p style="margin:0;">Insert one row into <code>nsr.data_lineage</code> for this batch, capturing <code>table_name</code>, <code>source_system</code>, <code>record_count</code>, <code>batch_ref</code>, <code>lawful_basis</code> (cite NDP Act 2023), and <code>data_owner</code>. Without this row, the load has no audit trail.</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:4px;flex-wrap:wrap;">
+          <span id="d7mp-status-5" style="font-size:0.82rem;color:#475569;flex:1;">&#9675; Not started</span>
+          <button onclick="d7mpOpen('p5')" id="d7mp-open-5" style="padding:7px 20px;border-radius:6px;border:1px solid #059669;background:#064e3b;color:#6ee7b7;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;">&#9654; Open SQL Editor</button>
+        </div>
+      </div>
+
+      <div class="d7mp-card" id="d7mp-puzzle-6" style="border:1px solid #064e3b;border-radius:10px;padding:18px;margin-bottom:14px;background:#080e18;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <span style="background:#064e3b;color:#34d399;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:999px;">Puzzle 6</span>
+          <span style="font-weight:700;color:#e2e8f0;font-size:0.95rem;">Prove Idempotency</span>
+          <span style="margin-left:auto;font-size:0.72rem;background:#064e3b;color:#34d399;padding:2px 8px;border-radius:999px;">Governance</span>
+        </div>
+        <div class="callout concept" style="margin-bottom:12px;">
+          <div class="callout-title">Your task</div>
+          <p style="margin:0;">A field officer accidentally re-runs the whole pipeline. Write a query that re-runs the Puzzle 4 load and confirms the household count is unchanged (no duplicates created), then query <code>nsr.data_lineage</code> ordered by <code>import_date DESC</code> to show the full audit history of this batch.</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:4px;flex-wrap:wrap;">
+          <span id="d7mp-status-6" style="font-size:0.82rem;color:#475569;flex:1;">&#9675; Not started</span>
+          <button onclick="d7mpOpen('p6')" id="d7mp-open-6" style="padding:7px 20px;border-radius:6px;border:1px solid #c2410c;background:#431407;color:#fdba74;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;">&#9654; Open SQL Editor</button>
+        </div>
+      </div>
+
+      <!-- Verification suite -->
+      <div style="background:#0d1929;border:1px solid #1e3a5f;border-radius:10px;padding:16px 18px;margin-top:8px;">
+        <div style="font-size:0.82rem;font-weight:700;color:#7dd3fc;margin-bottom:10px;">&#10004; Final Verification &#8212; run after all 6 puzzles</div>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">sql &#8211; verification suite</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="cmt">-- 1. Confirm reject table captured bad rows</span>
+<span class="kw">SELECT</span> reason, <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> nsr.stg_rejects <span class="kw">GROUP BY</span> reason;
+
+<span class="cmt">-- 2. Confirm no duplicate household_codes reached production</span>
+<span class="kw">SELECT</span> household_code, <span class="fn">COUNT</span>(*)
+<span class="kw">FROM</span>   nsr.households <span class="kw">GROUP BY</span> household_code <span class="kw">HAVING COUNT</span>(*) > <span class="num">1</span>;
+
+<span class="cmt">-- 3. Confirm a lineage record with lawful basis exists for this batch</span>
+<span class="kw">SELECT</span> batch_ref, record_count, lawful_basis, data_owner, import_date
+<span class="kw">FROM</span>   nsr.data_lineage <span class="kw">ORDER BY</span> import_date <span class="kw">DESC LIMIT</span> <span class="num">5</span>;</pre>
+        </div>
+      </div>
+
+      <!-- INSTRUCTOR MONITORING DASHBOARD -->
+      <div class="instructor-block instructor-only" style="margin-top:24px;">
+        <div style="background:#0d1929;border:1.5px solid #7c3aed;border-radius:12px;overflow:hidden;">
+          <div style="background:linear-gradient(90deg,#1a0a3d,#0f172a);padding:12px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:1rem;">&#128202;</span>
+              <span style="color:#e2e8f0;font-weight:700;font-size:0.88rem;letter-spacing:0.5px;">LIVE TEAM MONITOR &#8212; Day 7 Mini Project</span>
+              <span id="d7dash-live-dot" style="width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block;"></span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span id="d7dash-last-update" style="color:#475569;font-size:0.72rem;"></span>
+              <button onclick="d7dashFetch()" style="background:none;border:1px solid #7c3aed;color:#a78bfa;font-size:0.72rem;padding:3px 10px;border-radius:5px;cursor:pointer;font-family:inherit;">&#8635; Refresh</button>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#1e1b4b;">
+            <div style="background:#0a0f1a;padding:14px 16px;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                <span style="font-size:1rem;">&#128309;</span>
+                <span style="font-weight:700;color:#7dd3fc;font-size:0.88rem;">Team A</span>
+                <span id="d7dash-score-a" style="margin-left:auto;background:#1e3a5f;color:#7dd3fc;font-size:0.72rem;font-weight:700;padding:2px 10px;border-radius:999px;">0 / 6</span>
+              </div>
+              <div id="d7dash-members-a" style="font-size:0.78rem;color:#475569;">Loading&#8230;</div>
+            </div>
+            <div style="background:#0a0f1a;padding:14px 16px;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                <span style="font-size:1rem;">&#128992;</span>
+                <span style="font-weight:700;color:#fbbf24;font-size:0.88rem;">Team B</span>
+                <span id="d7dash-score-b" style="margin-left:auto;background:#3d2200;color:#fbbf24;font-size:0.72rem;font-weight:700;padding:2px 10px;border-radius:999px;">0 / 6</span>
+              </div>
+              <div id="d7dash-members-b" style="font-size:0.78rem;color:#475569;">Loading&#8230;</div>
+            </div>
+          </div>
+          <div style="background:#071120;padding:8px 16px;display:flex;gap:16px;flex-wrap:wrap;border-top:1px solid #1e1b4b;">
+            <span style="font-size:0.68rem;color:#475569;">Legend:</span>
+            <span style="font-size:0.68rem;color:#22c55e;">&#10003; Done</span>
+            <span style="font-size:0.68rem;color:#334155;">&#9675; Not yet</span>
+            <span style="font-size:0.68rem;color:#64748b;">P1=Stage &middot; P2=Quarantine &middot; P3=Dedup &middot; P4=Upsert &middot; P5=Lineage &middot; P6=Idempotency</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end tab-d7-miniproject -->
+
+<!-- SQL Editor Modal for Day 7 Mini Project -->
+<div id="d7mp-editor-modal" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.88);align-items:center;justify-content:center;">
+  <div onclick="d7mpClose()" style="position:absolute;inset:0;"></div>
+  <div style="position:relative;background:#0d1929;border:1px solid #1e293b;border-radius:12px;width:94vw;max-width:1180px;height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,0.7);">
+    <div style="background:#071120;border-bottom:1px solid #1e293b;padding:11px 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:1rem;">&#128187;</span>
+        <span id="d7mp-ed-title" style="color:#e2e8f0;font-weight:700;font-size:0.92rem;"></span>
+        <span id="d7mp-ed-phase" style="background:#1e3a5f;color:#7dd3fc;font-size:0.6rem;padding:1px 8px;border-radius:999px;font-weight:700;letter-spacing:0.5px;"></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button id="d7mp-run-btn" onclick="d7mpRun()" disabled style="background:#0f172a;color:#475569;border:1px solid #334155;border-radius:6px;padding:6px 22px;font-size:0.84rem;font-weight:700;cursor:not-allowed;font-family:inherit;opacity:0.5;">&#9654; Run</button>
+        <button onclick="d7mpClose()" style="background:none;border:1px solid #334155;color:#64748b;border-radius:6px;padding:6px 12px;font-size:0.82rem;cursor:pointer;font-family:inherit;">&#10005; Close</button>
+      </div>
+    </div>
+    <div style="display:flex;flex:1;overflow:hidden;min-height:0;">
+      <div style="width:272px;flex-shrink:0;background:#071120;border-right:1px solid #1e293b;overflow-y:auto;padding:15px 13px;font-family:system-ui,sans-serif;">
+        <div style="font-size:0.61rem;color:#475569;text-transform:uppercase;letter-spacing:0.9px;margin-bottom:7px;font-weight:700;">Task</div>
+        <div id="d7mp-ed-desc" style="color:#94a3b8;font-size:0.78rem;line-height:1.65;margin-bottom:14px;white-space:pre-wrap;"></div>
+        <div style="font-size:0.61rem;color:#475569;text-transform:uppercase;letter-spacing:0.9px;margin-bottom:7px;font-weight:700;">Hints</div>
+        <div id="d7mp-ed-hints" style="margin-bottom:14px;"></div>
+        <div style="font-size:0.61rem;color:#475569;text-transform:uppercase;letter-spacing:0.9px;margin-bottom:7px;font-weight:700;">Starter Query</div>
+        <pre id="d7mp-ed-starter" style="font-family:monospace;font-size:0.63rem;color:#94a3b8;background:#050c18;border:1px solid #1e293b;border-radius:5px;padding:9px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 14px 0;"></pre>
+        <div style="font-size:0.61rem;color:#475569;text-transform:uppercase;letter-spacing:0.9px;margin-bottom:7px;font-weight:700;">Expected Output</div>
+        <pre id="d7mp-ed-expected" style="font-family:monospace;font-size:0.65rem;color:#4ade80;background:#050c18;border:1px solid #1e293b;border-radius:5px;padding:9px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0;"></pre>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;">
+        <div style="background:#0d1929;border-bottom:1px solid #1e293b;padding:5px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+          <span style="font-size:0.67rem;color:#475569;font-family:monospace;">psql -U postgres -d lab_nsr</span>
+          <button onclick="document.getElementById('d7mp-ed-code').value=''" style="background:none;border:none;color:#334155;font-size:0.67rem;cursor:pointer;font-family:inherit;padding:0;">Clear</button>
+        </div>
+        <textarea id="d7mp-ed-code" oninput="d7mpEditorInput()" style="flex:1;background:#050c18;color:#e2e8f0;border:none;padding:14px 16px;font-family:'Cascadia Code','Fira Code',Consolas,monospace;font-size:0.8rem;line-height:1.7;resize:none;outline:none;min-height:0;max-height:50%;" spellcheck="false" placeholder="-- Type your SQL here, then click Run&#10;-- The starter query is shown in the panel on the left"></textarea>
+        <div id="d7mp-type-hint" style="background:#0d1929;border-top:1px solid #1e293b;padding:6px 14px;font-size:0.72rem;color:#f59e0b;display:flex;align-items:center;gap:6px;flex-shrink:0;">
+          <span>&#9998;</span> Type your SQL query above to enable the Run button.
+        </div>
+        <div style="background:#050c18;border-top:1px solid #1e293b;padding:5px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+          <span style="font-size:0.67rem;color:#475569;font-family:monospace;">Output</span>
+          <button onclick="document.getElementById('d7mp-ed-terminal').innerHTML=''" style="background:none;border:none;color:#334155;font-size:0.67rem;cursor:pointer;font-family:inherit;padding:0;">Clear</button>
+        </div>
+        <div id="d7mp-ed-terminal" style="flex:1;overflow-y:auto;padding:10px 14px;font-family:'Cascadia Code','Fira Code',Consolas,monospace;font-size:0.75rem;line-height:1.75;background:#050c18;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var KEY='d7mp_v1';
+  var _curKey=null, _selectedTeam=null, _dashTimer=null;
+
+  var D7P={
+    p1:{
+      title:'Puzzle 1 — Stage and Profile the Raw Data',phase:'Extract',
+      desc:'Create nsr.stg_adamawa as an unconstrained staging table (all TEXT columns), then write one validation report query that counts each issue type: missing household_code, invalid pmt_score, missing head_name, unresolvable lga_name, duplicate codes.',
+      starter:"CREATE TABLE nsr.stg_adamawa (\n  household_code  TEXT,\n  lga_name        TEXT,\n  head_name       TEXT,\n  pmt_score       TEXT,\n  loaded_at       TIMESTAMPTZ DEFAULT now()\n);\n\n-- Validation report\nSELECT issue, COUNT(*) AS row_count\nFROM (\n  SELECT 'missing_household_code' AS issue\n  FROM nsr.stg_adamawa WHERE household_code IS NULL OR trim(household_code) = ''\n  UNION ALL\n  SELECT 'invalid_pmt_score'\n  FROM nsr.stg_adamawa WHERE pmt_score !~ '^[0-9]+(\\.[0-9]+)?$'\n  UNION ALL\n  SELECT 'missing_head_name'\n  FROM nsr.stg_adamawa WHERE head_name IS NULL OR trim(head_name) = ''\n  UNION ALL\n  SELECT 'unresolvable_lga'\n  FROM nsr.stg_adamawa s\n  LEFT JOIN nsr.lgas l ON l.lga_name = s.lga_name\n  WHERE l.lga_id IS NULL\n  UNION ALL\n  SELECT 'duplicate_in_staging'\n  FROM (SELECT household_code FROM nsr.stg_adamawa GROUP BY household_code HAVING COUNT(*) > 1) d\n) errors\nGROUP BY issue\nORDER BY row_count DESC;",
+      hints:['Staging tables use TEXT for every column — never cast types until after validation','UNION ALL combines multiple issue counts into a single report','A regex like ^[0-9]+(\\.[0-9]+)?$ checks pmt_score looks numeric before casting'],
+      output:['CREATE TABLE','','        issue            | row_count','-------------------------+-----------',' duplicate_in_staging    |        12',' unresolvable_lga        |         4',' invalid_pmt_score       |         3','(3 rows)'],
+      validate:function(sql){
+        if(!/CREATE\s+TABLE/i.test(sql)) return{ok:false,msg:'Start by creating the staging table: CREATE TABLE nsr.stg_adamawa (...) with TEXT columns.'};
+        if(!/stg_adamawa/i.test(sql)) return{ok:false,msg:'Name the staging table nsr.stg_adamawa.'};
+        if(!/SELECT/i.test(sql.split(/CREATE\s+TABLE/i)[1]||'')) return{ok:false,msg:'Add a validation report query (SELECT ... UNION ALL ...) after creating the table.'};
+        if(!/UNION/i.test(sql)) return{ok:false,msg:'Combine multiple issue checks with UNION ALL into one report.'};
+        if(!/household_code|pmt_score|head_name|lga_name/i.test(sql)) return{ok:false,msg:'Your validation report should check household_code, pmt_score, head_name and lga_name.'};
+        return{ok:true};
+      }
+    },
+    p2:{
+      title:'Puzzle 2 — Quarantine Bad Rows',phase:'Extract',
+      desc:'Create nsr.stg_rejects and insert every row from staging that fails at least one validation rule, with a reason column.',
+      starter:"CREATE TABLE nsr.stg_rejects (\n  household_code  TEXT,\n  reason          TEXT,\n  rejected_at     TIMESTAMPTZ DEFAULT now()\n);\n\nINSERT INTO nsr.stg_rejects (household_code, reason)\nSELECT s.household_code,\n       CASE\n         WHEN s.household_code IS NULL OR trim(s.household_code) = ''\n              THEN 'missing_household_code'\n         WHEN s.pmt_score !~ '^[0-9]+(\\.[0-9]+)?$'\n              THEN 'invalid_pmt_score'\n         WHEN s.head_name IS NULL OR trim(s.head_name) = ''\n              THEN 'missing_head_name'\n         ELSE 'unresolvable_lga'\n       END AS reason\nFROM nsr.stg_adamawa s\nLEFT JOIN nsr.lgas l ON l.lga_name = s.lga_name\nWHERE s.household_code IS NULL OR trim(s.household_code) = ''\n   OR s.pmt_score !~ '^[0-9]+(\\.[0-9]+)?$'\n   OR s.head_name IS NULL OR trim(s.head_name) = ''\n   OR l.lga_id IS NULL;",
+      hints:['One reject table holds all failure types — the reason column distinguishes them','CASE WHEN ... ELSE lets you label the specific reason per row','The WHERE clause should OR together every validation rule from Puzzle 1'],
+      output:['CREATE TABLE','INSERT 0 19','','SELECT reason, COUNT(*) FROM nsr.stg_rejects GROUP BY reason;',' reason                 | count',' duplicate_in_staging   |    12',' unresolvable_lga       |     4'],
+      validate:function(sql){
+        if(!/CREATE\s+TABLE/i.test(sql)) return{ok:false,msg:'Create the quarantine table first: CREATE TABLE nsr.stg_rejects (...)'};
+        if(!/stg_rejects/i.test(sql)) return{ok:false,msg:'Name the quarantine table nsr.stg_rejects.'};
+        if(!/reason/i.test(sql)) return{ok:false,msg:'Include a reason column explaining why each row was rejected.'};
+        if(!/INSERT/i.test(sql)) return{ok:false,msg:'Insert the failing rows into nsr.stg_rejects using INSERT INTO ... SELECT ...'};
+        if(!/WHERE/i.test(sql)) return{ok:false,msg:'Filter for rows that fail at least one validation rule using WHERE ... OR ...'};
+        return{ok:true};
+      }
+    },
+    p3:{
+      title:'Puzzle 3 — Deduplicate the Staging Set',phase:'Transform',
+      desc:'Field tablets re-submitted some households more than once. Write a query that keeps only the most recently loaded version of each household_code.',
+      starter:"SELECT DISTINCT ON (household_code)\n    household_code,\n    lga_name,\n    head_name,\n    pmt_score,\n    loaded_at\nFROM   nsr.stg_adamawa\nWHERE  household_code IS NOT NULL\n  AND  trim(household_code) <> ''\nORDER BY household_code, loaded_at DESC;",
+      hints:['DISTINCT ON (col) keeps the first row per group after sorting','ORDER BY must start with the same column(s) as DISTINCT ON','ORDER BY household_code, loaded_at DESC keeps the newest submission'],
+      output:['  household_code | lga_name | head_name  | pmt_score | loaded_at',' -----------------+----------+------------+-----------+------------',' AD-001          | Yola N.  | Musa Bello | 18        | 2026-06-30 ...','(4,988 rows)'],
+      validate:function(sql){
+        if(!/DISTINCT\s+ON/i.test(sql)) return{ok:false,msg:'Use SELECT DISTINCT ON (household_code) ... to deduplicate.'};
+        if(!/household_code/i.test(sql)) return{ok:false,msg:'Deduplicate on the household_code column.'};
+        if(!/ORDER\s+BY/i.test(sql)) return{ok:false,msg:'DISTINCT ON requires an ORDER BY — start it with household_code, then loaded_at DESC to keep the newest row.'};
+        if(!/loaded_at/i.test(sql)) return{ok:false,msg:'Order by loaded_at DESC so the most recently submitted version is the one kept.'};
+        return{ok:true};
+      }
+    },
+    p4:{
+      title:'Puzzle 4 — Promote to Production with an Upsert',phase:'Load',
+      desc:'Wrap the load in BEGIN...COMMIT. Insert the clean, deduplicated rows into nsr.households using ON CONFLICT (household_code) DO UPDATE so re-runs refresh rather than duplicate.',
+      starter:"BEGIN;\n\nINSERT INTO nsr.households (household_code, lga_id, head_name, pmt_score)\nSELECT DISTINCT ON (s.household_code)\n    s.household_code,\n    l.lga_id,\n    s.head_name,\n    s.pmt_score::NUMERIC\nFROM   nsr.stg_adamawa s\nJOIN   nsr.lgas l ON l.lga_name = s.lga_name\nWHERE  s.household_code IS NOT NULL\n  AND  trim(s.household_code) <> ''\n  AND  s.pmt_score ~ '^[0-9]+(\\.[0-9]+)?$'\n  AND  s.head_name IS NOT NULL\nORDER BY s.household_code, s.loaded_at DESC\nON CONFLICT (household_code)\nDO UPDATE SET\n  head_name = EXCLUDED.head_name,\n  pmt_score = EXCLUDED.pmt_score,\n  lga_id    = EXCLUDED.lga_id;\n\nCOMMIT;",
+      hints:['BEGIN ... COMMIT ensures the whole load succeeds or none of it does','ON CONFLICT (household_code) DO UPDATE SET col = EXCLUDED.col refreshes existing rows','DO UPDATE (not DO NOTHING) is what makes re-enumeration update existing households'],
+      output:['BEGIN','INSERT 0 4988','COMMIT'],
+      validate:function(sql){
+        if(!/BEGIN/i.test(sql)) return{ok:false,msg:'Wrap the load in a transaction: start with BEGIN;'};
+        if(!/COMMIT/i.test(sql)) return{ok:false,msg:'Close the transaction with COMMIT; after the INSERT.'};
+        if(!/INSERT\s+INTO/i.test(sql)) return{ok:false,msg:'Write the INSERT INTO nsr.households (...) SELECT ... statement.'};
+        if(!/ON\s+CONFLICT/i.test(sql)) return{ok:false,msg:'Handle re-runs with ON CONFLICT (household_code) DO UPDATE ... — this is what makes the load idempotent.'};
+        if(!/DO\s+UPDATE/i.test(sql)) return{ok:false,msg:'Use DO UPDATE (not DO NOTHING) so a re-enumeration refreshes existing households with new data.'};
+        return{ok:true};
+      }
+    },
+    p5:{
+      title:'Puzzle 5 — Record an NDP Act-Compliant Lineage Entry',phase:'Governance',
+      desc:'Insert one row into nsr.data_lineage for this batch: table_name, source_system, record_count, batch_ref, lawful_basis (cite NDP Act 2023), data_owner.',
+      starter:"INSERT INTO nsr.data_lineage\n  (table_name, source_system, record_count, batch_ref, lawful_basis, data_owner)\nSELECT\n    'nsr.households',\n    'Adamawa Enumeration 2026',\n    COUNT(*),\n    'ADM-2026-R1',\n    'NDP Act 2023 s.25 - Social Protection Mandate',\n    'NSR Programme Team'\nFROM nsr.stg_adamawa;",
+      hints:['Every load must produce exactly one lineage row capturing what, how many, and under what legal authority','lawful_basis should cite a specific clause, not just say "compliant"','data_owner names the accountable team, not an individual — for accountability under audit'],
+      output:['INSERT 0 1','','SELECT batch_ref, record_count, lawful_basis FROM nsr.data_lineage ORDER BY import_date DESC LIMIT 1;',' batch_ref     | record_count | lawful_basis',' ADM-2026-R1   |         4988 | NDP Act 2023 s.25 ...'],
+      validate:function(sql){
+        if(!/INSERT\s+INTO/i.test(sql)) return{ok:false,msg:'Insert a row into nsr.data_lineage using INSERT INTO ... SELECT ...'};
+        if(!/data_lineage/i.test(sql)) return{ok:false,msg:'The target table is nsr.data_lineage.'};
+        if(!/lawful_basis|NDP/i.test(sql)) return{ok:false,msg:'Include a lawful_basis value citing the NDP Act 2023 — this is the legal authority for processing this data.'};
+        if(!/batch_ref/i.test(sql)) return{ok:false,msg:'Include a batch_ref so this load can be traced back to a specific submission.'};
+        if(!/data_owner/i.test(sql)) return{ok:false,msg:'Include a data_owner — the team accountable for this data under audit.'};
+        return{ok:true};
+      }
+    },
+    p6:{
+      title:'Puzzle 6 — Prove Idempotency',phase:'Governance',
+      desc:'A field officer accidentally re-runs the pipeline. Write a query confirming the household count is unchanged after a re-run, then query nsr.data_lineage ordered by import_date DESC to show the audit history.',
+      starter:"-- Before re-run: capture count\nSELECT COUNT(*) AS before_count FROM nsr.households;\n\n-- Re-run the Puzzle 4 upsert here (paste it), then:\n\n-- After re-run: confirm count unchanged\nSELECT COUNT(*) AS after_count FROM nsr.households;\n-- before_count must equal after_count -- ON CONFLICT DO UPDATE refreshes, never duplicates\n\n-- Full audit trail for this batch\nSELECT batch_ref, record_count, import_date, lawful_basis\nFROM   nsr.data_lineage\nORDER BY import_date DESC;",
+      hints:['Idempotent means: running it twice produces the same end state as running it once','Compare COUNT(*) before and after the re-run — they must match exactly','ORDER BY import_date DESC on data_lineage gives the full chronological audit trail'],
+      output:[' before_count',' -------------','          4988','','SELECT COUNT(*) AS after_count FROM nsr.households;',' after_count','--------------','        4988','','  batch_ref    | record_count | import_date','---------------+--------------+-------------',' ADM-2026-R1   |         4988 | 2026-07-01 ...'],
+      validate:function(sql){
+        if(!/COUNT/i.test(sql)) return{ok:false,msg:'Use COUNT(*) to capture the household count before and after the re-run.'};
+        if(!/before|after/i.test(sql)) return{ok:false,msg:'Label your before and after counts clearly (e.g. before_count, after_count) so the comparison is explicit.'};
+        if(!/data_lineage/i.test(sql)) return{ok:false,msg:'Query nsr.data_lineage to show the full audit trail for this batch.'};
+        if(!/ORDER\s+BY/i.test(sql)) return{ok:false,msg:'Order the lineage query by import_date DESC to show the most recent loads first.'};
+        return{ok:true};
+      }
+    }
+  };
+
+  function getP(){try{return JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){return{};}}
+  function saveP(d){try{localStorage.setItem(KEY,JSON.stringify(d));}catch(e){}}
+  function getName(){return localStorage.getItem('cwr_participant_name')||'';}
+  function getTeam(){return localStorage.getItem('cwr_team')||'';}
+  function fbOk(){return window.CWR_FIREBASE&&window.CWR_FIREBASE.databaseURL&&!window.CWR_FIREBASE.databaseURL.includes('REPLACE');}
+  function fbUrl(path){return window.CWR_FIREBASE.databaseURL+path;}
+  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+  function d7mpSyncFb(){
+    if(!fbOk())return;
+    var name=getName();if(!name)return;
+    var team=getTeam();
+    var safeKey=name.replace(/[^a-zA-Z0-9_-]/g,'_').toLowerCase().slice(0,40);
+    var p=getP();var puzzles={};
+    ['p1','p2','p3','p4','p5','p6'].forEach(function(k){puzzles[k]=p[k]||'todo';});
+    fetch(fbUrl('/d7_workshop/'+safeKey+'.json'),{
+      method:'PUT',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name:name,team:team,updated:new Date().toISOString(),puzzles:puzzles})
+    }).catch(function(){});
+  }
+
+  window.d7mpPickTeam=function(t){
+    _selectedTeam=t;
+    ['A','B'].forEach(function(x){
+      var btn=document.getElementById('d7mp-team-btn-'+x);if(!btn)return;
+      var sel=(x===t);
+      btn.style.borderColor=sel?(x==='A'?'#2563eb':'#d97706'):'#334155';
+      btn.style.background=sel?(x==='A'?'#0f2a4a':'#3d2200'):'#071120';
+    });
+  };
+
+  window.d7mpRegister=function(){
+    var err=document.getElementById('d7mp-reg-error');
+    if(!_selectedTeam){if(err){err.textContent='Please select a team first.';err.style.display='block';}return;}
+    var inp=document.getElementById('d7mp-name-input');
+    var name=inp?inp.value.trim():'';
+    if(!name){if(inp)inp.style.borderColor='#ef4444';if(err){err.textContent='Please enter your name.';err.style.display='block';}return;}
+    localStorage.setItem('cwr_participant_name',name);
+    localStorage.setItem('cwr_team',_selectedTeam);
+    updateRegBanner();d7mpSyncFb();
+  };
+
+  window.d7mpShowReg=function(){
+    var reg=document.getElementById('d7mp-registered');
+    var unreg=document.getElementById('d7mp-unregistered');
+    if(reg)reg.style.display='none';
+    if(unreg)unreg.style.display='block';
+    var t=getTeam();if(t){_selectedTeam=t;d7mpPickTeam(t);}
+    var inp=document.getElementById('d7mp-name-input');
+    if(inp)inp.value=getName();
+  };
+
+  function updateRegBanner(){
+    var name=getName(),team=getTeam();
+    var reg=document.getElementById('d7mp-registered');
+    var unreg=document.getElementById('d7mp-unregistered');
+    var badge=document.getElementById('d7mp-badge-text');
+    if(name&&team){
+      if(reg)reg.style.display='flex';
+      if(unreg)unreg.style.display='none';
+      if(badge){
+        var clr=team==='A'?'#7dd3fc':'#fbbf24';
+        badge.innerHTML='<span style="color:'+clr+'">Team '+esc(team)+'</span> &nbsp;&middot;&nbsp; <span style="color:#e2e8f0;">'+esc(name)+'</span>';
+      }
+    }else{
+      if(reg)reg.style.display='none';
+      if(unreg)unreg.style.display='block';
+      var t=getTeam();if(t){_selectedTeam=t;d7mpPickTeam(t);}
+      var inp=document.getElementById('d7mp-name-input');
+      if(inp&&name)inp.value=name;
+    }
+  }
+
+  function refresh(){
+    var p=getP();var done=0;
+    ['p1','p2','p3','p4','p5','p6'].forEach(function(k,i){
+      var n=i+1,isDone=p[k]==='done';
+      if(isDone)done++;
+      var dot=document.getElementById('d7mp-dot-'+n);
+      var st=document.getElementById('d7mp-status-'+n);
+      var btn=document.getElementById('d7mp-open-'+n);
+      if(dot){dot.textContent='P'+n+' '+(isDone?'✅':'○');dot.style.color=isDone?'#22c55e':'#475569';}
+      if(st){st.textContent=isDone?'✅ Completed':'○ Not started';st.style.color=isDone?'#22c55e':'#475569';}
+      if(btn&&isDone){btn.textContent='✅ Done — Re-open';btn.style.background='#14532d';btn.style.borderColor='#22c55e';btn.style.color='#bbf7d0';}
+      else if(btn&&!isDone){btn.textContent='▶ Open SQL Editor';}
+    });
+    var bar=document.getElementById('d7mp-bar');
+    var lbl=document.getElementById('d7mp-label');
+    if(bar)bar.style.width=(done*100/6)+'%';
+    if(lbl)lbl.textContent=done+' / 6 complete';
+  }
+
+  window.d7mpEditorInput=function(){
+    var code=document.getElementById('d7mp-ed-code');
+    var rb=document.getElementById('d7mp-run-btn');
+    var hint=document.getElementById('d7mp-type-hint');
+    var hasCode=code&&code.value.trim().length>=4;
+    if(rb){
+      rb.disabled=!hasCode;
+      rb.style.opacity=hasCode?'1':'0.5';
+      rb.style.cursor=hasCode?'pointer':'not-allowed';
+      rb.style.background=hasCode?'#2563eb':'#0f172a';
+      rb.style.borderColor=hasCode?'#2563eb':'#334155';
+      rb.style.color=hasCode?'#fff':'#475569';
+    }
+    if(hint)hint.style.display=hasCode?'none':'flex';
+  };
+
+  window.d7mpOpen=function(key){
+    _curKey=key;
+    var pz=D7P[key];if(!pz)return;
+    var code=document.getElementById('d7mp-ed-code');
+    var term=document.getElementById('d7mp-ed-terminal');
+    var rb=document.getElementById('d7mp-run-btn');
+    document.getElementById('d7mp-ed-title').textContent=pz.title;
+    document.getElementById('d7mp-ed-phase').textContent=pz.phase;
+    document.getElementById('d7mp-ed-desc').textContent=pz.desc;
+    document.getElementById('d7mp-ed-hints').innerHTML=pz.hints.map(function(h){
+      return '<div style="background:#071120;border-left:2px solid #2563eb;border-radius:0 4px 4px 0;padding:5px 8px;margin-bottom:5px;color:#7dd3fc;font-size:0.72rem;line-height:1.5;">'+esc(h)+'</div>';
+    }).join('');
+    document.getElementById('d7mp-ed-expected').textContent=pz.output.join('\n');
+    var starterEl=document.getElementById('d7mp-ed-starter');
+    if(starterEl)starterEl.textContent=pz.starter;
+    if(code){code.value='';code.dataset.key=key;}
+    if(term)term.innerHTML='';
+    var isDone=(getP()[key]==='done');
+    if(rb){
+      if(isDone){
+        rb.disabled=false;rb.style.opacity='1';rb.style.cursor='pointer';
+        rb.style.background='#14532d';rb.style.borderColor='#22c55e';rb.style.color='#bbf7d0';
+        rb.textContent='✓ Done — Re-run';
+      } else {
+        rb.disabled=true;rb.style.opacity='0.5';rb.style.cursor='not-allowed';
+        rb.style.background='#0f172a';rb.style.borderColor='#334155';rb.style.color='#475569';
+        rb.textContent='▶ Run';
+      }
+    }
+    var hint=document.getElementById('d7mp-type-hint');
+    if(hint)hint.style.display=isDone?'none':'flex';
+    document.getElementById('d7mp-editor-modal').style.display='flex';
+    setTimeout(function(){if(code)code.focus();},80);
+  };
+
+  window.d7mpClose=function(){
+    var m=document.getElementById('d7mp-editor-modal');
+    if(m)m.style.display='none';
+  };
+
+  window.d7mpRun=function(){
+    if(!_curKey)return;
+    var pz=D7P[_curKey];
+    var code=document.getElementById('d7mp-ed-code');
+    var term=document.getElementById('d7mp-ed-terminal');
+    var rb=document.getElementById('d7mp-run-btn');
+    var sql=code?code.value:'';
+    if(!sql.trim()){if(term)term.innerHTML='<span style="color:#f59e0b;">No SQL to run. Write your query above and click ▶ Run.</span>';return;}
+    rb.textContent='⏳ Running…';rb.disabled=true;
+    setTimeout(function(){
+      rb.disabled=false;
+      var res=pz.validate(sql);
+      if(res.ok){
+        var lines=[
+          '<span style="color:#475569;">psql (18.0)  Type "help" for help.</span>',
+          '<span style="color:#7dd3fc;">lab_nsr=#</span> <span style="color:#475569;">[running…]</span>',''
+        ];
+        pz.output.forEach(function(ln){lines.push('<span style="color:#4ade80;">'+esc(ln)+'</span>');});
+        lines.push('');
+        lines.push('<span style="color:#7dd3fc;">lab_nsr=#</span>');
+        lines.push('<span style="color:#22c55e;font-weight:700;">✓ Validation passed — puzzle marked complete</span>');
+        if(term){term.innerHTML=lines.join('<br>');term.scrollTop=term.scrollHeight;}
+        var p=getP();p[_curKey]='done';saveP(p);
+        refresh();d7mpSyncFb();
+        rb.style.background='#14532d';rb.style.borderColor='#22c55e';rb.textContent='✓ Done — Re-run';
+      }else{
+        var lines=[
+          '<span style="color:#475569;">psql (18.0)  Type "help" for help.</span>',
+          '<span style="color:#7dd3fc;">lab_nsr=#</span> <span style="color:#475569;">[running…]</span>','',
+          '<span style="color:#ef4444;font-weight:700;">ERROR:  Validation failed</span>',
+          '<span style="color:#fca5a5;">HINT:  '+esc(res.msg)+'</span>','',
+          '<span style="color:#94a3b8;">Fix the SQL above and click ▶ Run again.</span>'
+        ];
+        if(term){term.innerHTML=lines.join('<br>');term.scrollTop=term.scrollHeight;}
+        rb.style.background='#2563eb';rb.style.borderColor='#2563eb';rb.textContent='▶ Run';
+      }
+    },550);
+  };
+
+  document.addEventListener('DOMContentLoaded',function(){
+    var ta=document.getElementById('d7mp-ed-code');
+    if(ta)ta.addEventListener('keydown',function(e){
+      if(e.key==='Tab'){e.preventDefault();var s=this.selectionStart,en=this.selectionEnd;this.value=this.value.substring(0,s)+'  '+this.value.substring(en);this.selectionStart=this.selectionEnd=s+2;}
+    });
+  });
+
+  window.d7dashFetch=function(){
+    if(!fbOk()){renderDash(null);return;}
+    fetch(fbUrl('/d7_workshop.json'))
+      .then(function(r){return r.json();})
+      .then(function(data){renderDash(data);})
+      .catch(function(){renderDash(null);});
+  };
+
+  function renderDash(data){
+    var ts=document.getElementById('d7dash-last-update');
+    if(ts)ts.textContent='Updated '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    var teams={A:[],B:[]};
+    if(data&&typeof data==='object'){
+      Object.keys(data).forEach(function(k){
+        var p=data[k];if(!p||!p.name)return;
+        var t=(p.team==='A'||p.team==='B')?p.team:'A';
+        teams[t].push(p);
+      });
+    }
+    var KEYS=['p1','p2','p3','p4','p5','p6'];
+    var LABELS=['P1','P2','P3','P4','P5','P6'];
+    ['A','B'].forEach(function(t){
+      var members=teams[t];
+      var membersEl=document.getElementById('d7dash-members-'+t.toLowerCase());
+      var scoreEl=document.getElementById('d7dash-score-'+t.toLowerCase());
+      if(!membersEl)return;
+      if(!members.length){
+        membersEl.innerHTML='<span style="color:#334155;font-size:0.75rem;">No participants yet</span>';
+        if(scoreEl)scoreEl.textContent='0 / 6';return;
+      }
+      var totalDone=0;
+      var rows=members.map(function(p){
+        var pz=p.puzzles||{};
+        var done=KEYS.filter(function(k){return pz[k]==='done';}).length;
+        totalDone+=done;
+        var dots=KEYS.map(function(k,i){
+          var isDone=pz[k]==='done';
+          return '<span title="'+LABELS[i]+'" style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:4px;background:'+(isDone?'#14532d':'#1e293b')+';border:1px solid '+(isDone?'#22c55e':'#334155')+';font-size:0.58rem;color:'+(isDone?'#22c55e':'#475569')+';">'+LABELS[i]+'</span>';
+        }).join('');
+        return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #0d1929;">'
+          +'<span style="color:#94a3b8;font-size:0.78rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(p.name)+'</span>'
+          +'<div style="display:flex;gap:2px;flex-shrink:0;">'+dots+'</div>'
+          +'<span style="color:#64748b;font-size:0.7rem;min-width:28px;text-align:right;">'+done+'/6</span>'
+          +'</div>';
+      }).join('');
+      membersEl.innerHTML=rows;
+      if(scoreEl)scoreEl.textContent=totalDone+' / '+(members.length*6);
+    });
+  }
+
+  function init(){
+    updateRegBanner();refresh();
+    if(document.body&&document.body.classList.contains('instructor-mode')){
+      window.d7dashFetch();
+      _dashTimer=setInterval(window.d7dashFetch,15000);
+    }
+    var mpBtn=document.querySelector('button[onclick*="d7-miniproject"]');
+    if(mpBtn){
+      mpBtn.addEventListener('click',function(){
+        updateRegBanner();refresh();
+        if(document.body.classList.contains('instructor-mode'))window.d7dashFetch();
+      });
+    }
+  }
+
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}
+  else{init();}
+})();
+</script>
   </div>
 </div><!-- end day7 -->
 
