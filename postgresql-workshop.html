@@ -9565,6 +9565,170 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
         <div class="callout-title">Why staging tables have no constraints</div>
         The staging table accepts <em>everything</em> — nulls, bad formats, duplicates — because field enumeration data from Nigeria's LGAs will contain all of these. Rejecting bad data at load time means losing context about what arrived. Instead: load everything, validate in SQL, quarantine or fix bad rows, then promote clean rows into the target. <strong>pmt_score as TEXT</strong> in staging is deliberate — the regex <code>'^[0-9]+\.?[0-9]*$'</code> in the validation step catches values like "N/A" or "–" that would silently convert to NULL or cause a type error if the column were NUMERIC. <strong>ON CONFLICT DO NOTHING</strong> makes the INSERT idempotent — re-running after a failure does not create duplicates. In a re-enumeration scenario, use <code>ON CONFLICT DO UPDATE</code> instead to refresh existing records from the new batch.
       </div>
+
+      <h3>Advanced — Real-World ELT: Live API Integration with postgres_fdw</h3>
+      <div class="callout concept">
+        <div class="callout-title">Case Scenario: The IFMIS Integration</div>
+        <p>The Integrated Financial Management Information System (IFMIS) holds payment disbursement records that must be cross-checked against the NSR beneficiary list nightly. Rather than exporting a CSV and loading it, the DBA team decides to query IFMIS directly from PostgreSQL using a foreign data wrapper — this is <strong>ELT</strong>: the raw IFMIS data lands inside PostgreSQL unchanged, and transformation happens there using SQL CTEs, with no intermediate file.</p>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – ELT via postgres_fdw: query IFMIS inside PostgreSQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Step 1: Install the foreign data wrapper (run once, requires superuser)</span>
+<span class="kw">CREATE EXTENSION IF NOT EXISTS</span> postgres_fdw;
+
+<span class="cmt">-- Step 2: Register the remote server (IFMIS production DB)</span>
+<span class="kw">CREATE SERVER</span> ifmis_server
+  <span class="kw">FOREIGN DATA WRAPPER</span> postgres_fdw
+  <span class="kw">OPTIONS</span> (host <span class="str">'ifmis.gov.ng'</span>, port <span class="str">'5432'</span>, dbname <span class="str">'ifmis_prod'</span>);
+
+<span class="cmt">-- Step 3: Map the local DBA user to the remote read-only service account</span>
+<span class="kw">CREATE USER MAPPING FOR</span> nsr_etl_user
+  <span class="kw">SERVER</span> ifmis_server
+  <span class="kw">OPTIONS</span> (user <span class="str">'ifmis_readonly'</span>, password <span class="str">'••••••'</span>);
+
+<span class="cmt">-- Step 4: Import the remote disbursements table as a foreign table (schema stays remote)</span>
+<span class="kw">CREATE FOREIGN TABLE</span> nsr.ftbl_ifmis_payments (
+  payment_id      <span class="typ">BIGINT</span>,
+  nin             <span class="typ">TEXT</span>,
+  amount_ngn      <span class="typ">NUMERIC</span>(12,2),
+  disbursed_at    <span class="typ">TIMESTAMPTZ</span>,
+  programme_code  <span class="typ">TEXT</span>
+)
+<span class="kw">SERVER</span> ifmis_server
+<span class="kw">OPTIONS</span> (schema_name <span class="str">'public'</span>, table_name <span class="str">'disbursements'</span>);
+
+<span class="cmt">-- Step 5 (Transform inside PostgreSQL): find NSR beneficiaries NOT yet paid</span>
+<span class="kw">SELECT</span>
+  h.household_code,
+  i.nin,
+  i.first_name || <span class="str">' '</span> || i.last_name <span class="kw">AS</span> full_name,
+  h.pmt_score
+<span class="kw">FROM</span> nsr.households h
+<span class="kw">JOIN</span> nsr.individuals i <span class="kw">ON</span> i.household_id = h.household_id
+<span class="kw">LEFT JOIN</span> nsr.ftbl_ifmis_payments p <span class="kw">ON</span> p.nin = i.nin
+  <span class="kw">AND</span> p.programme_code = <span class="str">'CCT_2024'</span>
+<span class="kw">WHERE</span> h.is_active = <span class="kw">TRUE</span>
+  <span class="kw">AND</span> p.payment_id <span class="kw">IS NULL</span>   <span class="cmt">-- no matching disbursement found</span>
+<span class="kw">ORDER BY</span> h.pmt_score <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> <span class="num">100</span>;</pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">ELT vs ETL decision guide</div>
+        Use <strong>ELT</strong> when the source system supports a live SQL connection, data volumes are manageable within PostgreSQL working memory, and transformation logic is complex enough to benefit from CTEs and window functions. Use <strong>ETL</strong> (CSV export → staging) when the source is a legacy system without a SQL interface, the export is scheduled (batch, not live), or you need an immutable audit copy of the raw file. For the NSR: census data from LGA tablets always arrives as CSV (ETL); cross-checks against IFMIS or BVN can use ELT via FDW.
+      </div>
+
+      <h3>Advanced — Quarantine Pattern: Route Bad Rows Instead of Dropping Them</h3>
+      <div class="callout concept">
+        <div class="callout-title">Case Scenario: The 18% Rejection Rate</div>
+        <p>A Q3 2024 Adamawa import has 5,000 rows. Validation reveals 912 rows (18%) fail at least one rule. Dropping them means losing 18% of the enumeration — but putting them directly into production would corrupt the beneficiary list. The solution: a <strong>quarantine table</strong> that holds bad rows with a reason code attached. A data quality officer reviews and corrects them; once corrected, they are promoted through the same ETL pipeline. Nothing is ever silently discarded.</p>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – quarantine table pattern</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Quarantine table: holds rejected rows with reason code and reviewer state</span>
+<span class="kw">CREATE TABLE IF NOT EXISTS</span> nsr.stg_quarantine (
+  qid             <span class="typ">BIGSERIAL</span>    <span class="kw">PRIMARY KEY</span>,
+  source_batch    <span class="typ">TEXT</span>         <span class="kw">NOT NULL</span>,
+  raw_data        <span class="typ">JSONB</span>        <span class="kw">NOT NULL</span>,  <span class="cmt">-- the original row, preserved as JSON</span>
+  rejection_code  <span class="typ">TEXT</span>         <span class="kw">NOT NULL</span>,  <span class="cmt">-- e.g. 'MISSING_CODE', 'INVALID_PMT'</span>
+  rejected_at     <span class="typ">TIMESTAMPTZ</span>  <span class="kw">DEFAULT now</span>(),
+  resolved        <span class="typ">BOOLEAN</span>      <span class="kw">DEFAULT FALSE</span>,
+  resolved_by     <span class="typ">TEXT</span>,
+  resolved_at     <span class="typ">TIMESTAMPTZ</span>
+);
+
+<span class="cmt">-- Route bad rows to quarantine (run BEFORE the main INSERT)</span>
+<span class="kw">INSERT INTO</span> nsr.stg_quarantine (source_batch, raw_data, rejection_code)
+<span class="kw">SELECT</span>
+  import_batch,
+  <span class="fn">jsonb_build_object</span>(
+    <span class="str">'household_code'</span>, household_code,
+    <span class="str">'head_name'</span>,       head_name,
+    <span class="str">'pmt_score'</span>,       pmt_score,
+    <span class="str">'lga_name'</span>,        lga_name
+  ),
+  <span class="kw">CASE</span>
+    <span class="kw">WHEN</span> household_code <span class="kw">IS NULL</span>                          <span class="kw">THEN</span> <span class="str">'MISSING_CODE'</span>
+    <span class="kw">WHEN</span> pmt_score !~ <span class="str">'^[0-9]+(\.[0-9]+)?$'</span>            <span class="kw">THEN</span> <span class="str">'INVALID_PMT'</span>
+    <span class="kw">WHEN</span> head_name <span class="kw">IS NULL OR</span> <span class="fn">trim</span>(head_name) = <span class="str">''</span>      <span class="kw">THEN</span> <span class="str">'MISSING_NAME'</span>
+    <span class="kw">ELSE</span> <span class="str">'UNRESOLVABLE_LGA'</span>
+  <span class="kw">END</span>
+<span class="kw">FROM</span> nsr.stg_households s
+<span class="kw">LEFT JOIN</span> nsr.lgas l <span class="kw">ON</span> l.lga_name = s.lga_name
+<span class="kw">WHERE</span>
+   s.household_code <span class="kw">IS NULL</span>
+<span class="kw">OR</span> s.pmt_score !~ <span class="str">'^[0-9]+(\.[0-9]+)?$'</span>
+<span class="kw">OR</span> s.head_name <span class="kw">IS NULL OR</span> <span class="fn">trim</span>(s.head_name) = <span class="str">''</span>
+<span class="kw">OR</span> l.lga_id <span class="kw">IS NULL</span>;
+
+<span class="cmt">-- Review pending quarantine rows (data quality officer dashboard)</span>
+<span class="kw">SELECT</span>
+  rejection_code,
+  <span class="fn">COUNT</span>(*) <span class="kw">AS</span> total,
+  <span class="fn">COUNT</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE NOT</span> resolved) <span class="kw">AS</span> pending,
+  <span class="fn">round</span>(<span class="fn">AVG</span>((<span class="fn">now</span>() - rejected_at)) <span class="kw">filter</span> (<span class="kw">WHERE NOT</span> resolved)) <span class="kw">AS</span> avg_age
+<span class="kw">FROM</span> nsr.stg_quarantine
+<span class="kw">WHERE</span> source_batch = <span class="str">'BATCH_20240915'</span>
+<span class="kw">GROUP BY</span> rejection_code
+<span class="kw">ORDER BY</span> pending <span class="kw">DESC</span>;
+
+<span class="cmt">-- Mark a row as resolved (after manual correction)</span>
+<span class="kw">UPDATE</span> nsr.stg_quarantine
+<span class="kw">SET</span>
+  resolved    = <span class="kw">TRUE</span>,
+  resolved_by = <span class="fn">current_user</span>,
+  resolved_at = <span class="fn">now</span>()
+<span class="kw">WHERE</span> qid = <span class="num">441</span>;  <span class="cmt">-- specific quarantined row</span></pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Why JSONB for raw_data — not columns</div>
+        Storing the original row as JSONB preserves it exactly as it arrived, even if the staging table schema changes in a future import. It also means the quarantine table has a single fixed schema regardless of which source table produced the bad row — you can use it for all ETL pipelines in the system. The rejection_code enum is indexed; queries grouping by rejection type run without a sequential scan even with hundreds of thousands of quarantined rows.
+      </div>
+
+      <h3>Advanced — Incremental Loads with a High-Watermark</h3>
+      <div class="callout concept">
+        <div class="callout-title">Case Scenario: Nightly BVN Verification Sync</div>
+        <p>The NSR syncs BVN verification status from a NIBSS extract every night. The extract file contains <em>all</em> 12 million BVN records, but the NSR only needs changes since the last sync. Loading 12 million rows every night to find ~3,000 changes is wasteful. A <strong>high-watermark column</strong> (<code>last_modified</code>) on the source lets the pipeline extract only rows that changed after the last successful load.</p>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – incremental load using high-watermark</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Watermark table: stores the last successful sync point per source system</span>
+<span class="kw">CREATE TABLE IF NOT EXISTS</span> nsr.etl_watermarks (
+  source_name   <span class="typ">TEXT</span>         <span class="kw">PRIMARY KEY</span>,
+  last_loaded   <span class="typ">TIMESTAMPTZ</span>  <span class="kw">NOT NULL DEFAULT</span> <span class="str">'1970-01-01'</span>
+);
+
+<span class="kw">INSERT INTO</span> nsr.etl_watermarks (source_name) <span class="kw">VALUES</span> (<span class="str">'BVN_NIBSS'</span>)
+<span class="kw">ON CONFLICT DO NOTHING</span>;
+
+<span class="cmt">-- Load only rows modified since the last watermark</span>
+<span class="kw">WITH</span> watermark <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> last_loaded <span class="kw">FROM</span> nsr.etl_watermarks <span class="kw">WHERE</span> source_name = <span class="str">'BVN_NIBSS'</span>
+),
+new_rows <span class="kw">AS</span> (
+  <span class="kw">INSERT INTO</span> nsr.bvn_verifications (nin, bvn_status, verified_at, source_batch)
+  <span class="kw">SELECT DISTINCT ON</span> (nin)
+    nin,
+    verification_status,
+    last_modified,
+    <span class="str">'BVN_NIBSS_NIGHTLY'</span>
+  <span class="kw">FROM</span> nsr.stg_bvn_extract
+  <span class="kw">WHERE</span> last_modified > (<span class="kw">SELECT</span> last_loaded <span class="kw">FROM</span> watermark)
+  <span class="kw">ORDER BY</span> nin, last_modified <span class="kw">DESC</span>
+  <span class="kw">ON CONFLICT</span> (nin) <span class="kw">DO UPDATE SET</span>
+    bvn_status  = <span class="kw">EXCLUDED</span>.bvn_status,
+    verified_at = <span class="kw">EXCLUDED</span>.verified_at
+  <span class="kw">RETURNING</span> verified_at
+)
+<span class="cmt">-- Advance the watermark to the most recent row processed</span>
+<span class="kw">UPDATE</span> nsr.etl_watermarks
+<span class="kw">SET</span>    last_loaded = (<span class="kw">SELECT MAX</span>(verified_at) <span class="kw">FROM</span> new_rows)
+<span class="kw">WHERE</span>  source_name = <span class="str">'BVN_NIBSS'</span>;</pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Watermark safety: never advance past the end of a successful transaction</div>
+        The watermark UPDATE is part of the same CTE as the INSERT — if the INSERT fails (e.g. a constraint violation mid-batch), the whole statement rolls back and the watermark stays at the last known good point. On the next run, the pipeline re-processes the same window of rows — they will be upserted harmlessly because of <code>ON CONFLICT DO UPDATE</code>. This is the idempotency guarantee: the watermark only moves forward when data actually lands safely.
+      </div>
+
     </div>
 
     <div class="tab-panel" id="tab-d7-dedup">
@@ -9626,6 +9790,111 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
         <div class="callout-title">Two kinds of duplicates — different fixes</div>
         <strong>Duplicate household codes in staging</strong>: multiple rows arrived in the CSV with the same code — keep the one with the latest <code>loaded_at</code> and discard the rest before promoting to production. The <code>ctid</code> technique (physical row address) is a PostgreSQL-specific shortcut for this; in a production pipeline, use a proper <code>DISTINCT ON (household_code) ORDER BY loaded_at DESC</code> CTE. <strong>Duplicate NINs across households</strong>: the same individual appears enrolled in two households — a real data quality problem meaning either a data-entry error (person was enumerated twice) or a fraud signal (NIN cloned). The query surfaces the conflict; resolution requires a manual review workflow, not an automatic DELETE. Emphasise to participants: never auto-delete on a suspicion of duplicate — mark for review, log in audit_log, escalate to a supervisor.
       </div>
+
+      <h3>Advanced — Fuzzy Name Matching with pg_trgm</h3>
+      <div class="callout concept">
+        <div class="callout-title">Case Scenario: The Enumerator Double-Visit Problem</div>
+        <p>In Yobe State, enumerator teams A and B independently visited Damaturu LGA with overlapping zones. The same household appears twice in the staging table — once as "Bulama Modu, HH-YB-2847" and once as "Boulama Modu, HH-YB-9113". The <code>household_code</code> is different (different enumerator IDs), so the deduplication query that relies on code matching misses it completely. The only signal is a very similar name and matching LGA. This is a <strong>fuzzy matching</strong> problem — exact SQL equality cannot solve it.</p>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – fuzzy name deduplication using pg_trgm</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Enable trigram extension (requires superuser, run once)</span>
+<span class="kw">CREATE EXTENSION IF NOT EXISTS</span> pg_trgm;
+
+<span class="cmt">-- Create a GIN trigram index on head_name for fast similarity search</span>
+<span class="kw">CREATE INDEX IF NOT EXISTS</span> idx_stg_head_trgm
+  <span class="kw">ON</span> nsr.stg_households <span class="kw">USING GIN</span> (head_name gin_trgm_ops);
+
+<span class="cmt">-- Find pairs of staging rows that share an LGA AND have similar names</span>
+<span class="cmt">-- similarity() returns 0..1; > 0.6 = likely same person</span>
+<span class="kw">SELECT</span>
+  a.household_code   <span class="kw">AS</span> code_a,
+  b.household_code   <span class="kw">AS</span> code_b,
+  a.head_name        <span class="kw">AS</span> name_a,
+  b.head_name        <span class="kw">AS</span> name_b,
+  a.lga_name,
+  <span class="fn">round</span>(<span class="fn">similarity</span>(a.head_name, b.head_name)::numeric, <span class="num">3</span>) <span class="kw">AS</span> name_sim,
+  a.pmt_score        <span class="kw">AS</span> pmt_a,
+  b.pmt_score        <span class="kw">AS</span> pmt_b
+<span class="kw">FROM</span>  nsr.stg_households a
+<span class="kw">JOIN</span>  nsr.stg_households b
+  <span class="kw">ON</span>  a.household_code &lt; b.household_code       <span class="cmt">-- avoid self-joins and duplicate pairs</span>
+  <span class="kw">AND</span> a.lga_name = b.lga_name                   <span class="cmt">-- "blocking" on LGA: reduces search space</span>
+  <span class="kw">AND</span> <span class="fn">similarity</span>(a.head_name, b.head_name) > <span class="num">0.6</span>
+<span class="kw">ORDER BY</span> name_sim <span class="kw">DESC</span>;
+
+<span class="cmt">-- Check a specific suspicious pair in detail</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> nsr.stg_households
+<span class="kw">WHERE</span> household_code <span class="kw">IN</span> (<span class="str">'HH-YB-2847'</span>, <span class="str">'HH-YB-9113'</span>);
+
+<span class="cmt">-- Once confirmed as duplicates, flag for human review (never auto-delete)</span>
+<span class="kw">INSERT INTO</span> nsr.stg_quarantine (source_batch, raw_data, rejection_code)
+<span class="kw">SELECT</span>
+  import_batch,
+  <span class="fn">to_jsonb</span>(s),
+  <span class="str">'FUZZY_DUPLICATE_CANDIDATE'</span>
+<span class="kw">FROM</span> nsr.stg_households s
+<span class="kw">WHERE</span> household_code = <span class="str">'HH-YB-9113'</span>;  <span class="cmt">-- quarantine the later-arriving duplicate</span></pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Blocking: why you must constrain the search space first</div>
+        A naive cross-join of 5,000 staging rows against themselves produces 25 million pairs. Even with trigram indexes, comparing every name against every other name across all LGAs is slow and produces noise (two people in different states with similar names are not duplicates). <strong>Blocking</strong> — restricting pairs to rows with the same LGA — reduces the candidate set by a factor of 774. This is how production-scale deduplication systems work: first block on an exact attribute (LGA, state, dob), then run similarity within blocks.
+      </div>
+
+      <h3>Advanced — Master Data Management: The Golden Record</h3>
+      <div class="callout concept">
+        <div class="callout-title">Case Scenario: Four Versions of the Same Household</div>
+        <p>The NSR onboarding team finds a household (HH: the Adaeze Okonkwo family in Enugu) with four records across three source systems: the 2019 census CSV, a 2022 re-enumeration CSV, a 2023 LIMS mobile upload, and a 2024 BVN cross-reference. Each version has slightly different PMT scores, a different household member count, and one has a corrected address. The question: which version is authoritative? This is a <strong>master data management</strong> (MDM) problem. The answer is a <strong>golden record</strong> — a single canonical row assembled by applying a rule-based merge across all versions.</p>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – constructing a golden record from multiple source versions</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Versioned source tracking table: one row per source-system version</span>
+<span class="kw">CREATE TABLE IF NOT EXISTS</span> nsr.household_versions (
+  version_id      <span class="typ">BIGSERIAL</span>    <span class="kw">PRIMARY KEY</span>,
+  household_code  <span class="typ">TEXT</span>         <span class="kw">NOT NULL</span>,
+  source_system   <span class="typ">TEXT</span>         <span class="kw">NOT NULL</span>,
+  pmt_score       <span class="typ">NUMERIC</span>(5,2),
+  member_count    <span class="typ">INT</span>,
+  address_text    <span class="typ">TEXT</span>,
+  source_date     <span class="typ">DATE</span>         <span class="kw">NOT NULL</span>
+);
+
+<span class="cmt">-- Golden record CTE: most recent pmt_score, most recent address, max member count</span>
+<span class="kw">WITH</span> latest_pmt <span class="kw">AS</span> (
+  <span class="kw">SELECT DISTINCT ON</span> (household_code)
+    household_code, pmt_score
+  <span class="kw">FROM</span>  nsr.household_versions
+  <span class="kw">WHERE</span> pmt_score <span class="kw">IS NOT NULL</span>
+  <span class="kw">ORDER BY</span> household_code, source_date <span class="kw">DESC</span>
+),
+latest_address <span class="kw">AS</span> (
+  <span class="kw">SELECT DISTINCT ON</span> (household_code)
+    household_code, address_text
+  <span class="kw">FROM</span>  nsr.household_versions
+  <span class="kw">WHERE</span> address_text <span class="kw">IS NOT NULL</span>
+  <span class="kw">ORDER BY</span> household_code, source_date <span class="kw">DESC</span>
+),
+max_members <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> household_code, <span class="fn">MAX</span>(member_count) <span class="kw">AS</span> member_count
+  <span class="kw">FROM</span>  nsr.household_versions
+  <span class="kw">GROUP BY</span> household_code
+)
+<span class="kw">SELECT</span>
+  p.household_code,
+  p.pmt_score        <span class="kw">AS</span> golden_pmt_score,
+  a.address_text     <span class="kw">AS</span> golden_address,
+  m.member_count     <span class="kw">AS</span> golden_member_count,
+  <span class="fn">now</span>()              <span class="kw">AS</span> golden_created_at
+<span class="kw">FROM</span>  latest_pmt     p
+<span class="kw">JOIN</span>  latest_address a <span class="kw">USING</span> (household_code)
+<span class="kw">JOIN</span>  max_members    m <span class="kw">USING</span> (household_code)
+<span class="kw">WHERE</span> p.household_code = <span class="str">'EN-2019-0041'</span>;  <span class="cmt">-- the Okonkwo household</span></pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">MDM merge rules must be documented, not implicit</div>
+        "Most recent wins" is a rule. "Most complete wins" is a rule. "BVN source overrides CSV" is a rule. Whatever rules your organisation uses for the golden record, they must be written down in a data governance document and reviewed annually — because they determine which PMT score a household has, and therefore whether they receive a payment. A DBA who makes these choices silently in a CTE has just made a governance decision without sign-off. In practice: the golden record logic belongs in a stored function named something like <code>nsr.build_golden_record(p_code TEXT)</code>, versioned in git, and approved by the data steward.
+      </div>
+
     </div>
 
     <div class="tab-panel" id="tab-d7-gov">
@@ -9674,6 +9943,191 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
         <div class="callout-title">What each lineage column records and why</div>
         <strong>source_system</strong>: where the data came from — "NASSCO_CSV_Q1_2024", "BVN_API", "LIMS_EXPORT" — making it possible to trace any production row back to its origin file or system. <strong>lawful_basis</strong>: the NDP Act 2023 requires every processing activity to have a documented lawful basis (e.g. "Public task – Conditional Cash Transfer Programme"); this column is the database-level proof. <strong>batch_ref</strong>: links every promoted row to an import batch, enabling surgical rollback — if batch "NSR_20240315" is found to contain corrupt data, all rows with that batch_ref can be identified and reviewed. <strong>record_count</strong>: cross-check at the end of ETL — if the source file had 4,823 rows and record_count is 4,712, the delta of 111 needs an explanation (validation failures, duplicates, or a truncated file). In production, INSERT to this table immediately after every load step, not at the end — a mid-job crash would otherwise leave no lineage record for partial loads.
       </div>
+      <h3>Advanced — Right-to-Erasure: A Complete Implementation</h3>
+      <div class="callout concept">
+        <div class="callout-title">Case Scenario: The Erasure Request</div>
+        <p>NITDA receives a complaint from a citizen (NIN: 12345678901) who was incorrectly enrolled in the NSR during the 2022 Kaduna enumeration. They invoke their right to erasure under Section 34 of the NDP Act 2023. NASSCO must: (1) locate all records relating to this NIN, (2) pseudonymise or delete them, (3) record that the erasure occurred, and (4) be able to prove to NITDA that it was done — without retaining the PII that was erased. A hard DELETE would destroy the audit evidence. Pseudonymisation preserves the record structure for statistical purposes while making re-identification impossible.</p>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – right-to-erasure via pseudonymisation with pgcrypto</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Prerequisite: enable pgcrypto (requires superuser)</span>
+<span class="kw">CREATE EXTENSION IF NOT EXISTS</span> pgcrypto;
+
+<span class="cmt">-- Erasure requests table: NDP Act compliance record</span>
+<span class="kw">CREATE TABLE IF NOT EXISTS</span> nsr.erasure_requests (
+  request_id     <span class="typ">BIGSERIAL</span>    <span class="kw">PRIMARY KEY</span>,
+  nin_hash       <span class="typ">TEXT</span>         <span class="kw">NOT NULL</span>,  <span class="cmt">-- SHA-256 of original NIN: can verify without storing NIN</span>
+  requested_at   <span class="typ">TIMESTAMPTZ</span>  <span class="kw">DEFAULT now</span>(),
+  completed_at   <span class="typ">TIMESTAMPTZ</span>,
+  completed_by   <span class="typ">TEXT</span>,
+  rows_affected  <span class="typ">INT</span>,
+  legal_ref      <span class="typ">TEXT</span>  <span class="cmt">-- 'NDP Act 2023 s.34'</span>
+);
+
+<span class="cmt">-- Step 1: Log the request (before touching any data)</span>
+<span class="kw">INSERT INTO</span> nsr.erasure_requests (nin_hash, legal_ref)
+<span class="kw">VALUES</span> (
+  <span class="fn">encode</span>(<span class="fn">digest</span>(<span class="str">'12345678901'</span>, <span class="str">'sha256'</span>), <span class="str">'hex'</span>),
+  <span class="str">'NDP Act 2023 s.34 – Data Subject Erasure'</span>
+);
+
+<span class="cmt">-- Step 2: Pseudonymise the individual record</span>
+<span class="cmt">-- Replace identifying fields with irreversible tokens; preserve structure</span>
+<span class="kw">UPDATE</span> nsr.individuals
+<span class="kw">SET</span>
+  nin        = <span class="str">'ERASED-'</span> || <span class="fn">encode</span>(<span class="fn">gen_random_bytes</span>(<span class="num">8</span>), <span class="str">'hex'</span>),
+  first_name = <span class="str">'[REDACTED]'</span>,
+  last_name  = <span class="str">'[REDACTED]'</span>,
+  dob        = <span class="kw">NULL</span>,
+  phone      = <span class="kw">NULL</span>
+<span class="kw">WHERE</span> nin = <span class="str">'12345678901'</span>;
+
+<span class="cmt">-- Step 3: Pseudonymise household head name if this was the head</span>
+<span class="kw">UPDATE</span> nsr.households h
+<span class="kw">SET</span>   head_name = <span class="str">'[REDACTED]'</span>
+<span class="kw">FROM</span>  nsr.individuals i
+<span class="kw">WHERE</span> i.household_id = h.household_id
+  <span class="kw">AND</span> i.nin <span class="kw">LIKE</span> <span class="str">'ERASED-%'</span>   <span class="cmt">-- already pseudonymised above</span>
+  <span class="kw">AND</span> h.head_name <span class="kw">NOT LIKE</span> <span class="str">'[REDACTED]'</span>;
+
+<span class="cmt">-- Step 4: Record completion</span>
+<span class="kw">UPDATE</span> nsr.erasure_requests
+<span class="kw">SET</span>
+  completed_at  = <span class="fn">now</span>(),
+  completed_by  = <span class="fn">current_user</span>,
+  rows_affected = <span class="num">1</span>
+<span class="kw">WHERE</span> nin_hash = <span class="fn">encode</span>(<span class="fn">digest</span>(<span class="str">'12345678901'</span>, <span class="str">'sha256'</span>), <span class="str">'hex'</span>)
+  <span class="kw">AND</span> completed_at <span class="kw">IS NULL</span>;
+
+<span class="cmt">-- Step 5: Verify — confirm NIN no longer exists in cleartext anywhere</span>
+<span class="kw">SELECT</span> <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> nsr.individuals <span class="kw">WHERE</span> nin = <span class="str">'12345678901'</span>;
+<span class="cmt">-- Must return 0</span></pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Why pseudonymise instead of DELETE</div>
+        Deleting the row would break referential integrity (payments, audit_log entries referencing that individual_id), destroy statistical validity (benefit count changes), and — paradoxically — make it impossible to prove the erasure happened. Pseudonymisation preserves the row structure while making the person unidentifiable. The <code>nin_hash</code> in the erasure_requests table lets you later verify "yes, NIN 12345678901 was erased" without storing the NIN in plain text. The NITDA auditor gets the hash proof; the individual's identity is gone.
+      </div>
+
+      <h3>Advanced — Automated Data Retention with pg_cron</h3>
+      <div class="callout concept">
+        <div class="callout-title">Case Scenario: The 3-Year Retention Policy</div>
+        <p>NSR's data retention policy (aligned with NDP Act guidance) requires that payment records older than 3 years be purged from the live operational database. With a partitioned <code>nsr.payments</code> table (partitioned by year), this means detaching the 2021 partition in January 2025 and dropping it entirely after a 30-day cold-storage window. Without automation, this relies on someone remembering to run a manual command — which is a governance gap. <code>pg_cron</code> schedules this as a database-internal job, with execution recorded in a cron log.</p>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – automated partition retention with pg_cron</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Prerequisite: pg_cron extension (installed by DBA, requires shared_preload_libraries)</span>
+<span class="kw">CREATE EXTENSION IF NOT EXISTS</span> pg_cron;
+
+<span class="cmt">-- Retention policy log: records every automated partition operation</span>
+<span class="kw">CREATE TABLE IF NOT EXISTS</span> nsr.retention_log (
+  log_id         <span class="typ">BIGSERIAL</span>    <span class="kw">PRIMARY KEY</span>,
+  partition_name <span class="typ">TEXT</span>         <span class="kw">NOT NULL</span>,
+  action         <span class="typ">TEXT</span>         <span class="kw">NOT NULL</span>,  <span class="cmt">-- 'DETACHED' or 'DROPPED'</span>
+  executed_at    <span class="typ">TIMESTAMPTZ</span>  <span class="kw">DEFAULT now</span>(),
+  legal_basis    <span class="typ">TEXT</span>
+);
+
+<span class="cmt">-- Retention procedure: detach a named partition and log the action</span>
+<span class="kw">CREATE OR REPLACE PROCEDURE</span> nsr.enforce_retention_policy()
+<span class="kw">LANGUAGE</span> plpgsql <span class="kw">AS</span> $$
+<span class="kw">DECLARE</span>
+  cutoff_year  INT := <span class="fn">EXTRACT</span>(<span class="kw">YEAR FROM</span> <span class="fn">now</span>()) - <span class="num">3</span>;
+  part_name    <span class="typ">TEXT</span> := <span class="str">'payments_y'</span> || cutoff_year::text;
+  exists_check <span class="typ">BOOLEAN</span>;
+<span class="kw">BEGIN</span>
+  <span class="kw">SELECT EXISTS</span> (
+    <span class="kw">SELECT</span> <span class="num">1</span> <span class="kw">FROM</span> pg_class
+    <span class="kw">WHERE</span> relname = part_name <span class="kw">AND</span> relkind = <span class="str">'r'</span>
+  ) <span class="kw">INTO</span> exists_check;
+
+  <span class="kw">IF</span> exists_check <span class="kw">THEN</span>
+    <span class="kw">EXECUTE</span> <span class="fn">format</span>(
+      <span class="str">'ALTER TABLE nsr.payments DETACH PARTITION nsr.%I'</span>, part_name
+    );
+    <span class="kw">INSERT INTO</span> nsr.retention_log (partition_name, action, legal_basis)
+    <span class="kw">VALUES</span> (part_name, <span class="str">'DETACHED'</span>, <span class="str">'NDP Act 2023 – 3-year retention limit'</span>);
+  <span class="kw">END IF</span>;
+<span class="kw">END</span>;
+$$;
+
+<span class="cmt">-- Schedule: run on 1st January each year at 02:00 (when load is lowest)</span>
+<span class="kw">SELECT</span> cron.schedule(
+  <span class="str">'nsr-retention-policy'</span>,     <span class="cmt">-- job name</span>
+  <span class="str">'0 2 1 1 *'</span>,                <span class="cmt">-- cron: 02:00 on 1 Jan</span>
+  <span class="str">'CALL nsr.enforce_retention_policy()'</span>
+);
+
+<span class="cmt">-- Verify scheduled jobs</span>
+<span class="kw">SELECT</span> jobid, jobname, schedule, command, active
+<span class="kw">FROM</span> cron.job
+<span class="kw">WHERE</span> jobname = <span class="str">'nsr-retention-policy'</span>;
+
+<span class="cmt">-- View execution history (cron.job_run_details)</span>
+<span class="kw">SELECT</span> start_time, end_time, status, return_message
+<span class="kw">FROM</span>  cron.job_run_details
+<span class="kw">ORDER BY</span> start_time <span class="kw">DESC</span> <span class="kw">LIMIT</span> <span class="num">10</span>;</pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Why DETACH before DROP — and why wait 30 days</div>
+        <code>DETACH PARTITION</code> instantly removes the partition from the parent table's query path (reads and writes can no longer reach those rows), but the table still exists as a standalone relation. During the 30-day window it can be backed up to cold storage (e.g. <code>pg_dump payments_y2021 &gt; /archive/payments_2021.dump</code>) before the DROP. If an auditor requests historical data within the retention window, it can be re-attached — <code>ALTER TABLE nsr.payments ATTACH PARTITION nsr.payments_y2021 FOR VALUES FROM ('2021-01-01') TO ('2022-01-01')</code>. After 30 days, a second pg_cron job runs the DROP. Never skip the intermediate DETACH stage in a live system.
+      </div>
+
+      <h3>Advanced — Responding to a Data Breach Under the NDP Act</h3>
+      <div class="callout concept">
+        <div class="callout-title">Case Scenario: The Unauthorised Export</div>
+        <p>At 03:47 on a Tuesday, an anomaly detection job flags an unusual pattern: a caseworker account (nsr_caseworker_kn) ran 47 consecutive <code>SELECT * FROM nsr.individuals</code> queries in 8 minutes, each with a different state offset, exporting roughly 140,000 NIN records to a client application. This may be a data breach. The NDP Act 2023, Section 40, requires that NASSCO notify NITDA within 72 hours of becoming aware of a breach. What does the DBA do in the next 60 minutes?</p>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – breach investigation queries</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- 1. Confirm and scope the incident from audit_log</span>
+<span class="kw">SELECT</span>
+  changed_at,
+  role_name,
+  operation,
+  table_name,
+  <span class="fn">length</span>(old_data::text) + <span class="fn">length</span>(new_data::text) <span class="kw">AS</span> data_volume_chars
+<span class="kw">FROM</span> nsr.audit_log
+<span class="kw">WHERE</span> role_name = <span class="str">'nsr_caseworker_kn'</span>
+  <span class="kw">AND</span> changed_at <span class="kw">BETWEEN</span> <span class="str">'2025-07-08 03:40'</span> <span class="kw">AND</span> <span class="str">'2025-07-08 04:00'</span>
+<span class="kw">ORDER BY</span> changed_at;
+
+<span class="cmt">-- 2. Identify affected data subjects (how many NINs were in those rows?)</span>
+<span class="kw">SELECT</span> <span class="fn">COUNT</span>(*) <span class="kw">AS</span> affected_individuals
+<span class="kw">FROM</span> nsr.individuals
+<span class="kw">WHERE</span> state_code = <span class="str">'KN'</span>;  <span class="cmt">-- caseworker had access to Kano state only</span>
+
+<span class="cmt">-- 3. Immediately revoke the compromised account</span>
+<span class="kw">REVOKE CONNECT ON DATABASE</span> nsr_prod <span class="kw">FROM</span> nsr_caseworker_kn;
+
+<span class="cmt">-- 4. Check if account has been used from multiple IPs (pg_stat_activity history)</span>
+<span class="kw">SELECT DISTINCT</span> client_addr, application_name, backend_start, state_change
+<span class="kw">FROM</span> pg_stat_activity
+<span class="kw">WHERE</span> usename = <span class="str">'nsr_caseworker_kn'</span>;
+
+<span class="cmt">-- 5. Preserve the audit trail as immutable evidence (do not delete audit_log rows)</span>
+<span class="kw">SELECT</span>
+  <span class="fn">pg_export_snapshot</span>() <span class="kw">AS</span> snapshot_id;  <span class="cmt">-- snapshot for forensic consistency</span>
+
+<span class="cmt">-- 6. Record the incident (DBA creates incident record immediately)</span>
+<span class="kw">CREATE TABLE IF NOT EXISTS</span> nsr.breach_incidents (
+  incident_id    <span class="typ">BIGSERIAL</span>    <span class="kw">PRIMARY KEY</span>,
+  detected_at    <span class="typ">TIMESTAMPTZ</span>  <span class="kw">NOT NULL</span>,
+  account_name   <span class="typ">TEXT</span>         <span class="kw">NOT NULL</span>,
+  estimated_rows <span class="typ">INT</span>,
+  nitda_notified <span class="typ">BOOLEAN</span>      <span class="kw">DEFAULT FALSE</span>,
+  notification_deadline <span class="typ">TIMESTAMPTZ</span> <span class="kw">GENERATED ALWAYS AS</span>
+    (detected_at + <span class="kw">INTERVAL</span> <span class="str">'72 hours'</span>) <span class="kw">STORED</span>,
+  status         <span class="typ">TEXT</span>         <span class="kw">DEFAULT</span> <span class="str">'INVESTIGATING'</span>
+);
+
+<span class="kw">INSERT INTO</span> nsr.breach_incidents (detected_at, account_name, estimated_rows)
+<span class="kw">VALUES</span> (<span class="str">'2025-07-08 03:47:00+01'</span>, <span class="str">'nsr_caseworker_kn'</span>, <span class="num">140000</span>);</pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">The 72-hour clock and what the DBA provides</div>
+        The NDP Act Section 40 requires notification to NITDA within 72 hours. In practice the DBA is not the person who sends that notification — the Data Protection Officer (DPO) does. But the DBA is the person who produces the evidence package: number of affected individuals, exact time window, what data was accessed, whether encryption was in place, and what remediation was taken. The <code>audit_log</code>, <code>breach_incidents</code>, and <code>erasure_requests</code> tables together form that evidence package. A system with no audit log cannot prove anything in either direction — it cannot prove a breach occurred, and it cannot prove one did not.
+      </div>
+
     </div>
 
     <div class="tab-panel" id="tab-d7-exercises">
@@ -9947,6 +10401,187 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
           </div>
         </div>
       </div>
+
+      <div class="exercise-card">
+        <div class="exercise-header" onclick="toggleExercise(this)">
+          <div class="ex-num">G4</div>
+          <div class="ex-title">Fuzzy deduplication: find the double-enrolled household</div>
+          <span class="ex-difficulty diff-advanced">Advanced</span>
+          <span class="ex-toggle">▼</span>
+        </div>
+        <div class="exercise-body" style="display:none">
+          <p>A re-enumeration of Nassarawa State produced the staging rows below. Using <code>pg_trgm</code>, write a query that identifies the two rows most likely to be the same household (same head-of-household, same LGA, slightly different spelling). Then write the quarantine INSERT that flags the lower-code duplicate for human review.</p>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">sql – setup: insert test rows into staging</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+            <pre><span class="cmt">-- Setup: ensure pg_trgm is enabled and staging table exists</span>
+<span class="kw">CREATE EXTENSION IF NOT EXISTS</span> pg_trgm;
+<span class="kw">CREATE TABLE IF NOT EXISTS</span> nsr.stg_households (
+  household_code  <span class="typ">TEXT</span>, state_name <span class="typ">TEXT</span>, lga_name <span class="typ">TEXT</span>,
+  head_name <span class="typ">TEXT</span>, pmt_score <span class="typ">TEXT</span>, import_batch <span class="typ">TEXT</span>,
+  loaded_at <span class="typ">TIMESTAMPTZ</span> <span class="kw">DEFAULT now</span>()
+);
+<span class="kw">TRUNCATE</span> nsr.stg_households;
+<span class="kw">INSERT INTO</span> nsr.stg_households (household_code, state_name, lga_name, head_name, pmt_score, import_batch)
+<span class="kw">VALUES</span>
+  (<span class="str">'NS-0010'</span>, <span class="str">'Nassarawa'</span>, <span class="str">'Lafia'</span>, <span class="str">'Yusuf Abdullahi Maikano'</span>, <span class="str">'29.4'</span>, <span class="str">'BATCH_NS_2024'</span>),
+  (<span class="str">'NS-0011'</span>, <span class="str">'Nassarawa'</span>, <span class="str">'Lafia'</span>, <span class="str">'Yusuf Abdullahi Maikano'</span>, <span class="str">'31.0'</span>, <span class="str">'BATCH_NS_2024'</span>),
+  (<span class="str">'NS-0012'</span>, <span class="str">'Nassarawa'</span>, <span class="str">'Lafia'</span>, <span class="str">'Hauwa Ibrahim Bako'</span>,      <span class="str">'44.2'</span>, <span class="str">'BATCH_NS_2024'</span>),
+  (<span class="str">'NS-0013'</span>, <span class="str">'Nassarawa'</span>, <span class="str">'Karu'</span>,  <span class="str">'Emeka Obi'</span>,               <span class="str">'19.1'</span>, <span class="str">'BATCH_NS_2024'</span>),
+  (<span class="str">'NS-0014'</span>, <span class="str">'Nassarawa'</span>, <span class="str">'Lafia'</span>, <span class="str">'Yusuf Abdulahi Maikano'</span>,  <span class="str">'30.0'</span>, <span class="str">'BATCH_NS_2024'</span>);</pre>
+          </div>
+          <div class="answer-area">Write your fuzzy match query and quarantine INSERT here</div>
+          <div class="answer-reveal" id="ans-d7-g4">
+            <div class="callout tip"><div class="callout-title">Full Solution</div></div>
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">sql – fuzzy match query + quarantine INSERT</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre><span class="cmt">-- Step 1: Find near-duplicate pairs within the same LGA</span>
+<span class="kw">SELECT</span>
+  a.household_code  <span class="kw">AS</span> code_a,
+  b.household_code  <span class="kw">AS</span> code_b,
+  a.head_name       <span class="kw">AS</span> name_a,
+  b.head_name       <span class="kw">AS</span> name_b,
+  <span class="fn">round</span>(<span class="fn">similarity</span>(a.head_name, b.head_name)::numeric, <span class="num">3</span>) <span class="kw">AS</span> name_sim,
+  a.pmt_score       <span class="kw">AS</span> pmt_a,
+  b.pmt_score       <span class="kw">AS</span> pmt_b
+<span class="kw">FROM</span>  nsr.stg_households a
+<span class="kw">JOIN</span>  nsr.stg_households b
+  <span class="kw">ON</span>  a.household_code &lt; b.household_code
+  <span class="kw">AND</span> a.lga_name = b.lga_name
+  <span class="kw">AND</span> <span class="fn">similarity</span>(a.head_name, b.head_name) > <span class="num">0.55</span>
+<span class="kw">ORDER BY</span> name_sim <span class="kw">DESC</span>;
+<span class="cmt">-- Expected: NS-0010 vs NS-0011 (exact match, sim=1.0)
+--            NS-0010 vs NS-0014 (similar, sim≈0.92)
+--            NS-0011 vs NS-0014 (similar, sim≈0.92)</span>
+
+<span class="cmt">-- Step 2: Quarantine the two later-arriving near-duplicate rows</span>
+<span class="cmt">-- (NS-0011 and NS-0014 both look like re-entries of NS-0010)</span>
+<span class="kw">CREATE TABLE IF NOT EXISTS</span> nsr.stg_quarantine (
+  qid            <span class="typ">BIGSERIAL</span>   <span class="kw">PRIMARY KEY</span>,
+  source_batch   <span class="typ">TEXT</span>        <span class="kw">NOT NULL</span>,
+  raw_data       <span class="typ">JSONB</span>       <span class="kw">NOT NULL</span>,
+  rejection_code <span class="typ">TEXT</span>        <span class="kw">NOT NULL</span>,
+  rejected_at    <span class="typ">TIMESTAMPTZ</span> <span class="kw">DEFAULT now</span>(),
+  resolved       <span class="typ">BOOLEAN</span>     <span class="kw">DEFAULT FALSE</span>
+);
+
+<span class="kw">INSERT INTO</span> nsr.stg_quarantine (source_batch, raw_data, rejection_code)
+<span class="kw">SELECT</span>
+  import_batch,
+  <span class="fn">to_jsonb</span>(s),
+  <span class="str">'FUZZY_DUPLICATE_CANDIDATE'</span>
+<span class="kw">FROM</span> nsr.stg_households s
+<span class="kw">WHERE</span> household_code <span class="kw">IN</span> (<span class="str">'NS-0011'</span>, <span class="str">'NS-0014'</span>);
+
+<span class="cmt">-- Step 3: Verify quarantine contains the right rows</span>
+<span class="kw">SELECT</span> qid, rejection_code, raw_data->><span class="str">'household_code'</span> <span class="kw">AS</span> code
+<span class="kw">FROM</span> nsr.stg_quarantine
+<span class="kw">WHERE</span> rejection_code = <span class="str">'FUZZY_DUPLICATE_CANDIDATE'</span>;</pre>
+            </div>
+            <div class="callout info" style="margin-top:8px">
+              <div class="callout-title">Key teaching points</div>
+              <strong>NS-0010 vs NS-0011</strong> have identical names (sim=1.0) but different PMT scores (29.4 vs 31.0) — likely the same household re-enumerated, with a scoring discrepancy that needs investigation. <strong>NS-0014</strong> has a slightly different spelling ("Abdulahi" vs "Abdullahi") and a third PMT score (30.0) — could be the same household or a different person with a similar name. The golden rule: when fuzzy matching raises a flag, a human decides. Never auto-merge records with different PMT scores.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            <button class="btn-toggle-answer" onclick="toggleAnswer('d7-g4',this)">▼ Show Answer</button>
+            <button class="ex-complete-btn" onclick="markExDone(this)">✓ Mark done</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="exercise-card">
+        <div class="exercise-header" onclick="toggleExercise(this)">
+          <div class="ex-num">G5</div>
+          <div class="ex-title">Right-to-erasure: pseudonymise and audit an NDP Act request</div>
+          <span class="ex-difficulty diff-advanced">Advanced</span>
+          <span class="ex-toggle">▼</span>
+        </div>
+        <div class="exercise-body" style="display:none">
+          <p>A citizen with NIN <code>'44556677889'</code> has invoked their right to erasure under NDP Act 2023, Section 34. Write the complete implementation: (1) log the request in <code>nsr.erasure_requests</code>, (2) pseudonymise the individual record in <code>nsr.individuals</code>, (3) mark the request as completed. Then write a verification query that confirms the NIN no longer exists in plain text and the erasure is recorded.</p>
+          <div class="callout info"><div class="callout-title">Setup reminder</div>
+            Ensure <code>pgcrypto</code> is enabled: <code>CREATE EXTENSION IF NOT EXISTS pgcrypto;</code>
+            Ensure <code>nsr.erasure_requests</code> and <code>nsr.individuals</code> exist (from the governance tab examples).
+          </div>
+          <div class="answer-area">Write your erasure implementation SQL here</div>
+          <div class="answer-reveal" id="ans-d7-g5">
+            <div class="callout tip"><div class="callout-title">Full Solution</div></div>
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">sql – right-to-erasure implementation</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre><span class="kw">CREATE EXTENSION IF NOT EXISTS</span> pgcrypto;
+
+<span class="cmt">-- Step 1: Log the erasure request BEFORE touching any data</span>
+<span class="kw">CREATE TABLE IF NOT EXISTS</span> nsr.erasure_requests (
+  request_id     <span class="typ">BIGSERIAL</span>    <span class="kw">PRIMARY KEY</span>,
+  nin_hash       <span class="typ">TEXT</span>         <span class="kw">NOT NULL</span>,
+  requested_at   <span class="typ">TIMESTAMPTZ</span>  <span class="kw">DEFAULT now</span>(),
+  completed_at   <span class="typ">TIMESTAMPTZ</span>,
+  completed_by   <span class="typ">TEXT</span>,
+  rows_affected  <span class="typ">INT</span>,
+  legal_ref      <span class="typ">TEXT</span>
+);
+
+<span class="kw">INSERT INTO</span> nsr.erasure_requests (nin_hash, legal_ref)
+<span class="kw">VALUES</span> (
+  <span class="fn">encode</span>(<span class="fn">digest</span>(<span class="str">'44556677889'</span>, <span class="str">'sha256'</span>), <span class="str">'hex'</span>),
+  <span class="str">'NDP Act 2023 s.34 – Data Subject Erasure Request'</span>
+);
+
+<span class="cmt">-- Step 2: Pseudonymise the individual (replace PII with irreversible tokens)</span>
+<span class="kw">UPDATE</span> nsr.individuals
+<span class="kw">SET</span>
+  nin        = <span class="str">'ERASED-'</span> || <span class="fn">encode</span>(<span class="fn">gen_random_bytes</span>(<span class="num">8</span>), <span class="str">'hex'</span>),
+  first_name = <span class="str">'[REDACTED]'</span>,
+  last_name  = <span class="str">'[REDACTED]'</span>,
+  dob        = <span class="kw">NULL</span>
+<span class="kw">WHERE</span> nin = <span class="str">'44556677889'</span>;
+
+<span class="cmt">-- Step 3: Mark the request as completed</span>
+<span class="kw">UPDATE</span> nsr.erasure_requests
+<span class="kw">SET</span>
+  completed_at  = <span class="fn">now</span>(),
+  completed_by  = <span class="fn">current_user</span>,
+  rows_affected = <span class="num">1</span>
+<span class="kw">WHERE</span> nin_hash = <span class="fn">encode</span>(<span class="fn">digest</span>(<span class="str">'44556677889'</span>, <span class="str">'sha256'</span>), <span class="str">'hex'</span>)
+  <span class="kw">AND</span> completed_at <span class="kw">IS NULL</span>;
+
+<span class="cmt">-- Step 4: Verification queries</span>
+
+<span class="cmt">-- 4a: Confirm NIN no longer exists in plain text</span>
+<span class="kw">SELECT</span> <span class="fn">COUNT</span>(*) <span class="kw">AS</span> plain_nin_count
+<span class="kw">FROM</span>  nsr.individuals
+<span class="kw">WHERE</span> nin = <span class="str">'44556677889'</span>;
+<span class="cmt">-- Must return 0</span>
+
+<span class="cmt">-- 4b: Confirm erasure record exists (proves compliance without retaining NIN)</span>
+<span class="kw">SELECT</span>
+  request_id,
+  requested_at,
+  completed_at,
+  completed_by,
+  rows_affected,
+  legal_ref
+<span class="kw">FROM</span>  nsr.erasure_requests
+<span class="kw">WHERE</span> nin_hash = <span class="fn">encode</span>(<span class="fn">digest</span>(<span class="str">'44556677889'</span>, <span class="str">'sha256'</span>), <span class="str">'hex'</span>);
+<span class="cmt">-- Must return 1 row with completed_at populated</span>
+
+<span class="cmt">-- 4c: Confirm pseudonymised row still exists (structural integrity preserved)</span>
+<span class="kw">SELECT</span> nin, first_name, last_name, dob
+<span class="kw">FROM</span>  nsr.individuals
+<span class="kw">WHERE</span> nin <span class="kw">LIKE</span> <span class="str">'ERASED-%'</span>
+<span class="kw">LIMIT</span> <span class="num">5</span>;</pre>
+            </div>
+            <div class="callout info" style="margin-top:8px">
+              <div class="callout-title">Key teaching points</div>
+              <strong>Hash not NIN</strong>: storing SHA-256 of the NIN lets you later verify "yes, this person's erasure was completed" without retaining their NIN in plain text. The hash is one-way — you cannot reverse it to get the NIN back. <strong>Order matters</strong>: log the request first, then pseudonymise, then mark complete — if any step fails, you have a partial audit trail rather than silent failure. <strong>Why not DELETE?</strong>: referential integrity (payments, audit_log entries) and statistical validity both require the row to remain. The pseudonymised row contributes to aggregate counts; it just cannot identify the person.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            <button class="btn-toggle-answer" onclick="toggleAnswer('d7-g5',this)">▼ Show Answer</button>
+            <button class="ex-complete-btn" onclick="markExDone(this)">✓ Mark done</button>
+          </div>
+        </div>
+      </div>
+
     </div>
     <div class="tab-panel" id="tab-d7-miniproject">
 
