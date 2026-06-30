@@ -9108,7 +9108,7 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
       output:['-- (a) Reads all pages regardless of selectivity (50k+ rows)','-- (b) hit=RAM cache (cheap), read=disk I/O (expensive)','-- (c) Partial index on pmt_score WHERE is_active=TRUE'],
       validate:function(sql){
         var s=sql.toLowerCase();
-        if(!/(seq|sequential|every|all)\s*(page|block|row|record)/i.test(s)&&!/reads every/i.test(s)&&!/all.*row/i.test(s))
+        if(!/(seq|sequential|every|all)\s*(page|block|row|record)/i.test(s)&&!/reads every/i.test(s)&&!/all.*row/i.test(s)&&!/(seq|sequential)\s*scan/i.test(s))
           return{ok:false,msg:'Part (a): Explain why a seq scan is slow — it reads every page/block in the table regardless of how many rows match.'};
         if(!/(hit|cache|buffer|ram)/i.test(s))
           return{ok:false,msg:'Part (b): Explain "shared hit" — pages served from RAM (buffer cache) without touching disk.'};
