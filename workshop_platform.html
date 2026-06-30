@@ -9491,6 +9491,30 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
     <div class="tab-panel" id="tab-d7-etl">
       <h3>Basics — What ETL Is and Why Data Migration Is Hard</h3>
       <p><strong>ETL</strong> (Extract, Transform, Load) is the process of moving data from one system into another while cleaning and reshaping it along the way. It sounds simple but is one of the most failure-prone operations in database work — because source data is almost always dirtier than expected. The NSR receives household data from 774 LGAs collected by field enumerators using paper forms and mobile apps under poor connectivity. Expect nulls, duplicates, invalid codes, mismatched formats, and truncated names — always.</p>
+      <div class="callout warning" style="margin-bottom:12px">
+        <div class="callout-title">&#x26A0; Setup required: create lga_data.csv first</div>
+        <p style="margin:6px 0 4px">Before running <code>\COPY</code>, the CSV file must exist on your machine. Choose one method:</p>
+        <p style="margin:4px 0 2px"><strong>Option A &mdash; Notepad:</strong> Open Notepad, paste the content below, then <em>File &rarr; Save As &rarr; change type to &ldquo;All Files&rdquo; &rarr; filename: <code>lga_data.csv</code> &rarr; save to <code>C:\Users\terts\Downloads\</code></em></p>
+        <p style="margin:4px 0 2px"><strong>Option B &mdash; PowerShell (one command):</strong></p>
+        <div class="code-block" style="margin:4px 0 8px">
+          <div class="code-header"><span class="code-lang">powershell &ndash; create lga_data.csv</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre style="font-size:0.72rem">$csv = @"
+household_code,state_name,lga_name,head_name,pmt_score,import_batch
+KN-001,Kano,Kano Municipal,Aisha Sule,32.5,BATCH_20240315
+KN-002,Kano,Kano Municipal,Ibrahim Yusuf,28.1,BATCH_20240315
+KN-003,Kano,Tarauni,Fatima Danladi,41.7,BATCH_20240315
+KN-004,Kano,Kumbotso,Musa Tukur,19.3,BATCH_20240315
+KN-005,Kano,Kano Municipal,Aisha Sule,32.5,BATCH_20240315
+KN-006,Kano,Nassarawa,Halima Abdullahi,55.0,BATCH_20240315
+KN-007,Kano,Tarauni,Yusuf Garba,N/A,BATCH_20240315
+KN-008,Kano,Kumbotso,Zainab Sani,22.7,BATCH_20240315
+,Kano,Kano Municipal,Garba Musa,30.0,BATCH_20240315
+KN-010,Kano,Nasarawa,Mele Ibrahim,38.4,BATCH_20240315
+"@
+$csv.TrimStart() | Out-File -FilePath "C:\Users\terts\Downloads\lga_data.csv" -Encoding utf8NoBOM</pre>
+        </div>
+        <p style="margin:4px 0 2px;font-size:0.8rem;color:#94a3b8;"><strong>Deliberate errors in this file (for the validation exercise):</strong> KN-005 duplicates KN-001 &bull; KN-007 has invalid pmt_score &lsquo;N/A&rsquo; &bull; row 9 has a missing household_code &bull; KN-010 has a misspelled LGA (&ldquo;Nasarawa&rdquo; vs &ldquo;Nassarawa&rdquo;)</p>
+      </div>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">sql – the simplest possible ETL: load a CSV into PostgreSQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
         <pre><span class="cmt">-- Step 1: Create a staging table with NO constraints (accept everything)</span>
@@ -10137,7 +10161,29 @@ $$;
         </div>
         <div class="exercise-body" style="display:none">
           <p>Create the staging table. Write a validation query that returns a summary of errors (missing codes, invalid pmt values, duplicates). Then write the INSERT that loads only valid rows.</p>
-          <div class="answer-area">Write your SQL here</div>
+<div class="callout warning" style="margin:8px 0 10px">
+            <div class="callout-title">&#x26A0; Setup required: create lga_data.csv first</div>
+            <p style="margin:6px 0 4px">Run this once in <strong>PowerShell</strong> (not psql) to create the test CSV file:</p>
+            <div class="code-block" style="margin:4px 0 6px">
+              <div class="code-header"><span class="code-lang">powershell &ndash; run once to create lga_data.csv</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre style="font-size:0.72rem">$csv = @"
+household_code,state_name,lga_name,head_name,pmt_score,import_batch
+KN-001,Kano,Kano Municipal,Aisha Sule,32.5,BATCH_20240315
+KN-002,Kano,Kano Municipal,Ibrahim Yusuf,28.1,BATCH_20240315
+KN-003,Kano,Tarauni,Fatima Danladi,41.7,BATCH_20240315
+KN-004,Kano,Kumbotso,Musa Tukur,19.3,BATCH_20240315
+KN-005,Kano,Kano Municipal,Aisha Sule,32.5,BATCH_20240315
+KN-006,Kano,Nassarawa,Halima Abdullahi,55.0,BATCH_20240315
+KN-007,Kano,Tarauni,Yusuf Garba,N/A,BATCH_20240315
+KN-008,Kano,Kumbotso,Zainab Sani,22.7,BATCH_20240315
+,Kano,Kano Municipal,Garba Musa,30.0,BATCH_20240315
+KN-010,Kano,Nasarawa,Mele Ibrahim,38.4,BATCH_20240315
+"@
+$csv.TrimStart() | Out-File -FilePath "C:\Users\terts\Downloads\lga_data.csv" -Encoding utf8NoBOM</pre>
+            </div>
+            <p style="margin:4px 0;font-size:0.78rem;color:#94a3b8;">File contains 4 deliberate errors: 1 duplicate, 1 bad pmt_score (N/A), 1 missing household_code, 1 misspelled LGA &mdash; your validation query should catch all four.</p>
+          </div>
+                    <div class="answer-area">Write your SQL here</div>
           <div class="answer-reveal" id="ans-d7-g1">
             <div class="callout tip"><div class="callout-title">Full Solution</div></div>
             <div class="code-block">
