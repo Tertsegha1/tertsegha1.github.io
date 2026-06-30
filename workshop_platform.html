@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -9494,7 +9494,7 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
       <div class="callout warning" style="margin-bottom:12px">
         <div class="callout-title">&#x26A0; Setup required: create lga_data.csv first</div>
         <p style="margin:6px 0 4px">Before running <code>\COPY</code>, the CSV file must exist on your machine. Choose one method:</p>
-        <p style="margin:4px 0 2px"><strong>Option A &mdash; Notepad:</strong> Open Notepad, paste the content below, then <em>File &rarr; Save As &rarr; change type to &ldquo;All Files&rdquo; &rarr; filename: <code>lga_data.csv</code> &rarr; save to <code>C:\Users\terts\Downloads\</code></em></p>
+        <p style="margin:4px 0 2px"><strong>Option A &mdash; Notepad:</strong> Open Notepad, paste the content below, then <em>File &rarr; Save As &rarr; change type to &ldquo;All Files&rdquo; &rarr; filename: <code>lga_data.csv</code> &rarr; save to <code>$env:USERPROFILE\Downloads\</code></em></p>
         <p style="margin:4px 0 2px"><strong>Option B &mdash; PowerShell (one command):</strong></p>
         <div class="code-block" style="margin:4px 0 8px">
           <div class="code-header"><span class="code-lang">powershell &ndash; create lga_data.csv</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
@@ -9511,7 +9511,7 @@ KN-008,Kano,Kumbotso,Zainab Sani,22.7,BATCH_20240315
 ,Kano,Kano Municipal,Garba Musa,30.0,BATCH_20240315
 KN-010,Kano,Nasarawa,Mele Ibrahim,38.4,BATCH_20240315
 "@
-$csv.TrimStart() | Out-File -FilePath "C:\Users\terts\Downloads\lga_data.csv" -Encoding utf8NoBOM</pre>
+$csv.TrimStart() | Out-File -FilePath "$env:USERPROFILE\Downloads\lga_data.csv" -Encoding utf8NoBOM</pre>
         </div>
         <p style="margin:4px 0 2px;font-size:0.8rem;color:#94a3b8;"><strong>Deliberate errors in this file (for the validation exercise):</strong> KN-005 duplicates KN-001 &bull; KN-007 has invalid pmt_score &lsquo;N/A&rsquo; &bull; row 9 has a missing household_code &bull; KN-010 has a misspelled LGA (&ldquo;Nasarawa&rdquo; vs &ldquo;Nassarawa&rdquo;)</p>
       </div>
@@ -9524,7 +9524,7 @@ $csv.TrimStart() | Out-File -FilePath "C:\Users\terts\Downloads\lga_data.csv" -E
 
 <span class="cmt">-- Step 2: Load the file (run in psql, not in SQL)</span>
 <span class="cmt">-- Windows path (one line — no line break allowed in \COPY):</span>
-<span class="cmt">-- \COPY nsr.stg_raw FROM 'C:/Users/terts/Downloads/lga_data.csv' CSV HEADER</span>
+<span class="cmt">-- \COPY nsr.stg_raw FROM 'C:/Users/YourName/Downloads/lga_data.csv' CSV HEADER</span>
 
 <span class="cmt">-- Step 3: Inspect what arrived</span>
 <span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.stg_raw;
@@ -9559,7 +9559,7 @@ $csv.TrimStart() | Out-File -FilePath "C:\Users\terts\Downloads\lga_data.csv" -E
 <span class="kw">ALTER TABLE</span> nsr.stg_households <span class="kw">ADD COLUMN IF NOT EXISTS</span> loaded_at    <span class="typ">TIMESTAMPTZ</span> <span class="kw">DEFAULT now</span>();
 
 <span class="cmt">-- Step 2: Load from CSV (\COPY must be on ONE line — no line break)</span>
-<span class="cmt">-- \COPY nsr.stg_households(household_code,state_name,lga_name,head_name,pmt_score,import_batch) FROM 'C:/Users/terts/Downloads/lga_data.csv' CSV HEADER</span>
+<span class="cmt">-- \COPY nsr.stg_households(household_code,state_name,lga_name,head_name,pmt_score,import_batch) FROM 'C:/Users/YourName/Downloads/lga_data.csv' CSV HEADER</span>
 
 <span class="cmt">-- Step 3: Validate</span>
 <span class="kw">SELECT</span> <span class="str">'missing_code'</span> <span class="kw">AS</span> issue, <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> nsr.stg_households <span class="kw">WHERE</span> household_code <span class="kw">IS NULL</span>
@@ -10179,7 +10179,7 @@ KN-008,Kano,Kumbotso,Zainab Sani,22.7,BATCH_20240315
 ,Kano,Kano Municipal,Garba Musa,30.0,BATCH_20240315
 KN-010,Kano,Nasarawa,Mele Ibrahim,38.4,BATCH_20240315
 "@
-$csv.TrimStart() | Out-File -FilePath "C:\Users\terts\Downloads\lga_data.csv" -Encoding utf8NoBOM</pre>
+$csv.TrimStart() | Out-File -FilePath "$env:USERPROFILE\Downloads\lga_data.csv" -Encoding utf8NoBOM</pre>
             </div>
             <p style="margin:4px 0;font-size:0.78rem;color:#94a3b8;">File contains 4 deliberate errors: 1 duplicate, 1 bad pmt_score (N/A), 1 missing household_code, 1 misspelled LGA &mdash; your validation query should catch all four.</p>
           </div>
@@ -10196,7 +10196,7 @@ $csv.TrimStart() | Out-File -FilePath "C:\Users\terts\Downloads\lga_data.csv" -E
 <span class="cmt">-- Verify: \d nsr.stg_households  (should now show 7 columns)</span>
 
 <span class="cmt">-- Step 2: Load from CSV (\COPY must be ONE line in psql — no line break)</span>
-<span class="cmt">-- \COPY nsr.stg_households(household_code,state_name,lga_name,head_name,pmt_score,import_batch) FROM 'C:/Users/terts/Downloads/lga_data.csv' CSV HEADER</span>
+<span class="cmt">-- \COPY nsr.stg_households(household_code,state_name,lga_name,head_name,pmt_score,import_batch) FROM 'C:/Users/YourName/Downloads/lga_data.csv' CSV HEADER</span>
 
 <span class="cmt">-- Step 3: Comprehensive validation report</span>
 <span class="kw">SELECT</span> issue, <span class="fn">COUNT</span>(*) <span class="kw">AS</span> row_count
@@ -12225,7 +12225,7 @@ max_members <span class="kw">AS</span> (
 
 <span class="cmt">-- Step 2: Load the file (run in psql, not in SQL)</span>
 <span class="cmt">-- Windows path (one line — no line break allowed in \COPY):</span>
-<span class="cmt">-- \COPY nsr.stg_raw FROM 'C:/Users/terts/Downloads/lga_data.csv' CSV HEADER</span>
+<span class="cmt">-- \COPY nsr.stg_raw FROM 'C:/Users/YourName/Downloads/lga_data.csv' CSV HEADER</span>
 
 <span class="cmt">-- Step 3: Inspect what arrived</span>
 <span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.stg_raw;
@@ -12260,7 +12260,7 @@ max_members <span class="kw">AS</span> (
 <span class="kw">ALTER TABLE</span> nsr.stg_households <span class="kw">ADD COLUMN IF NOT EXISTS</span> loaded_at    <span class="typ">TIMESTAMPTZ</span> <span class="kw">DEFAULT now</span>();
 
 <span class="cmt">-- Step 2: Load from CSV (\COPY must be on ONE line — no line break)</span>
-<span class="cmt">-- \COPY nsr.stg_households(household_code,state_name,lga_name,head_name,pmt_score,import_batch) FROM 'C:/Users/terts/Downloads/lga_data.csv' CSV HEADER</span>
+<span class="cmt">-- \COPY nsr.stg_households(household_code,state_name,lga_name,head_name,pmt_score,import_batch) FROM 'C:/Users/YourName/Downloads/lga_data.csv' CSV HEADER</span>
 
 <span class="cmt">-- Step 3: Validate</span>
 <span class="kw">SELECT</span> <span class="str">'missing_code'</span> <span class="kw">AS</span> issue, <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> nsr.stg_households <span class="kw">WHERE</span> household_code <span class="kw">IS NULL</span>
@@ -12875,7 +12875,7 @@ $$;
 <span class="cmt">-- Verify: \d nsr.stg_households  (should now show 7 columns)</span>
 
 <span class="cmt">-- Step 2: Load from CSV (\COPY must be ONE line in psql — no line break)</span>
-<span class="cmt">-- \COPY nsr.stg_households(household_code,state_name,lga_name,head_name,pmt_score,import_batch) FROM 'C:/Users/terts/Downloads/lga_data.csv' CSV HEADER</span>
+<span class="cmt">-- \COPY nsr.stg_households(household_code,state_name,lga_name,head_name,pmt_score,import_batch) FROM 'C:/Users/YourName/Downloads/lga_data.csv' CSV HEADER</span>
 
 <span class="cmt">-- Step 3: Comprehensive validation report</span>
 <span class="kw">SELECT</span> issue, <span class="fn">COUNT</span>(*) <span class="kw">AS</span> row_count
