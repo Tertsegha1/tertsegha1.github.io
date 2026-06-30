@@ -10210,11 +10210,11 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
         <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px;">
           <span style="font-size:1.6rem;">&#128203;</span>
           <div>
-            <div style="font-size:1.1rem;font-weight:700;color:#7dd3fc;letter-spacing:0.02em;">Day 7 Feedback</div>
-            <div style="font-size:0.8rem;color:#64748b;margin-top:2px;">2 minutes &middot; helps us improve the rest of the programme</div>
+            <div style="font-size:1.1rem;font-weight:700;color:#7dd3fc;letter-spacing:0.02em;">Programme Feedback &mdash; Tue 23 June to Wed 1 July 2026</div>
+            <div style="font-size:0.8rem;color:#64748b;margin-top:2px;">3 minutes &middot; covers the whole training programme, not just today</div>
           </div>
         </div>
-        <p style="color:#94a3b8;font-size:0.88rem;margin:0;">Your honest feedback shapes how we run the remaining sessions. This takes about 2 minutes &mdash; five quick ratings, one pace check, one recommendation score, and a couple of short comments. Responses are shared with the programme team only.</p>
+        <p style="color:#94a3b8;font-size:0.88rem;margin:0;">You've now completed all six training days &mdash; Foundations through ETL/ELT &amp; Governance. Your honest reflection on the <strong style="color:#e2e8f0;">whole programme</strong> shapes how we run future cohorts. This takes about 3 minutes &mdash; a per-day rating, five quick programme-wide ratings, one pace check, one recommendation score, and a couple of short comments. Responses are shared with the programme team only.</p>
       </div>
 
       <!-- Identity banner — individual response, no team grouping -->
@@ -10242,47 +10242,79 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
       <div id="d7fb-confirmation" style="display:none;background:#0a1f14;border:1px solid #166534;border-radius:12px;padding:28px 24px;margin-bottom:18px;text-align:center;">
         <div style="font-size:2.2rem;margin-bottom:10px;">&#9989;</div>
         <div style="font-size:1.05rem;font-weight:700;color:#6ee7b7;margin-bottom:6px;">Thank you &mdash; your feedback has been recorded</div>
-        <div style="font-size:0.84rem;color:#94a3b8;margin-bottom:16px;">You can update your response any time before the end of the day.</div>
+        <div style="font-size:0.84rem;color:#94a3b8;margin-bottom:16px;">You can update your response any time before the programme closing session.</div>
         <button onclick="d7fbEdit()" style="padding:8px 20px;background:none;border:1px solid #166534;color:#6ee7b7;border-radius:7px;font-size:0.84rem;font-weight:600;cursor:pointer;font-family:inherit;">&#9998; Edit my response</button>
       </div>
 
       <!-- Feedback form -->
       <div id="d7fb-form-wrap">
 
+        <!-- Per-day ratings -->
+        <div class="d7fb-q" style="background:#080e18;border:1px solid #1e3a5f;border-radius:10px;padding:18px 20px;margin-bottom:14px;">
+          <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:4px;">1. Please rate each training day <span style="color:#ef4444;">*</span></div>
+          <div style="font-size:0.76rem;color:#94a3b8;margin-bottom:14px;">1 = Poor &middot; 5 = Excellent</div>
+          <div style="display:grid;gap:12px;">
+            <div>
+              <div style="font-size:0.82rem;color:#cbd5e1;margin-bottom:6px;">Day 1 &middot; Foundations &amp; Architecture (23 Jun)</div>
+              <div id="d7fb-rate-day1" class="d7fb-rate-group" data-field="day1" style="display:flex;gap:6px;"></div>
+            </div>
+            <div>
+              <div style="font-size:0.82rem;color:#cbd5e1;margin-bottom:6px;">Day 2 &middot; SQL Fundamentals (24 Jun)</div>
+              <div id="d7fb-rate-day2" class="d7fb-rate-group" data-field="day2" style="display:flex;gap:6px;"></div>
+            </div>
+            <div>
+              <div style="font-size:0.82rem;color:#cbd5e1;margin-bottom:6px;">Day 3 &middot; Admin, Security &amp; Backup (25 Jun)</div>
+              <div id="d7fb-rate-day3" class="d7fb-rate-group" data-field="day3" style="display:flex;gap:6px;"></div>
+            </div>
+            <div>
+              <div style="font-size:0.82rem;color:#cbd5e1;margin-bottom:6px;">Day 5 &middot; Assessment Day (29 Jun)</div>
+              <div id="d7fb-rate-day5" class="d7fb-rate-group" data-field="day5" style="display:flex;gap:6px;"></div>
+            </div>
+            <div>
+              <div style="font-size:0.82rem;color:#cbd5e1;margin-bottom:6px;">Day 6 &middot; Performance Tuning (30 Jun)</div>
+              <div id="d7fb-rate-day6" class="d7fb-rate-group" data-field="day6" style="display:flex;gap:6px;"></div>
+            </div>
+            <div>
+              <div style="font-size:0.82rem;color:#cbd5e1;margin-bottom:6px;">Day 7 &middot; ETL/ELT &amp; Governance (1 Jul)</div>
+              <div id="d7fb-rate-day7" class="d7fb-rate-group" data-field="day7" style="display:flex;gap:6px;"></div>
+            </div>
+          </div>
+        </div>
+
         <!-- Rating questions -->
         <div class="d7fb-q" style="background:#080e18;border:1px solid #1e3a5f;border-radius:10px;padding:18px 20px;margin-bottom:14px;">
-          <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:4px;">1. Overall, how would you rate today's session?</div>
+          <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:4px;">2. Overall, how would you rate the training programme?</div>
           <div style="font-size:0.76rem;color:#94a3b8;margin-bottom:12px;">1 = Poor &middot; 5 = Excellent</div>
           <div id="d7fb-rate-overall" class="d7fb-rate-group" data-field="overall" style="display:flex;gap:8px;"></div>
         </div>
 
         <div class="d7fb-q" style="background:#080e18;border:1px solid #1e3a5f;border-radius:10px;padding:18px 20px;margin-bottom:14px;">
-          <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:4px;">2. How clear was the ETL/ELT &amp; Governance content?</div>
+          <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:4px;">3. How clear was the content covered across the programme?</div>
           <div style="font-size:0.76rem;color:#94a3b8;margin-bottom:12px;">1 = Very confusing &middot; 5 = Very clear</div>
           <div id="d7fb-rate-clarity" class="d7fb-rate-group" data-field="clarity" style="display:flex;gap:8px;"></div>
         </div>
 
         <div class="d7fb-q" style="background:#080e18;border:1px solid #1e3a5f;border-radius:10px;padding:18px 20px;margin-bottom:14px;">
-          <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:4px;">3. How useful was the Mini Project (hands-on SQL pipeline)?</div>
+          <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:4px;">4. How useful were the hands-on mini projects (Days 5&ndash;7)?</div>
           <div style="font-size:0.76rem;color:#94a3b8;margin-bottom:12px;">1 = Not useful &middot; 5 = Extremely useful</div>
           <div id="d7fb-rate-miniproject" class="d7fb-rate-group" data-field="miniproject" style="display:flex;gap:8px;"></div>
         </div>
 
         <div class="d7fb-q" style="background:#080e18;border:1px solid #1e3a5f;border-radius:10px;padding:18px 20px;margin-bottom:14px;">
-          <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:4px;">4. How would you rate the instructor's support today?</div>
+          <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:4px;">5. How would you rate the instructor's support throughout the programme?</div>
           <div style="font-size:0.76rem;color:#94a3b8;margin-bottom:12px;">1 = Poor &middot; 5 = Excellent</div>
           <div id="d7fb-rate-instructor" class="d7fb-rate-group" data-field="instructor" style="display:flex;gap:8px;"></div>
         </div>
 
         <div class="d7fb-q" style="background:#080e18;border:1px solid #1e3a5f;border-radius:10px;padding:18px 20px;margin-bottom:14px;">
-          <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:4px;">5. How relevant is this content to your day-to-day NSR role?</div>
+          <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:4px;">6. How relevant is this content to your day-to-day NSR role?</div>
           <div style="font-size:0.76rem;color:#94a3b8;margin-bottom:12px;">1 = Not relevant &middot; 5 = Highly relevant</div>
           <div id="d7fb-rate-relevance" class="d7fb-rate-group" data-field="relevance" style="display:flex;gap:8px;"></div>
         </div>
 
         <!-- Pace -->
         <div class="d7fb-q" style="background:#080e18;border:1px solid #1e3a5f;border-radius:10px;padding:18px 20px;margin-bottom:14px;">
-          <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:12px;">6. How was the pace of today's session?</div>
+          <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:12px;">7. How was the overall pace of the programme?</div>
           <div id="d7fb-pace-group" style="display:flex;gap:8px;flex-wrap:wrap;">
             <button class="d7fb-pace-btn" data-val="slow" onclick="d7fbSetPace('slow')" style="flex:1;min-width:120px;padding:10px;border-radius:8px;border:1.5px solid #334155;background:#0d1929;color:#94a3b8;font-size:0.84rem;font-weight:600;cursor:pointer;font-family:inherit;">&#128034; Too slow</button>
             <button class="d7fb-pace-btn" data-val="right" onclick="d7fbSetPace('right')" style="flex:1;min-width:120px;padding:10px;border-radius:8px;border:1.5px solid #334155;background:#0d1929;color:#94a3b8;font-size:0.84rem;font-weight:600;cursor:pointer;font-family:inherit;">&#9989; Just right</button>
@@ -10292,29 +10324,29 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
 
         <!-- NPS -->
         <div class="d7fb-q" style="background:#080e18;border:1px solid #1e3a5f;border-radius:10px;padding:18px 20px;margin-bottom:14px;">
-          <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:4px;">7. How likely are you to recommend this training to a colleague?</div>
+          <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:4px;">8. How likely are you to recommend this training to a colleague?</div>
           <div style="font-size:0.76rem;color:#94a3b8;margin-bottom:12px;">0 = Not at all likely &middot; 10 = Extremely likely</div>
           <div id="d7fb-nps-group" style="display:flex;gap:5px;flex-wrap:wrap;"></div>
         </div>
 
         <!-- Open text -->
         <div class="d7fb-q" style="background:#080e18;border:1px solid #1e3a5f;border-radius:10px;padding:18px 20px;margin-bottom:14px;">
-          <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:4px;">8. What worked well today? <span style="color:#ef4444;">*</span></div>
-          <textarea id="d7fb-well" placeholder="e.g. the case scenarios made EXPLAIN ANALYZE click for me..." style="width:100%;min-height:70px;background:#0d1929;border:1px solid #1e3a5f;border-radius:6px;color:#e2e8f0;font-family:inherit;font-size:0.84rem;padding:10px;resize:vertical;box-sizing:border-box;outline:none;margin-top:8px;"></textarea>
+          <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:4px;">9. What worked well across the programme? <span style="color:#ef4444;">*</span></div>
+          <textarea id="d7fb-well" placeholder="e.g. the case scenarios in Day 6 made EXPLAIN ANALYZE click for me..." style="width:100%;min-height:70px;background:#0d1929;border:1px solid #1e3a5f;border-radius:6px;color:#e2e8f0;font-family:inherit;font-size:0.84rem;padding:10px;resize:vertical;box-sizing:border-box;outline:none;margin-top:8px;"></textarea>
         </div>
 
         <div class="d7fb-q" style="background:#080e18;border:1px solid #1e3a5f;border-radius:10px;padding:18px 20px;margin-bottom:14px;">
-          <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:4px;">9. What could be improved? <span style="color:#ef4444;">*</span></div>
+          <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:4px;">10. What could be improved for future cohorts? <span style="color:#ef4444;">*</span></div>
           <textarea id="d7fb-improve" placeholder="e.g. more time on the deduplication tab, or a clearer pg_stat_statements setup guide..." style="width:100%;min-height:70px;background:#0d1929;border:1px solid #1e3a5f;border-radius:6px;color:#e2e8f0;font-family:inherit;font-size:0.84rem;padding:10px;resize:vertical;box-sizing:border-box;outline:none;margin-top:8px;"></textarea>
         </div>
 
         <div class="d7fb-q" style="background:#080e18;border:1px solid #1e3a5f;border-radius:10px;padding:18px 20px;margin-bottom:14px;">
-          <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:4px;">10. Any technical issues you faced today? <span style="color:#64748b;font-weight:400;">(optional)</span></div>
+          <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:4px;">11. Any technical issues you faced during the programme? <span style="color:#64748b;font-weight:400;">(optional)</span></div>
           <textarea id="d7fb-issues" placeholder="e.g. PostgreSQL service wouldn't restart, error messages, slow laptop..." style="width:100%;min-height:60px;background:#0d1929;border:1px solid #1e3a5f;border-radius:6px;color:#e2e8f0;font-family:inherit;font-size:0.84rem;padding:10px;resize:vertical;box-sizing:border-box;outline:none;margin-top:8px;"></textarea>
         </div>
 
         <div class="d7fb-q" style="background:#080e18;border:1px solid #1e3a5f;border-radius:10px;padding:18px 20px;margin-bottom:18px;">
-          <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:4px;">11. Any suggestions or action items for the programme team? <span style="color:#64748b;font-weight:400;">(optional)</span></div>
+          <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:4px;">12. Any suggestions or action items for the programme team? <span style="color:#64748b;font-weight:400;">(optional)</span></div>
           <textarea id="d7fb-actions" placeholder="e.g. send the slide deck in advance, add a recap video..." style="width:100%;min-height:60px;background:#0d1929;border:1px solid #1e3a5f;border-radius:6px;color:#e2e8f0;font-family:inherit;font-size:0.84rem;padding:10px;resize:vertical;box-sizing:border-box;outline:none;margin-top:8px;"></textarea>
         </div>
 
@@ -10328,7 +10360,7 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
           <div style="background:linear-gradient(90deg,#1a0a3d,#0f172a);padding:12px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
             <div style="display:flex;align-items:center;gap:10px;">
               <span style="font-size:1rem;">&#128202;</span>
-              <span style="color:#e2e8f0;font-weight:700;font-size:0.88rem;letter-spacing:0.5px;">DAY 7 FEEDBACK ANALYTICS</span>
+              <span style="color:#e2e8f0;font-weight:700;font-size:0.88rem;letter-spacing:0.5px;">PROGRAMME FEEDBACK ANALYTICS &middot; 23 Jun &ndash; 1 Jul</span>
               <span id="d7fbdash-live-dot" style="width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block;"></span>
             </div>
             <div style="display:flex;align-items:center;gap:10px;">
@@ -10353,9 +10385,15 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
             </div>
           </div>
 
+          <!-- Per-day rating bars -->
+          <div style="padding:18px 20px;border-top:1px solid #1e1b4b;">
+            <div style="font-size:0.78rem;font-weight:700;color:#a78bfa;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px;">Average Rating Per Day (out of 5)</div>
+            <div id="d7fbdash-day-bars" style="display:grid;gap:10px;"></div>
+          </div>
+
           <!-- Rating bars -->
           <div style="padding:18px 20px;border-top:1px solid #1e1b4b;">
-            <div style="font-size:0.78rem;font-weight:700;color:#a78bfa;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px;">Average Ratings (out of 5)</div>
+            <div style="font-size:0.78rem;font-weight:700;color:#a78bfa;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px;">Average Programme-Wide Ratings (out of 5)</div>
             <div id="d7fbdash-bars" style="display:grid;gap:10px;"></div>
           </div>
 
@@ -10396,7 +10434,9 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
   var KEY='d7fb_v1';
   var _dashTimer=null;
   var ratingFields=['overall','clarity','miniproject','instructor','relevance'];
-  var ratingLabels={overall:'Overall session',clarity:'Content clarity',miniproject:'Mini project usefulness',instructor:'Instructor support',relevance:'Relevance to role'};
+  var ratingLabels={overall:'Overall programme',clarity:'Content clarity',miniproject:'Mini projects usefulness',instructor:'Instructor support',relevance:'Relevance to role'};
+  var dayFields=['day1','day2','day3','day5','day6','day7'];
+  var dayLabels={day1:'Day 1 · Foundations',day2:'Day 2 · SQL Fundamentals',day3:'Day 3 · Admin, Security & Backup',day5:'Day 5 · Assessment',day6:'Day 6 · Performance Tuning',day7:'Day 7 · ETL/ELT & Governance'};
   var responses={};
 
   function getR(){try{return JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){return{};}}
@@ -10514,6 +10554,7 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
     responses.actions=document.getElementById('d7fb-actions').value.trim();
 
     var missing=[];
+    dayFields.forEach(function(f){ if(!responses[f]) missing.push(f); });
     ratingFields.forEach(function(f){ if(!responses[f]) missing.push(f); });
     if(!responses.pace) missing.push('pace');
     if(responses.nps===undefined||responses.nps===null) missing.push('nps');
@@ -10558,6 +10599,7 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
     var saved=getR();
     if(!saved || Object.keys(saved).length===0) return;
     responses=Object.assign({},saved);
+    dayFields.forEach(function(f){ if(saved[f]) window.d7fbSetRating(f, saved[f]); });
     ratingFields.forEach(function(f){ if(saved[f]) window.d7fbSetRating(f, saved[f]); });
     if(saved.pace) window.d7fbSetPace(saved.pace);
     if(saved.nps!==undefined && saved.nps!==null) window.d7fbSetNps(saved.nps);
@@ -10593,6 +10635,7 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
       var avgEl=document.getElementById('d7fbdash-avg-overall'); if(avgEl) avgEl.textContent='—';
       var npsEl=document.getElementById('d7fbdash-nps'); if(npsEl) npsEl.textContent='—';
       var barsEl=document.getElementById('d7fbdash-bars'); if(barsEl) barsEl.innerHTML='<span style="color:#94a3b8;font-size:0.78rem;">No responses yet</span>';
+      var dayBarsEl=document.getElementById('d7fbdash-day-bars'); if(dayBarsEl) dayBarsEl.innerHTML='<span style="color:#94a3b8;font-size:0.78rem;">No responses yet</span>';
       var paceEl=document.getElementById('d7fbdash-pace'); if(paceEl) paceEl.innerHTML='<span style="color:#94a3b8;font-size:0.78rem;">No responses yet</span>';
       ['well','improve','issues','actions'].forEach(function(f){
         var el=document.getElementById('d7fbdash-'+f); if(el) el.innerHTML='<span style="color:#94a3b8;font-size:0.78rem;">No responses yet</span>';
@@ -10614,6 +10657,21 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
       var nps=Math.round((promoters/npsResponders.length - detractors/npsResponders.length)*100);
       if(npsEl) npsEl.textContent=(nps>0?'+':'')+nps;
     } else if(npsEl) npsEl.textContent='—';
+
+    /* Per-day rating bars */
+    var dayBarsEl=document.getElementById('d7fbdash-day-bars');
+    if(dayBarsEl){
+      dayBarsEl.innerHTML=dayFields.map(function(f){
+        var vals=all.map(function(r){return r[f];}).filter(function(v){return v;});
+        var avg=vals.length? (vals.reduce(function(a,b){return a+b;},0)/vals.length) : 0;
+        var pct=(avg/5*100).toFixed(0);
+        var lowFlag = vals.length && avg<3.5 ? ' &#9888;' : '';
+        return '<div>'
+          +'<div style="display:flex;justify-content:space-between;font-size:0.78rem;color:#e2e8f0;margin-bottom:4px;"><span>'+dayLabels[f]+'</span><span style="color:#fbbf24;font-weight:700;">'+(vals.length?avg.toFixed(1):'—')+' / 5'+lowFlag+'</span></div>'
+          +'<div style="background:#071120;border-radius:999px;height:8px;overflow:hidden;"><div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,#f59e0b,#fbbf24);border-radius:999px;"></div></div>'
+          +'</div>';
+      }).join('');
+    }
 
     /* Rating bars */
     var barsEl=document.getElementById('d7fbdash-bars');
@@ -10667,6 +10725,7 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
 
   /* ── Init ─────────────────────────────────────────────── */
   function init(){
+    dayFields.forEach(function(f){ buildRatingGroup('d7fb-rate-'+f, f); });
     ratingFields.forEach(function(f){ buildRatingGroup('d7fb-rate-'+f, f); });
     buildNpsGroup();
     updateRegBanner();
