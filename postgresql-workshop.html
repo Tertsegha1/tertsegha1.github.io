@@ -496,6 +496,8 @@ body.instructor-mode .nav-item.instructor-block { display: flex; }
 .tab-btn.active { color: var(--brand); border-bottom-color: var(--brand); }
 .tab-btn-mini { background: #1e3a8a !important; color: #fff !important; border-radius: 6px 6px 0 0; margin-left: 6px; font-weight: 700 !important; }
 .tab-btn-mini.active { background: #2563eb !important; color: #fff !important; border-bottom-color: #93c5fd !important; box-shadow: 0 0 0 2px #93c5fd inset; }
+.tab-btn-feedback { background: #065f46 !important; color: #fff !important; border-radius: 6px 6px 0 0; margin-left: 6px; font-weight: 700 !important; }
+.tab-btn-feedback.active { background: #059669 !important; color: #fff !important; border-bottom-color: #6ee7b7 !important; box-shadow: 0 0 0 2px #6ee7b7 inset; }
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
 
@@ -9470,6 +9472,7 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
     <button class="tab-btn" onclick="switchTab(this,'d7tabs','d7-gov')">NDP Act &amp; Governance</button>
     <button class="tab-btn" onclick="switchTab(this,'d7tabs','d7-exercises')">Exercises</button>
     <button class="tab-btn tab-btn-mini" onclick="switchTab(this,'d7tabs','d7-miniproject')">🏛 Mini Project</button>
+    <button class="tab-btn tab-btn-feedback" onclick="switchTab(this,'d7tabs','d7-feedback')">📋 Feedback</button>
   </div>
 
   <div id="d7tabs">
@@ -10197,6 +10200,521 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
       </div>
 
     </div><!-- end tab-d7-miniproject -->
+
+    <div class="tab-panel" id="tab-d7-feedback">
+
+      <div style="background:linear-gradient(135deg,#0d1929 0%,#080e18 100%);border:1px solid #1e3a5f;border-radius:12px;padding:22px 24px;margin-bottom:20px;">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px;">
+          <span style="font-size:1.6rem;">&#128203;</span>
+          <div>
+            <div style="font-size:1.1rem;font-weight:700;color:#7dd3fc;letter-spacing:0.02em;">Day 7 Feedback</div>
+            <div style="font-size:0.8rem;color:#64748b;margin-top:2px;">2 minutes &middot; helps us improve the rest of the programme</div>
+          </div>
+        </div>
+        <p style="color:#94a3b8;font-size:0.88rem;margin:0;">Your honest feedback shapes how we run the remaining sessions. This takes about 2 minutes &mdash; five quick ratings, one pace check, one recommendation score, and a couple of short comments. Responses are shared with the programme team only.</p>
+      </div>
+
+      <!-- Identity banner (reuses the same team/name as the mini project) -->
+      <div id="d7fb-reg-panel" style="background:#071120;border:1px solid #1e3a5f;border-radius:10px;padding:16px 18px;margin-bottom:18px;">
+        <div id="d7fb-registered" style="display:none;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:1rem;">&#128100;</span>
+            <span id="d7fb-badge-text" style="font-weight:700;font-size:0.88rem;"></span>
+          </div>
+          <button onclick="d7fbShowReg()" style="background:none;border:1px solid #334155;color:#94a3b8;font-size:0.72rem;padding:3px 10px;border-radius:5px;cursor:pointer;font-family:inherit;">Change</button>
+        </div>
+        <div id="d7fb-unregistered">
+          <div style="font-size:0.72rem;color:#64748b;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;">Who is submitting this feedback?</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+            <button id="d7fb-team-btn-A" onclick="d7fbPickTeam('A')" style="background:#071120;border:1.5px solid #334155;color:#94a3b8;border-radius:8px;padding:12px 10px;cursor:pointer;font-family:inherit;text-align:left;transition:all 0.15s;">
+              <div style="font-size:1.1rem;margin-bottom:4px;">&#128309;</div>
+              <div style="font-size:0.8rem;font-weight:700;color:#94a3b8;">Team A</div>
+            </button>
+            <button id="d7fb-team-btn-B" onclick="d7fbPickTeam('B')" style="background:#071120;border:1.5px solid #334155;color:#94a3b8;border-radius:8px;padding:12px 10px;cursor:pointer;font-family:inherit;text-align:left;transition:all 0.15s;">
+              <div style="font-size:1.1rem;margin-bottom:4px;">&#128992;</div>
+              <div style="font-size:0.8rem;font-weight:700;color:#94a3b8;">Team B</div>
+            </button>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <input id="d7fb-name-input" type="text" placeholder="Your full name e.g. Amaka Okafor"
+              style="flex:1;padding:9px 12px;background:#0d1929;border:1.5px solid #334155;border-radius:7px;color:#e2e8f0;font-size:0.88rem;font-family:inherit;outline:none;box-sizing:border-box;"
+              onkeydown="if(event.key==='Enter')d7fbRegister()" />
+            <button onclick="d7fbRegister()" style="padding:9px 18px;background:#2563eb;color:#fff;border:none;border-radius:7px;font-size:0.88rem;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;">Continue &rarr;</button>
+          </div>
+          <div id="d7fb-reg-error" style="display:none;color:#ef4444;font-size:0.72rem;margin-top:6px;"></div>
+        </div>
+      </div>
+
+      <!-- Confirmation panel (shown after submit) -->
+      <div id="d7fb-confirmation" style="display:none;background:#0a1f14;border:1px solid #166534;border-radius:12px;padding:28px 24px;margin-bottom:18px;text-align:center;">
+        <div style="font-size:2.2rem;margin-bottom:10px;">&#9989;</div>
+        <div style="font-size:1.05rem;font-weight:700;color:#6ee7b7;margin-bottom:6px;">Thank you &mdash; your feedback has been recorded</div>
+        <div style="font-size:0.84rem;color:#94a3b8;margin-bottom:16px;">You can update your response any time before the end of the day.</div>
+        <button onclick="d7fbEdit()" style="padding:8px 20px;background:none;border:1px solid #166534;color:#6ee7b7;border-radius:7px;font-size:0.84rem;font-weight:600;cursor:pointer;font-family:inherit;">&#9998; Edit my response</button>
+      </div>
+
+      <!-- Feedback form -->
+      <div id="d7fb-form-wrap">
+
+        <!-- Rating questions -->
+        <div class="d7fb-q" style="background:#080e18;border:1px solid #1e3a5f;border-radius:10px;padding:18px 20px;margin-bottom:14px;">
+          <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:4px;">1. Overall, how would you rate today's session?</div>
+          <div style="font-size:0.76rem;color:#94a3b8;margin-bottom:12px;">1 = Poor &middot; 5 = Excellent</div>
+          <div id="d7fb-rate-overall" class="d7fb-rate-group" data-field="overall" style="display:flex;gap:8px;"></div>
+        </div>
+
+        <div class="d7fb-q" style="background:#080e18;border:1px solid #1e3a5f;border-radius:10px;padding:18px 20px;margin-bottom:14px;">
+          <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:4px;">2. How clear was the ETL/ELT &amp; Governance content?</div>
+          <div style="font-size:0.76rem;color:#94a3b8;margin-bottom:12px;">1 = Very confusing &middot; 5 = Very clear</div>
+          <div id="d7fb-rate-clarity" class="d7fb-rate-group" data-field="clarity" style="display:flex;gap:8px;"></div>
+        </div>
+
+        <div class="d7fb-q" style="background:#080e18;border:1px solid #1e3a5f;border-radius:10px;padding:18px 20px;margin-bottom:14px;">
+          <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:4px;">3. How useful was the Mini Project (hands-on SQL pipeline)?</div>
+          <div style="font-size:0.76rem;color:#94a3b8;margin-bottom:12px;">1 = Not useful &middot; 5 = Extremely useful</div>
+          <div id="d7fb-rate-miniproject" class="d7fb-rate-group" data-field="miniproject" style="display:flex;gap:8px;"></div>
+        </div>
+
+        <div class="d7fb-q" style="background:#080e18;border:1px solid #1e3a5f;border-radius:10px;padding:18px 20px;margin-bottom:14px;">
+          <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:4px;">4. How would you rate the instructor's support today?</div>
+          <div style="font-size:0.76rem;color:#94a3b8;margin-bottom:12px;">1 = Poor &middot; 5 = Excellent</div>
+          <div id="d7fb-rate-instructor" class="d7fb-rate-group" data-field="instructor" style="display:flex;gap:8px;"></div>
+        </div>
+
+        <div class="d7fb-q" style="background:#080e18;border:1px solid #1e3a5f;border-radius:10px;padding:18px 20px;margin-bottom:14px;">
+          <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:4px;">5. How relevant is this content to your day-to-day NSR role?</div>
+          <div style="font-size:0.76rem;color:#94a3b8;margin-bottom:12px;">1 = Not relevant &middot; 5 = Highly relevant</div>
+          <div id="d7fb-rate-relevance" class="d7fb-rate-group" data-field="relevance" style="display:flex;gap:8px;"></div>
+        </div>
+
+        <!-- Pace -->
+        <div class="d7fb-q" style="background:#080e18;border:1px solid #1e3a5f;border-radius:10px;padding:18px 20px;margin-bottom:14px;">
+          <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:12px;">6. How was the pace of today's session?</div>
+          <div id="d7fb-pace-group" style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="d7fb-pace-btn" data-val="slow" onclick="d7fbSetPace('slow')" style="flex:1;min-width:120px;padding:10px;border-radius:8px;border:1.5px solid #334155;background:#0d1929;color:#94a3b8;font-size:0.84rem;font-weight:600;cursor:pointer;font-family:inherit;">&#128034; Too slow</button>
+            <button class="d7fb-pace-btn" data-val="right" onclick="d7fbSetPace('right')" style="flex:1;min-width:120px;padding:10px;border-radius:8px;border:1.5px solid #334155;background:#0d1929;color:#94a3b8;font-size:0.84rem;font-weight:600;cursor:pointer;font-family:inherit;">&#9989; Just right</button>
+            <button class="d7fb-pace-btn" data-val="fast" onclick="d7fbSetPace('fast')" style="flex:1;min-width:120px;padding:10px;border-radius:8px;border:1.5px solid #334155;background:#0d1929;color:#94a3b8;font-size:0.84rem;font-weight:600;cursor:pointer;font-family:inherit;">&#128640; Too fast</button>
+          </div>
+        </div>
+
+        <!-- NPS -->
+        <div class="d7fb-q" style="background:#080e18;border:1px solid #1e3a5f;border-radius:10px;padding:18px 20px;margin-bottom:14px;">
+          <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:4px;">7. How likely are you to recommend this training to a colleague?</div>
+          <div style="font-size:0.76rem;color:#94a3b8;margin-bottom:12px;">0 = Not at all likely &middot; 10 = Extremely likely</div>
+          <div id="d7fb-nps-group" style="display:flex;gap:5px;flex-wrap:wrap;"></div>
+        </div>
+
+        <!-- Open text -->
+        <div class="d7fb-q" style="background:#080e18;border:1px solid #1e3a5f;border-radius:10px;padding:18px 20px;margin-bottom:14px;">
+          <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:4px;">8. What worked well today? <span style="color:#ef4444;">*</span></div>
+          <textarea id="d7fb-well" placeholder="e.g. the case scenarios made EXPLAIN ANALYZE click for me..." style="width:100%;min-height:70px;background:#0d1929;border:1px solid #1e3a5f;border-radius:6px;color:#e2e8f0;font-family:inherit;font-size:0.84rem;padding:10px;resize:vertical;box-sizing:border-box;outline:none;margin-top:8px;"></textarea>
+        </div>
+
+        <div class="d7fb-q" style="background:#080e18;border:1px solid #1e3a5f;border-radius:10px;padding:18px 20px;margin-bottom:14px;">
+          <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:4px;">9. What could be improved? <span style="color:#ef4444;">*</span></div>
+          <textarea id="d7fb-improve" placeholder="e.g. more time on the deduplication tab, or a clearer pg_stat_statements setup guide..." style="width:100%;min-height:70px;background:#0d1929;border:1px solid #1e3a5f;border-radius:6px;color:#e2e8f0;font-family:inherit;font-size:0.84rem;padding:10px;resize:vertical;box-sizing:border-box;outline:none;margin-top:8px;"></textarea>
+        </div>
+
+        <div class="d7fb-q" style="background:#080e18;border:1px solid #1e3a5f;border-radius:10px;padding:18px 20px;margin-bottom:14px;">
+          <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:4px;">10. Any technical issues you faced today? <span style="color:#64748b;font-weight:400;">(optional)</span></div>
+          <textarea id="d7fb-issues" placeholder="e.g. PostgreSQL service wouldn't restart, error messages, slow laptop..." style="width:100%;min-height:60px;background:#0d1929;border:1px solid #1e3a5f;border-radius:6px;color:#e2e8f0;font-family:inherit;font-size:0.84rem;padding:10px;resize:vertical;box-sizing:border-box;outline:none;margin-top:8px;"></textarea>
+        </div>
+
+        <div class="d7fb-q" style="background:#080e18;border:1px solid #1e3a5f;border-radius:10px;padding:18px 20px;margin-bottom:18px;">
+          <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:4px;">11. Any suggestions or action items for the programme team? <span style="color:#64748b;font-weight:400;">(optional)</span></div>
+          <textarea id="d7fb-actions" placeholder="e.g. send the slide deck in advance, add a recap video..." style="width:100%;min-height:60px;background:#0d1929;border:1px solid #1e3a5f;border-radius:6px;color:#e2e8f0;font-family:inherit;font-size:0.84rem;padding:10px;resize:vertical;box-sizing:border-box;outline:none;margin-top:8px;"></textarea>
+        </div>
+
+        <div id="d7fb-submit-error" style="display:none;color:#ef4444;font-size:0.8rem;margin-bottom:10px;text-align:center;">Please answer all required questions (marked *) before submitting.</div>
+        <button id="d7fb-submit-btn" onclick="d7fbSubmit()" style="width:100%;padding:13px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:0.92rem;font-weight:700;cursor:pointer;font-family:inherit;">Submit Feedback</button>
+      </div>
+
+      <!-- INSTRUCTOR ANALYTICS DASHBOARD -->
+      <div class="instructor-block instructor-only" style="margin-top:28px;">
+        <div style="background:#0d1929;border:1.5px solid #7c3aed;border-radius:12px;overflow:hidden;">
+          <div style="background:linear-gradient(90deg,#1a0a3d,#0f172a);padding:12px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:1rem;">&#128202;</span>
+              <span style="color:#e2e8f0;font-weight:700;font-size:0.88rem;letter-spacing:0.5px;">DAY 7 FEEDBACK ANALYTICS</span>
+              <span id="d7fbdash-live-dot" style="width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block;"></span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span id="d7fbdash-last-update" style="color:#94a3b8;font-size:0.72rem;"></span>
+              <button onclick="d7fbDashFetch()" style="background:none;border:1px solid #7c3aed;color:#a78bfa;font-size:0.72rem;padding:3px 10px;border-radius:5px;cursor:pointer;font-family:inherit;">&#8635; Refresh</button>
+            </div>
+          </div>
+
+          <!-- KPI row -->
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#1e1b4b;">
+            <div style="background:#0a0f1a;padding:16px;text-align:center;">
+              <div style="color:#94a3b8;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Responses</div>
+              <div id="d7fbdash-count" style="color:#e2e8f0;font-size:1.8rem;font-weight:700;">0</div>
+            </div>
+            <div style="background:#0a0f1a;padding:16px;text-align:center;">
+              <div style="color:#94a3b8;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Avg. Overall Rating</div>
+              <div id="d7fbdash-avg-overall" style="color:#7dd3fc;font-size:1.8rem;font-weight:700;">&mdash;</div>
+            </div>
+            <div style="background:#0a0f1a;padding:16px;text-align:center;">
+              <div style="color:#94a3b8;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">NPS Score</div>
+              <div id="d7fbdash-nps" style="color:#fbbf24;font-size:1.8rem;font-weight:700;">&mdash;</div>
+            </div>
+          </div>
+
+          <!-- Rating bars -->
+          <div style="padding:18px 20px;border-top:1px solid #1e1b4b;">
+            <div style="font-size:0.78rem;font-weight:700;color:#a78bfa;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px;">Average Ratings (out of 5)</div>
+            <div id="d7fbdash-bars" style="display:grid;gap:10px;"></div>
+          </div>
+
+          <!-- Pace distribution -->
+          <div style="padding:18px 20px;border-top:1px solid #1e1b4b;">
+            <div style="font-size:0.78rem;font-weight:700;color:#a78bfa;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px;">Pace Feedback</div>
+            <div id="d7fbdash-pace" style="display:flex;gap:14px;flex-wrap:wrap;"></div>
+          </div>
+
+          <!-- Comments -->
+          <div style="padding:18px 20px;border-top:1px solid #1e1b4b;display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+            <div>
+              <div style="font-size:0.78rem;font-weight:700;color:#6ee7b7;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">&#128077; What Worked Well</div>
+              <div id="d7fbdash-well" style="max-height:260px;overflow-y:auto;display:grid;gap:8px;"></div>
+            </div>
+            <div>
+              <div style="font-size:0.78rem;font-weight:700;color:#fbbf24;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">&#128161; What Could Be Improved</div>
+              <div id="d7fbdash-improve" style="max-height:260px;overflow-y:auto;display:grid;gap:8px;"></div>
+            </div>
+          </div>
+          <div style="padding:18px 20px;border-top:1px solid #1e1b4b;display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+            <div>
+              <div style="font-size:0.78rem;font-weight:700;color:#fca5a5;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">&#9888; Technical Issues</div>
+              <div id="d7fbdash-issues" style="max-height:200px;overflow-y:auto;display:grid;gap:8px;"></div>
+            </div>
+            <div>
+              <div style="font-size:0.78rem;font-weight:700;color:#7dd3fc;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">&#9999; Action Items</div>
+              <div id="d7fbdash-actions" style="max-height:200px;overflow-y:auto;display:grid;gap:8px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end tab-d7-feedback -->
+
+<script>
+(function(){
+  var KEY='d7fb_v1';
+  var _selectedTeam=null;
+  var _dashTimer=null;
+  var ratingFields=['overall','clarity','miniproject','instructor','relevance'];
+  var ratingLabels={overall:'Overall session',clarity:'Content clarity',miniproject:'Mini project usefulness',instructor:'Instructor support',relevance:'Relevance to role'};
+  var responses={};
+
+  function getR(){try{return JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){return{};}}
+  function saveR(d){try{localStorage.setItem(KEY,JSON.stringify(d));}catch(e){}}
+  function getName(){return localStorage.getItem('cwr_participant_name')||'';}
+  function getTeam(){return localStorage.getItem('cwr_team')||'';}
+  function fbOk(){return window.CWR_FIREBASE&&window.CWR_FIREBASE.databaseURL&&!window.CWR_FIREBASE.databaseURL.includes('REPLACE');}
+  function fbUrl(path){return window.CWR_FIREBASE.databaseURL+path;}
+  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+  /* ── Build the 1-5 rating button groups ──────────────── */
+  function buildRatingGroup(containerId, field){
+    var el=document.getElementById(containerId);
+    if(!el) return;
+    var html='';
+    for(var i=1;i<=5;i++){
+      html+='<button type="button" class="d7fb-rate-btn" data-field="'+field+'" data-val="'+i+'" onclick="d7fbSetRating(\''+field+'\','+i+')" '
+        +'style="flex:1;padding:11px 0;border-radius:8px;border:1.5px solid #334155;background:#0d1929;color:#94a3b8;font-size:0.95rem;font-weight:700;cursor:pointer;font-family:inherit;">'+i+'</button>';
+    }
+    el.innerHTML=html;
+  }
+
+  function buildNpsGroup(){
+    var el=document.getElementById('d7fb-nps-group');
+    if(!el) return;
+    var html='';
+    for(var i=0;i<=10;i++){
+      html+='<button type="button" class="d7fb-nps-btn" data-val="'+i+'" onclick="d7fbSetNps('+i+')" '
+        +'style="min-width:36px;flex:1;padding:9px 0;border-radius:7px;border:1.5px solid #334155;background:#0d1929;color:#94a3b8;font-size:0.84rem;font-weight:700;cursor:pointer;font-family:inherit;">'+i+'</button>';
+    }
+    el.innerHTML=html;
+  }
+
+  /* ── Selection handlers ───────────────────────────────── */
+  window.d7fbSetRating=function(field,val){
+    responses[field]=val;
+    var group=document.getElementById('d7fb-rate-'+field);
+    if(!group) return;
+    Array.from(group.children).forEach(function(btn){
+      var sel=(parseInt(btn.dataset.val,10)===val);
+      btn.style.background=sel?'#1e3a8a':'#0d1929';
+      btn.style.borderColor=sel?'#3b82f6':'#334155';
+      btn.style.color=sel?'#fff':'#94a3b8';
+    });
+  };
+
+  window.d7fbSetPace=function(val){
+    responses.pace=val;
+    document.querySelectorAll('.d7fb-pace-btn').forEach(function(btn){
+      var sel=(btn.dataset.val===val);
+      btn.style.background=sel?'#1e3a8a':'#0d1929';
+      btn.style.borderColor=sel?'#3b82f6':'#334155';
+      btn.style.color=sel?'#fff':'#94a3b8';
+    });
+  };
+
+  window.d7fbSetNps=function(val){
+    responses.nps=val;
+    document.querySelectorAll('.d7fb-nps-btn').forEach(function(btn){
+      var sel=(parseInt(btn.dataset.val,10)===val);
+      var clr = val<=6 ? '#ef4444' : (val<=8 ? '#f59e0b' : '#22c55e');
+      btn.style.background=sel?clr:'#0d1929';
+      btn.style.borderColor=sel?clr:'#334155';
+      btn.style.color=sel?'#fff':'#94a3b8';
+    });
+  };
+
+  /* ── Registration (reuses cwr_participant_name / cwr_team) ── */
+  window.d7fbPickTeam=function(t){
+    _selectedTeam=t;
+    ['A','B'].forEach(function(x){
+      var btn=document.getElementById('d7fb-team-btn-'+x);if(!btn)return;
+      var sel=(x===t);
+      btn.style.borderColor=sel?(x==='A'?'#2563eb':'#d97706'):'#334155';
+      btn.style.background=sel?(x==='A'?'#0f2a4a':'#3d2200'):'#071120';
+    });
+  };
+
+  window.d7fbRegister=function(){
+    var err=document.getElementById('d7fb-reg-error');
+    if(!_selectedTeam){if(err){err.textContent='Please select a team first.';err.style.display='block';}return;}
+    var inp=document.getElementById('d7fb-name-input');
+    var name=inp?inp.value.trim():'';
+    if(!name){if(inp)inp.style.borderColor='#ef4444';if(err){err.textContent='Please enter your name.';err.style.display='block';}return;}
+    localStorage.setItem('cwr_participant_name',name);
+    localStorage.setItem('cwr_team',_selectedTeam);
+    updateRegBanner();
+  };
+
+  window.d7fbShowReg=function(){
+    var reg=document.getElementById('d7fb-registered');
+    var unreg=document.getElementById('d7fb-unregistered');
+    if(reg)reg.style.display='none';
+    if(unreg)unreg.style.display='block';
+    var t=getTeam();if(t){_selectedTeam=t;d7fbPickTeam(t);}
+    var inp=document.getElementById('d7fb-name-input');
+    if(inp)inp.value=getName();
+  };
+
+  function updateRegBanner(){
+    var name=getName(),team=getTeam();
+    var reg=document.getElementById('d7fb-registered');
+    var unreg=document.getElementById('d7fb-unregistered');
+    var badge=document.getElementById('d7fb-badge-text');
+    if(name&&team){
+      if(reg)reg.style.display='flex';
+      if(unreg)unreg.style.display='none';
+      if(badge){
+        var clr=team==='A'?'#7dd3fc':'#fbbf24';
+        badge.innerHTML='<span style="color:'+clr+'">Team '+esc(team)+'</span> &nbsp;&middot;&nbsp; <span style="color:#e2e8f0;">'+esc(name)+'</span>';
+      }
+    }else{
+      if(reg)reg.style.display='none';
+      if(unreg)unreg.style.display='block';
+      var t=getTeam();if(t){_selectedTeam=t;d7fbPickTeam(t);}
+      var inp=document.getElementById('d7fb-name-input');
+      if(inp&&name)inp.value=name;
+    }
+  }
+
+  /* ── Submit / Edit ────────────────────────────────────── */
+  window.d7fbSubmit=function(){
+    var errEl=document.getElementById('d7fb-submit-error');
+    var name=getName(), team=getTeam();
+    if(!name||!team){
+      if(errEl){errEl.textContent='Please enter your name and team above before submitting.';errEl.style.display='block';}
+      return;
+    }
+    responses.well=document.getElementById('d7fb-well').value.trim();
+    responses.improve=document.getElementById('d7fb-improve').value.trim();
+    responses.issues=document.getElementById('d7fb-issues').value.trim();
+    responses.actions=document.getElementById('d7fb-actions').value.trim();
+
+    var missing=[];
+    ratingFields.forEach(function(f){ if(!responses[f]) missing.push(f); });
+    if(!responses.pace) missing.push('pace');
+    if(responses.nps===undefined||responses.nps===null) missing.push('nps');
+    if(!responses.well) missing.push('well');
+    if(!responses.improve) missing.push('improve');
+
+    if(missing.length){
+      if(errEl){errEl.textContent='Please answer all required questions (marked *) before submitting.';errEl.style.display='block';}
+      return;
+    }
+    if(errEl) errEl.style.display='none';
+
+    responses.name=name;
+    responses.team=team;
+    responses.submittedAt=new Date().toISOString();
+    saveR(responses);
+    d7fbSyncFb();
+    showConfirmation();
+  };
+
+  window.d7fbEdit=function(){
+    document.getElementById('d7fb-confirmation').style.display='none';
+    document.getElementById('d7fb-form-wrap').style.display='block';
+  };
+
+  function showConfirmation(){
+    document.getElementById('d7fb-confirmation').style.display='block';
+    document.getElementById('d7fb-form-wrap').style.display='none';
+  }
+
+  function d7fbSyncFb(){
+    if(!fbOk())return;
+    var name=getName();if(!name)return;
+    var safeKey=name.replace(/[^a-zA-Z0-9_-]/g,'_').toLowerCase().slice(0,40);
+    fetch(fbUrl('/day7_feedback/'+safeKey+'.json'),{
+      method:'PUT',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(responses)
+    }).catch(function(){});
+  }
+
+  /* ── Restore previously saved response into the form ─── */
+  function restoreForm(){
+    var saved=getR();
+    if(!saved || Object.keys(saved).length===0) return;
+    responses=Object.assign({},saved);
+    ratingFields.forEach(function(f){ if(saved[f]) window.d7fbSetRating(f, saved[f]); });
+    if(saved.pace) window.d7fbSetPace(saved.pace);
+    if(saved.nps!==undefined && saved.nps!==null) window.d7fbSetNps(saved.nps);
+    var wellEl=document.getElementById('d7fb-well'); if(wellEl && saved.well) wellEl.value=saved.well;
+    var impEl=document.getElementById('d7fb-improve'); if(impEl && saved.improve) impEl.value=saved.improve;
+    var issEl=document.getElementById('d7fb-issues'); if(issEl && saved.issues) issEl.value=saved.issues;
+    var actEl=document.getElementById('d7fb-actions'); if(actEl && saved.actions) actEl.value=saved.actions;
+    if(saved.submittedAt) showConfirmation();
+  }
+
+  /* ── Instructor dashboard ─────────────────────────────── */
+  window.d7fbDashFetch=function(){
+    if(!fbOk()){renderFbDash(null);return;}
+    fetch(fbUrl('/day7_feedback.json'))
+      .then(function(r){return r.json();})
+      .then(function(data){renderFbDash(data);})
+      .catch(function(){renderFbDash(null);});
+  };
+
+  function renderFbDash(data){
+    var ts=document.getElementById('d7fbdash-last-update');
+    if(ts)ts.textContent='Updated '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+    var all=[];
+    if(data && typeof data==='object'){
+      Object.keys(data).forEach(function(k){ if(data[k] && data[k].name) all.push(data[k]); });
+    }
+
+    var countEl=document.getElementById('d7fbdash-count');
+    if(countEl) countEl.textContent=all.length;
+
+    if(!all.length){
+      var avgEl=document.getElementById('d7fbdash-avg-overall'); if(avgEl) avgEl.textContent='—';
+      var npsEl=document.getElementById('d7fbdash-nps'); if(npsEl) npsEl.textContent='—';
+      var barsEl=document.getElementById('d7fbdash-bars'); if(barsEl) barsEl.innerHTML='<span style="color:#94a3b8;font-size:0.78rem;">No responses yet</span>';
+      var paceEl=document.getElementById('d7fbdash-pace'); if(paceEl) paceEl.innerHTML='<span style="color:#94a3b8;font-size:0.78rem;">No responses yet</span>';
+      ['well','improve','issues','actions'].forEach(function(f){
+        var el=document.getElementById('d7fbdash-'+f); if(el) el.innerHTML='<span style="color:#94a3b8;font-size:0.78rem;">No responses yet</span>';
+      });
+      return;
+    }
+
+    /* Average overall rating */
+    var overallAvg=all.reduce(function(s,r){return s+(r.overall||0);},0)/all.length;
+    var avgEl=document.getElementById('d7fbdash-avg-overall');
+    if(avgEl) avgEl.textContent=overallAvg.toFixed(1);
+
+    /* NPS: promoters(9-10) - detractors(0-6), as % of respondents who answered nps */
+    var npsResponders=all.filter(function(r){return r.nps!==undefined && r.nps!==null;});
+    var npsEl=document.getElementById('d7fbdash-nps');
+    if(npsResponders.length){
+      var promoters=npsResponders.filter(function(r){return r.nps>=9;}).length;
+      var detractors=npsResponders.filter(function(r){return r.nps<=6;}).length;
+      var nps=Math.round((promoters/npsResponders.length - detractors/npsResponders.length)*100);
+      if(npsEl) npsEl.textContent=(nps>0?'+':'')+nps;
+    } else if(npsEl) npsEl.textContent='—';
+
+    /* Rating bars */
+    var barsEl=document.getElementById('d7fbdash-bars');
+    if(barsEl){
+      barsEl.innerHTML=ratingFields.map(function(f){
+        var vals=all.map(function(r){return r[f];}).filter(function(v){return v;});
+        var avg=vals.length? (vals.reduce(function(a,b){return a+b;},0)/vals.length) : 0;
+        var pct=(avg/5*100).toFixed(0);
+        return '<div>'
+          +'<div style="display:flex;justify-content:space-between;font-size:0.78rem;color:#e2e8f0;margin-bottom:4px;"><span>'+ratingLabels[f]+'</span><span style="color:#7dd3fc;font-weight:700;">'+(vals.length?avg.toFixed(1):'—')+' / 5</span></div>'
+          +'<div style="background:#071120;border-radius:999px;height:8px;overflow:hidden;"><div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,#0ea5e9,#6366f1);border-radius:999px;"></div></div>'
+          +'</div>';
+      }).join('');
+    }
+
+    /* Pace distribution */
+    var paceEl=document.getElementById('d7fbdash-pace');
+    if(paceEl){
+      var paceCounts={slow:0,right:0,fast:0};
+      all.forEach(function(r){ if(r.pace && paceCounts.hasOwnProperty(r.pace)) paceCounts[r.pace]++; });
+      var paceTotal=paceCounts.slow+paceCounts.right+paceCounts.fast;
+      var paceLabels={slow:'🐢 Too slow',right:'✅ Just right',fast:'🚀 Too fast'};
+      paceEl.innerHTML=['slow','right','fast'].map(function(k){
+        var pct=paceTotal? Math.round(paceCounts[k]/paceTotal*100) : 0;
+        return '<div style="text-align:center;flex:1;min-width:100px;">'
+          +'<div style="color:#e2e8f0;font-size:0.8rem;margin-bottom:4px;">'+paceLabels[k]+'</div>'
+          +'<div style="color:#7dd3fc;font-size:1.3rem;font-weight:700;">'+paceCounts[k]+'</div>'
+          +'<div style="color:#94a3b8;font-size:0.72rem;">'+pct+'%</div>'
+          +'</div>';
+      }).join('');
+    }
+
+    /* Comments lists */
+    function renderComments(elId, field, accentColor){
+      var el=document.getElementById(elId);
+      if(!el) return;
+      var items=all.filter(function(r){return r[field] && r[field].trim();});
+      if(!items.length){ el.innerHTML='<span style="color:#94a3b8;font-size:0.78rem;">No comments yet</span>'; return; }
+      el.innerHTML=items.map(function(r){
+        var clr=r.team==='A'?'#7dd3fc':'#fbbf24';
+        return '<div style="background:#071120;border-left:3px solid '+accentColor+';border-radius:0 6px 6px 0;padding:8px 10px;">'
+          +'<div style="font-size:0.68rem;color:'+clr+';font-weight:700;margin-bottom:3px;">'+esc(r.name)+' &middot; Team '+esc(r.team)+'</div>'
+          +'<div style="font-size:0.8rem;color:#e2e8f0;line-height:1.5;">'+esc(r[field])+'</div>'
+          +'</div>';
+      }).join('');
+    }
+    renderComments('d7fbdash-well','well','#22c55e');
+    renderComments('d7fbdash-improve','improve','#f59e0b');
+    renderComments('d7fbdash-issues','issues','#ef4444');
+    renderComments('d7fbdash-actions','actions','#0ea5e9');
+  }
+
+  /* ── Init ─────────────────────────────────────────────── */
+  function init(){
+    ratingFields.forEach(function(f){ buildRatingGroup('d7fb-rate-'+f, f); });
+    buildNpsGroup();
+    updateRegBanner();
+    restoreForm();
+    if(document.body && document.body.classList.contains('instructor-mode')){
+      window.d7fbDashFetch();
+      _dashTimer=setInterval(window.d7fbDashFetch,15000);
+    }
+    var fbBtn=document.querySelector('button[onclick*="d7-feedback"]');
+    if(fbBtn){
+      fbBtn.addEventListener('click',function(){
+        updateRegBanner();
+        if(document.body.classList.contains('instructor-mode')) window.d7fbDashFetch();
+      });
+    }
+  }
+
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}
+  else{init();}
+})();
+</script>
 
 <!-- SQL Editor Modal for Day 7 Mini Project -->
 <div id="d7mp-editor-modal" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.88);align-items:center;justify-content:center;">
