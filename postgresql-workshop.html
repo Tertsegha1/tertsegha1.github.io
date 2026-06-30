@@ -8013,6 +8013,71 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
         <div class="callout-title">How to read the output</div>
         The plan is read bottom-up: the innermost (most indented) node executes first. Key numbers to compare: <strong>rows</strong> (planner estimate) vs <strong>actual rows</strong> (real execution) — a large gap means stale statistics; run <code>ANALYZE nsr.households;</code> to fix. <strong>cost</strong> is an arbitrary planner unit (not milliseconds); only compare costs within the same plan. <strong>actual time</strong> is real milliseconds for that node. <strong>Buffers: shared hit</strong> = pages served from shared_buffers (fast); <strong>shared read</strong> = pages fetched from disk (slow). A query with high shared reads on a table that should be cached is a sign either <code>shared_buffers</code> is too small or the table has severe bloat from dead tuples.
       </div>
+      <h3>Advanced — Case Scenario: The Monthly Disbursement Report Times Out</h3>
+      <div class="callout info" style="margin-bottom:12px">
+        <div class="callout-title">The situation</div>
+        It's the last working day of the month. The NSR Finance Unit runs the same report every month to reconcile disbursements: every household paid in the current cycle, joined to its LGA and state, ordered by payment date. Six months ago it returned in under 2 seconds. This month, it has been running for over 40 seconds and the finance officer suspects the database is "broken."
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – the slow report</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">SELECT</span> h.household_code, h.head_name, p.amount_ngn, p.payment_date, l.lga_name, s.state_name
+<span class="kw">FROM</span>   nsr.payments     p
+<span class="kw">JOIN</span>   nsr.households   h <span class="kw">ON</span> h.household_id = p.household_id
+<span class="kw">JOIN</span>   nsr.lgas         l <span class="kw">ON</span> l.lga_id       = h.lga_id
+<span class="kw">JOIN</span>   nsr.states       s <span class="kw">ON</span> s.state_id     = l.state_id
+<span class="kw">WHERE</span>  p.payment_date <span class="kw">BETWEEN</span> <span class="str">'2026-06-01'</span> <span class="kw">AND</span> <span class="str">'2026-06-30'</span>
+<span class="kw">ORDER BY</span> p.payment_date;</pre>
+      </div>
+      <p>Nothing about this query looks wrong. The investigation has to start with the plan, not the SQL text.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – step 1: get the real plan</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">EXPLAIN</span> (<span class="kw">ANALYZE</span>, <span class="kw">BUFFERS</span>)
+<span class="kw">SELECT</span> h.household_code, h.head_name, p.amount_ngn, p.payment_date, l.lga_name, s.state_name
+<span class="kw">FROM</span>   nsr.payments     p
+<span class="kw">JOIN</span>   nsr.households   h <span class="kw">ON</span> h.household_id = p.household_id
+<span class="kw">JOIN</span>   nsr.lgas         l <span class="kw">ON</span> l.lga_id       = h.lga_id
+<span class="kw">JOIN</span>   nsr.states       s <span class="kw">ON</span> s.state_id     = l.state_id
+<span class="kw">WHERE</span>  p.payment_date <span class="kw">BETWEEN</span> <span class="str">'2026-06-01'</span> <span class="kw">AND</span> <span class="str">'2026-06-30'</span>
+<span class="kw">ORDER BY</span> p.payment_date;
+
+<span class="cmt">-- Plan output (abridged):</span>
+<span class="cmt">-- Sort  (cost=58213.40..58312.88 rows=39791 width=84) (actual time=38847.2..38851.0 rows=41204 loops=1)</span>
+<span class="cmt">--   Sort Key: p.payment_date</span>
+<span class="cmt">--   ->  Hash Join  (cost=2104.00..51882.00 rows=39791 width=84) (actual time=88.4..38622.1 rows=41204 loops=1)</span>
+<span class="cmt">--         Hash Cond: (h.household_id = p.household_id)</span>
+<span class="cmt">--         ->  Seq Scan on households h  (cost=0.00..38211.00 rows=1850000 width=42)</span>
+<span class="cmt">--               (actual time=0.02..29104.6 rows=1850000 loops=1)</span>
+<span class="cmt">--         ->  Hash  (cost=1604.00..1604.00 rows=39791 width=50)</span>
+<span class="cmt">--               ->  Seq Scan on payments p  (cost=0.00..1604.00 rows=39791 width=50)</span>
+<span class="cmt">--                     Filter: (payment_date BETWEEN '2026-06-01' AND '2026-06-30')</span>
+<span class="cmt">-- Planning Time: 1.1 ms</span>
+<span class="cmt">-- Execution Time: 38855.7 ms</span></pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Diagnosis</div>
+        Reading bottom-up: the <code>payments</code> filter is fine — it returns 39,791 rows from a 30-day window, exactly as expected. The real cost is the <strong>Seq Scan on households</strong>: PostgreSQL reads <strong>all 1.85 million household rows</strong> just to look up the small number that match this month's payments, because there is no index on <code>households.household_id</code> that the hash join can use efficiently as a probe target — wait, more precisely: the planner chose a Hash Join, which by design builds a hash table from one side and scans the other side sequentially. With <code>households</code> as the much larger table, the seq scan dominates: <strong>29.1 of the 38.8 seconds is spent here</strong>. Six months ago, <code>households</code> had 200,000 rows — a seq scan was actually the cheapest plan back then. The table has since grown 9x as new states onboarded, and nobody re-evaluated the plan.
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – step 2: the fix</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- households.household_id is the PK and already indexed —</span>
+<span class="cmt">-- the real fix is forcing a Nested Loop from the small payments set instead</span>
+<span class="cmt">-- by ensuring statistics are fresh, which lets the planner re-cost correctly:</span>
+<span class="kw">ANALYZE</span> nsr.households;
+<span class="kw">ANALYZE</span> nsr.payments;
+
+<span class="cmt">-- Re-run the same EXPLAIN ANALYZE — the planner now sees the true table</span>
+<span class="cmt">-- size and selectivity, and switches to a Nested Loop using the payments</span>
+<span class="cmt">-- index scan as the outer (small) side, probing households by PK:</span>
+<span class="cmt">-- ->  Nested Loop  (actual time=0.06..42.3 rows=41204 loops=1)</span>
+<span class="cmt">--       ->  Index Scan on payments using idx_payments_date</span>
+<span class="cmt">--       ->  Index Scan on households using households_pkey</span>
+<span class="cmt">-- Execution Time: 58.4 ms</span></pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Root cause and lesson</div>
+        The query was never broken — the <strong>planner's statistics were stale</strong>. PostgreSQL's autovacuum daemon runs <code>ANALYZE</code> automatically, but only after roughly 10% of a table's rows have changed since the last analyze. On a slow-growing reference-style table like <code>households</code>, that threshold can take months to trigger naturally, especially right after a large one-off bulk load (the state onboarding). The fix took 4 seconds to run; the diagnosis — reading the plan to find which node actually consumed the 38 seconds — is the skill. <strong>Rule of thumb for the NSR</strong>: after any bulk load of more than a few thousand rows, run <code>ANALYZE</code> manually on the affected table immediately rather than waiting for autovacuum's threshold.
+      </div>
+
     </div>
 
     <div class="tab-panel" id="tab-d6-index">
@@ -8075,6 +8140,64 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
         <div class="callout-title">Choosing the right index type</div>
         <strong>B-tree</strong> (default): handles equality, range, BETWEEN, ORDER BY. Right for pmt_score, payment_date, household_code. <strong>Partial index</strong>: adds a WHERE clause to the index definition — only rows satisfying the condition are indexed. Smaller, faster, used when the common query always filters on the same condition (e.g. <code>is_active = TRUE</code>). <strong>Composite index</strong>: covers multi-column WHERE and ORDER BY; column order matters — leading column must appear in the query for the index to be used. <strong>GIN</strong>: required for JSONB containment (<code>@&gt;</code>) and full-text search — cannot be used for range queries. The <code>pg_stat_user_indexes</code> query at the end is the index audit: any index with <code>idx_scan = 0</code> after weeks of production use is unused overhead on every INSERT/UPDATE and should be dropped.
       </div>
+      <h3>Advanced — Case Scenario: The Caseworker Search Page Goes From Instant to Sluggish</h3>
+      <div class="callout info" style="margin-bottom:12px">
+        <div class="callout-title">The situation</div>
+        A new feature ships: caseworkers can now look up a household by phone number when a beneficiary calls the helpline, instead of needing the household code. In testing with 500 sample rows it felt instant. Two weeks after going live to all 36 states, helpdesk staff report each lookup now takes 3&#8211;6 seconds, and the call centre is backing up.
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – the lookup query</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">SELECT</span> household_code, head_name, phone_number, pmt_score
+<span class="kw">FROM</span>   nsr.households
+<span class="kw">WHERE</span>  phone_number = <span class="str">'08031234567'</span>;</pre>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – step 1: check the plan in production</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">EXPLAIN</span> (<span class="kw">ANALYZE</span>, <span class="kw">BUFFERS</span>)
+<span class="kw">SELECT</span> household_code, head_name, phone_number, pmt_score
+<span class="kw">FROM</span>   nsr.households
+<span class="kw">WHERE</span>  phone_number = <span class="str">'08031234567'</span>;
+
+<span class="cmt">-- Seq Scan on households  (cost=0.00..41023.00 rows=1 width=58)</span>
+<span class="cmt">--                          (actual time=12.4..4821.6 rows=1 loops=1)</span>
+<span class="cmt">--   Filter: (phone_number = '08031234567')</span>
+<span class="cmt">--   Rows Removed by Filter: 1849999</span>
+<span class="cmt">-- Buffers: shared hit=3104 read=38760</span>
+<span class="cmt">-- Execution Time: 4823.9 ms</span></pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Diagnosis</div>
+        This is the textbook case for indexing: a highly selective lookup (exactly one row matches out of 1.85 million) running as a full table scan. <code>Rows Removed by Filter: 1,849,999</code> confirms PostgreSQL read and discarded nearly every row. <code>Buffers: shared hit=3104 read=38760</code> shows most of those pages were not even in cache — they had to be pulled from disk, which is why it felt fine in the small 500-row test (everything fit in cache) but collapsed at production scale.
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – step 2: the fix</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">CREATE INDEX</span> idx_households_phone
+<span class="kw">ON</span> nsr.households (phone_number);
+
+<span class="cmt">-- Re-run the same EXPLAIN ANALYZE:</span>
+<span class="cmt">-- Index Scan using idx_households_phone on households</span>
+<span class="cmt">--   (cost=0.42..8.44 rows=1 width=58) (actual time=0.04..0.05 rows=1 loops=1)</span>
+<span class="cmt">--   Index Cond: (phone_number = '08031234567')</span>
+<span class="cmt">-- Execution Time: 0.08 ms</span>
+<span class="cmt">-- 4823.9 ms -> 0.08 ms: a ~60,000x improvement</span></pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">A second wrinkle — caseworkers also filter by state</div>
+        After the fix ships, the supervisor dashboard adds a second use case: "show me all households in my state with a registered phone number, ordered by registration date." A single-column index on <code>phone_number</code> does not help this query at all, because it does not filter on phone number — it filters on <code>state_id</code> and checks <code>phone_number IS NOT NULL</code>. This calls for a second, different index — a <strong>partial composite index</strong>:
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – a second index for a second access pattern</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Composite + partial: only rows with a phone number, grouped by state,</span>
+<span class="cmt">-- ordered for the dashboard's default sort</span>
+<span class="kw">CREATE INDEX</span> idx_households_state_registered
+<span class="kw">ON</span> nsr.households (state_id, registered_date)
+<span class="kw">WHERE</span> phone_number <span class="kw">IS NOT NULL</span>;</pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Root cause and lesson</div>
+        There is no single "add an index to the table" fix — each <strong>distinct access pattern</strong> (search by phone, browse by state) needs its own index matched to its WHERE/ORDER BY shape. The mistake in this story was testing only with a small dataset, where a seq scan and an index scan both feel instant — index problems only reveal themselves at production data volumes. <strong>Rule of thumb</strong>: before shipping any new lookup feature, run <code>EXPLAIN ANALYZE</code> against a copy of the production-sized table, not the development sample.
+      </div>
+
     </div>
 
     <div class="tab-panel" id="tab-d6-partition">
@@ -8123,6 +8246,57 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
         <div class="callout-title">Why partition payments by year?</div>
         The NSR payments table will accumulate millions of rows across multiple disbursement cycles. A caseworker reporting on 2024 payments should never need to scan 2025 or 2026 data. Partition pruning lets PostgreSQL eliminate irrelevant child tables entirely — the EXPLAIN output shows only <code>payments_2024</code> in the plan when filtering by a 2024 date range, regardless of how large the other partitions grow. Each partition can also have its own index, vacuum schedule, and tablespace — enabling hot/cold storage separation: recent partitions on fast NVMe, archived partitions on cheaper storage. The key constraint: the partition key column (<code>payment_date</code>) must always appear in queries for pruning to work; queries without a date filter scan all partitions and may be slower than a non-partitioned table.
       </div>
+      <h3>Advanced — Case Scenario: The Year-End Archive Purge</h3>
+      <div class="callout info" style="margin-bottom:12px">
+        <div class="callout-title">The situation</div>
+        NSR's data retention policy (aligned with NDP Act guidance) requires payment records older than 3 years to be purged from the live operational database and moved to cold archive storage. It is January, and the DBA team needs to remove all of 2022's payment records — roughly 2.1 million rows — from a single, non-partitioned <code>nsr.payments</code> table containing 9 million rows total.
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – the naive approach on a non-partitioned table</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">DELETE FROM</span> nsr.payments
+<span class="kw">WHERE</span> payment_date < <span class="str">'2023-01-01'</span>;
+<span class="cmt">-- This single statement:</span>
+<span class="cmt">--  • takes 6+ minutes to execute on 2.1M rows</span>
+<span class="cmt">--  • holds a ROW EXCLUSIVE lock on the entire table for that duration</span>
+<span class="cmt">--  • generates 2.1M dead tuples that autovacuum must now clean up</span>
+<span class="cmt">--  • blocks every caseworker INSERT/UPDATE on payments during the delete</span>
+<span class="cmt">--  • bloats the table and its indexes — disk space is not reclaimed</span>
+<span class="cmt">--    until a VACUUM FULL, which itself locks the table</span></pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Why this is the wrong tool</div>
+        A row-by-row <code>DELETE</code> is the most expensive way to remove old data: PostgreSQL must individually mark each of the 2.1 million rows as deleted, write that to the WAL, update every index entry, and leave the disk space as reclaimable-but-not-reclaimed dead space until VACUUM runs. None of this is necessary if the data was organised by date from the start.
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – the partitioned approach (built in Puzzle 5 of the mini project)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- With nsr.payments_by_year PARTITION BY RANGE (payment_date),</span>
+<span class="cmt">-- 2022 data lives entirely in its own physical table: payments_2022</span>
+
+<span class="cmt">-- Step 1: detach the partition (instant — no row-by-row work, no long lock)</span>
+<span class="kw">ALTER TABLE</span> nsr.payments_by_year
+  <span class="kw">DETACH PARTITION</span> nsr.payments_2022;
+
+<span class="cmt">-- Step 2: copy it to archive storage (a separate, slower operation —</span>
+<span class="cmt">-- can run in the background since it is now independent of the live table)</span>
+<span class="cmt">-- pg_dump -t nsr.payments_2022 lab_nsr > payments_2022_archive.sql</span>
+
+<span class="cmt">-- Step 3: drop the detached table — instant, metadata-only operation</span>
+<span class="kw">DROP TABLE</span> nsr.payments_2022;</pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Why this works</div>
+        <code>DETACH PARTITION</code> and <code>DROP TABLE</code> are both <strong>metadata-only operations</strong> — PostgreSQL simply removes the table's entry from the partition hierarchy (or catalog), without touching a single row of data. There is no row-by-row deletion, no WAL bloat proportional to row count, and no long-held lock. The entire operation completes in milliseconds regardless of whether the partition held 10 rows or 10 million. The archived data can be copied out at leisure before the drop, satisfying the retention policy's "move to cold storage" requirement without ever blocking live traffic.
+      </div>
+      <table>
+        <tr><th>Approach</th><th>Time for 2.1M rows</th><th>Table lock duration</th><th>Reclaims disk space</th></tr>
+        <tr><td>DELETE on non-partitioned table</td><td>~6 minutes</td><td>Full duration</td><td>No (needs VACUUM FULL)</td></tr>
+        <tr><td>DROP on detached partition</td><td>&lt; 50 ms</td><td>None (already detached)</td><td>Yes, immediately</td></tr>
+      </table>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Root cause and lesson</div>
+        The underlying design decision — partitioning <code>payments</code> by year from the start — is what turned a 6-minute, lock-heavy, disk-bloating operation into an instant one. This is the strongest argument for partitioning large, time-series-style NSR tables <strong>before</strong> they grow large, not after: retrofitting partitioning onto an existing multi-million-row table requires its own migration (create the partitioned structure, migrate data, swap names), which is itself a non-trivial project.
+      </div>
+
     </div>
 
     <div class="tab-panel" id="tab-d6-monitor">
@@ -8322,6 +8496,70 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
         <div class="callout-title">Workflow: from pg_stat_statements to a fix</div>
         <strong>Step 1</strong> — find the query with the highest total_exec_time. This is the one consuming the most cumulative server time, regardless of whether individual runs are slow. <strong>Step 2</strong> — copy the query text and run <code>EXPLAIN (ANALYZE, BUFFERS)</code> on it to see the plan. <strong>Step 3</strong> — identify the bottleneck node (highest actual time, or large actual rows vs estimated rows). <strong>Step 4</strong> — apply the fix: create a missing index, run ANALYZE to refresh statistics, or rewrite the query. <strong>Step 5</strong> — call <code>pg_stat_statements_reset()</code> and re-run for 24 hours to measure the improvement. For the NSR, add pg_stat_statements to <code>shared_preload_libraries</code> in postgresql.conf and enable it on day one of production — it costs very little and is invaluable for post-deployment performance investigations.
       </div>
+      <h3>Advanced — Case Scenario: The Friday Afternoon Slowdown</h3>
+      <div class="callout info" style="margin-bottom:12px">
+        <div class="callout-title">The situation</div>
+        Every Friday around 4pm, caseworkers across multiple states report the system "feels slow" — payment entry forms take several seconds to submit, and the eligibility report takes noticeably longer than on other days. It resolves itself by Monday morning. The pattern is consistent enough that the operations team needs a root cause before assuming it is "just network issues."
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – step 1: check the cache hit ratio first</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">SELECT</span>
+  <span class="fn">ROUND</span>(blks_hit::numeric / <span class="fn">NULLIF</span>(blks_hit+blks_read,<span class="num">0</span>)*<span class="num">100</span>,<span class="num">2</span>) <span class="kw">AS</span> cache_hit_pct
+<span class="kw">FROM</span> pg_stat_database
+<span class="kw">WHERE</span> datname = <span class="str">'lab_nsr'</span>;
+<span class="cmt">-- cache_hit_pct: 99.81  -- looks healthy, this is not the cause</span></pre>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – step 2: check table bloat</span><button class="copy-parsedbtn" onclick="copyCode(this)"></button><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">SELECT</span> relname, n_live_tup, n_dead_tup,
+  <span class="fn">ROUND</span>(n_dead_tup::numeric / <span class="fn">NULLIF</span>(n_live_tup+n_dead_tup,<span class="num">0</span>)*<span class="num">100</span>,<span class="num">1</span>) <span class="kw">AS</span> dead_pct,
+  last_autovacuum
+<span class="kw">FROM</span> pg_stat_user_tables
+<span class="kw">WHERE</span> schemaname = <span class="str">'nsr'</span>
+<span class="kw">ORDER BY</span> dead_pct <span class="kw">DESC NULLS LAST</span>;
+
+<span class="cmt">--   relname   | n_live_tup | n_dead_tup | dead_pct | last_autovacuum</span>
+<span class="cmt">-- ------------+------------+------------+----------+-----------------</span>
+<span class="cmt">--  payments   |    1850000 |     412000 |     18.2 | 2026-06-22 03:11</span>
+<span class="cmt">--  households |    1850000 |       4100 |      0.2 | 2026-06-26 02:08</span>
+<span class="cmt">-- payments has 18.2% dead tuples and has not been autovacuumed in 8 days</span></pre>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – step 3: the missing piece — who is blocking autovacuum?</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">SELECT</span> pid, usename, state, now() - xact_start <span class="kw">AS</span> tx_age, query
+<span class="kw">FROM</span>   pg_stat_activity
+<span class="kw">WHERE</span>  state = <span class="str">'idle in transaction'</span>
+<span class="kw">ORDER BY</span> tx_age <span class="kw">DESC</span>;
+
+<span class="cmt">--  pid  | usename       | state               | tx_age   | query</span>
+<span class="cmt">-- ------+---------------+---------------------+----------+------------------------</span>
+<span class="cmt">-- 28401 | nsr_reporting | idle in transaction | 04:12:33 | SELECT * FROM payments..</span>
+<span class="cmt">-- A reporting connection opened a transaction 4+ hours ago and never</span>
+<span class="cmt">-- committed or rolled back — it is still "in progress" as far as MVCC</span>
+<span class="cmt">-- is concerned.</span></pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Diagnosis</div>
+        The Friday report job opens a connection, runs a long read query inside an explicit transaction, and — due to a bug in the reporting tool's connection pooling — never closes that transaction cleanly at the end of the week. PostgreSQL's MVCC model means <strong>VACUUM cannot remove dead row versions that are still potentially visible to any open transaction</strong>, no matter how old. Every <code>UPDATE</code> or <code>DELETE</code> on <code>payments</code> since that transaction opened has been quietly piling up as dead tuples that autovacuum is prevented from reclaiming, which is why <code>last_autovacuum</code> is stuck at June 22 and <code>dead_pct</code> keeps climbing through the week — explaining the Friday afternoon degradation as the bloat compounds.
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – step 4: the fix</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- Terminate the stuck connection (safe — it is not doing useful work)</span>
+<span class="kw">SELECT</span> <span class="fn">pg_terminate_backend</span>(<span class="num">28401</span>);
+
+<span class="cmt">-- Manually trigger vacuum to catch up immediately rather than waiting</span>
+<span class="kw">VACUUM</span> (<span class="kw">ANALYZE</span>) nsr.payments;
+
+<span class="cmt">-- Re-check bloat — dead_pct should now drop sharply</span>
+<span class="kw">SELECT</span> relname, n_dead_tup,
+  <span class="fn">ROUND</span>(n_dead_tup::numeric / <span class="fn">NULLIF</span>(n_live_tup+n_dead_tup,<span class="num">0</span>)*<span class="num">100</span>,<span class="num">1</span>) <span class="kw">AS</span> dead_pct
+<span class="kw">FROM</span> pg_stat_user_tables <span class="kw">WHERE</span> relname = <span class="str">'payments'</span>;</pre>
+      </div>
+      <div class="callout info" style="margin-top:8px">
+        <div class="callout-title">Root cause and lesson</div>
+        The slowdown was never about CPU, network, or query complexity — it was a <strong>long-running idle transaction silently blocking vacuum</strong>, a classic and easy-to-miss PostgreSQL failure mode. The permanent fix is twofold: (1) fix the reporting tool to always COMMIT or ROLLBACK, and (2) add <code>idle_in_transaction_session_timeout</code> to <code>postgresql.conf</code> so PostgreSQL automatically kills any session that sits idle-in-transaction beyond a safe limit (e.g. 10 minutes), preventing this class of problem from recurring regardless of which application causes it. <strong>Rule of thumb for the NSR</strong>: idle-in-transaction sessions should be part of every regular monitoring check, not just something investigated after a complaint.
+      </div>
+
     </div>
 
     <div class="tab-panel" id="tab-d6-exercises">
