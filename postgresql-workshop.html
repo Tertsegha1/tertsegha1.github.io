@@ -8024,7 +8024,7 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
 <span class="kw">FROM</span>   nsr.payments     p
 <span class="kw">JOIN</span>   nsr.households   h <span class="kw">ON</span> h.household_id = p.household_id
 <span class="kw">JOIN</span>   nsr.lgas         l <span class="kw">ON</span> l.lga_id       = h.lga_id
-<span class="kw">JOIN</span>   nsr.states       s <span class="kw">ON</span> s.state_id     = l.state_id
+<span class="kw">JOIN</span>   nsr.states       s <span class="kw">ON</span> s.state_code   = l.state_code
 <span class="kw">WHERE</span>  p.payment_date <span class="kw">BETWEEN</span> <span class="str">'2026-06-01'</span> <span class="kw">AND</span> <span class="str">'2026-06-30'</span>
 <span class="kw">ORDER BY</span> p.payment_date;</pre>
       </div>
@@ -8036,7 +8036,7 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
 <span class="kw">FROM</span>   nsr.payments     p
 <span class="kw">JOIN</span>   nsr.households   h <span class="kw">ON</span> h.household_id = p.household_id
 <span class="kw">JOIN</span>   nsr.lgas         l <span class="kw">ON</span> l.lga_id       = h.lga_id
-<span class="kw">JOIN</span>   nsr.states       s <span class="kw">ON</span> s.state_id     = l.state_id
+<span class="kw">JOIN</span>   nsr.states       s <span class="kw">ON</span> s.state_code   = l.state_code
 <span class="kw">WHERE</span>  p.payment_date <span class="kw">BETWEEN</span> <span class="str">'2026-06-01'</span> <span class="kw">AND</span> <span class="str">'2026-06-30'</span>
 <span class="kw">ORDER BY</span> p.payment_date;
 
@@ -8146,6 +8146,13 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
         A new feature ships: caseworkers can now look up a household by phone number when a beneficiary calls the helpline, instead of needing the household code. In testing with 500 sample rows it felt instant. Two weeks after going live to all 36 states, helpdesk staff report each lookup now takes 3&#8211;6 seconds, and the call centre is backing up.
       </div>
       <div class="code-block">
+        <div class="code-header"><span class="code-lang">sql – prerequisite: this scenario assumes two columns added to households</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmt">-- nsr.households (from Day 1) does not include phone_number or registered_date.</span>
+<span class="cmt">-- Run this once before the scenario below — it models the "new feature" being shipped:</span>
+<span class="kw">ALTER TABLE</span> nsr.households <span class="kw">ADD COLUMN</span> phone_number    <span class="typ">TEXT</span>;
+<span class="kw">ALTER TABLE</span> nsr.households <span class="kw">ADD COLUMN</span> registered_date <span class="typ">DATE</span> <span class="kw">NOT NULL DEFAULT</span> <span class="fn">CURRENT_DATE</span>;</pre>
+      </div>
+      <div class="code-block">
         <div class="code-header"><span class="code-lang">sql – the lookup query</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
         <pre><span class="kw">SELECT</span> household_code, head_name, phone_number, pmt_score
 <span class="kw">FROM</span>   nsr.households
@@ -8183,14 +8190,15 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
       </div>
       <div class="callout info" style="margin-top:8px">
         <div class="callout-title">A second wrinkle — caseworkers also filter by state</div>
-        After the fix ships, the supervisor dashboard adds a second use case: "show me all households in my state with a registered phone number, ordered by registration date." A single-column index on <code>phone_number</code> does not help this query at all, because it does not filter on phone number — it filters on <code>state_id</code> and checks <code>phone_number IS NOT NULL</code>. This calls for a second, different index — a <strong>partial composite index</strong>:
+        After the fix ships, the supervisor dashboard adds a second use case: "show me all households in my state with a registered phone number, ordered by registration date." A single-column index on <code>phone_number</code> does not help this query at all, because it does not filter on phone number — it filters on <code>lga_id</code> (households has no direct state column — state is reached through <code>nsr.lgas.state_code</code>) and checks <code>phone_number IS NOT NULL</code>. This calls for a second, different index — a <strong>partial composite index</strong>:
       </div>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">sql – a second index for a second access pattern</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-        <pre><span class="cmt">-- Composite + partial: only rows with a phone number, grouped by state,</span>
-<span class="cmt">-- ordered for the dashboard's default sort</span>
-<span class="kw">CREATE INDEX</span> idx_households_state_registered
-<span class="kw">ON</span> nsr.households (state_id, registered_date)
+        <pre><span class="cmt">-- Composite + partial: only rows with a phone number, grouped by LGA (the dashboard</span>
+<span class="cmt">-- then joins nsr.lgas to filter/group by state_code — households has no state column</span>
+<span class="cmt">-- of its own), ordered for the dashboard's default sort</span>
+<span class="kw">CREATE INDEX</span> idx_households_lga_registered
+<span class="kw">ON</span> nsr.households (lga_id, registered_date)
 <span class="kw">WHERE</span> phone_number <span class="kw">IS NOT NULL</span>;</pre>
       </div>
       <div class="callout info" style="margin-top:8px">
@@ -8510,7 +8518,7 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
 <span class="cmt">-- cache_hit_pct: 99.81  -- looks healthy, this is not the cause</span></pre>
       </div>
       <div class="code-block">
-        <div class="code-header"><span class="code-lang">sql – step 2: check table bloat</span><button class="copy-parsedbtn" onclick="copyCode(this)"></button><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <div class="code-header"><span class="code-lang">sql – step 2: check table bloat</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
         <pre><span class="kw">SELECT</span> relname, n_live_tup, n_dead_tup,
   <span class="fn">ROUND</span>(n_dead_tup::numeric / <span class="fn">NULLIF</span>(n_live_tup+n_dead_tup,<span class="num">0</span>)*<span class="num">100</span>,<span class="num">1</span>) <span class="kw">AS</span> dead_pct,
   last_autovacuum
@@ -9080,7 +9088,7 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
     p1:{
       title:'Puzzle 1 — Read the Execution Plan',phase:'EXPLAIN ANALYZE',
       desc:'Run EXPLAIN (ANALYZE, BUFFERS) on the slow eligibility query.\n\nWrite down:\n(a) Scan type on nsr.households\n(b) Estimated vs actual rows\n(c) Total execution time in ms',
-      starter:'EXPLAIN (ANALYZE, BUFFERS)\nSELECT\n    h.household_code,\n    h.head_name,\n    l.lga_name,\n    s.state_name,\n    h.pmt_score\nFROM   nsr.households  h\nJOIN   nsr.lgas        l ON l.lga_id    = h.lga_id\nJOIN   nsr.states      s ON s.state_id  = l.state_id\nWHERE  h.pmt_score < 25\n  AND  h.is_active = TRUE\nORDER BY h.pmt_score;',
+      starter:'EXPLAIN (ANALYZE, BUFFERS)\nSELECT\n    h.household_code,\n    h.head_name,\n    l.lga_name,\n    s.state_name,\n    h.pmt_score\nFROM   nsr.households  h\nJOIN   nsr.lgas        l ON l.lga_id     = h.lga_id\nJOIN   nsr.states      s ON s.state_code = l.state_code\nWHERE  h.pmt_score < 25\n  AND  h.is_active = TRUE\nORDER BY h.pmt_score;',
       hints:['Look for "Seq Scan" or "Index Scan" at the top of the plan','Find "Execution Time:" at the very last line','Buffers: shared hit=X (RAM cache) read=Y (disk)'],
       output:['Seq Scan on households  (cost=0.00..4832.50 ...)','  Filter: (pmt_score < 25) AND (is_active = true)','Planning Time: 0.8 ms','Execution Time: 847.3 ms'],
       validate:function(sql){
@@ -9124,7 +9132,7 @@ pg_restore -U postgres -d lab_cwr_test --no-privileges -F c C:\temp\cwr_backup.d
     p4:{
       title:'Puzzle 4 — Verify the Index is Used',phase:'Indexing',
       desc:'After creating the index:\n\n(a) Re-run EXPLAIN (ANALYZE, BUFFERS)\n(b) Confirm it shows Index Scan\n(c) Query pg_stat_user_indexes to check idx_scan > 0',
-      starter:"EXPLAIN (ANALYZE, BUFFERS)\nSELECT h.household_code, h.head_name,\n       l.lga_name, s.state_name, h.pmt_score\nFROM   nsr.households h\nJOIN   nsr.lgas       l ON l.lga_id   = h.lga_id\nJOIN   nsr.states     s ON s.state_id = l.state_id\nWHERE  h.pmt_score < 25\n  AND  h.is_active = TRUE\nORDER BY h.pmt_score;\n\nSELECT indexrelname, idx_scan,\n       pg_size_pretty(pg_relation_size(indexrelid)) AS index_size\nFROM   pg_stat_user_indexes\nWHERE  relname = 'households';",
+      starter:"EXPLAIN (ANALYZE, BUFFERS)\nSELECT h.household_code, h.head_name,\n       l.lga_name, s.state_name, h.pmt_score\nFROM   nsr.households h\nJOIN   nsr.lgas       l ON l.lga_id     = h.lga_id\nJOIN   nsr.states     s ON s.state_code = l.state_code\nWHERE  h.pmt_score < 25\n  AND  h.is_active = TRUE\nORDER BY h.pmt_score;\n\nSELECT indexrelname, idx_scan,\n       pg_size_pretty(pg_relation_size(indexrelid)) AS index_size\nFROM   pg_stat_user_indexes\nWHERE  relname = 'households';",
       hints:['After CREATE INDEX, re-run the same EXPLAIN ANALYZE query','Plan should now say "Index Scan using idx_households_active_pmt"','idx_scan increments each time the index is used by a query'],
       output:['Index Scan using idx_households_active_pmt on households','  Index Cond: (pmt_score < 25)','Execution Time: 1.8 ms','','         indexrelname          | idx_scan | index_size','-------------------------------+----------+------------',' idx_households_active_pmt     |        1 | 48 kB'],
       validate:function(sql){
