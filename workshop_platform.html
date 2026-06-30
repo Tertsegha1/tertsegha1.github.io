@@ -10582,6 +10582,248 @@ $$;
         </div>
       </div>
 
+
+      <div class="exercise-card">
+        <div class="exercise-header" onclick="toggleExercise(this)">
+          <div class="ex-num">G6</div>
+          <div class="ex-title">Incremental watermark load: only move what&#39;s new</div>
+          <span class="ex-difficulty diff-advanced">Advanced</span>
+          <span class="ex-toggle">&#9660;</span>
+        </div>
+        <div class="exercise-body" style="display:none">
+          <p>A full re-load of <code>nsr.stg_households</code> every night is too slow at scale. Implement a high-watermark pattern: (1) create <code>nsr.etl_watermarks</code>, (2) write a CTE that reads the watermark, inserts only rows loaded after it, and advances the watermark atomically. (3) Verify the watermark advances on each run and no row is processed twice.</p>
+          <div class="callout info"><div class="callout-title">Why this matters</div>
+            Full loads scan millions of rows nightly. A watermark stores <code>MAX(loaded_at)</code> of the last successful run. The next run adds <code>WHERE loaded_at &gt; last_loaded</code>, cutting scan time from hours to seconds on large NSR datasets.
+          </div>
+          <div class="answer-area">Write your watermark load SQL here</div>
+          <div class="answer-reveal" id="ans-d7-g6">
+            <div class="callout tip"><div class="callout-title">Full Solution</div></div>
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">sql &#8211; high-watermark incremental load</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre><span class="cmt">-- Step 1: Create watermark table (one row per source)</span>
+<span class="kw">CREATE TABLE IF NOT EXISTS</span> nsr.etl_watermarks (
+  source_name  <span class="typ">TEXT</span>         <span class="kw">PRIMARY KEY</span>,
+  last_loaded  <span class="typ">TIMESTAMPTZ</span>  <span class="kw">NOT NULL DEFAULT</span> <span class="str">&#39;1970-01-01&#39;</span>
+);
+<span class="kw">INSERT INTO</span> nsr.etl_watermarks (source_name)
+<span class="kw">VALUES</span> (<span class="str">&#39;stg_households&#39;</span>) <span class="kw">ON CONFLICT DO NOTHING</span>;
+
+<span class="cmt">-- Step 2: Seed staging with rows at two different timestamps</span>
+<span class="kw">INSERT INTO</span> nsr.stg_households
+  (household_code, state_name, lga_name, head_name, pmt_score, import_batch, loaded_at)
+<span class="kw">VALUES</span>
+  (<span class="str">&#39;KN-100&#39;</span>, <span class="str">&#39;Kano&#39;</span>, <span class="str">&#39;Kano Municipal&#39;</span>, <span class="str">&#39;Amina Garba&#39;</span>,   <span class="str">&#39;33.1&#39;</span>, <span class="str">&#39;BATCH_A&#39;</span>, <span class="str">&#39;2024-01-10 08:00&#39;</span>),
+  (<span class="str">&#39;KN-101&#39;</span>, <span class="str">&#39;Kano&#39;</span>, <span class="str">&#39;Kano Municipal&#39;</span>, <span class="str">&#39;Suleiman Audu&#39;</span>, <span class="str">&#39;27.9&#39;</span>, <span class="str">&#39;BATCH_A&#39;</span>, <span class="str">&#39;2024-01-10 08:00&#39;</span>),
+  (<span class="str">&#39;KN-102&#39;</span>, <span class="str">&#39;Kano&#39;</span>, <span class="str">&#39;Tarauni&#39;</span>,        <span class="str">&#39;Hajiya Binta&#39;</span>,  <span class="str">&#39;45.0&#39;</span>, <span class="str">&#39;BATCH_B&#39;</span>, <span class="str">&#39;2024-03-15 09:30&#39;</span>),
+  (<span class="str">&#39;KN-103&#39;</span>, <span class="str">&#39;Kano&#39;</span>, <span class="str">&#39;Tarauni&#39;</span>,        <span class="str">&#39;Musa Tukur&#39;</span>,    <span class="str">&#39;38.4&#39;</span>, <span class="str">&#39;BATCH_B&#39;</span>, <span class="str">&#39;2024-03-15 09:30&#39;</span>);
+
+<span class="cmt">-- Step 3: Watermark load CTE</span>
+<span class="kw">WITH</span> wm <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> last_loaded <span class="kw">FROM</span> nsr.etl_watermarks <span class="kw">WHERE</span> source_name = <span class="str">&#39;stg_households&#39;</span>
+),
+loaded <span class="kw">AS</span> (
+  <span class="kw">INSERT INTO</span> nsr.households (household_code, lga_id, head_name, pmt_score)
+  <span class="kw">SELECT DISTINCT ON</span> (s.household_code)
+    s.household_code, l.lga_id, s.head_name, s.pmt_score::<span class="typ">NUMERIC</span>
+  <span class="kw">FROM</span>  nsr.stg_households s
+  <span class="kw">JOIN</span>  nsr.lgas l <span class="kw">ON</span> l.lga_name = s.lga_name
+  <span class="kw">CROSS JOIN</span> wm
+  <span class="kw">WHERE</span> s.loaded_at &gt; wm.last_loaded
+    <span class="kw">AND</span>  s.household_code <span class="kw">IS NOT NULL</span>
+    <span class="kw">AND</span>  s.pmt_score ~ <span class="str">&#39;^[0-9]+(\.[0-9]+)?$&#39;</span>
+  <span class="kw">ORDER BY</span> s.household_code, s.loaded_at <span class="kw">DESC</span>
+  <span class="kw">ON CONFLICT</span> (household_code) <span class="kw">DO UPDATE SET</span> pmt_score = <span class="kw">EXCLUDED</span>.pmt_score
+  <span class="kw">RETURNING</span> household_code
+)
+<span class="kw">UPDATE</span> nsr.etl_watermarks
+<span class="kw">SET</span>    last_loaded = (
+         <span class="kw">SELECT MAX</span>(loaded_at) <span class="kw">FROM</span> nsr.stg_households
+         <span class="kw">WHERE</span>  loaded_at &gt; (<span class="kw">SELECT</span> last_loaded <span class="kw">FROM</span> nsr.etl_watermarks
+                              <span class="kw">WHERE</span>  source_name = <span class="str">&#39;stg_households&#39;</span>))
+<span class="kw">WHERE</span>  source_name = <span class="str">&#39;stg_households&#39;</span>;
+
+<span class="cmt">-- Step 4: Verify watermark advanced</span>
+<span class="kw">SELECT</span> source_name, last_loaded <span class="kw">FROM</span> nsr.etl_watermarks;
+<span class="cmt">-- First run:  last_loaded = 2024-03-15 09:30
+-- Second run: unchanged (no newer rows)</span>
+
+<span class="cmt">-- Step 5: Add new row then re-run CTE -- only this row is processed</span>
+<span class="kw">INSERT INTO</span> nsr.stg_households
+  (household_code, state_name, lga_name, head_name, pmt_score, import_batch)
+<span class="kw">VALUES</span> (<span class="str">&#39;KN-104&#39;</span>, <span class="str">&#39;Kano&#39;</span>, <span class="str">&#39;Kumbotso&#39;</span>, <span class="str">&#39;Zainab Sani&#39;</span>, <span class="str">&#39;22.7&#39;</span>, <span class="str">&#39;BATCH_C&#39;</span>);</pre>
+            </div>
+            <div class="callout info" style="margin-top:8px">
+              <div class="callout-title">Key teaching points</div>
+              <strong>Atomic watermark advance</strong>: the watermark UPDATE is in the same CTE chain as the INSERT &#8212; if the INSERT fails, the watermark does not advance, so the next run reprocesses from the same point (exactly-once semantics). <strong>CROSS JOIN wm</strong>: joins the single-row CTE to every staging row so <code>last_loaded</code> is available without a correlated subquery per row. <strong>Index tip</strong>: add <code>CREATE INDEX ON nsr.stg_households(loaded_at)</code> &#8212; the WHERE clause becomes a range scan instead of a full table scan.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            <button class="btn-toggle-answer" onclick="toggleAnswer('d7-g6',this)">&#9660; Show Answer</button>
+            <button class="ex-complete-btn" onclick="markExDone(this)">&#10003; Mark done</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="exercise-card">
+        <div class="exercise-header" onclick="toggleExercise(this)">
+          <div class="ex-num">G7</div>
+          <div class="ex-title">ELT cross-check: find NSR beneficiaries missing from IFMIS payments</div>
+          <span class="ex-difficulty diff-advanced">Advanced</span>
+          <span class="ex-toggle">&#9660;</span>
+        </div>
+        <div class="exercise-body" style="display:none">
+          <p>Using <code>postgres_fdw</code>, identify active NSR beneficiaries enrolled in <code>CCT_2026</code> who have received no payment in the last 90 days. This is an ELT pattern &#8212; the remote IFMIS data is joined inside PostgreSQL without staging it locally first.</p>
+          <div class="callout info"><div class="callout-title">Setup &#8212; run once</div>
+            The foreign server and foreign table are shown in the ETL tab. Create them first if they do not yet exist.
+          </div>
+          <div class="answer-area">Write your ELT cross-check query here</div>
+          <div class="answer-reveal" id="ans-d7-g7">
+            <div class="callout tip"><div class="callout-title">Full Solution</div></div>
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">sql &#8211; ELT cross-check via postgres_fdw</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre><span class="cmt">-- Prerequisite foreign objects (from ETL tab)</span>
+<span class="kw">CREATE EXTENSION IF NOT EXISTS</span> postgres_fdw;
+
+<span class="kw">CREATE SERVER IF NOT EXISTS</span> ifmis_server
+  <span class="kw">FOREIGN DATA WRAPPER</span> postgres_fdw
+  <span class="kw">OPTIONS</span> (host <span class="str">&#39;ifmis.gov.ng&#39;</span>, dbname <span class="str">&#39;ifmis_prod&#39;</span>, port <span class="str">&#39;5432&#39;</span>);
+
+<span class="kw">CREATE USER MAPPING IF NOT EXISTS FOR CURRENT_USER</span>
+  <span class="kw">SERVER</span> ifmis_server <span class="kw">OPTIONS</span> (user <span class="str">&#39;nsr_ro&#39;</span>, password <span class="str">&#39;***&#39;</span>);
+
+<span class="kw">CREATE FOREIGN TABLE IF NOT EXISTS</span> nsr.ftbl_ifmis_payments (
+  payment_id      <span class="typ">BIGINT</span>,
+  nin             <span class="typ">TEXT</span>,
+  amount_ngn      <span class="typ">NUMERIC</span>,
+  disbursed_at    <span class="typ">TIMESTAMPTZ</span>,
+  programme_code  <span class="typ">TEXT</span>
+) <span class="kw">SERVER</span> ifmis_server
+  <span class="kw">OPTIONS</span> (schema_name <span class="str">&#39;public&#39;</span>, table_name <span class="str">&#39;payments&#39;</span>);
+
+<span class="cmt">-- Cross-check: active CCT_2026 beneficiaries with no payment in last 90 days</span>
+<span class="kw">SELECT</span>
+  h.household_code,
+  i.nin,
+  i.first_name || <span class="str">&#39; &#39;</span> || i.last_name  <span class="kw">AS</span> full_name,
+  h.pmt_score,
+  <span class="fn">MAX</span>(p.disbursed_at)                 <span class="kw">AS</span> last_payment_date,
+  <span class="fn">COUNT</span>(p.payment_id)                 <span class="kw">AS</span> payments_this_quarter
+<span class="kw">FROM</span>      nsr.households  h
+<span class="kw">JOIN</span>      nsr.individuals i  <span class="kw">ON</span> i.household_code = h.household_code
+<span class="kw">LEFT JOIN</span> nsr.ftbl_ifmis_payments p
+       <span class="kw">ON</span> p.nin            = i.nin
+      <span class="kw">AND</span> p.programme_code = <span class="str">&#39;CCT_2026&#39;</span>
+      <span class="kw">AND</span> p.disbursed_at  &gt;= <span class="kw">now</span>() - <span class="kw">INTERVAL</span> <span class="str">&#39;90 days&#39;</span>
+<span class="kw">WHERE</span>   h.is_active = <span class="kw">TRUE</span>
+<span class="kw">GROUP BY</span> h.household_code, i.nin, full_name, h.pmt_score
+<span class="kw">HAVING</span>  <span class="fn">COUNT</span>(p.payment_id) = <span class="num">0</span>
+<span class="kw">ORDER BY</span> h.pmt_score <span class="kw">ASC</span>
+<span class="kw">LIMIT</span> <span class="num">50</span>;
+
+<span class="cmt">-- Log the cross-check in data_lineage</span>
+<span class="kw">INSERT INTO</span> nsr.data_lineage (table_name, source_system, record_count, batch_ref, lawful_basis, data_owner)
+<span class="kw">VALUES</span> (<span class="str">&#39;nsr.ftbl_ifmis_payments&#39;</span>, <span class="str">&#39;IFMIS via postgres_fdw&#39;</span>, <span class="num">0</span>,
+        <span class="str">&#39;FDW_CHECK_&#39;</span> || <span class="fn">to_char</span>(<span class="kw">now</span>(), <span class="str">&#39;YYYYMMDD&#39;</span>),
+        <span class="str">&#39;NDP Act 2023 s.25&#39;</span>, <span class="str">&#39;NSR Programme Team&#39;</span>);</pre>
+            </div>
+            <div class="callout info" style="margin-top:8px">
+              <div class="callout-title">Key teaching points</div>
+              <strong>ELT vs ETL</strong>: no local staging copy &#8212; PostgreSQL pulls IFMIS data live via the foreign table and joins it in-engine. <strong>LEFT JOIN + HAVING COUNT = 0</strong>: the anti-join pattern &#8212; keep only beneficiaries with no matching payment. <strong>ORDER BY pmt_score ASC</strong>: surfaces the most vulnerable households (lowest score = greatest need) first. <strong>Never auto-correct</strong>: a missing payment may be a legitimate hold, name mismatch, or banking failure &#8212; always escalate and log in audit_log.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            <button class="btn-toggle-answer" onclick="toggleAnswer('d7-g7',this)">&#9660; Show Answer</button>
+            <button class="ex-complete-btn" onclick="markExDone(this)">&#10003; Mark done</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="exercise-card">
+        <div class="exercise-header" onclick="toggleExercise(this)">
+          <div class="ex-num">G8</div>
+          <div class="ex-title">MDM golden record: resolve conflicting data across re-enumerations</div>
+          <span class="ex-difficulty diff-advanced">Advanced</span>
+          <span class="ex-toggle">&#9660;</span>
+        </div>
+        <div class="exercise-body" style="display:none">
+          <p>Three re-enumeration batches produced conflicting data for the same households &#8212; different PMT scores, addresses, and household sizes. Write a multi-CTE MDM query that produces one golden record per household by resolving each attribute independently: latest PMT score, latest address, maximum member count ever recorded.</p>
+          <div class="answer-area">Write your MDM golden record CTE here</div>
+          <div class="answer-reveal" id="ans-d7-g8">
+            <div class="callout tip"><div class="callout-title">Full Solution</div></div>
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">sql &#8211; MDM golden record via multi-CTE</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre><span class="cmt">-- Setup: three conflicting re-enumeration batches</span>
+<span class="kw">INSERT INTO</span> nsr.stg_households
+  (household_code, lga_name, head_name, pmt_score, ward, member_count, import_batch, loaded_at)
+<span class="kw">VALUES</span>
+  (<span class="str">&#39;KD-500&#39;</span>, <span class="str">&#39;Kaduna North&#39;</span>, <span class="str">&#39;Hadiza Usman&#39;</span>, <span class="str">&#39;31.2&#39;</span>, <span class="str">&#39;Malali&#39;</span>, <span class="num">6</span>, <span class="str">&#39;BATCH_2022&#39;</span>, <span class="str">&#39;2022-04-01&#39;</span>),
+  (<span class="str">&#39;KD-500&#39;</span>, <span class="str">&#39;Kaduna North&#39;</span>, <span class="str">&#39;Hadiza Usman&#39;</span>, <span class="str">&#39;35.8&#39;</span>, <span class="str">&#39;Kawo&#39;</span>,   <span class="num">8</span>, <span class="str">&#39;BATCH_2023&#39;</span>, <span class="str">&#39;2023-07-15&#39;</span>),
+  (<span class="str">&#39;KD-500&#39;</span>, <span class="str">&#39;Kaduna North&#39;</span>, <span class="str">&#39;Hadiza Usman&#39;</span>, <span class="str">&#39;33.5&#39;</span>, <span class="str">&#39;Kawo&#39;</span>,   <span class="num">7</span>, <span class="str">&#39;BATCH_2024&#39;</span>, <span class="str">&#39;2024-09-20&#39;</span>),
+  (<span class="str">&#39;KD-501&#39;</span>, <span class="str">&#39;Kaduna North&#39;</span>, <span class="str">&#39;Mele Ibrahim&#39;</span>,  <span class="str">&#39;28.0&#39;</span>, <span class="str">&#39;Rigasa&#39;</span>, <span class="num">4</span>, <span class="str">&#39;BATCH_2022&#39;</span>, <span class="str">&#39;2022-04-01&#39;</span>),
+  (<span class="str">&#39;KD-501&#39;</span>, <span class="str">&#39;Kaduna North&#39;</span>, <span class="str">&#39;Mele Ibrahim&#39;</span>,  <span class="str">&#39;29.3&#39;</span>, <span class="str">&#39;Rigasa&#39;</span>, <span class="num">5</span>, <span class="str">&#39;BATCH_2024&#39;</span>, <span class="str">&#39;2024-09-20&#39;</span>);
+
+<span class="cmt">-- MDM golden record: each attribute resolved by its own rule</span>
+<span class="kw">WITH</span>
+<span class="cmt">-- Rule 1: latest PMT score (most recent enumeration)</span>
+latest_pmt <span class="kw">AS</span> (
+  <span class="kw">SELECT DISTINCT ON</span> (household_code)
+    household_code, pmt_score::<span class="typ">NUMERIC</span> <span class="kw">AS</span> golden_pmt
+  <span class="kw">FROM</span>  nsr.stg_households
+  <span class="kw">WHERE</span> pmt_score ~ <span class="str">&#39;^[0-9]+(\.[0-9]+)?$&#39;</span>
+  <span class="kw">ORDER BY</span> household_code, loaded_at <span class="kw">DESC</span>
+),
+<span class="cmt">-- Rule 2: latest known address (ward from most recent batch)</span>
+latest_address <span class="kw">AS</span> (
+  <span class="kw">SELECT DISTINCT ON</span> (household_code)
+    household_code, lga_name <span class="kw">AS</span> golden_lga, ward <span class="kw">AS</span> golden_ward
+  <span class="kw">FROM</span>  nsr.stg_households
+  <span class="kw">ORDER BY</span> household_code, loaded_at <span class="kw">DESC</span>
+),
+<span class="cmt">-- Rule 3: maximum member count ever (protects historical entitlement)</span>
+max_members <span class="kw">AS</span> (
+  <span class="kw">SELECT</span>   household_code, <span class="fn">MAX</span>(member_count) <span class="kw">AS</span> golden_members
+  <span class="kw">FROM</span>     nsr.stg_households
+  <span class="kw">GROUP BY</span> household_code
+)
+<span class="kw">SELECT</span>
+  a.household_code,
+  a.golden_lga,
+  a.golden_ward,
+  p.golden_pmt,
+  m.golden_members
+<span class="kw">FROM</span>  latest_address a
+<span class="kw">JOIN</span>  latest_pmt     p  <span class="kw">ON</span> p.household_code = a.household_code
+<span class="kw">JOIN</span>  max_members    m  <span class="kw">ON</span> m.household_code = a.household_code
+<span class="kw">ORDER BY</span> a.household_code;
+<span class="cmt">-- KD-500: pmt=33.5 (2024), ward=Kawo (2024), members=8 (peak 2023)
+-- KD-501: pmt=29.3 (2024), ward=Rigasa, members=5</span>
+
+<span class="cmt">-- Upsert golden records into production households</span>
+<span class="kw">INSERT INTO</span> nsr.households (household_code, lga_id, head_name, pmt_score)
+<span class="kw">SELECT</span>
+  a.household_code,
+  l.lga_id,
+  (<span class="kw">SELECT</span> head_name <span class="kw">FROM</span> nsr.stg_households
+   <span class="kw">WHERE</span>  household_code = a.household_code <span class="kw">ORDER BY</span> loaded_at <span class="kw">DESC LIMIT</span> <span class="num">1</span>),
+  p.golden_pmt
+<span class="kw">FROM</span>  latest_address a
+<span class="kw">JOIN</span>  latest_pmt p  <span class="kw">ON</span> p.household_code = a.household_code
+<span class="kw">JOIN</span>  nsr.lgas  l  <span class="kw">ON</span> l.lga_name = a.golden_lga
+<span class="kw">ON CONFLICT</span> (household_code) <span class="kw">DO UPDATE SET</span>
+  pmt_score = <span class="kw">EXCLUDED</span>.pmt_score;</pre>
+            </div>
+            <div class="callout info" style="margin-top:8px">
+              <div class="callout-title">Key teaching points</div>
+              <strong>Different rules for different attributes</strong>: PMT uses the latest value, address uses latest location (people move), member count uses historical MAX (once enrolled, entitlement is protected even if absent at re-enumeration). The rule is a programme policy decision &#8212; not a database one. <strong>DISTINCT ON per CTE</strong>: each CTE has its own ORDER BY so attributes resolve independently. A single DISTINCT ON forcing one ordering would be wrong for MDM. <strong>Three CTEs, one final JOIN</strong>: each CTE is independently queryable for audit before merging.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            <button class="btn-toggle-answer" onclick="toggleAnswer('d7-g8',this)">&#9660; Show Answer</button>
+            <button class="ex-complete-btn" onclick="markExDone(this)">&#10003; Mark done</button>
+          </div>
+        </div>
+      </div>
+
     </div>
     <div class="tab-panel" id="tab-d7-miniproject">
 
