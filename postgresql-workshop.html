@@ -11392,6 +11392,8 @@ max_members <span class="kw">AS</span> (
             <div style="display:flex;align-items:center;gap:10px;">
               <span id="d7fbdash-last-update" style="color:#94a3b8;font-size:0.72rem;"></span>
               <button onclick="d7fbDashFetch()" style="background:none;border:1px solid #7c3aed;color:#a78bfa;font-size:0.72rem;padding:3px 10px;border-radius:5px;cursor:pointer;font-family:inherit;">&#8635; Refresh</button>
+              <button onclick="d7fbDownloadCsv()" style="background:none;border:1px solid #059669;color:#6ee7b7;font-size:0.72rem;padding:3px 10px;border-radius:5px;cursor:pointer;font-family:inherit;">&#8595; CSV</button>
+              <button onclick="d7fbDownloadReport()" style="background:none;border:1px solid #d97706;color:#fcd34d;font-size:0.72rem;padding:3px 10px;border-radius:5px;cursor:pointer;font-family:inherit;">&#8595; Report + Charts</button>
             </div>
           </div>
 
@@ -11660,6 +11662,7 @@ max_members <span class="kw">AS</span> (
     if(data && typeof data==='object'){
       Object.keys(data).forEach(function(k){ if(data[k] && data[k].name) all.push(data[k]); });
     }
+    _d7fbAll=all;
 
     var countEl=document.getElementById('d7fbdash-count');
     if(countEl) countEl.textContent=all.length;
@@ -13882,6 +13885,8 @@ $$;
             <div style="display:flex;align-items:center;gap:10px;">
               <span id="d7fbdash-last-update" style="color:#94a3b8;font-size:0.72rem;"></span>
               <button onclick="d7fbDashFetch()" style="background:none;border:1px solid #7c3aed;color:#a78bfa;font-size:0.72rem;padding:3px 10px;border-radius:5px;cursor:pointer;font-family:inherit;">&#8635; Refresh</button>
+              <button onclick="d7fbDownloadCsv()" style="background:none;border:1px solid #059669;color:#6ee7b7;font-size:0.72rem;padding:3px 10px;border-radius:5px;cursor:pointer;font-family:inherit;">&#8595; CSV</button>
+              <button onclick="d7fbDownloadReport()" style="background:none;border:1px solid #d97706;color:#fcd34d;font-size:0.72rem;padding:3px 10px;border-radius:5px;cursor:pointer;font-family:inherit;">&#8595; Report + Charts</button>
             </div>
           </div>
 
@@ -14150,6 +14155,7 @@ $$;
     if(data && typeof data==='object'){
       Object.keys(data).forEach(function(k){ if(data[k] && data[k].name) all.push(data[k]); });
     }
+    _d7fbAll=all;
 
     var countEl=document.getElementById('d7fbdash-count');
     if(countEl) countEl.textContent=all.length;
@@ -14270,6 +14276,168 @@ $$;
   if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}
   else{init();}
 })();
+
+  /* ── Download helpers ─────────────────────────────────────── */
+  var _d7fbAll=[];  /* populated by renderFbDash */
+
+  function d7fbDownloadCsv(){
+    if(!_d7fbAll.length){alert('No feedback data loaded yet. Click Refresh first.');return;}
+    var dayF=['day1','day2','day3','day5','day6','day7'];
+    var ratF=['overall','clarity','miniproject','instructor','relevance'];
+    var dayL={day1:'Day 1 Foundations',day2:'Day 2 SQL Fundamentals',day3:'Day 3 Admin/Security/Backup',day5:'Day 5 Assessment',day6:'Day 6 Performance Tuning',day7:'Day 7 ETL/ELT/Governance'};
+    var ratL={overall:'Overall programme',clarity:'Content clarity',miniproject:'Mini projects usefulness',instructor:'Instructor support',relevance:'Relevance to role'};
+    var cols=['Name','Submitted'].concat(dayF.map(function(f){return dayL[f];})).concat(ratF.map(function(f){return ratL[f];})).concat(['Pace','NPS','What went well','Improvements','Issues','Workplace actions']);
+    var rows=[cols.map(function(c){return '"'+c+'"';}).join(',')];
+    _d7fbAll.forEach(function(r){
+      var row=[
+        '"'+(r.name||'').replace(/"/g,'""')+'"',
+        '"'+(r.submitted_at||'').replace(/"/g,'""')+'"'
+      ];
+      dayF.forEach(function(f){row.push(r[f]||'');});
+      ratF.forEach(function(f){row.push(r[f]||'');});
+      row.push('"'+(r.pace||'').replace(/"/g,'""')+'"');
+      row.push(r.nps!==undefined&&r.nps!==null?r.nps:'');
+      ['well','improve','issues','actions'].forEach(function(f){row.push('"'+(r[f]||'').replace(/"/g,'""')+'"');});
+      rows.push(row.join(','));
+    });
+    var csv='﻿'+rows.join('\r\n');
+    var blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='NSR_Day7_Feedback_'+new Date().toISOString().slice(0,10)+'.csv';
+    a.click();
+  }
+
+  function d7fbDownloadReport(){
+    if(!_d7fbAll.length){alert('No feedback data loaded yet. Click Refresh first.');return;}
+    var all=_d7fbAll;
+    var n=all.length;
+    var dayF=['day1','day2','day3','day5','day6','day7'];
+    var ratF=['overall','clarity','miniproject','instructor','relevance'];
+    var dayL={day1:'Day 1 · Foundations',day2:'Day 2 · SQL Fundamentals',day3:'Day 3 · Admin/Security/Backup',day5:'Day 5 · Assessment',day6:'Day 6 · Performance Tuning',day7:'Day 7 · ETL/ELT & Governance'};
+    var ratL={overall:'Overall programme',clarity:'Content clarity',miniproject:'Mini projects usefulness',instructor:'Instructor support',relevance:'Relevance to role'};
+
+    function avg(field){
+      var v=all.map(function(r){return r[field];}).filter(function(x){return x;});
+      return v.length?(v.reduce(function(a,b){return a+b;},0)/v.length):0;
+    }
+    function dist(field,max){
+      var d={};for(var i=1;i<=max;i++)d[i]=0;
+      all.forEach(function(r){if(r[field])d[r[field]]=(d[r[field]]||0)+1;});
+      return d;
+    }
+    function npsCalc(){
+      var v=all.filter(function(r){return r.nps!==undefined&&r.nps!==null;});
+      if(!v.length)return{score:'—',p:0,pa:0,n:0,na:0,det:0,deta:0};
+      var p=v.filter(function(r){return r.nps>=9;}).length;
+      var d=v.filter(function(r){return r.nps<=6;}).length;
+      var sc=Math.round((p/v.length-d/v.length)*100);
+      return{score:(sc>0?'+':'')+sc,p:p,pa:Math.round(p/v.length*100),det:d,deta:Math.round(d/v.length*100),pass:v.length-p-d,pct:Math.round((v.length-p-d)/v.length*100)};
+    }
+
+    /* SVG bar chart: fields array, labelMap, maxVal, color */
+    function svgBars(fields,labelMap,maxVal,color){
+      var bh=22,gap=8,w=480,lw=220,bw=w-lw-60;
+      var h=fields.length*(bh+gap)+20;
+      var bars=fields.map(function(f,i){
+        var a=avg(f);
+        var fw=a?Math.round((a/maxVal)*bw):0;
+        var y=20+i*(bh+gap);
+        var label=labelMap[f]||f;
+        return '<text x="'+lw+'" y="'+(y+16)+'" font-size="12" fill="#cbd5e1" text-anchor="end" font-family="Arial,sans-serif">'+label+'</text>'
+          +'<rect x="'+(lw+8)+'" y="'+y+'" width="'+bw+'" height="'+bh+'" rx="4" fill="#1e3a5f"/>'
+          +'<rect x="'+(lw+8)+'" y="'+y+'" width="'+fw+'" height="'+bh+'" rx="4" fill="'+color+'"/>'
+          +(a?'<text x="'+(lw+8+fw+6)+'" y="'+(y+16)+'" font-size="12" font-weight="bold" fill="'+color+'" font-family="Arial,sans-serif">'+a.toFixed(1)+'</text>':'');
+      }).join('');
+      return '<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'" style="max-width:100%;background:#071120;border-radius:8px;padding:4px">'+bars+'</svg>';
+    }
+
+    /* SVG distribution chart for one field (1-5 stars) */
+    function svgDist(field,label){
+      var d=dist(field,5);
+      var bw=40,gap=6,h=100,pad=20;
+      var mx=Math.max.apply(null,Object.values(d))||1;
+      var bars='';
+      for(var i=1;i<=5;i++){
+        var x=pad+(i-1)*(bw+gap);
+        var bh=Math.round((d[i]/mx)*70);
+        var y=h-bh-20;
+        bars+='<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+bh+'" rx="4" fill="#2563eb"/>';
+        bars+='<text x="'+(x+bw/2)+'" y="'+(h-6)+'" text-anchor="middle" font-size="11" fill="#94a3b8" font-family="Arial,sans-serif">'+i+'★</text>';
+        if(d[i])bars+='<text x="'+(x+bw/2)+'" y="'+(y-4)+'" text-anchor="middle" font-size="11" font-weight="bold" fill="#7dd3fc" font-family="Arial,sans-serif">'+d[i]+'</text>';
+      }
+      var tw=(5*(bw+gap))-gap+2*pad;
+      return '<div style="display:inline-block;margin:4px 8px 4px 0"><div style="font-size:12px;color:#94a3b8;margin-bottom:4px;font-family:Arial">'+label+'</div><svg xmlns="http://www.w3.org/2000/svg" width="'+tw+'" height="'+h+'" style="background:#071120;border-radius:6px">'+bars+'</svg></div>';
+    }
+
+    /* NPS gauge (simple horizontal bar) */
+    var nps=npsCalc();
+    var npsBar='<div style="display:flex;gap:0;height:20px;border-radius:6px;overflow:hidden;margin:8px 0;max-width:400px">'
+      +'<div style="flex:'+nps.det+';background:#dc2626;" title="Detractors '+nps.deta+'%"></div>'
+      +'<div style="flex:'+nps.pass+';background:#64748b;" title="Passives"></div>'
+      +'<div style="flex:'+nps.p+';background:#16a34a;" title="Promoters '+nps.pa+'%"></div>'
+      +'</div>'
+      +'<div style="font-size:11px;color:#94a3b8;font-family:Arial">Detractors '+nps.deta+'% &nbsp;|&nbsp; Passives '+nps.pct+'% &nbsp;|&nbsp; Promoters '+nps.pa+'%</div>';
+
+    /* Pace distribution */
+    var paceCounts={Too_slow:0,About_right:0,Too_fast:0};
+    all.forEach(function(r){if(r.pace){var k=r.pace.replace(/\s+/g,'_');if(paceCounts[k]!==undefined)paceCounts[k]++;}});
+    var paceBars=Object.keys(paceCounts).map(function(k){
+      var pct=n?Math.round(paceCounts[k]/n*100):0;
+      return '<div style="margin:4px 0"><span style="display:inline-block;width:90px;font-size:12px;color:#cbd5e1;font-family:Arial">'+k.replace(/_/g,' ')+'</span>'
+        +'<span style="display:inline-block;background:#1e3a5f;border-radius:4px;width:200px;height:16px;vertical-align:middle;overflow:hidden">'
+        +'<span style="display:block;background:#0ea5e9;height:100%;width:'+pct+'%"></span></span>'
+        +' <span style="font-size:12px;color:#7dd3fc;font-family:Arial">'+paceCounts[k]+'</span></div>';
+    }).join('');
+
+    /* Free text sections */
+    function textList(field){
+      return all.map(function(r){return r[field]?'<li style="margin:4px 0;font-size:13px;color:#e2e8f0;font-family:Arial">'+r[field].replace(/</g,'&lt;')+'</li>':'';}).filter(Boolean).join('');
+    }
+
+    var html='<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>NSR Training Feedback Report — '+new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})+'</title>'
+      +'<style>body{background:#0a1628;color:#e2e8f0;font-family:Arial,sans-serif;margin:0;padding:24px}h1{color:#fbbf24;font-size:1.4rem;margin-bottom:4px}h2{color:#7dd3fc;font-size:1.05rem;border-bottom:1px solid #1e3a5f;padding-bottom:6px;margin-top:28px}.kpi{display:inline-block;background:#0f2a4a;border:1px solid #1e3a5f;border-radius:8px;padding:12px 20px;margin:6px;text-align:center}.kpi .val{font-size:2rem;font-weight:700;color:#fbbf24}.kpi .lbl{font-size:0.78rem;color:#94a3b8;margin-top:2px}ul{margin:6px 0;padding-left:20px}@media print{body{background:#fff;color:#111}h1,h2{color:#1e3a5f}.kpi{border-color:#ccc;background:#f8fafc}.kpi .val{color:#d97706}.kpi .lbl{color:#64748b}}</style>'
+      +'</head><body>'
+      +'<h1>NSR Training Programme — Participant Feedback Report</h1>'
+      +'<div style="color:#94a3b8;font-size:0.82rem;margin-bottom:16px">Generated '+new Date().toLocaleString('en-GB')+' &nbsp;|&nbsp; '+n+' response'+(n!==1?'s':'')+' collected</div>'
+
+      +'<div>'
+      +'<div class="kpi"><div class="val">'+n+'</div><div class="lbl">Responses</div></div>'
+      +'<div class="kpi"><div class="val">'+avg('overall').toFixed(1)+'<span style="font-size:1rem">/5</span></div><div class="lbl">Overall Rating</div></div>'
+      +'<div class="kpi"><div class="val">'+nps.score+'</div><div class="lbl">NPS Score</div></div>'
+      +'<div class="kpi"><div class="val">'+avg('instructor').toFixed(1)+'<span style="font-size:1rem">/5</span></div><div class="lbl">Instructor Support</div></div>'
+      +'</div>'
+
+      +'<h2>Per-Day Ratings</h2>'
+      +svgBars(dayF,dayL,5,'#f59e0b')
+
+      +'<h2>Programme Ratings</h2>'
+      +svgBars(ratF,ratL,5,'#38bdf8')
+
+      +'<h2>Rating Distributions (per question)</h2>'
+      +'<div>'+ratF.map(function(f){return svgDist(f,ratL[f]);}).join('')+'</div>'
+
+      +'<h2>NPS — Net Promoter Score</h2>'
+      +'<div style="font-size:1.6rem;font-weight:700;color:#fbbf24;margin-bottom:6px">'+nps.score+'</div>'
+      +npsBar
+
+      +'<h2>Training Pace</h2>'
+      +paceBars
+
+      +'<h2>What Went Well</h2><ul>'+textList('well')+'</ul>'
+      +'<h2>Suggested Improvements</h2><ul>'+textList('improve')+'</ul>'
+      +'<h2>Issues Encountered</h2><ul>'+textList('issues')+'</ul>'
+      +'<h2>Planned Workplace Actions</h2><ul>'+textList('actions')+'</ul>'
+
+      +'<div style="margin-top:32px;color:#475569;font-size:0.75rem;border-top:1px solid #1e3a5f;padding-top:8px">NSR Training Programme &mdash; Dr Tertsegha J. Anande &mdash; tertseghaanande@gmail.com</div>'
+      +'</body></html>';
+
+    var blob=new Blob([html],{type:'text/html;charset=utf-8'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='NSR_Day7_Feedback_Report_'+new Date().toISOString().slice(0,10)+'.html';
+    a.click();
+  }
 </script>
 
 <!-- SQL Editor Modal for Day 7 Mini Project -->
