@@ -11323,9 +11323,15 @@ max_members <span class="kw">AS</span> (
           <textarea id="d7fb-issues" placeholder="e.g. PostgreSQL service wouldn't restart, error messages, slow laptop..." style="width:100%;min-height:60px;background:#0d1929;border:1px solid #1e3a5f;border-radius:6px;color:#e2e8f0;font-family:inherit;font-size:0.84rem;padding:10px;resize:vertical;box-sizing:border-box;outline:none;margin-top:8px;"></textarea>
         </div>
 
-        <div class="d7fb-q" style="background:#080e18;border:1px solid #1e3a5f;border-radius:10px;padding:18px 20px;margin-bottom:18px;">
+        <div class="d7fb-q" style="background:#080e18;border:1px solid #1e3a5f;border-radius:10px;padding:18px 20px;margin-bottom:14px;">
           <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:4px;">12. Any suggestions or action items for the programme team? <span style="color:#64748b;font-weight:400;">(optional)</span></div>
           <textarea id="d7fb-actions" placeholder="e.g. send the slide deck in advance, add a recap video..." style="width:100%;min-height:60px;background:#0d1929;border:1px solid #1e3a5f;border-radius:6px;color:#e2e8f0;font-family:inherit;font-size:0.84rem;padding:10px;resize:vertical;box-sizing:border-box;outline:none;margin-top:8px;"></textarea>
+        </div>
+
+        <div class="d7fb-q" style="background:#080e18;border:1px solid #14532d;border-radius:10px;padding:18px 20px;margin-bottom:18px;">
+          <div style="font-weight:700;color:#6ee7b7;font-size:0.92rem;margin-bottom:4px;">13. How do you plan to apply what you have learnt in your workplace? <span style="color:#ef4444;">*</span></div>
+          <div style="font-size:0.76rem;color:#94a3b8;margin-bottom:8px;">Be as specific as possible &mdash; e.g. a process you will improve, a tool you will introduce, or a problem you will now be able to solve.</div>
+          <textarea id="d7fb-apply" placeholder="e.g. I will use ETL staging tables to validate our monthly enumeration CSV before loading into the production NSR database, and set up pg_cron to enforce our 7-year data retention policy..." style="width:100%;min-height:90px;background:#0d1929;border:1px solid #14532d;border-radius:6px;color:#e2e8f0;font-family:inherit;font-size:0.84rem;padding:10px;resize:vertical;box-sizing:border-box;outline:none;margin-top:8px;"></textarea>
         </div>
 
         <div id="d7fb-submit-error" style="display:none;color:#ef4444;font-size:0.8rem;margin-bottom:10px;text-align:center;">Please answer all required questions (marked *) before submitting.</div>
@@ -11401,6 +11407,10 @@ max_members <span class="kw">AS</span> (
               <div style="font-size:0.78rem;font-weight:700;color:#7dd3fc;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">&#9999; Action Items</div>
               <div id="d7fbdash-actions" style="max-height:200px;overflow-y:auto;display:grid;gap:8px;"></div>
             </div>
+          </div>
+          <div style="padding:18px 20px;border-top:1px solid #1e1b4b;">
+            <div style="font-size:0.78rem;font-weight:700;color:#6ee7b7;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">&#127775; Applying the Learning — Workplace Plans</div>
+            <div id="d7fbdash-apply" style="max-height:320px;overflow-y:auto;display:grid;gap:8px;"></div>
           </div>
         </div>
       </div>
@@ -11530,6 +11540,7 @@ max_members <span class="kw">AS</span> (
     responses.improve=document.getElementById('d7fb-improve').value.trim();
     responses.issues=document.getElementById('d7fb-issues').value.trim();
     responses.actions=document.getElementById('d7fb-actions').value.trim();
+    responses.apply=document.getElementById('d7fb-apply').value.trim();
 
     var missing=[];
     dayFields.forEach(function(f){ if(!responses[f]) missing.push(f); });
@@ -11538,6 +11549,7 @@ max_members <span class="kw">AS</span> (
     if(responses.nps===undefined||responses.nps===null) missing.push('nps');
     if(!responses.well) missing.push('well');
     if(!responses.improve) missing.push('improve');
+    if(!responses.apply) missing.push('apply');
 
     if(missing.length){
       if(errEl){errEl.textContent='Please answer all required questions (marked *) before submitting.';errEl.style.display='block';}
@@ -11585,6 +11597,7 @@ max_members <span class="kw">AS</span> (
     var impEl=document.getElementById('d7fb-improve'); if(impEl && saved.improve) impEl.value=saved.improve;
     var issEl=document.getElementById('d7fb-issues'); if(issEl && saved.issues) issEl.value=saved.issues;
     var actEl=document.getElementById('d7fb-actions'); if(actEl && saved.actions) actEl.value=saved.actions;
+    var applyEl=document.getElementById('d7fb-apply'); if(applyEl && saved.apply) applyEl.value=saved.apply;
     if(saved.submittedAt) showConfirmation();
   }
 
@@ -11699,6 +11712,7 @@ max_members <span class="kw">AS</span> (
     renderComments('d7fbdash-improve','improve','#f59e0b');
     renderComments('d7fbdash-issues','issues','#ef4444');
     renderComments('d7fbdash-actions','actions','#0ea5e9');
+    renderComments('d7fbdash-apply','apply','#6ee7b7');
   }
 
   /* ── Init ─────────────────────────────────────────────── */
@@ -13757,9 +13771,15 @@ $$;
           <textarea id="d7fb-issues" placeholder="e.g. PostgreSQL service wouldn't restart, error messages, slow laptop..." style="width:100%;min-height:60px;background:#0d1929;border:1px solid #1e3a5f;border-radius:6px;color:#e2e8f0;font-family:inherit;font-size:0.84rem;padding:10px;resize:vertical;box-sizing:border-box;outline:none;margin-top:8px;"></textarea>
         </div>
 
-        <div class="d7fb-q" style="background:#080e18;border:1px solid #1e3a5f;border-radius:10px;padding:18px 20px;margin-bottom:18px;">
+        <div class="d7fb-q" style="background:#080e18;border:1px solid #1e3a5f;border-radius:10px;padding:18px 20px;margin-bottom:14px;">
           <div style="font-weight:700;color:#e2e8f0;font-size:0.92rem;margin-bottom:4px;">12. Any suggestions or action items for the programme team? <span style="color:#64748b;font-weight:400;">(optional)</span></div>
           <textarea id="d7fb-actions" placeholder="e.g. send the slide deck in advance, add a recap video..." style="width:100%;min-height:60px;background:#0d1929;border:1px solid #1e3a5f;border-radius:6px;color:#e2e8f0;font-family:inherit;font-size:0.84rem;padding:10px;resize:vertical;box-sizing:border-box;outline:none;margin-top:8px;"></textarea>
+        </div>
+
+        <div class="d7fb-q" style="background:#080e18;border:1px solid #14532d;border-radius:10px;padding:18px 20px;margin-bottom:18px;">
+          <div style="font-weight:700;color:#6ee7b7;font-size:0.92rem;margin-bottom:4px;">13. How do you plan to apply what you have learnt in your workplace? <span style="color:#ef4444;">*</span></div>
+          <div style="font-size:0.76rem;color:#94a3b8;margin-bottom:8px;">Be as specific as possible &mdash; e.g. a process you will improve, a tool you will introduce, or a problem you will now be able to solve.</div>
+          <textarea id="d7fb-apply" placeholder="e.g. I will use ETL staging tables to validate our monthly enumeration CSV before loading into the production NSR database, and set up pg_cron to enforce our 7-year data retention policy..." style="width:100%;min-height:90px;background:#0d1929;border:1px solid #14532d;border-radius:6px;color:#e2e8f0;font-family:inherit;font-size:0.84rem;padding:10px;resize:vertical;box-sizing:border-box;outline:none;margin-top:8px;"></textarea>
         </div>
 
         <div id="d7fb-submit-error" style="display:none;color:#ef4444;font-size:0.8rem;margin-bottom:10px;text-align:center;">Please answer all required questions (marked *) before submitting.</div>
@@ -13835,6 +13855,10 @@ $$;
               <div style="font-size:0.78rem;font-weight:700;color:#7dd3fc;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">&#9999; Action Items</div>
               <div id="d7fbdash-actions" style="max-height:200px;overflow-y:auto;display:grid;gap:8px;"></div>
             </div>
+          </div>
+          <div style="padding:18px 20px;border-top:1px solid #1e1b4b;">
+            <div style="font-size:0.78rem;font-weight:700;color:#6ee7b7;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">&#127775; Applying the Learning — Workplace Plans</div>
+            <div id="d7fbdash-apply" style="max-height:320px;overflow-y:auto;display:grid;gap:8px;"></div>
           </div>
         </div>
       </div>
@@ -13964,6 +13988,7 @@ $$;
     responses.improve=document.getElementById('d7fb-improve').value.trim();
     responses.issues=document.getElementById('d7fb-issues').value.trim();
     responses.actions=document.getElementById('d7fb-actions').value.trim();
+    responses.apply=document.getElementById('d7fb-apply').value.trim();
 
     var missing=[];
     dayFields.forEach(function(f){ if(!responses[f]) missing.push(f); });
@@ -13972,6 +13997,7 @@ $$;
     if(responses.nps===undefined||responses.nps===null) missing.push('nps');
     if(!responses.well) missing.push('well');
     if(!responses.improve) missing.push('improve');
+    if(!responses.apply) missing.push('apply');
 
     if(missing.length){
       if(errEl){errEl.textContent='Please answer all required questions (marked *) before submitting.';errEl.style.display='block';}
@@ -14019,6 +14045,7 @@ $$;
     var impEl=document.getElementById('d7fb-improve'); if(impEl && saved.improve) impEl.value=saved.improve;
     var issEl=document.getElementById('d7fb-issues'); if(issEl && saved.issues) issEl.value=saved.issues;
     var actEl=document.getElementById('d7fb-actions'); if(actEl && saved.actions) actEl.value=saved.actions;
+    var applyEl=document.getElementById('d7fb-apply'); if(applyEl && saved.apply) applyEl.value=saved.apply;
     if(saved.submittedAt) showConfirmation();
   }
 
@@ -14133,6 +14160,7 @@ $$;
     renderComments('d7fbdash-improve','improve','#f59e0b');
     renderComments('d7fbdash-issues','issues','#ef4444');
     renderComments('d7fbdash-actions','actions','#0ea5e9');
+    renderComments('d7fbdash-apply','apply','#6ee7b7');
   }
 
   /* ── Init ─────────────────────────────────────────────── */
