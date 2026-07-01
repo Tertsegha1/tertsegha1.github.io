@@ -14402,7 +14402,75 @@ $$;
       +'<h2>Issues Encountered</h2><ul>'+textList('issues')+'</ul>'
       +'<h2>Planned Workplace Actions</h2><ul>'+textList('actions')+'</ul>'
       +'<div style="margin-top:28px;color:#475569;font-size:0.72rem;border-top:1px solid #1e3a5f;padding-top:8px">NSR Training Programme &mdash; Dr Tertsegha J. Anande &mdash; tertseghaanande@gmail.com</div>'
-      +'</body></html>';
+      +'
+<!-- ===== CERTIFICATE VERIFICATION OVERLAY ===== -->
+<div id="cert-verify-overlay" style="display:none;position:fixed;inset:0;background:rgba(5,12,30,0.92);z-index:9999;overflow-y:auto;padding:40px 20px;">
+  <div style="max-width:560px;margin:0 auto;background:#0f2a4a;border:2px solid #B8952A;border-radius:16px;padding:40px 36px;text-align:center;position:relative;">
+    <div id="cvo-loading" style="color:#94a3b8;font-size:1rem;padding:20px 0;">Verifying certificate&#8230;</div>
+    <div id="cvo-valid" style="display:none;">
+      <div style="font-size:3rem;margin-bottom:8px;">&#10003;</div>
+      <div style="color:#22c55e;font-size:1.4rem;font-weight:700;margin-bottom:4px;">Certificate Verified</div>
+      <div style="color:#94a3b8;font-size:0.82rem;margin-bottom:24px;">This is an authentic AUKTIE / NSR Training certificate</div>
+      <div style="background:#071120;border-radius:10px;padding:20px;text-align:left;margin-bottom:20px;">
+        <div style="margin-bottom:12px;"><span style="color:#94a3b8;font-size:0.78rem;display:block;">CERTIFICATE ID</span><span id="cvo-id" style="color:#fbbf24;font-weight:700;font-size:1rem;font-family:monospace;"></span></div>
+        <div style="margin-bottom:12px;"><span style="color:#94a3b8;font-size:0.78rem;display:block;">AWARDED TO</span><span id="cvo-name" style="color:#e2e8f0;font-weight:700;font-size:1.1rem;"></span></div>
+        <div style="margin-bottom:12px;"><span style="color:#94a3b8;font-size:0.78rem;display:block;">PROGRAMME</span><span id="cvo-prog" style="color:#7dd3fc;font-size:0.9rem;"></span></div>
+        <div><span style="color:#94a3b8;font-size:0.78rem;display:block;">DATE ISSUED</span><span id="cvo-date" style="color:#e2e8f0;font-size:0.9rem;"></span></div>
+      </div>
+      <div style="color:#475569;font-size:0.75rem;">Issued by AUKTIE Ltd &#183; Dr Tertsegha J. Anande &#183; tertseghaanande@gmail.com</div>
+    </div>
+    <div id="cvo-invalid" style="display:none;">
+      <div style="font-size:3rem;margin-bottom:8px;">&#10007;</div>
+      <div style="color:#ef4444;font-size:1.3rem;font-weight:700;margin-bottom:8px;">Certificate Not Found</div>
+      <div style="color:#94a3b8;font-size:0.88rem;">The certificate ID <span id="cvo-bad-id" style="color:#fbbf24;font-family:monospace;"></span> could not be verified.<br>It may be invalid, a forgery, or not yet registered.</div>
+      <div style="margin-top:16px;color:#475569;font-size:0.75rem;">To report a suspicious certificate contact tertseghaanande@gmail.com</div>
+    </div>
+    <button onclick="document.getElementById('cert-verify-overlay').style.display='none'" style="margin-top:24px;padding:10px 28px;background:#0C2340;border:1px solid #B8952A;color:#fbbf24;border-radius:8px;font-size:0.9rem;cursor:pointer;font-family:inherit;">Close</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var params = new URLSearchParams(window.location.search);
+  var vid = params.get('verify');
+  if (!vid) return;
+
+  var ov = document.getElementById('cert-verify-overlay');
+  if (!ov) return;
+  ov.style.display = 'block';
+
+  function doVerify() {
+    if (!window.CWR_FIREBASE || !window.CWR_FIREBASE.databaseURL || window.CWR_FIREBASE.databaseURL.includes('REPLACE')) {
+      setTimeout(doVerify, 400);
+      return;
+    }
+    var safeId = vid.replace(/[^a-zA-Z0-9_-]/g, '_');
+    fetch(window.CWR_FIREBASE.databaseURL + '/nsr_certificates/' + safeId + '.json')
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        document.getElementById('cvo-loading').style.display = 'none';
+        if (data && data.certId) {
+          document.getElementById('cvo-id').textContent   = data.certId;
+          document.getElementById('cvo-name').textContent = data.name;
+          document.getElementById('cvo-prog').textContent = data.programme;
+          document.getElementById('cvo-date').textContent = data.issueDate;
+          document.getElementById('cvo-valid').style.display = 'block';
+        } else {
+          document.getElementById('cvo-bad-id').textContent = vid;
+          document.getElementById('cvo-invalid').style.display = 'block';
+        }
+      })
+      .catch(function(){
+        document.getElementById('cvo-loading').style.display = 'none';
+        document.getElementById('cvo-bad-id').textContent = vid;
+        document.getElementById('cvo-invalid').style.display = 'block';
+      });
+  }
+  doVerify();
+})();
+</script>
+
+</body></html>';
 
     var blob=new Blob([html],{type:'text/html;charset=utf-8'});
     var a=document.createElement('a');
