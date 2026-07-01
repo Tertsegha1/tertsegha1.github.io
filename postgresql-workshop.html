@@ -17369,11 +17369,12 @@ function initCertificatePage() {
         }).catch(function(){});
       }
       // Generate QR code then draw certificate
-      QRCode.toDataURL(verifyUrl, { width: 300, margin: 1, color: { dark: '#0C2340', light: '#FFFFFF' } }, function(err, dataUrl) {
-        if (!err && dataUrl) {
+      var _qrCanvas = document.createElement('canvas');
+      QRCode.toCanvas(_qrCanvas, verifyUrl, { width: 300, margin: 1, color: { dark: '#0C2340', light: '#FFFFFF' } }, function(err) {
+        if (!err) {
           const img = new Image();
           img.onload = function() { drawCertificate(canvas, name, id, dateStr, img); };
-          img.src = dataUrl;
+          img.src = _qrCanvas.toDataURL('image/png');
         } else {
           drawCertificate(canvas, name, id, dateStr, null);
         }
@@ -17471,18 +17472,22 @@ function drawSampleCertificate() {
   // Then add QR badge on top once library is available
   var sampleVerifyUrl = 'https://tertsegha1.github.io/postgresql-workshop.html?verify=AUKTIE-PG26-SAMPLE';
   function addQR() {
-    if (typeof QRCode === 'undefined' || !QRCode.toDataURL) {
+    if (typeof QRCode === 'undefined' || !QRCode.toCanvas) {
       setTimeout(addQR, 300);
       return;
     }
-    QRCode.toDataURL(sampleVerifyUrl, { width: 300, margin: 1, color: { dark: '#0C2340', light: '#FFFFFF' } }, function(err, dataUrl) {
-      if (err || !dataUrl) return;
+    var tc = document.createElement('canvas');
+    QRCode.toCanvas(tc, sampleVerifyUrl, { width: 300, margin: 1, color: { dark: '#0C2340', light: '#FFFFFF' } }, function(err) {
+      if (err) {
+        // toCanvas failed — skip QR silently
+        return;
+      }
       var img = new Image();
       img.onload = function() {
         drawCertificate(canvas, 'Firstname Surname', 'AUKTIE-PG26-SAMPLE', '3 July 2026', img);
         doStamp();
       };
-      img.src = dataUrl;
+      img.src = tc.toDataURL('image/png');
     });
   }
   addQR();
