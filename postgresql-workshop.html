@@ -9696,24 +9696,29 @@ $csv.TrimStart() | Out-File -FilePath "$env:USERPROFILE\Downloads\lga_data.csv" 
 <span class="kw">OR</span> s.head_name <span class="kw">IS NULL OR</span> <span class="fn">trim</span>(s.head_name) = <span class="str">''</span>
 <span class="kw">OR</span> l.lga_id <span class="kw">IS NULL</span>;
 
-<span class="cmt">-- Review pending quarantine rows (data quality officer dashboard)</span>
+<span class="cmt">-- Step 2: Check what was quarantined (run this first to see the qids)</span>
+<span class="kw">SELECT</span> qid, rejection_code, source_batch, resolved
+<span class="kw">FROM</span> nsr.stg_quarantine;
+<span class="cmt">-- Expected: 4 rows (MISSING_CODE, INVALID_PMT, UNRESOLVABLE_LGA x2)</span>
+
+<span class="cmt">-- Step 3: Summary dashboard by rejection code</span>
 <span class="kw">SELECT</span>
   rejection_code,
   <span class="fn">COUNT</span>(*) <span class="kw">AS</span> total,
   <span class="fn">COUNT</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE NOT</span> resolved) <span class="kw">AS</span> pending,
-  <span class="fn"><span class="fn">date_trunc</span>(<span class="str">'minute'</span>, <span class="fn">AVG</span>(<span class="fn">now</span>() - rejected_at) <span class="kw">FILTER</span> (<span class="kw">WHERE NOT</span> resolved)) <span class="kw">AS</span> avg_age
+  <span class="fn">date_trunc</span>(<span class="str">'minute'</span>, <span class="fn">AVG</span>(<span class="fn">now</span>() - rejected_at) <span class="kw">FILTER</span> (<span class="kw">WHERE NOT</span> resolved)) <span class="kw">AS</span> avg_age
 <span class="kw">FROM</span> nsr.stg_quarantine
 <span class="kw">WHERE</span> source_batch = <span class="str">'BATCH_20240315'</span>
 <span class="kw">GROUP BY</span> rejection_code
 <span class="kw">ORDER BY</span> pending <span class="kw">DESC</span>;
 
-<span class="cmt">-- Mark a row as resolved (after manual correction)</span>
+<span class="cmt">-- Step 4: Mark a row as resolved — use a real qid from the Step 2 results above</span>
 <span class="kw">UPDATE</span> nsr.stg_quarantine
 <span class="kw">SET</span>
   resolved    = <span class="kw">TRUE</span>,
   resolved_by = <span class="fn">current_user</span>,
   resolved_at = <span class="fn">now</span>()
-<span class="kw">WHERE</span> qid = <span class="num">441</span>;  <span class="cmt">-- replace 441 with an actual qid from the SELECT above</span></pre>
+<span class="kw">WHERE</span> qid = <span class="num">1</span>;  <span class="cmt">-- replace 1 with the actual qid from Step 2</span></pre>
       </div>
       <div class="callout info" style="margin-top:8px">
         <div class="callout-title">Why JSONB for raw_data — not columns</div>
@@ -12424,24 +12429,29 @@ max_members <span class="kw">AS</span> (
 <span class="kw">OR</span> s.head_name <span class="kw">IS NULL OR</span> <span class="fn">trim</span>(s.head_name) = <span class="str">''</span>
 <span class="kw">OR</span> l.lga_id <span class="kw">IS NULL</span>;
 
-<span class="cmt">-- Review pending quarantine rows (data quality officer dashboard)</span>
+<span class="cmt">-- Step 2: Check what was quarantined (run this first to see the qids)</span>
+<span class="kw">SELECT</span> qid, rejection_code, source_batch, resolved
+<span class="kw">FROM</span> nsr.stg_quarantine;
+<span class="cmt">-- Expected: 4 rows (MISSING_CODE, INVALID_PMT, UNRESOLVABLE_LGA x2)</span>
+
+<span class="cmt">-- Step 3: Summary dashboard by rejection code</span>
 <span class="kw">SELECT</span>
   rejection_code,
   <span class="fn">COUNT</span>(*) <span class="kw">AS</span> total,
   <span class="fn">COUNT</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE NOT</span> resolved) <span class="kw">AS</span> pending,
-  <span class="fn"><span class="fn">date_trunc</span>(<span class="str">'minute'</span>, <span class="fn">AVG</span>(<span class="fn">now</span>() - rejected_at) <span class="kw">FILTER</span> (<span class="kw">WHERE NOT</span> resolved)) <span class="kw">AS</span> avg_age
+  <span class="fn">date_trunc</span>(<span class="str">'minute'</span>, <span class="fn">AVG</span>(<span class="fn">now</span>() - rejected_at) <span class="kw">FILTER</span> (<span class="kw">WHERE NOT</span> resolved)) <span class="kw">AS</span> avg_age
 <span class="kw">FROM</span> nsr.stg_quarantine
 <span class="kw">WHERE</span> source_batch = <span class="str">'BATCH_20240315'</span>
 <span class="kw">GROUP BY</span> rejection_code
 <span class="kw">ORDER BY</span> pending <span class="kw">DESC</span>;
 
-<span class="cmt">-- Mark a row as resolved (after manual correction)</span>
+<span class="cmt">-- Step 4: Mark a row as resolved — use a real qid from the Step 2 results above</span>
 <span class="kw">UPDATE</span> nsr.stg_quarantine
 <span class="kw">SET</span>
   resolved    = <span class="kw">TRUE</span>,
   resolved_by = <span class="fn">current_user</span>,
   resolved_at = <span class="fn">now</span>()
-<span class="kw">WHERE</span> qid = <span class="num">441</span>;  <span class="cmt">-- replace 441 with an actual qid from the SELECT above</span></pre>
+<span class="kw">WHERE</span> qid = <span class="num">1</span>;  <span class="cmt">-- replace 1 with the actual qid from Step 2</span></pre>
       </div>
       <div class="callout info" style="margin-top:8px">
         <div class="callout-title">Why JSONB for raw_data — not columns</div>
