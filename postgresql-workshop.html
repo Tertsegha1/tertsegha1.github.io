@@ -9614,8 +9614,13 @@ $csv.TrimStart() | Out-File -FilePath "$env:USERPROFILE\Downloads\lga_data.csv" 
   <span class="kw">FOREIGN DATA WRAPPER</span> postgres_fdw
   <span class="kw">OPTIONS</span> (host <span class="str">'ifmis.gov.ng'</span>, port <span class="str">'5432'</span>, dbname <span class="str">'ifmis_prod'</span>);
 
-<span class="cmt">-- Step 4: Map the local role to the remote read-only service account</span>
+<span class="cmt">-- Step 4: Map the local roles to the remote read-only service account</span>
+<span class="cmt">-- Add a mapping for every role that will run FDW queries (including your login role)</span>
 <span class="kw">CREATE USER MAPPING FOR</span> nsr_etl_user
+  <span class="kw">SERVER</span> ifmis_server
+  <span class="kw">OPTIONS</span> (user <span class="str">'ifmis_readonly'</span>, password <span class="str">'••••••'</span>);
+
+<span class="kw">CREATE USER MAPPING FOR</span> postgres   <span class="cmt">-- also map your current login role</span>
   <span class="kw">SERVER</span> ifmis_server
   <span class="kw">OPTIONS</span> (user <span class="str">'ifmis_readonly'</span>, password <span class="str">'••••••'</span>);
 
@@ -12339,8 +12344,13 @@ max_members <span class="kw">AS</span> (
   <span class="kw">FOREIGN DATA WRAPPER</span> postgres_fdw
   <span class="kw">OPTIONS</span> (host <span class="str">'ifmis.gov.ng'</span>, port <span class="str">'5432'</span>, dbname <span class="str">'ifmis_prod'</span>);
 
-<span class="cmt">-- Step 4: Map the local role to the remote read-only service account</span>
+<span class="cmt">-- Step 4: Map the local roles to the remote read-only service account</span>
+<span class="cmt">-- Add a mapping for every role that will run FDW queries (including your login role)</span>
 <span class="kw">CREATE USER MAPPING FOR</span> nsr_etl_user
+  <span class="kw">SERVER</span> ifmis_server
+  <span class="kw">OPTIONS</span> (user <span class="str">'ifmis_readonly'</span>, password <span class="str">'••••••'</span>);
+
+<span class="kw">CREATE USER MAPPING FOR</span> postgres   <span class="cmt">-- also map your current login role</span>
   <span class="kw">SERVER</span> ifmis_server
   <span class="kw">OPTIONS</span> (user <span class="str">'ifmis_readonly'</span>, password <span class="str">'••••••'</span>);
 
