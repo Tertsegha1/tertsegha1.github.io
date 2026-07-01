@@ -9614,7 +9614,8 @@ $csv.TrimStart() | Out-File -FilePath "$env:USERPROFILE\Downloads\lga_data.csv" 
 <span class="cmt">-- For this exercise we simulate it locally: FDW connects back to THIS PostgreSQL instance.</span>
 <span class="kw">CREATE SERVER</span> ifmis_server
   <span class="kw">FOREIGN DATA WRAPPER</span> postgres_fdw
-  <span class="kw">OPTIONS</span> (host <span class="str">'localhost'</span>, port <span class="str">'5432'</span>, dbname <span class="str">'lab_nsr'</span>);
+  <span class="kw">OPTIONS</span> (host <span class="str">'localhost'</span>, port <span class="str">'5432'</span>, dbname <span class="str">'postgres'</span>);
+<span class="cmt">-- Use the same database where your nsr.* schema lives (check with \conninfo)</span>
 
 <span class="cmt">-- Step 4: Map local roles to the FDW connection</span>
 <span class="cmt">-- ⚠ Replace 'your_postgres_password' with the password you set when you installed PostgreSQL 18.</span>
@@ -12363,7 +12364,8 @@ max_members <span class="kw">AS</span> (
 <span class="cmt">-- For this exercise we simulate it locally: FDW connects back to THIS PostgreSQL instance.</span>
 <span class="kw">CREATE SERVER</span> ifmis_server
   <span class="kw">FOREIGN DATA WRAPPER</span> postgres_fdw
-  <span class="kw">OPTIONS</span> (host <span class="str">'localhost'</span>, port <span class="str">'5432'</span>, dbname <span class="str">'lab_nsr'</span>);
+  <span class="kw">OPTIONS</span> (host <span class="str">'localhost'</span>, port <span class="str">'5432'</span>, dbname <span class="str">'postgres'</span>);
+<span class="cmt">-- Use the same database where your nsr.* schema lives (check with \conninfo)</span>
 
 <span class="cmt">-- Step 4: Map local roles to the FDW connection</span>
 <span class="cmt">-- ⚠ Replace 'your_postgres_password' with the password you set when you installed PostgreSQL 18.</span>
