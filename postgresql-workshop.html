@@ -1197,7 +1197,7 @@ psql -U postgres
 <span class="cmt">-- Step 5: Create NSR schema</span>
 <span class="kw">CREATE SCHEMA</span> nsr;
 
-<span class="cmt">-- Step 6: Install extensions</span>
+<span class="cmt">-- Step 7: Install extensions</span>
 <span class="kw">CREATE EXTENSION IF NOT EXISTS</span> pgcrypto;
 <span class="kw">CREATE EXTENSION IF NOT EXISTS</span> "uuid-ossp";
 <span class="cmt">-- NOTE: pg_stat_statements requires shared_preload_libraries to be set in</span>
@@ -4121,7 +4121,7 @@ pg_ctl start -D /var/lib/pgsql/data
 <span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.households;
 <span class="cmt">-- NULL = no LGA match = 0 rows visible</span>
 
-<span class="cmt">-- Step 6: Confirm WITH CHECK blocks an out-of-state INSERT</span>
+<span class="cmt">-- Step 7: Confirm WITH CHECK blocks an out-of-state INSERT</span>
 <span class="kw">SET</span> app.state_code = <span class="str">'KN'</span>;
 <span class="kw">INSERT INTO</span> nsr.households (household_code, lga_id, head_name, pmt_score, is_active)
   <span class="kw">SELECT</span> <span class="str">'HH-LEAK-TEST'</span>, lga_id, <span class="str">'Leak Test'</span>, <span class="num">20.0</span>, <span class="kw">TRUE</span>
@@ -9606,17 +9606,20 @@ $csv.TrimStart() | Out-File -FilePath "$env:USERPROFILE\Downloads\lga_data.csv" 
         <pre><span class="cmt">-- Step 1: Install the foreign data wrapper (run once, requires superuser)</span>
 <span class="kw">CREATE EXTENSION IF NOT EXISTS</span> postgres_fdw;
 
-<span class="cmt">-- Step 2: Register the remote server (IFMIS production DB)</span>
+<span class="cmt">-- Step 2: Create the local role that will own the FDW connection</span>
+<span class="kw">CREATE ROLE</span> nsr_etl_user <span class="kw">LOGIN</span> <span class="kw">PASSWORD</span> <span class="str">'change_this_password'</span>;
+
+<span class="cmt">-- Step 3: Register the remote server (IFMIS production DB)</span>
 <span class="kw">CREATE SERVER</span> ifmis_server
   <span class="kw">FOREIGN DATA WRAPPER</span> postgres_fdw
   <span class="kw">OPTIONS</span> (host <span class="str">'ifmis.gov.ng'</span>, port <span class="str">'5432'</span>, dbname <span class="str">'ifmis_prod'</span>);
 
-<span class="cmt">-- Step 3: Map the local DBA user to the remote read-only service account</span>
+<span class="cmt">-- Step 4: Map the local role to the remote read-only service account</span>
 <span class="kw">CREATE USER MAPPING FOR</span> nsr_etl_user
   <span class="kw">SERVER</span> ifmis_server
   <span class="kw">OPTIONS</span> (user <span class="str">'ifmis_readonly'</span>, password <span class="str">'••••••'</span>);
 
-<span class="cmt">-- Step 4: Import the remote disbursements table as a foreign table (schema stays remote)</span>
+<span class="cmt">-- Step 5: Import the remote disbursements table as a foreign table (schema stays remote)</span>
 <span class="kw">CREATE FOREIGN TABLE</span> nsr.ftbl_ifmis_payments (
   payment_id      <span class="typ">BIGINT</span>,
   nin             <span class="typ">TEXT</span>,
@@ -9627,7 +9630,7 @@ $csv.TrimStart() | Out-File -FilePath "$env:USERPROFILE\Downloads\lga_data.csv" 
 <span class="kw">SERVER</span> ifmis_server
 <span class="kw">OPTIONS</span> (schema_name <span class="str">'public'</span>, table_name <span class="str">'disbursements'</span>);
 
-<span class="cmt">-- Step 5 (Transform inside PostgreSQL): find NSR beneficiaries NOT yet paid</span>
+<span class="cmt">-- Step 6 (Transform inside PostgreSQL): find NSR beneficiaries NOT yet paid</span>
 <span class="kw">SELECT</span>
   h.household_code,
   i.nin,
@@ -10427,7 +10430,7 @@ $csv.TrimStart() | Out-File -FilePath "$env:USERPROFILE\Downloads\lga_data.csv" 
 
 <span class="kw">SELECT</span> batch_ref, record_count, import_date <span class="kw">FROM</span> nsr.data_lineage <span class="kw">ORDER BY</span> import_date <span class="kw">DESC LIMIT</span> <span class="num">1</span>;
 
-<span class="cmt">-- Step 6: Idempotency test — re-run Step 4 and verify counts unchanged</span>
+<span class="cmt">-- Step 7: Idempotency test — re-run Step 4 and verify counts unchanged</span>
 <span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.households <span class="kw">WHERE</span> household_code <span class="kw">IN</span> (<span class="str">'KN-002'</span>, <span class="str">'KN-003'</span>);
 <span class="cmt">-- Must still be 2 — ON CONFLICT DO UPDATE refreshes, does not duplicate</span></pre>
             </div>
@@ -12330,17 +12333,20 @@ max_members <span class="kw">AS</span> (
         <pre><span class="cmt">-- Step 1: Install the foreign data wrapper (run once, requires superuser)</span>
 <span class="kw">CREATE EXTENSION IF NOT EXISTS</span> postgres_fdw;
 
-<span class="cmt">-- Step 2: Register the remote server (IFMIS production DB)</span>
+<span class="cmt">-- Step 2: Create the local role that will own the FDW connection</span>
+<span class="kw">CREATE ROLE</span> nsr_etl_user <span class="kw">LOGIN</span> <span class="kw">PASSWORD</span> <span class="str">'change_this_password'</span>;
+
+<span class="cmt">-- Step 3: Register the remote server (IFMIS production DB)</span>
 <span class="kw">CREATE SERVER</span> ifmis_server
   <span class="kw">FOREIGN DATA WRAPPER</span> postgres_fdw
   <span class="kw">OPTIONS</span> (host <span class="str">'ifmis.gov.ng'</span>, port <span class="str">'5432'</span>, dbname <span class="str">'ifmis_prod'</span>);
 
-<span class="cmt">-- Step 3: Map the local DBA user to the remote read-only service account</span>
+<span class="cmt">-- Step 4: Map the local role to the remote read-only service account</span>
 <span class="kw">CREATE USER MAPPING FOR</span> nsr_etl_user
   <span class="kw">SERVER</span> ifmis_server
   <span class="kw">OPTIONS</span> (user <span class="str">'ifmis_readonly'</span>, password <span class="str">'••••••'</span>);
 
-<span class="cmt">-- Step 4: Import the remote disbursements table as a foreign table (schema stays remote)</span>
+<span class="cmt">-- Step 5: Import the remote disbursements table as a foreign table (schema stays remote)</span>
 <span class="kw">CREATE FOREIGN TABLE</span> nsr.ftbl_ifmis_payments (
   payment_id      <span class="typ">BIGINT</span>,
   nin             <span class="typ">TEXT</span>,
@@ -12351,7 +12357,7 @@ max_members <span class="kw">AS</span> (
 <span class="kw">SERVER</span> ifmis_server
 <span class="kw">OPTIONS</span> (schema_name <span class="str">'public'</span>, table_name <span class="str">'disbursements'</span>);
 
-<span class="cmt">-- Step 5 (Transform inside PostgreSQL): find NSR beneficiaries NOT yet paid</span>
+<span class="cmt">-- Step 6 (Transform inside PostgreSQL): find NSR beneficiaries NOT yet paid</span>
 <span class="kw">SELECT</span>
   h.household_code,
   i.nin,
@@ -13129,7 +13135,7 @@ $$;
 
 <span class="kw">SELECT</span> batch_ref, record_count, import_date <span class="kw">FROM</span> nsr.data_lineage <span class="kw">ORDER BY</span> import_date <span class="kw">DESC LIMIT</span> <span class="num">1</span>;
 
-<span class="cmt">-- Step 6: Idempotency test — re-run Step 4 and verify counts unchanged</span>
+<span class="cmt">-- Step 7: Idempotency test — re-run Step 4 and verify counts unchanged</span>
 <span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> nsr.households <span class="kw">WHERE</span> household_code <span class="kw">IN</span> (<span class="str">'KN-002'</span>, <span class="str">'KN-003'</span>);
 <span class="cmt">-- Must still be 2 — ON CONFLICT DO UPDATE refreshes, does not duplicate</span></pre>
             </div>
