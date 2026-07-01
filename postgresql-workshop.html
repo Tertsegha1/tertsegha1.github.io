@@ -9701,7 +9701,7 @@ $csv.TrimStart() | Out-File -FilePath "$env:USERPROFILE\Downloads\lga_data.csv" 
   rejection_code,
   <span class="fn">COUNT</span>(*) <span class="kw">AS</span> total,
   <span class="fn">COUNT</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE NOT</span> resolved) <span class="kw">AS</span> pending,
-  <span class="fn">round</span>(<span class="fn">AVG</span>((<span class="fn">now</span>() - rejected_at)) <span class="kw">filter</span> (<span class="kw">WHERE NOT</span> resolved)) <span class="kw">AS</span> avg_age
+  <span class="fn"><span class="fn">date_trunc</span>(<span class="str">'minute'</span>, <span class="fn">AVG</span>(<span class="fn">now</span>() - rejected_at) <span class="kw">FILTER</span> (<span class="kw">WHERE NOT</span> resolved)) <span class="kw">AS</span> avg_age
 <span class="kw">FROM</span> nsr.stg_quarantine
 <span class="kw">WHERE</span> source_batch = <span class="str">'BATCH_20240915'</span>
 <span class="kw">GROUP BY</span> rejection_code
@@ -12429,7 +12429,7 @@ max_members <span class="kw">AS</span> (
   rejection_code,
   <span class="fn">COUNT</span>(*) <span class="kw">AS</span> total,
   <span class="fn">COUNT</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE NOT</span> resolved) <span class="kw">AS</span> pending,
-  <span class="fn">round</span>(<span class="fn">AVG</span>((<span class="fn">now</span>() - rejected_at)) <span class="kw">filter</span> (<span class="kw">WHERE NOT</span> resolved)) <span class="kw">AS</span> avg_age
+  <span class="fn"><span class="fn">date_trunc</span>(<span class="str">'minute'</span>, <span class="fn">AVG</span>(<span class="fn">now</span>() - rejected_at) <span class="kw">FILTER</span> (<span class="kw">WHERE NOT</span> resolved)) <span class="kw">AS</span> avg_age
 <span class="kw">FROM</span> nsr.stg_quarantine
 <span class="kw">WHERE</span> source_batch = <span class="str">'BATCH_20240915'</span>
 <span class="kw">GROUP BY</span> rejection_code
