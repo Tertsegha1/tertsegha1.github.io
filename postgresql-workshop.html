@@ -11464,7 +11464,6 @@ max_members <span class="kw">AS</span> (
     </div><!-- end tab-d7-feedback -->
 
 <script>
-var _d7fbAll=[];  /* feedback data cache — global so download fns can access */
 (function(){
   var KEY='d7fb_v1';
   var _dashTimer=null;
@@ -11665,7 +11664,7 @@ var _d7fbAll=[];  /* feedback data cache — global so download fns can access *
     if(data && typeof data==='object'){
       Object.keys(data).forEach(function(k){ if(data[k] && data[k].name) all.push(data[k]); });
     }
-    _d7fbAll=all;
+    _fbAll=all;
 
     var countEl=document.getElementById('d7fbdash-count');
     if(countEl) countEl.textContent=all.length;
@@ -14160,7 +14159,7 @@ $$;
     if(data && typeof data==='object'){
       Object.keys(data).forEach(function(k){ if(data[k] && data[k].name) all.push(data[k]); });
     }
-    _d7fbAll=all;
+    _fbAll=all;
 
     var countEl=document.getElementById('d7fbdash-count');
     if(countEl) countEl.textContent=all.length;
@@ -14280,23 +14279,20 @@ $$;
 
   if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}
   else{init();}
-})();
 
-  /* ── Download helpers ─────────────────────────────────────── */
+  /* ── Download helpers (exposed on window for onclick handlers) ───── */
+  var _fbAll = [];  /* set by renderFbDash each fetch */
 
-  function d7fbDownloadCsv(){
-    if(!_d7fbAll.length){alert('No feedback data loaded yet. Click Refresh first.');return;}
+  window.d7fbDownloadCsv = function(){
+    if(!_fbAll.length){alert('No responses yet — click Refresh first.');return;}
     var dayF=['day1','day2','day3','day5','day6','day7'];
     var ratF=['overall','clarity','miniproject','instructor','relevance'];
-    var dayL={day1:'Day 1 Foundations',day2:'Day 2 SQL Fundamentals',day3:'Day 3 Admin/Security/Backup',day5:'Day 5 Assessment',day6:'Day 6 Performance Tuning',day7:'Day 7 ETL/ELT/Governance'};
+    var dayL={day1:'Day 1 Foundations',day2:'Day 2 SQL Fundamentals',day3:'Day 3 Admin/Security/Backup',day5:'Day 5 Assessment',day6:'Day 6 Performance Tuning',day7:'Day 7 ETL/ELT & Governance'};
     var ratL={overall:'Overall programme',clarity:'Content clarity',miniproject:'Mini projects usefulness',instructor:'Instructor support',relevance:'Relevance to role'};
     var cols=['Name','Submitted'].concat(dayF.map(function(f){return dayL[f];})).concat(ratF.map(function(f){return ratL[f];})).concat(['Pace','NPS','What went well','Improvements','Issues','Workplace actions']);
     var rows=[cols.map(function(c){return '"'+c+'"';}).join(',')];
-    _d7fbAll.forEach(function(r){
-      var row=[
-        '"'+(r.name||'').replace(/"/g,'""')+'"',
-        '"'+(r.submitted_at||'').replace(/"/g,'""')+'"'
-      ];
+    _fbAll.forEach(function(r){
+      var row=['"'+(r.name||'').replace(/"/g,'""')+'"','"'+(r.submitted_at||'').replace(/"/g,'""')+'"'];
       dayF.forEach(function(f){row.push(r[f]||'');});
       ratF.forEach(function(f){row.push(r[f]||'');});
       row.push('"'+(r.pace||'').replace(/"/g,'""')+'"');
@@ -14304,314 +14300,201 @@ $$;
       ['well','improve','issues','actions'].forEach(function(f){row.push('"'+(r[f]||'').replace(/"/g,'""')+'"');});
       rows.push(row.join(','));
     });
-    var csv='﻿'+rows.join('\r\n');
-    var blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+    var blob=new Blob(['﻿'+rows.join('\r\n')],{type:'text/csv;charset=utf-8'});
     var a=document.createElement('a');
     a.href=URL.createObjectURL(blob);
-    a.download='NSR_Day7_Feedback_'+new Date().toISOString().slice(0,10)+'.csv';
-    a.click();
-  }
+    a.download='NSR_Feedback_'+new Date().toISOString().slice(0,10)+'.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  };
 
-  function d7fbDownloadReport(){
-    if(!_d7fbAll.length){alert('No feedback data loaded yet. Click Refresh first.');return;}
-    var all=_d7fbAll;
-    var n=all.length;
+  window.d7fbDownloadReport = function(){
+    if(!_fbAll.length){alert('No responses yet — click Refresh first.');return;}
+    var all=_fbAll, n=all.length;
     var dayF=['day1','day2','day3','day5','day6','day7'];
     var ratF=['overall','clarity','miniproject','instructor','relevance'];
-    var dayL={day1:'Day 1 · Foundations',day2:'Day 2 · SQL Fundamentals',day3:'Day 3 · Admin/Security/Backup',day5:'Day 5 · Assessment',day6:'Day 6 · Performance Tuning',day7:'Day 7 · ETL/ELT & Governance'};
+    var dayL={day1:'Day 1 Foundations',day2:'Day 2 SQL Fundamentals',day3:'Day 3 Admin/Security/Backup',day5:'Day 5 Assessment',day6:'Day 6 Performance Tuning',day7:'Day 7 ETL/ELT & Governance'};
     var ratL={overall:'Overall programme',clarity:'Content clarity',miniproject:'Mini projects usefulness',instructor:'Instructor support',relevance:'Relevance to role'};
 
-    function avg(field){
-      var v=all.map(function(r){return r[field];}).filter(function(x){return x;});
-      return v.length?(v.reduce(function(a,b){return a+b;},0)/v.length):0;
-    }
-    function dist(field,max){
-      var d={};for(var i=1;i<=max;i++)d[i]=0;
-      all.forEach(function(r){if(r[field])d[r[field]]=(d[r[field]]||0)+1;});
-      return d;
-    }
-    function npsCalc(){
-      var v=all.filter(function(r){return r.nps!==undefined&&r.nps!==null;});
-      if(!v.length)return{score:'—',p:0,pa:0,n:0,na:0,det:0,deta:0};
-      var p=v.filter(function(r){return r.nps>=9;}).length;
-      var d=v.filter(function(r){return r.nps<=6;}).length;
-      var sc=Math.round((p/v.length-d/v.length)*100);
-      return{score:(sc>0?'+':'')+sc,p:p,pa:Math.round(p/v.length*100),det:d,deta:Math.round(d/v.length*100),pass:v.length-p-d,pct:Math.round((v.length-p-d)/v.length*100)};
-    }
+    function avg(f){var v=all.map(function(r){return r[f];}).filter(Boolean);return v.length?v.reduce(function(a,b){return a+b;},0)/v.length:0;}
+    function dist5(f){var d={1:0,2:0,3:0,4:0,5:0};all.forEach(function(r){if(r[f])d[r[f]]++;});return d;}
 
-    /* SVG bar chart: fields array, labelMap, maxVal, color */
-    function svgBars(fields,labelMap,maxVal,color){
-      var bh=22,gap=8,w=480,lw=220,bw=w-lw-60;
-      var h=fields.length*(bh+gap)+20;
+    function svgBars(fields,labels,color){
+      var lw=220,bw=220,bh=20,gap=8,pad=10;
+      var h=fields.length*(bh+gap)+pad*2;
       var bars=fields.map(function(f,i){
-        var a=avg(f);
-        var fw=a?Math.round((a/maxVal)*bw):0;
-        var y=20+i*(bh+gap);
-        var label=labelMap[f]||f;
-        return '<text x="'+lw+'" y="'+(y+16)+'" font-size="12" fill="#cbd5e1" text-anchor="end" font-family="Arial,sans-serif">'+label+'</text>'
-          +'<rect x="'+(lw+8)+'" y="'+y+'" width="'+bw+'" height="'+bh+'" rx="4" fill="#1e3a5f"/>'
-          +'<rect x="'+(lw+8)+'" y="'+y+'" width="'+fw+'" height="'+bh+'" rx="4" fill="'+color+'"/>'
-          +(a?'<text x="'+(lw+8+fw+6)+'" y="'+(y+16)+'" font-size="12" font-weight="bold" fill="'+color+'" font-family="Arial,sans-serif">'+a.toFixed(1)+'</text>':'');
+        var a=avg(f),fw=a?Math.round((a/5)*bw):0,y=pad+i*(bh+gap);
+        return '<text x="'+lw+'" y="'+(y+15)+'" font-size="12" fill="#cbd5e1" text-anchor="end" font-family="Arial">'+labels[f]+'</text>'
+          +'<rect x="'+(lw+6)+'" y="'+y+'" width="'+bw+'" height="'+bh+'" rx="3" fill="#1e3a5f"/>'
+          +'<rect x="'+(lw+6)+'" y="'+y+'" width="'+fw+'" height="'+bh+'" rx="3" fill="'+color+'"/>'
+          +(a?'<text x="'+(lw+fw+12)+'" y="'+(y+15)+'" font-size="12" font-weight="bold" fill="'+color+'" font-family="Arial">'+a.toFixed(1)+'</text>':'');
       }).join('');
-      return '<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'" style="max-width:100%;background:#071120;border-radius:8px;padding:4px">'+bars+'</svg>';
+      return '<svg xmlns="http://www.w3.org/2000/svg" width="'+(lw+bw+60)+'" height="'+h+'" style="max-width:100%;background:#071120;border-radius:6px;padding:4px;display:block">'+bars+'</svg>';
     }
 
-    /* SVG distribution chart for one field (1-5 stars) */
-    function svgDist(field,label){
-      var d=dist(field,5);
-      var bw=40,gap=6,pad=20;
-      var topPad=22,botPad=22,barMax=70;
+    function svgDist(f,label){
+      var d=dist5(f),mx=Math.max.apply(null,[d[1],d[2],d[3],d[4],d[5]])||1;
+      var bw=38,gap=6,topPad=22,botPad=22,barMax=60,pad=16;
       var h=topPad+barMax+botPad;
-      var mx=Math.max.apply(null,Object.values(d))||1;
       var bars='';
       for(var i=1;i<=5;i++){
         var x=pad+(i-1)*(bw+gap);
         var bh=Math.round((d[i]/mx)*barMax);
         var y=topPad+(barMax-bh);
-        bars+='<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+bh+'" rx="4" fill="#2563eb"/>';
-        bars+='<text x="'+(x+bw/2)+'" y="'+(h-6)+'" text-anchor="middle" font-size="11" fill="#94a3b8" font-family="Arial,sans-serif">'+i+'★</text>';
-        if(d[i])bars+='<text x="'+(x+bw/2)+'" y="'+(y-5)+'" text-anchor="middle" font-size="11" font-weight="bold" fill="#7dd3fc" font-family="Arial,sans-serif">'+d[i]+'</text>';
+        bars+='<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+bh+'" rx="3" fill="#2563eb"/>';
+        bars+='<text x="'+(x+bw/2)+'" y="'+(h-6)+'" text-anchor="middle" font-size="11" fill="#94a3b8" font-family="Arial">'+i+'</text>';
+        if(d[i]) bars+='<text x="'+(x+bw/2)+'" y="'+(y-5)+'" text-anchor="middle" font-size="11" font-weight="bold" fill="#7dd3fc" font-family="Arial">'+d[i]+'</text>';
       }
       var tw=(5*(bw+gap))-gap+2*pad;
-      return '<div style="display:inline-block;margin:4px 8px 4px 0"><div style="font-size:13px;color:#cbd5e1;margin-bottom:4px;font-family:Arial;font-weight:600">'+label+'</div><svg xmlns="http://www.w3.org/2000/svg" width="'+tw+'" height="'+h+'" style="background:#071120;border-radius:6px;overflow:visible">'+bars+'</svg></div>';
+      return '<div style="display:inline-block;margin:4px 8px 4px 0;vertical-align:top">'
+        +'<div style="font-size:12px;color:#cbd5e1;margin-bottom:4px;font-family:Arial;font-weight:600">'+label+'</div>'
+        +'<svg xmlns="http://www.w3.org/2000/svg" width="'+tw+'" height="'+h+'" style="background:#071120;border-radius:6px;overflow:visible">'+bars+'</svg>'
+        +'</div>';
     }
 
-    /* NPS gauge (simple horizontal bar) */
-    var nps=npsCalc();
-    var npsBar='<div style="display:flex;gap:0;height:20px;border-radius:6px;overflow:hidden;margin:8px 0;max-width:400px">'
-      +'<div style="flex:'+nps.det+';background:#dc2626;" title="Detractors '+nps.deta+'%"></div>'
-      +'<div style="flex:'+nps.pass+';background:#64748b;" title="Passives"></div>'
-      +'<div style="flex:'+nps.p+';background:#16a34a;" title="Promoters '+nps.pa+'%"></div>'
-      +'</div>'
-      +'<div style="font-size:11px;color:#94a3b8;font-family:Arial">Detractors '+nps.deta+'% &nbsp;|&nbsp; Passives '+nps.pct+'% &nbsp;|&nbsp; Promoters '+nps.pa+'%</div>';
+    var npsR=all.filter(function(r){return r.nps!==undefined&&r.nps!==null;});
+    var npsScore='—', npsP=0,npsPA=0,npsD=0,npsDA=0,npsPass=0,npsPassA=0;
+    if(npsR.length){
+      npsP=npsR.filter(function(r){return r.nps>=9;}).length;
+      npsD=npsR.filter(function(r){return r.nps<=6;}).length;
+      npsPass=npsR.length-npsP-npsD;
+      npsPA=Math.round(npsP/npsR.length*100); npsDA=Math.round(npsD/npsR.length*100); npsPassA=Math.round(npsPass/npsR.length*100);
+      npsScore=(Math.round((npsP/npsR.length-npsD/npsR.length)*100)>0?'+':'')+Math.round((npsP/npsR.length-npsD/npsR.length)*100);
+    }
+    var npsBar='<div style="display:flex;height:18px;border-radius:6px;overflow:hidden;max-width:360px;margin:8px 0">'
+      +'<div style="flex:'+npsD+';background:#dc2626"></div><div style="flex:'+npsPass+';background:#64748b"></div><div style="flex:'+npsP+';background:#16a34a"></div></div>'
+      +'<div style="font-size:11px;color:#94a3b8;font-family:Arial">Detractors '+npsDA+'% | Passives '+npsPassA+'% | Promoters '+npsPA+'%</div>';
 
-    /* Pace distribution */
-    var paceCounts={Too_slow:0,About_right:0,Too_fast:0};
-    all.forEach(function(r){if(r.pace){var k=r.pace.replace(/\s+/g,'_');if(paceCounts[k]!==undefined)paceCounts[k]++;}});
-    var paceBars=Object.keys(paceCounts).map(function(k){
-      var pct=n?Math.round(paceCounts[k]/n*100):0;
+    var paceC={Too_slow:0,About_right:0,Too_fast:0};
+    all.forEach(function(r){if(r.pace){var k=r.pace.replace(/\s+/g,'_');if(paceC[k]!==undefined)paceC[k]++;}});
+    var paceBars=Object.keys(paceC).map(function(k){
+      var pct=n?Math.round(paceC[k]/n*100):0;
       return '<div style="margin:4px 0"><span style="display:inline-block;width:90px;font-size:12px;color:#cbd5e1;font-family:Arial">'+k.replace(/_/g,' ')+'</span>'
-        +'<span style="display:inline-block;background:#1e3a5f;border-radius:4px;width:200px;height:16px;vertical-align:middle;overflow:hidden">'
+        +'<span style="display:inline-block;background:#1e3a5f;border-radius:4px;width:180px;height:14px;vertical-align:middle;overflow:hidden">'
         +'<span style="display:block;background:#0ea5e9;height:100%;width:'+pct+'%"></span></span>'
-        +' <span style="font-size:12px;color:#7dd3fc;font-family:Arial">'+paceCounts[k]+'</span></div>';
+        +' <span style="font-size:12px;color:#7dd3fc;font-family:Arial">'+paceC[k]+'</span></div>';
     }).join('');
 
-    /* Free text sections */
-    function textList(field){
-      return all.map(function(r){return r[field]?'<li style="margin:4px 0;font-size:13px;color:#e2e8f0;font-family:Arial">'+r[field].replace(/</g,'&lt;')+'</li>':'';}).filter(Boolean).join('');
-    }
+    function textList(f){return all.map(function(r){return r[f]?'<li style="margin:4px 0;font-size:13px;color:#e2e8f0;font-family:Arial">'+r[f].replace(/</g,'&lt;')+'</li>':'';}).filter(Boolean).join('');}
 
-    var html='<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>NSR Training Feedback Report — '+new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})+'</title>'
-      +'<style>body{background:#0a1628;color:#e2e8f0;font-family:Arial,sans-serif;margin:0;padding:24px}h1{color:#fbbf24;font-size:1.4rem;margin-bottom:4px}h2{color:#7dd3fc;font-size:1.05rem;border-bottom:1px solid #1e3a5f;padding-bottom:6px;margin-top:28px}.kpi{display:inline-block;background:#0f2a4a;border:1px solid #1e3a5f;border-radius:8px;padding:12px 20px;margin:6px;text-align:center}.kpi .val{font-size:2rem;font-weight:700;color:#fbbf24}.kpi .lbl{font-size:0.78rem;color:#94a3b8;margin-top:2px}ul{margin:6px 0;padding-left:20px}@media print{body{background:#fff;color:#111}h1,h2{color:#1e3a5f}.kpi{border-color:#ccc;background:#f8fafc}.kpi .val{color:#d97706}.kpi .lbl{color:#64748b}}</style>'
+    var html='<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>NSR Feedback Report</title>'
+      +'<style>body{background:#0a1628;color:#e2e8f0;font-family:Arial,sans-serif;margin:0;padding:24px}'
+      +'h1{color:#fbbf24;font-size:1.3rem}h2{color:#7dd3fc;font-size:1rem;border-bottom:1px solid #1e3a5f;padding-bottom:6px;margin-top:24px}'
+      +'.kpi{display:inline-block;background:#0f2a4a;border:1px solid #1e3a5f;border-radius:8px;padding:12px 18px;margin:5px;text-align:center}'
+      +'.kv{font-size:1.8rem;font-weight:700;color:#fbbf24}.kl{font-size:0.76rem;color:#94a3b8}'
+      +'ul{margin:4px 0;padding-left:18px}'
+      +'@media print{body{background:#fff;color:#111}h1,h2{color:#1e3a5f}.kpi{border-color:#ccc;background:#f8fafc}.kv{color:#d97706}.kl{color:#64748b}}</style>'
       +'</head><body>'
-      +'<h1>NSR Training Programme — Participant Feedback Report</h1>'
-      +'<div style="color:#94a3b8;font-size:0.82rem;margin-bottom:16px">Generated '+new Date().toLocaleString('en-GB')+' &nbsp;|&nbsp; '+n+' response'+(n!==1?'s':'')+' collected</div>'
-
+      +'<h1>NSR Training Programme — Feedback Report</h1>'
+      +'<div style="color:#94a3b8;font-size:0.8rem;margin-bottom:14px">Generated '+new Date().toLocaleString('en-GB')+' &nbsp;|&nbsp; '+n+' response'+(n!==1?'s':'')+' collected</div>'
       +'<div>'
-      +'<div class="kpi"><div class="val">'+n+'</div><div class="lbl">Responses</div></div>'
-      +'<div class="kpi"><div class="val">'+avg('overall').toFixed(1)+'<span style="font-size:1rem">/5</span></div><div class="lbl">Overall Rating</div></div>'
-      +'<div class="kpi"><div class="val">'+nps.score+'</div><div class="lbl">NPS Score</div></div>'
-      +'<div class="kpi"><div class="val">'+avg('instructor').toFixed(1)+'<span style="font-size:1rem">/5</span></div><div class="lbl">Instructor Support</div></div>'
+      +'<div class="kpi"><div class="kv">'+n+'</div><div class="kl">Responses</div></div>'
+      +'<div class="kpi"><div class="kv">'+avg('overall').toFixed(1)+'<span style="font-size:0.9rem">/5</span></div><div class="kl">Overall</div></div>'
+      +'<div class="kpi"><div class="kv">'+npsScore+'</div><div class="kl">NPS</div></div>'
+      +'<div class="kpi"><div class="kv">'+avg('instructor').toFixed(1)+'<span style="font-size:0.9rem">/5</span></div><div class="kl">Instructor</div></div>'
       +'</div>'
-
-      +'<h2>Per-Day Ratings</h2>'
-      +svgBars(dayF,dayL,5,'#f59e0b')
-
-      +'<h2>Programme Ratings</h2>'
-      +svgBars(ratF,ratL,5,'#38bdf8')
-
-      +'<h2>Rating Distributions (per question)</h2>'
-      +'<div>'+ratF.map(function(f){return svgDist(f,ratL[f]);}).join('')+'</div>'
-
-      +'<h2>NPS — Net Promoter Score</h2>'
-      +'<div style="font-size:1.6rem;font-weight:700;color:#fbbf24;margin-bottom:6px">'+nps.score+'</div>'
-      +npsBar
-
-      +'<h2>Training Pace</h2>'
-      +paceBars
-
+      +'<h2>Per-Day Ratings</h2>'+svgBars(dayF,dayL,'#f59e0b')
+      +'<h2>Programme Ratings</h2>'+svgBars(ratF,ratL,'#38bdf8')
+      +'<h2>Rating Distributions</h2><div>'+ratF.map(function(f){return svgDist(f,ratL[f]);}).join('')+'</div>'
+      +'<h2>Net Promoter Score</h2><div style="font-size:1.5rem;font-weight:700;color:#fbbf24;margin-bottom:4px">'+npsScore+'</div>'+npsBar
+      +'<h2>Training Pace</h2>'+paceBars
       +'<h2>What Went Well</h2><ul>'+textList('well')+'</ul>'
       +'<h2>Suggested Improvements</h2><ul>'+textList('improve')+'</ul>'
       +'<h2>Issues Encountered</h2><ul>'+textList('issues')+'</ul>'
       +'<h2>Planned Workplace Actions</h2><ul>'+textList('actions')+'</ul>'
-
-      +'<div style="margin-top:32px;color:#475569;font-size:0.75rem;border-top:1px solid #1e3a5f;padding-top:8px">NSR Training Programme &mdash; Dr Tertsegha J. Anande &mdash; tertseghaanande@gmail.com</div>'
-      +'
-<!-- ===== CERTIFICATE VERIFICATION OVERLAY ===== -->
-<div id="cert-verify-overlay" style="display:none;position:fixed;inset:0;background:rgba(5,12,30,0.92);z-index:9999;overflow-y:auto;padding:40px 20px;">
-  <div style="max-width:560px;margin:0 auto;background:#0f2a4a;border:2px solid #B8952A;border-radius:16px;padding:40px 36px;text-align:center;position:relative;">
-    <div id="cvo-loading" style="color:#94a3b8;font-size:1rem;padding:20px 0;">Verifying certificate…</div>
-    <div id="cvo-valid" style="display:none;">
-      <div style="font-size:3rem;margin-bottom:8px;">✅</div>
-      <div style="color:#22c55e;font-size:1.4rem;font-weight:700;margin-bottom:4px;">Certificate Verified</div>
-      <div style="color:#94a3b8;font-size:0.82rem;margin-bottom:24px;">This is an authentic AUKTIE / NSR Training certificate</div>
-      <div style="background:#071120;border-radius:10px;padding:20px;text-align:left;margin-bottom:20px;">
-        <div style="margin-bottom:12px;"><span style="color:#94a3b8;font-size:0.78rem;display:block;">CERTIFICATE ID</span><span id="cvo-id" style="color:#fbbf24;font-weight:700;font-size:1rem;font-family:monospace;"></span></div>
-        <div style="margin-bottom:12px;"><span style="color:#94a3b8;font-size:0.78rem;display:block;">AWARDED TO</span><span id="cvo-name" style="color:#e2e8f0;font-weight:700;font-size:1.1rem;"></span></div>
-        <div style="margin-bottom:12px;"><span style="color:#94a3b8;font-size:0.78rem;display:block;">PROGRAMME</span><span id="cvo-prog" style="color:#7dd3fc;font-size:0.9rem;"></span></div>
-        <div><span style="color:#94a3b8;font-size:0.78rem;display:block;">DATE ISSUED</span><span id="cvo-date" style="color:#e2e8f0;font-size:0.9rem;"></span></div>
-      </div>
-      <div style="color:#475569;font-size:0.75rem;">Issued by AUKTIE Ltd · Dr Tertsegha J. Anande · tertseghaanande@gmail.com</div>
-    </div>
-    <div id="cvo-invalid" style="display:none;">
-      <div style="font-size:3rem;margin-bottom:8px;">❌</div>
-      <div style="color:#ef4444;font-size:1.3rem;font-weight:700;margin-bottom:8px;">Certificate Not Found</div>
-      <div style="color:#94a3b8;font-size:0.88rem;">The certificate ID <span id="cvo-bad-id" style="color:#fbbf24;font-family:monospace;"></span> could not be verified.<br>It may be invalid, a forgery, or not yet registered.</div>
-      <div style="margin-top:16px;color:#475569;font-size:0.75rem;">To report a suspicious certificate contact tertseghaanande@gmail.com</div>
-    </div>
-    <button onclick="document.getElementById('cert-verify-overlay').style.display='none'" style="margin-top:24px;padding:10px 28px;background:#0C2340;border:1px solid #B8952A;color:#fbbf24;border-radius:8px;font-size:0.9rem;cursor:pointer;font-family:inherit;">Close</button>
-  </div>
-</div>
-
-<script>
-(function(){
-  var params = new URLSearchParams(window.location.search);
-  var vid = params.get('verify');
-  if (!vid) return;
-
-  // Show overlay immediately
-  var ov = document.getElementById('cert-verify-overlay');
-  if (!ov) return;
-  ov.style.display = 'block';
-
-  // Wait for Firebase to be ready then fetch
-  function doVerify() {
-    if (!window.CWR_FIREBASE || !window.CWR_FIREBASE.databaseURL || window.CWR_FIREBASE.databaseURL.includes('REPLACE')) {
-      // retry briefly
-      setTimeout(doVerify, 400);
-      return;
-    }
-    var safeId = vid.replace(/[^a-zA-Z0-9_-]/g, '_');
-    fetch(window.CWR_FIREBASE.databaseURL + '/nsr_certificates/' + safeId + '.json')
-      .then(function(r){ return r.json(); })
-      .then(function(data){
-        document.getElementById('cvo-loading').style.display = 'none';
-        if (data && data.certId) {
-          document.getElementById('cvo-id').textContent   = data.certId;
-          document.getElementById('cvo-name').textContent = data.name;
-          document.getElementById('cvo-prog').textContent = data.programme;
-          document.getElementById('cvo-date').textContent = data.issueDate;
-          document.getElementById('cvo-valid').style.display = 'block';
-        } else {
-          document.getElementById('cvo-bad-id').textContent = vid;
-          document.getElementById('cvo-invalid').style.display = 'block';
-        }
-      })
-      .catch(function(){
-        document.getElementById('cvo-loading').style.display = 'none';
-        document.getElementById('cvo-bad-id').textContent = vid;
-        document.getElementById('cvo-invalid').style.display = 'block';
-      });
-  }
-  doVerify();
-})();
-
-  function d7fbDownloadParticipantReports(){
-    if(!_d7fbAll.length){alert('No feedback data loaded yet. Click Refresh first.');return;}
-    var ratF=['overall','clarity','miniproject','instructor','relevance'];
-    var ratL={overall:'Overall programme',clarity:'Content clarity',miniproject:'Mini projects usefulness',instructor:'Instructor support',relevance:'Relevance to role'};
-    var dayF=['day1','day2','day3','day5','day6','day7'];
-    var dayL={day1:'Day 1 Foundations',day2:'Day 2 SQL Fundamentals',day3:'Day 3 Admin/Security/Backup',day5:'Day 5 Assessment',day6:'Day 6 Performance Tuning',day7:'Day 7 ETL/ELT & Governance'};
-    var paceLabel={'Too_slow':'Too slow','About_right':'About right','Too_fast':'Too fast'};
-
-    function starBar(val,max){
-      if(!val) return '<span style="color:#475569">Not answered</span>';
-      var pct=Math.round((val/max)*100);
-      return '<span style="font-weight:700;color:#fbbf24;font-size:1rem">'+val+'</span><span style="color:#718096;font-size:0.82rem"> / '+max+'</span>'
-        +'<span style="display:inline-block;vertical-align:middle;margin-left:10px;background:#1e3a5f;border-radius:999px;height:8px;width:120px;overflow:hidden">'
-        +'<span style="display:block;height:100%;width:'+pct+'%;background:linear-gradient(90deg,#2563eb,#38bdf8);border-radius:999px"></span></span>';
-    }
-    function textBlock(icon,title,text){
-      if(!text||!text.trim()) return '';
-      var safe=text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/
-/g,'<br>');
-      return '<div style="margin-bottom:12px;padding:12px 14px;background:#071120;border-radius:8px;border-left:3px solid #2563eb">'
-        +'<div style="font-size:0.7rem;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">'+icon+' '+title+'</div>'
-        +'<div style="color:#e2e8f0;font-size:0.88rem;line-height:1.6">'+safe+'</div></div>';
-    }
-
-    var n=_d7fbAll.length;
-    var sections=_d7fbAll.map(function(r,idx){
-      var npsV=r.nps!==undefined&&r.nps!==null;
-      var npsCol=npsV?(r.nps>=9?'#22c55e':r.nps>=7?'#fbbf24':'#ef4444'):'#475569';
-      var npsLbl=npsV?(r.nps>=9?'Promoter':r.nps>=7?'Passive':'Detractor'):'';
-      var paceKey=(r.pace||'').replace(/\s+/g,'_');
-
-      var ratRows=ratF.map(function(f){
-        return '<tr><td style="padding:7px 10px;color:#cbd5e1;font-size:0.83rem;border-bottom:1px solid #1e3a5f;width:55%">'+ratL[f]+'</td>'
-          +'<td style="padding:7px 10px;border-bottom:1px solid #1e3a5f">'+starBar(r[f],5)+'</td></tr>';
-      }).join('');
-      var dayRows=dayF.map(function(f){
-        return '<tr><td style="padding:7px 10px;color:#cbd5e1;font-size:0.83rem;border-bottom:1px solid #1e3a5f;width:55%">'+dayL[f]+'</td>'
-          +'<td style="padding:7px 10px;border-bottom:1px solid #1e3a5f">'+starBar(r[f],5)+'</td></tr>';
-      }).join('');
-
-      return '<div style="'+(idx>0?'page-break-before:always;':'')+' padding:32px 36px;min-height:96vh;display:flex;flex-direction:column;">'
-        +'<div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #B8952A;padding-bottom:14px;margin-bottom:20px">'
-          +'<div><div style="color:#B8952A;font-size:0.68rem;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">NSR Training — Individual Feedback Report</div>'
-            +'<div style="font-size:1.5rem;font-weight:700;color:#e2e8f0">'+r.name.replace(/</g,'&lt;')+'</div>'
-            +(r.submitted_at?'<div style="color:#94a3b8;font-size:0.75rem;margin-top:2px">Submitted: '+r.submitted_at+'</div>':'')
-          +'</div>'
-          +'<div style="text-align:right"><div style="font-size:2rem;font-weight:700;color:#fbbf24">'+(r.overall||'—')+'<span style="font-size:0.9rem;color:#94a3b8">/5</span></div>'
-            +'<div style="font-size:0.68rem;color:#94a3b8">Overall</div></div>'
-        +'</div>'
-        +'<div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap">'
-          +'<div style="background:#0f2a4a;border:1px solid #1e3a5f;border-radius:8px;padding:10px 16px;text-align:center">'
-            +'<div style="font-size:1.3rem;font-weight:700;color:'+npsCol+'">'+(npsV?r.nps:'—')+'</div>'
-            +'<div style="font-size:0.68rem;color:#94a3b8">NPS</div>'
-            +(npsLbl?'<div style="font-size:0.65rem;color:'+npsCol+'">'+npsLbl+'</div>':'')
-          +'</div>'
-          +'<div style="background:#0f2a4a;border:1px solid #1e3a5f;border-radius:8px;padding:10px 16px;text-align:center">'
-            +'<div style="font-size:0.95rem;font-weight:700;color:#7dd3fc">'+(paceLabel[paceKey]||r.pace||'—')+'</div>'
-            +'<div style="font-size:0.68rem;color:#94a3b8">Pace</div>'
-          +'</div>'
-        +'</div>'
-        +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">'
-          +'<div><div style="font-size:0.72rem;color:#38bdf8;font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Programme Ratings</div>'
-            +'<table style="width:100%;border-collapse:collapse">'+ratRows+'</table></div>'
-          +'<div><div style="font-size:0.72rem;color:#f59e0b;font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Per-Day Ratings</div>'
-            +'<table style="width:100%;border-collapse:collapse">'+dayRows+'</table></div>'
-        +'</div>'
-        +textBlock('&#10003;','What went well',r.well)
-        +textBlock('&#128161;','Suggested improvements',r.improve)
-        +textBlock('&#9888;','Issues encountered',r.issues)
-        +textBlock('&#127919;','Planned workplace actions',r.actions)
-        +'<div style="margin-top:auto;padding-top:12px;border-top:1px solid #1e3a5f;font-size:0.7rem;color:#475569;display:flex;justify-content:space-between">'
-          +'<span>NSR Training Programme &middot; Dr Tertsegha J. Anande &middot; tertseghaanande@gmail.com</span>'
-          +'<span>Participant '+(idx+1)+' of '+n+'</span>'
-        +'</div>'
-      +'</div>';
-    }).join('');
-
-    var html='<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">'
-      +'<title>NSR Individual Feedback Reports '+new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})+'</title>'
-      +'<style>*{box-sizing:border-box}body{margin:0;padding:0;background:#0a1628;color:#e2e8f0;font-family:Arial,sans-serif}'
-        +'@media print{.noprint{display:none!important}body{background:#fff;color:#111}'
-        +'div[style*="page-break-before:always"]{page-break-before:always}'
-        +'@page{margin:0.55in}}</style>'
-      +'</head><body>'
-      +'<div class="noprint" style="background:#0f2a4a;padding:10px 20px;position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between">'
-        +'<span style="color:#7dd3fc;font-size:0.82rem;font-weight:700">NSR Individual Feedback — '+n+' participants</span>'
-        +'<button onclick="window.print()" style="background:#2563eb;border:none;color:#fff;padding:7px 16px;border-radius:6px;cursor:pointer;font-size:0.8rem;font-family:Arial">Print / Save as PDF</button>'
-      +'</div>'
-      +sections
+      +'<div style="margin-top:28px;color:#475569;font-size:0.72rem;border-top:1px solid #1e3a5f;padding-top:8px">NSR Training Programme &mdash; Dr Tertsegha J. Anande &mdash; tertseghaanande@gmail.com</div>'
       +'</body></html>';
-
-    var blob=new Blob([html],{type:'text/html;charset=utf-8'});
-    var a=document.createElement('a');a.href=URL.createObjectURL(blob);
-    a.download='NSR_Individual_Feedback_'+new Date().toISOString().slice(0,10)+'.html';
-    a.click();
-  }
-</script>
-
-</body></html>';
 
     var blob=new Blob([html],{type:'text/html;charset=utf-8'});
     var a=document.createElement('a');
     a.href=URL.createObjectURL(blob);
-    a.download='NSR_Day7_Feedback_Report_'+new Date().toISOString().slice(0,10)+'.html';
-    a.click();
-  }
+    a.download='NSR_Feedback_Report_'+new Date().toISOString().slice(0,10)+'.html';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  };
+
+  window.d7fbDownloadParticipantReports = function(){
+    if(!_fbAll.length){alert('No responses yet — click Refresh first.');return;}
+    var all=_fbAll, n=all.length;
+    var ratF=['overall','clarity','miniproject','instructor','relevance'];
+    var ratL={overall:'Overall programme',clarity:'Content clarity',miniproject:'Mini projects usefulness',instructor:'Instructor support',relevance:'Relevance to role'};
+    var dayF=['day1','day2','day3','day5','day6','day7'];
+    var dayL={day1:'Day 1 Foundations',day2:'Day 2 SQL Fundamentals',day3:'Day 3 Admin/Security/Backup',day5:'Day 5 Assessment',day6:'Day 6 Performance Tuning',day7:'Day 7 ETL/ELT & Governance'};
+
+    function starBar(val){
+      if(!val) return '<span style="color:#475569">—</span>';
+      var pct=Math.round((val/5)*100);
+      return '<b style="color:#fbbf24">'+val+'</b><span style="color:#718096;font-size:0.8em">/5</span>'
+        +' <span style="display:inline-block;vertical-align:middle;background:#1e3a5f;border-radius:999px;height:7px;width:100px;overflow:hidden">'
+        +'<span style="display:block;height:100%;width:'+pct+'%;background:linear-gradient(90deg,#2563eb,#38bdf8);border-radius:999px"></span></span>';
+    }
+    function textBlock(icon,title,text){
+      if(!text||!text.trim()) return '';
+      return '<div style="margin-bottom:10px;padding:10px 12px;background:#071120;border-radius:6px;border-left:3px solid #2563eb">'
+        +'<div style="font-size:0.68rem;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">'+icon+' '+title+'</div>'
+        +'<div style="color:#e2e8f0;font-size:0.85rem;line-height:1.5">'+text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>')+'</div></div>';
+    }
+
+    var sections=all.map(function(r,idx){
+      var npsV=r.nps!==undefined&&r.nps!==null;
+      var npsCol=npsV?(r.nps>=9?'#22c55e':r.nps>=7?'#fbbf24':'#ef4444'):'#475569';
+      var npsLbl=npsV?(r.nps>=9?'Promoter':r.nps>=7?'Passive':'Detractor'):'';
+      var paceKey=(r.pace||'').replace(/\s+/g,'_');
+      var paceMap={Too_slow:'Too slow',About_right:'About right',Too_fast:'Too fast'};
+
+      var ratRows=ratF.map(function(f){
+        return '<tr><td style="padding:6px 8px;color:#cbd5e1;font-size:0.8rem;border-bottom:1px solid #1e3a5f;width:50%">'+ratL[f]+'</td><td style="padding:6px 8px;border-bottom:1px solid #1e3a5f">'+starBar(r[f])+'</td></tr>';
+      }).join('');
+      var dayRows=dayF.map(function(f){
+        return '<tr><td style="padding:6px 8px;color:#cbd5e1;font-size:0.8rem;border-bottom:1px solid #1e3a5f;width:50%">'+dayL[f]+'</td><td style="padding:6px 8px;border-bottom:1px solid #1e3a5f">'+starBar(r[f])+'</td></tr>';
+      }).join('');
+
+      return '<div style="'+(idx>0?'page-break-before:always;':'')+' padding:28px 32px;min-height:95vh;display:flex;flex-direction:column">'
+        +'<div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #B8952A;padding-bottom:12px;margin-bottom:16px">'
+          +'<div><div style="color:#B8952A;font-size:0.65rem;letter-spacing:2px;text-transform:uppercase;margin-bottom:3px">NSR Training — Individual Feedback</div>'
+            +'<div style="font-size:1.4rem;font-weight:700;color:#e2e8f0">'+r.name.replace(/</g,'&lt;')+'</div>'
+            +(r.submitted_at?'<div style="color:#94a3b8;font-size:0.72rem">Submitted: '+r.submitted_at+'</div>':'')
+          +'</div>'
+          +'<div style="text-align:right"><div style="font-size:1.8rem;font-weight:700;color:#fbbf24">'+(r.overall||'—')+'<span style="font-size:0.85rem;color:#94a3b8">/5</span></div><div style="font-size:0.65rem;color:#94a3b8">Overall</div></div>'
+        +'</div>'
+        +'<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">'
+          +'<div style="background:#0f2a4a;border:1px solid #1e3a5f;border-radius:6px;padding:8px 14px;text-align:center"><div style="font-size:1.2rem;font-weight:700;color:'+npsCol+'">'+(npsV?r.nps:'—')+'</div><div style="font-size:0.65rem;color:#94a3b8">NPS</div>'+(npsLbl?'<div style="font-size:0.62rem;color:'+npsCol+'">'+npsLbl+'</div>':'')+'</div>'
+          +'<div style="background:#0f2a4a;border:1px solid #1e3a5f;border-radius:6px;padding:8px 14px;text-align:center"><div style="font-size:0.9rem;font-weight:700;color:#7dd3fc">'+(paceMap[paceKey]||r.pace||'—')+'</div><div style="font-size:0.65rem;color:#94a3b8">Pace</div></div>'
+        +'</div>'
+        +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">'
+          +'<div><div style="font-size:0.68rem;color:#38bdf8;font-weight:700;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Programme Ratings</div><table style="width:100%;border-collapse:collapse">'+ratRows+'</table></div>'
+          +'<div><div style="font-size:0.68rem;color:#f59e0b;font-weight:700;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Per-Day Ratings</div><table style="width:100%;border-collapse:collapse">'+dayRows+'</table></div>'
+        +'</div>'
+        +textBlock('&#10003;','What went well',r.well)
+        +textBlock('&#128161;','Improvements',r.improve)
+        +textBlock('&#9888;','Issues',r.issues)
+        +textBlock('&#127919;','Workplace actions',r.actions)
+        +'<div style="margin-top:auto;padding-top:10px;border-top:1px solid #1e3a5f;font-size:0.68rem;color:#475569;display:flex;justify-content:space-between">'
+          +'<span>NSR Training &middot; Dr Tertsegha J. Anande &middot; tertseghaanande@gmail.com</span>'
+          +'<span>'+( idx+1)+' / '+n+'</span>'
+        +'</div>'
+      +'</div>';
+    }).join('');
+
+    var html='<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>NSR Individual Feedback Reports</title>'
+      +'<style>*{box-sizing:border-box}body{margin:0;padding:0;background:#0a1628;color:#e2e8f0;font-family:Arial,sans-serif}'
+        +'@media print{.noprint{display:none!important}body{background:#fff;color:#111}'
+        +'div[style*="page-break-before:always"]{page-break-before:always}'
+        +'@page{margin:0.5in}}</style>'
+      +'</head><body>'
+      +'<div class="noprint" style="background:#0f2a4a;padding:8px 18px;position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between">'
+        +'<span style="color:#7dd3fc;font-size:0.8rem;font-weight:700">Individual Reports — '+n+' participants</span>'
+        +'<button onclick="window.print()" style="background:#2563eb;border:none;color:#fff;padding:6px 14px;border-radius:5px;cursor:pointer;font-size:0.78rem;font-family:Arial">Print / Save as PDF</button>'
+      +'</div>'
+      +sections+'</body></html>';
+
+    var blob=new Blob([html],{type:'text/html;charset=utf-8'});
+    var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    a.download='NSR_Individual_'+new Date().toISOString().slice(0,10)+'.html';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  };
+
+})();
+
+  /* ── Download helpers ─────────────────────────────────────── */
 </script>
 
 <!-- SQL Editor Modal for Day 7 Mini Project -->
