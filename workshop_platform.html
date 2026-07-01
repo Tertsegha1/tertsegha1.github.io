@@ -17361,9 +17361,10 @@ function drawSampleCertificate() {
   const canvas = document.getElementById('cert-sample-canvas');
   if (!canvas) return;
 
-  function stampSample(ctx, w, h) {
+  function doStamp() {
+    const ctx = canvas.getContext('2d');
     ctx.save();
-    ctx.translate(w / 2, h / 2);
+    ctx.translate(canvas.width / 2, canvas.height / 2);
     ctx.rotate(-Math.PI / 6);
     ctx.font = 'bold 130px Arial, sans-serif';
     ctx.fillStyle = 'rgba(180,30,30,0.13)';
@@ -17373,28 +17374,28 @@ function drawSampleCertificate() {
     ctx.restore();
   }
 
-  const sampleVerifyUrl = 'https://tertsegha1.github.io/postgresql-workshop.html?verify=AUKTIE-PG26-SAMPLE';
-  if (typeof QRCode !== 'undefined' && QRCode.toDataURL) {
-    QRCode.toDataURL(sampleVerifyUrl, { width: 300, margin: 1, color: { dark: '#0C2340', light: '#FFFFFF' } }, function(err, dataUrl) {
-      if (!err && dataUrl) {
-        const img = new Image();
-        img.onload = function() {
-          drawCertificate(canvas, 'Firstname Surname', 'AUKTIE-PG26-SAMPLE', '3 July 2026', img);
-          stampSample(canvas.getContext('2d'), canvas.width, canvas.height);
-        };
-        img.src = dataUrl;
-      } else {
-        drawCertificate(canvas, 'Firstname Surname', 'AUKTIE-PG26-SAMPLE', '3 July 2026', null);
-        stampSample(canvas.getContext('2d'), canvas.width, canvas.height);
-      }
-    });
-  } else {
-    // QRCode library not yet loaded — retry after short delay
-    setTimeout(drawSampleCertificate, 500);
-    return;
-  }
-  return; // rendering is async — stamp applied in callback above
+  // Draw certificate immediately so canvas is never blank
+  drawCertificate(canvas, 'Firstname Surname', 'AUKTIE-PG26-SAMPLE', '3 July 2026', null);
+  doStamp();
 
+  // Then add QR badge on top once library is available
+  var sampleVerifyUrl = 'https://tertsegha1.github.io/postgresql-workshop.html?verify=AUKTIE-PG26-SAMPLE';
+  function addQR() {
+    if (typeof QRCode === 'undefined' || !QRCode.toDataURL) {
+      setTimeout(addQR, 300);
+      return;
+    }
+    QRCode.toDataURL(sampleVerifyUrl, { width: 300, margin: 1, color: { dark: '#0C2340', light: '#FFFFFF' } }, function(err, dataUrl) {
+      if (err || !dataUrl) return;
+      var img = new Image();
+      img.onload = function() {
+        drawCertificate(canvas, 'Firstname Surname', 'AUKTIE-PG26-SAMPLE', '3 July 2026', img);
+        doStamp();
+      };
+      img.src = dataUrl;
+    });
+  }
+  addQR();
 }
 
 function downloadCertificate() {
