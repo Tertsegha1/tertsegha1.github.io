@@ -9609,27 +9609,11 @@ $csv.TrimStart() | Out-File -FilePath "$env:USERPROFILE\Downloads\lga_data.csv" 
 <span class="cmt">-- Step 2: Create the local role that will own the FDW connection</span>
 <span class="kw">CREATE ROLE</span> nsr_etl_user <span class="kw">LOGIN</span> <span class="kw">PASSWORD</span> <span class="str">'change_this_password'</span>;
 
-<span class="cmt">-- Step 3: Register the remote server</span>
-<span class="cmt">-- In production this points to the real IFMIS host.</span>
-<span class="cmt">-- For this exercise we simulate it locally: FDW connects back to THIS PostgreSQL instance.</span>
-<span class="kw">CREATE SERVER</span> ifmis_server
-  <span class="kw">FOREIGN DATA WRAPPER</span> postgres_fdw
-  <span class="kw">OPTIONS</span> (host <span class="str">'localhost'</span>, port <span class="str">'5432'</span>, dbname <span class="str">'postgres'</span>);
-<span class="cmt">-- Use the same database where your nsr.* schema lives (check with \conninfo)</span>
+<span class="cmt">-- Step 3: Register the remote server (concept only — on Windows, TCP auth blocks local FDW loops)</span>
+<span class="cmt">-- In production: CREATE SERVER pointing at the real IFMIS host.</span>
+<span class="cmt">-- On this training machine we skip FDW network auth and use a VIEW instead (same query pattern).</span>
 
-<span class="cmt">-- Step 4: Map local roles to the FDW connection</span>
-<span class="cmt">-- ⚠ Replace 'your_postgres_password' with the password you set when you installed PostgreSQL 18.</span>
-<span class="cmt">-- To update after the fact: DROP USER MAPPING IF EXISTS FOR postgres SERVER ifmis_server;</span>
-<span class="cmt">-- then re-run CREATE USER MAPPING below with the correct password.</span>
-<span class="kw">CREATE USER MAPPING FOR</span> nsr_etl_user
-  <span class="kw">SERVER</span> ifmis_server
-  <span class="kw">OPTIONS</span> (user <span class="str">'postgres'</span>, password <span class="str">'your_postgres_password'</span>);
-
-<span class="kw">CREATE USER MAPPING FOR</span> postgres
-  <span class="kw">SERVER</span> ifmis_server
-  <span class="kw">OPTIONS</span> (user <span class="str">'postgres'</span>, password <span class="str">'your_postgres_password'</span>);
-
-<span class="cmt">-- Step 5: Create mock IFMIS payment data in a separate schema (simulates the remote DB)</span>
+<span class="cmt">-- Step 4: Create mock IFMIS payment data in a separate schema (simulates the remote system)</span>
 <span class="kw">CREATE SCHEMA IF NOT EXISTS</span> ifmis;
 <span class="kw">CREATE TABLE IF NOT EXISTS</span> ifmis.disbursements (
   payment_id      <span class="typ">BIGSERIAL</span>    <span class="kw">PRIMARY KEY</span>,
@@ -9638,24 +9622,16 @@ $csv.TrimStart() | Out-File -FilePath "$env:USERPROFILE\Downloads\lga_data.csv" 
   disbursed_at    <span class="typ">TIMESTAMPTZ</span>  <span class="kw">DEFAULT now</span>(),
   programme_code  <span class="typ">TEXT</span>
 );
-<span class="cmt">-- Seed a few payments (these NIDs will already exist in nsr.individuals)</span>
 <span class="kw">INSERT INTO</span> ifmis.disbursements (nin, amount_ngn, programme_code) <span class="kw">VALUES</span>
   (<span class="str">'AD-2026-NIN-001'</span>, 25000.00, <span class="str">'CCT_2024'</span>),
-  (<span class="str">'AD-2026-NIN-002'</span>, 25000.00, <span class="str">'CCT_2024'</span>);
+  (<span class="str">'AD-2026-NIN-002'</span>, 25000.00, <span class="str">'CCT_2024'</span>)
+<span class="kw">ON CONFLICT DO NOTHING</span>;
 
-<span class="cmt">-- Step 6: Register the local ifmis.disbursements table as a foreign table in the nsr schema</span>
-<span class="kw">DROP FOREIGN TABLE IF EXISTS</span> nsr.ftbl_ifmis_payments;
-<span class="kw">CREATE FOREIGN TABLE</span> nsr.ftbl_ifmis_payments (
-  payment_id      <span class="typ">BIGINT</span>,
-  nin             <span class="typ">TEXT</span>,
-  amount_ngn      <span class="typ">NUMERIC</span>(12,2),
-  disbursed_at    <span class="typ">TIMESTAMPTZ</span>,
-  programme_code  <span class="typ">TEXT</span>
-)
-<span class="kw">SERVER</span> ifmis_server
-<span class="kw">OPTIONS</span> (schema_name <span class="str">'ifmis'</span>, table_name <span class="str">'disbursements'</span>);
+<span class="cmt">-- Step 5: Expose disbursements to the nsr schema via a view (mirrors what a foreign table does)</span>
+<span class="kw">CREATE OR REPLACE VIEW</span> nsr.ftbl_ifmis_payments <span class="kw">AS</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> ifmis.disbursements;
 
-<span class="cmt">-- Step 7 (Transform inside PostgreSQL): find NSR beneficiaries NOT yet paid</span>
+<span class="cmt">-- Step 6 (Transform inside PostgreSQL): find NSR beneficiaries NOT yet paid</span>
 <span class="kw">SELECT</span>
   h.household_code,
   i.nin,
@@ -12359,27 +12335,11 @@ max_members <span class="kw">AS</span> (
 <span class="cmt">-- Step 2: Create the local role that will own the FDW connection</span>
 <span class="kw">CREATE ROLE</span> nsr_etl_user <span class="kw">LOGIN</span> <span class="kw">PASSWORD</span> <span class="str">'change_this_password'</span>;
 
-<span class="cmt">-- Step 3: Register the remote server</span>
-<span class="cmt">-- In production this points to the real IFMIS host.</span>
-<span class="cmt">-- For this exercise we simulate it locally: FDW connects back to THIS PostgreSQL instance.</span>
-<span class="kw">CREATE SERVER</span> ifmis_server
-  <span class="kw">FOREIGN DATA WRAPPER</span> postgres_fdw
-  <span class="kw">OPTIONS</span> (host <span class="str">'localhost'</span>, port <span class="str">'5432'</span>, dbname <span class="str">'postgres'</span>);
-<span class="cmt">-- Use the same database where your nsr.* schema lives (check with \conninfo)</span>
+<span class="cmt">-- Step 3: Register the remote server (concept only — on Windows, TCP auth blocks local FDW loops)</span>
+<span class="cmt">-- In production: CREATE SERVER pointing at the real IFMIS host.</span>
+<span class="cmt">-- On this training machine we skip FDW network auth and use a VIEW instead (same query pattern).</span>
 
-<span class="cmt">-- Step 4: Map local roles to the FDW connection</span>
-<span class="cmt">-- ⚠ Replace 'your_postgres_password' with the password you set when you installed PostgreSQL 18.</span>
-<span class="cmt">-- To update after the fact: DROP USER MAPPING IF EXISTS FOR postgres SERVER ifmis_server;</span>
-<span class="cmt">-- then re-run CREATE USER MAPPING below with the correct password.</span>
-<span class="kw">CREATE USER MAPPING FOR</span> nsr_etl_user
-  <span class="kw">SERVER</span> ifmis_server
-  <span class="kw">OPTIONS</span> (user <span class="str">'postgres'</span>, password <span class="str">'your_postgres_password'</span>);
-
-<span class="kw">CREATE USER MAPPING FOR</span> postgres
-  <span class="kw">SERVER</span> ifmis_server
-  <span class="kw">OPTIONS</span> (user <span class="str">'postgres'</span>, password <span class="str">'your_postgres_password'</span>);
-
-<span class="cmt">-- Step 5: Create mock IFMIS payment data in a separate schema (simulates the remote DB)</span>
+<span class="cmt">-- Step 4: Create mock IFMIS payment data in a separate schema (simulates the remote system)</span>
 <span class="kw">CREATE SCHEMA IF NOT EXISTS</span> ifmis;
 <span class="kw">CREATE TABLE IF NOT EXISTS</span> ifmis.disbursements (
   payment_id      <span class="typ">BIGSERIAL</span>    <span class="kw">PRIMARY KEY</span>,
@@ -12388,24 +12348,16 @@ max_members <span class="kw">AS</span> (
   disbursed_at    <span class="typ">TIMESTAMPTZ</span>  <span class="kw">DEFAULT now</span>(),
   programme_code  <span class="typ">TEXT</span>
 );
-<span class="cmt">-- Seed a few payments (these NIDs will already exist in nsr.individuals)</span>
 <span class="kw">INSERT INTO</span> ifmis.disbursements (nin, amount_ngn, programme_code) <span class="kw">VALUES</span>
   (<span class="str">'AD-2026-NIN-001'</span>, 25000.00, <span class="str">'CCT_2024'</span>),
-  (<span class="str">'AD-2026-NIN-002'</span>, 25000.00, <span class="str">'CCT_2024'</span>);
+  (<span class="str">'AD-2026-NIN-002'</span>, 25000.00, <span class="str">'CCT_2024'</span>)
+<span class="kw">ON CONFLICT DO NOTHING</span>;
 
-<span class="cmt">-- Step 6: Register the local ifmis.disbursements table as a foreign table in the nsr schema</span>
-<span class="kw">DROP FOREIGN TABLE IF EXISTS</span> nsr.ftbl_ifmis_payments;
-<span class="kw">CREATE FOREIGN TABLE</span> nsr.ftbl_ifmis_payments (
-  payment_id      <span class="typ">BIGINT</span>,
-  nin             <span class="typ">TEXT</span>,
-  amount_ngn      <span class="typ">NUMERIC</span>(12,2),
-  disbursed_at    <span class="typ">TIMESTAMPTZ</span>,
-  programme_code  <span class="typ">TEXT</span>
-)
-<span class="kw">SERVER</span> ifmis_server
-<span class="kw">OPTIONS</span> (schema_name <span class="str">'ifmis'</span>, table_name <span class="str">'disbursements'</span>);
+<span class="cmt">-- Step 5: Expose disbursements to the nsr schema via a view (mirrors what a foreign table does)</span>
+<span class="kw">CREATE OR REPLACE VIEW</span> nsr.ftbl_ifmis_payments <span class="kw">AS</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> ifmis.disbursements;
 
-<span class="cmt">-- Step 7 (Transform inside PostgreSQL): find NSR beneficiaries NOT yet paid</span>
+<span class="cmt">-- Step 6 (Transform inside PostgreSQL): find NSR beneficiaries NOT yet paid</span>
 <span class="kw">SELECT</span>
   h.household_code,
   i.nin,
