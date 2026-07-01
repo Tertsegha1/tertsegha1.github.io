@@ -9518,6 +9518,8 @@ $csv.TrimStart() | Out-File -FilePath "$env:USERPROFILE\Downloads\lga_data.csv" 
       <div class="code-block">
         <div class="code-header"><span class="code-lang">sql – the simplest possible ETL: load a CSV into PostgreSQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
         <pre><span class="cmt">-- Step 1: Create a staging table with NO constraints (accept everything as TEXT)</span>
+<span class="cmt">-- Drop and recreate each run -- stg_raw is a scratch table, not permanent</span>
+<span class="kw">DROP TABLE IF EXISTS</span> nsr.stg_raw;
 <span class="kw">CREATE TABLE</span> nsr.stg_raw (
   household_code  <span class="typ">TEXT</span>,
   state_name      <span class="typ">TEXT</span>,
@@ -12239,6 +12241,8 @@ max_members <span class="kw">AS</span> (
       <div class="code-block">
         <div class="code-header"><span class="code-lang">sql – the simplest possible ETL: load a CSV into PostgreSQL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
         <pre><span class="cmt">-- Step 1: Create a staging table with NO constraints (accept everything as TEXT)</span>
+<span class="cmt">-- Drop and recreate each run -- stg_raw is a scratch table, not permanent</span>
+<span class="kw">DROP TABLE IF EXISTS</span> nsr.stg_raw;
 <span class="kw">CREATE TABLE</span> nsr.stg_raw (
   household_code  <span class="typ">TEXT</span>,
   state_name      <span class="typ">TEXT</span>,
