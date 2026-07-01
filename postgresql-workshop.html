@@ -9634,7 +9634,7 @@ $csv.TrimStart() | Out-File -FilePath "$env:USERPROFILE\Downloads\lga_data.csv" 
 <span class="kw">SELECT</span>
   h.household_code,
   i.nin,
-  i.first_name || <span class="str">' '</span> || i.last_name <span class="kw">AS</span> full_name,
+  i.full_name,
   h.pmt_score
 <span class="kw">FROM</span> nsr.households h
 <span class="kw">JOIN</span> nsr.individuals i <span class="kw">ON</span> i.household_id = h.household_id
@@ -10009,8 +10009,7 @@ max_members <span class="kw">AS</span> (
 <span class="kw">UPDATE</span> nsr.individuals
 <span class="kw">SET</span>
   nin        = <span class="str">'ERASED-'</span> || <span class="fn">encode</span>(<span class="fn">gen_random_bytes</span>(<span class="num">8</span>), <span class="str">'hex'</span>),
-  first_name = <span class="str">'[REDACTED]'</span>,
-  last_name  = <span class="str">'[REDACTED]'</span>,
+  full_name  = <span class="str">'[REDACTED]'</span>,
   dob        = <span class="kw">NULL</span>,
   phone      = <span class="kw">NULL</span>
 <span class="kw">WHERE</span> nin = <span class="str">'12345678901'</span>;
@@ -10572,8 +10571,7 @@ $csv.TrimStart() | Out-File -FilePath "$env:USERPROFILE\Downloads\lga_data.csv" 
 <span class="kw">UPDATE</span> nsr.individuals
 <span class="kw">SET</span>
   nin        = <span class="str">'ERASED-'</span> || <span class="fn">encode</span>(<span class="fn">gen_random_bytes</span>(<span class="num">8</span>), <span class="str">'hex'</span>),
-  first_name = <span class="str">'[REDACTED]'</span>,
-  last_name  = <span class="str">'[REDACTED]'</span>,
+  full_name  = <span class="str">'[REDACTED]'</span>,
   dob        = <span class="kw">NULL</span>
 <span class="kw">WHERE</span> nin = <span class="str">'44556677889'</span>;
 
@@ -12361,7 +12359,7 @@ max_members <span class="kw">AS</span> (
 <span class="kw">SELECT</span>
   h.household_code,
   i.nin,
-  i.first_name || <span class="str">' '</span> || i.last_name <span class="kw">AS</span> full_name,
+  i.full_name,
   h.pmt_score
 <span class="kw">FROM</span> nsr.households h
 <span class="kw">JOIN</span> nsr.individuals i <span class="kw">ON</span> i.household_id = h.household_id
@@ -12736,8 +12734,7 @@ max_members <span class="kw">AS</span> (
 <span class="kw">UPDATE</span> nsr.individuals
 <span class="kw">SET</span>
   nin        = <span class="str">'ERASED-'</span> || <span class="fn">encode</span>(<span class="fn">gen_random_bytes</span>(<span class="num">8</span>), <span class="str">'hex'</span>),
-  first_name = <span class="str">'[REDACTED]'</span>,
-  last_name  = <span class="str">'[REDACTED]'</span>,
+  full_name  = <span class="str">'[REDACTED]'</span>,
   dob        = <span class="kw">NULL</span>,
   phone      = <span class="kw">NULL</span>
 <span class="kw">WHERE</span> nin = <span class="str">'12345678901'</span>;
@@ -13277,8 +13274,7 @@ $$;
 <span class="kw">UPDATE</span> nsr.individuals
 <span class="kw">SET</span>
   nin        = <span class="str">'ERASED-'</span> || <span class="fn">encode</span>(<span class="fn">gen_random_bytes</span>(<span class="num">8</span>), <span class="str">'hex'</span>),
-  first_name = <span class="str">'[REDACTED]'</span>,
-  last_name  = <span class="str">'[REDACTED]'</span>,
+  full_name  = <span class="str">'[REDACTED]'</span>,
   dob        = <span class="kw">NULL</span>
 <span class="kw">WHERE</span> nin = <span class="str">'44556677889'</span>;
 
