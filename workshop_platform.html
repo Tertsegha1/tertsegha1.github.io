@@ -15533,6 +15533,40 @@ pg_restore -U postgres -d lab_nsr_restore -j 4 -F c backup.dump</pre>
     </div>
   </div>
 
+  <!-- CERTIFICATE MONITORING (instructor view only) -->
+  <div class="section instructor-block" style="margin-bottom:20px;">
+    <div class="section-header">
+      <div class="section-icon si-purple">&#128196;</div>
+      <h2>Certificate Monitor</h2>
+    </div>
+    <div class="callout instructor-only" style="margin-bottom:12px;">
+      <div class="callout-title">Instructor Note</div>
+      Shows which participants have generated and downloaded their certificate. A row appears once a participant completes all days and visits the certificate page. Download count increments each time they click Download PNG.
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+      <button onclick="certMonitorRefresh()" style="background:none;border:1px solid #2563eb;color:#7dd3fc;font-size:0.75rem;padding:4px 12px;border-radius:5px;cursor:pointer;font-family:inherit;">&#8635; Refresh</button>
+      <span id="cert-monitor-status" style="color:#64748b;font-size:0.72rem;"></span>
+    </div>
+    <div id="cert-monitor-wrap" style="overflow-x:auto;">
+      <table class="cohort-table" id="cert-monitor-table">
+        <thead>
+          <tr>
+            <th style="width:3%;">#</th>
+            <th style="width:25%;">Participant</th>
+            <th style="width:20%;">Certificate ID</th>
+            <th style="width:14%;">Issued</th>
+            <th style="width:12%;text-align:center;">Generated</th>
+            <th style="width:10%;text-align:center;">Downloads</th>
+            <th style="width:16%;text-align:center;">Last Download</th>
+          </tr>
+        </thead>
+        <tbody id="cert-monitor-body">
+          <tr><td colspan="7" style="color:#64748b;font-size:0.8rem;padding:12px;text-align:center;">Click Refresh to load data</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- INSTRUCTOR SAMPLE (instructor view only) -->
   <div class="section instructor-block">
     <div class="section-header">
@@ -17425,6 +17459,62 @@ function initCertificatePage() {
   drawSampleCertificate();
 }
 
+
+function certMonitorRefresh() {
+  var status = document.getElementById('cert-monitor-status');
+  var tbody  = document.getElementById('cert-monitor-body');
+  if (!tbody) return;
+  if (!window.CWR_FIREBASE || !window.CWR_FIREBASE.databaseURL || window.CWR_FIREBASE.databaseURL.includes('REPLACE')) {
+    if (status) status.textContent = 'Firebase not configured.';
+    return;
+  }
+  if (status) status.textContent = 'Loading…';
+  fetch(window.CWR_FIREBASE.databaseURL + '/nsr_certificates.json')
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+      var rows = '';
+      PARTICIPANTS.forEach(function(p, idx) {
+        if (p.name.indexOf('Spare') === 0) return;
+        var id = certId(p.code);
+        var safeId = id.replace(/[^a-zA-Z0-9_-]/g, '_');
+        var rec = data && data[safeId];
+        var generated = rec ? '✅' : '—';
+        var genColor  = rec ? '#22c55e' : '#475569';
+        var dlCount = 0, lastDl = '—';
+        if (rec && rec.downloads) {
+          var dlVals = Object.values(rec.downloads);
+          dlCount = dlVals.length;
+          var sorted = dlVals.map(function(d){ return d.at || ''; }).filter(Boolean).sort();
+          if (sorted.length) {
+            var d = new Date(sorted[sorted.length - 1]);
+            lastDl = d.toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'})
+              + ' ' + d.toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit'});
+          }
+        }
+        var dlBadge = dlCount > 0
+          ? '<span style="background:#1e3a5f;color:#7dd3fc;border-radius:999px;padding:1px 10px;font-size:0.8rem;font-weight:700;">' + dlCount + '</span>'
+          : '<span style="color:#475569">—</span>';
+        rows += '<tr>'
+          + '<td style="color:#64748b;">' + (idx + 1) + '</td>'
+          + '<td style="font-weight:600;">' + p.name + '<br><span style="color:#64748b;font-size:0.72rem;font-weight:400;">' + p.code + '</span></td>'
+          + '<td style="font-family:monospace;font-size:0.75rem;color:#fbbf24;">' + id + '</td>'
+          + '<td style="font-size:0.78rem;color:#94a3b8;">' + (rec && rec.issueDate ? rec.issueDate : '—') + '</td>'
+          + '<td style="text-align:center;font-size:1.1rem;color:' + genColor + ';">' + generated + '</td>'
+          + '<td style="text-align:center;">' + dlBadge + '</td>'
+          + '<td style="font-size:0.75rem;color:#94a3b8;text-align:center;">' + lastDl + '</td>'
+          + '</tr>';
+      });
+      tbody.innerHTML = rows || '<tr><td colspan="7" style="color:#64748b;padding:12px;text-align:center;">No certificate records yet.</td></tr>';
+      if (status) {
+        var t = new Date().toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+        status.textContent = 'Updated ' + t;
+      }
+    })
+    .catch(function(e) {
+      if (status) status.textContent = 'Error: ' + e.message;
+    });
+}
+
 function drawSampleCertificate() {
   const canvas = document.getElementById('cert-sample-canvas');
   if (!canvas) return;
@@ -17474,6 +17564,15 @@ function downloadCertificate() {
   link.download = 'AUKTIE_PostgreSQL_Certificate_' + name.replace(/\s+/g, '_') + '.png';
   link.href = canvas.toDataURL('image/png');
   link.click();
+  if (window.CWR_FIREBASE && window.CWR_FIREBASE.databaseURL && !window.CWR_FIREBASE.databaseURL.includes('REPLACE')) {
+    const id = certId(currentUser);
+    const safeId = id.replace(/[^a-zA-Z0-9_-]/g, '_');
+    fetch(window.CWR_FIREBASE.databaseURL + '/nsr_certificates/' + safeId + '/downloads.json', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ at: new Date().toISOString(), ua: navigator.userAgent.slice(0, 80) })
+    }).catch(function(){});
+  }
 }
 
 function downloadSampleCertificate() {
