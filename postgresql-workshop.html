@@ -9616,7 +9616,10 @@ $csv.TrimStart() | Out-File -FilePath "$env:USERPROFILE\Downloads\lga_data.csv" 
   <span class="kw">FOREIGN DATA WRAPPER</span> postgres_fdw
   <span class="kw">OPTIONS</span> (host <span class="str">'localhost'</span>, port <span class="str">'5432'</span>, dbname <span class="str">'lab_nsr'</span>);
 
-<span class="cmt">-- Step 4: Map local roles to the FDW connection (using your own superuser credentials)</span>
+<span class="cmt">-- Step 4: Map local roles to the FDW connection</span>
+<span class="cmt">-- ⚠ Replace 'your_postgres_password' with the password you set when you installed PostgreSQL 18.</span>
+<span class="cmt">-- To update after the fact: DROP USER MAPPING IF EXISTS FOR postgres SERVER ifmis_server;</span>
+<span class="cmt">-- then re-run CREATE USER MAPPING below with the correct password.</span>
 <span class="kw">CREATE USER MAPPING FOR</span> nsr_etl_user
   <span class="kw">SERVER</span> ifmis_server
   <span class="kw">OPTIONS</span> (user <span class="str">'postgres'</span>, password <span class="str">'your_postgres_password'</span>);
@@ -12362,7 +12365,10 @@ max_members <span class="kw">AS</span> (
   <span class="kw">FOREIGN DATA WRAPPER</span> postgres_fdw
   <span class="kw">OPTIONS</span> (host <span class="str">'localhost'</span>, port <span class="str">'5432'</span>, dbname <span class="str">'lab_nsr'</span>);
 
-<span class="cmt">-- Step 4: Map local roles to the FDW connection (using your own superuser credentials)</span>
+<span class="cmt">-- Step 4: Map local roles to the FDW connection</span>
+<span class="cmt">-- ⚠ Replace 'your_postgres_password' with the password you set when you installed PostgreSQL 18.</span>
+<span class="cmt">-- To update after the fact: DROP USER MAPPING IF EXISTS FOR postgres SERVER ifmis_server;</span>
+<span class="cmt">-- then re-run CREATE USER MAPPING below with the correct password.</span>
 <span class="kw">CREATE USER MAPPING FOR</span> nsr_etl_user
   <span class="kw">SERVER</span> ifmis_server
   <span class="kw">OPTIONS</span> (user <span class="str">'postgres'</span>, password <span class="str">'your_postgres_password'</span>);
