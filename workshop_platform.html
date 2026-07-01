@@ -9680,7 +9680,7 @@ $csv.TrimStart() | Out-File -FilePath "$env:USERPROFILE\Downloads\lga_data.csv" 
     <span class="str">'household_code'</span>, household_code,
     <span class="str">'head_name'</span>,       head_name,
     <span class="str">'pmt_score'</span>,       pmt_score,
-    <span class="str">'lga_name'</span>,        lga_name
+    <span class="str">'lga_name'</span>,        s.lga_name
   ),
   <span class="kw">CASE</span>
     <span class="kw">WHEN</span> household_code <span class="kw">IS NULL</span>                          <span class="kw">THEN</span> <span class="str">'MISSING_CODE'</span>
@@ -12408,7 +12408,7 @@ max_members <span class="kw">AS</span> (
     <span class="str">'household_code'</span>, household_code,
     <span class="str">'head_name'</span>,       head_name,
     <span class="str">'pmt_score'</span>,       pmt_score,
-    <span class="str">'lga_name'</span>,        lga_name
+    <span class="str">'lga_name'</span>,        s.lga_name
   ),
   <span class="kw">CASE</span>
     <span class="kw">WHEN</span> household_code <span class="kw">IS NULL</span>                          <span class="kw">THEN</span> <span class="str">'MISSING_CODE'</span>
