@@ -14411,7 +14411,34 @@ $$;
         return{ok:true};
       }
     }
-  };
+  ,
+    p7:{
+      title:'Puzzle 7 – Record an NDP Act-Compliant Lineage Entry',phase:'Governance & Compliance',
+      desc:"Inside the same transaction as your Puzzle 4 upsert, insert one row into nsr.data_lineage capturing: table_name, source_system, record_count (rows promoted), batch_ref ('ADM-2026-R1'), lawful_basis citing NDP Act 2023 s.25, and a retention_until date of 7 years from today.",
+      starter:"CREATE TABLE IF NOT EXISTS nsr.data_lineage (\n  lineage_id     BIGSERIAL PRIMARY KEY,\n  table_name     TEXT,\n  source_system  TEXT,\n  record_count   INT,\n  batch_ref      TEXT,\n  lawful_basis   TEXT,\n  loaded_at      TIMESTAMPTZ DEFAULT now(),\n  retention_until DATE\n);\n\nBEGIN;\n\nINSERT INTO nsr.data_lineage\n  (table_name, source_system, record_count, batch_ref, lawful_basis, retention_until)\nVALUES\n  ('nsr.households', 'stg_adamawa',\n   (SELECT COUNT(*) FROM nsr.households),\n   'ADM-2026-R1',\n   'NDP Act 2023 s.25 \u2014 statistical and administrative purpose',\n   CURRENT_DATE + INTERVAL '7 years');\n\nCOMMIT;\n\nSELECT * FROM nsr.data_lineage ORDER BY lineage_id DESC LIMIT 1;",
+      hints:["retention_until = CURRENT_DATE + INTERVAL '7 years' calculates the NDP-compliant retention date",'lawful_basis should cite the specific NDP Act section','Wrap in BEGIN...COMMIT so lineage and the data change are atomic'],
+      output:['CREATE TABLE','BEGIN','INSERT 0 1','COMMIT','lineage_id | table_name | ... | lawful_basis | retention_until'],
+      validate:function(sql){
+        if(!/data_lineage/i.test(sql)) return{ok:false,msg:'Create and insert into nsr.data_lineage.'};
+        if(!/lawful_basis/i.test(sql)) return{ok:false,msg:'Include a lawful_basis column citing the NDP Act section.'};
+        if(!/retention_until|INTERVAL/i.test(sql)) return{ok:false,msg:'Set retention_until to 7 years from today using CURRENT_DATE + INTERVAL.'};
+        return{ok:true,msg:'Lineage entry recorded — NDP Act s.25 compliance documented.'};
+      }
+    },
+    p8:{
+      title:'Puzzle 8 – Right-to-Erasure (NDP Act s.34)',phase:'Governance & Compliance',
+      desc:"Enable pgcrypto. For a citizen with NIN 'AD-2026-NIN-001': (1) create nsr.erasure_requests logging a SHA-256 hash of the NIN, (2) pseudonymise the row in nsr.individuals (overwrite NIN, full_name, dob), (3) mark the request complete. Verify the NIN no longer exists in plain text.",
+      starter:"CREATE EXTENSION IF NOT EXISTS pgcrypto;\n\nCREATE TABLE IF NOT EXISTS nsr.erasure_requests (\n  request_id    BIGSERIAL PRIMARY KEY,\n  nin_hash      TEXT,\n  requested_at  TIMESTAMPTZ DEFAULT now(),\n  completed_at  TIMESTAMPTZ,\n  erased_by     TEXT\n);\n\nINSERT INTO nsr.erasure_requests (nin_hash, erased_by)\nVALUES (\n  encode(digest('AD-2026-NIN-001', 'sha256'), 'hex'),\n  current_user\n);\n\nUPDATE nsr.individuals\nSET\n  nin       = 'ERASED-' || encode(gen_random_bytes(8), 'hex'),\n  full_name = '[REDACTED]',\n  dob       = NULL\nWHERE nin = 'AD-2026-NIN-001';\n\nUPDATE nsr.erasure_requests\nSET completed_at = now()\nWHERE nin_hash = encode(digest('AD-2026-NIN-001', 'sha256'), 'hex')\n  AND completed_at IS NULL;\n\nSELECT nin, full_name, dob FROM nsr.individuals WHERE nin LIKE 'ERASED-%' LIMIT 5;",
+      hints:["encode(digest(nin, 'sha256'), 'hex') hashes the NIN without storing it in plain text",'gen_random_bytes(8) generates a unique random suffix for the pseudonymised NIN','After erasure, a search for the original NIN must return 0 rows'],
+      output:['CREATE EXTENSION','CREATE TABLE','INSERT 0 1','UPDATE 1','UPDATE 1','        nin          | full_name  |  dob  ','---------------------+------------+-------',' ERASED-a1b2c3d4e5f6 | [REDACTED] |      ','(1 row)'],
+      validate:function(sql){
+        if(!/pgcrypto/i.test(sql)) return{ok:false,msg:'Enable pgcrypto first: CREATE EXTENSION IF NOT EXISTS pgcrypto.'};
+        if(!/erasure_requests/i.test(sql)) return{ok:false,msg:'Create and insert into nsr.erasure_requests to log the request.'};
+        if(!/digest|sha256/i.test(sql)) return{ok:false,msg:"Hash the NIN using encode(digest(nin, 'sha256'), 'hex')."};
+        if(!/UPDATE\s+nsr\.individuals/i.test(sql)) return{ok:false,msg:"Pseudonymise the individual: UPDATE nsr.individuals SET nin = 'ERASED-'..."};
+        return{ok:true,msg:'Right-to-erasure complete — NDP Act s.34 compliance achieved.'};
+      }
+    }};
 
   function getP(){try{return JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){return{};}}
   function saveP(d){try{localStorage.setItem(KEY,JSON.stringify(d));}catch(e){}}
