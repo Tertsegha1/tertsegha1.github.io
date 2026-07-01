@@ -748,7 +748,6 @@ body.instructor-mode .cohort-section { display: block; }
 .ct-bar { height: 6px; background: var(--brand); border-radius: 3px; transition: width .3s; }
 .ct-inactive { color: #bbb; font-style: italic; font-size: 0.8rem; }
 </style>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
 </head>
 <body>
 
@@ -17303,7 +17302,7 @@ function drawCertificate(canvas, participantName, id, dateStr, qrImg) {
 
   // ── Digital badge (QR code) ───────────────────────────────────────────
   if (qrImg) {
-    const qx = 62, qy = H - 220, qs = 150;
+    const qx = 62, qy = 630, qs = 150;
     // White background square
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(qx - 4, qy - 4, qs + 8, qs + 8);
@@ -17369,16 +17368,11 @@ function initCertificatePage() {
         }).catch(function(){});
       }
       // Generate QR code then draw certificate
-      var _qrCanvas = document.createElement('canvas');
-      QRCode.toCanvas(_qrCanvas, verifyUrl, { width: 300, margin: 1, color: { dark: '#0C2340', light: '#FFFFFF' } }, function(err) {
-        if (!err) {
-          const img = new Image();
-          img.onload = function() { drawCertificate(canvas, name, id, dateStr, img); };
-          img.src = _qrCanvas.toDataURL('image/png');
-        } else {
-          drawCertificate(canvas, name, id, dateStr, null);
-        }
-      });
+      const qrImg = new Image();
+      qrImg.crossOrigin = 'anonymous';
+      qrImg.onload = function() { drawCertificate(canvas, name, id, dateStr, qrImg); };
+      qrImg.onerror = function() { drawCertificate(canvas, name, id, dateStr, null); };
+      qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&color=0C2340&bgcolor=FFFFFF&data=' + encodeURIComponent(verifyUrl);
     }
 
     const idDisplay = document.getElementById('cert-id-display');
@@ -17469,28 +17463,16 @@ function drawSampleCertificate() {
   drawCertificate(canvas, 'Firstname Surname', 'AUKTIE-PG26-SAMPLE', '3 July 2026', null);
   doStamp();
 
-  // Then add QR badge on top once library is available
+  // Add QR badge via external QR image API (CORS-enabled, no library needed)
   var sampleVerifyUrl = 'https://tertsegha1.github.io/postgresql-workshop.html?verify=AUKTIE-PG26-SAMPLE';
-  function addQR() {
-    if (typeof QRCode === 'undefined' || !QRCode.toCanvas) {
-      setTimeout(addQR, 300);
-      return;
-    }
-    var tc = document.createElement('canvas');
-    QRCode.toCanvas(tc, sampleVerifyUrl, { width: 300, margin: 1, color: { dark: '#0C2340', light: '#FFFFFF' } }, function(err) {
-      if (err) {
-        // toCanvas failed — skip QR silently
-        return;
-      }
-      var img = new Image();
-      img.onload = function() {
-        drawCertificate(canvas, 'Firstname Surname', 'AUKTIE-PG26-SAMPLE', '3 July 2026', img);
-        doStamp();
-      };
-      img.src = tc.toDataURL('image/png');
-    });
-  }
-  addQR();
+  var qrImg = new Image();
+  qrImg.crossOrigin = 'anonymous';
+  qrImg.onload = function() {
+    drawCertificate(canvas, 'Firstname Surname', 'AUKTIE-PG26-SAMPLE', '3 July 2026', qrImg);
+    doStamp();
+  };
+  qrImg.onerror = function() { /* QR fetch failed — cert already rendered without QR */ };
+  qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&color=0C2340&bgcolor=FFFFFF&data=' + encodeURIComponent(sampleVerifyUrl);
 }
 
 function downloadCertificate() {
