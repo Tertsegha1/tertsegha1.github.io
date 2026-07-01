@@ -9628,7 +9628,9 @@ $csv.TrimStart() | Out-File -FilePath "$env:USERPROFILE\Downloads\lga_data.csv" 
 <span class="kw">ON CONFLICT DO NOTHING</span>;
 
 <span class="cmt">-- Step 5: Expose disbursements to the nsr schema via a view (mirrors what a foreign table does)</span>
-<span class="kw">CREATE OR REPLACE VIEW</span> nsr.ftbl_ifmis_payments <span class="kw">AS</span>
+<span class="cmt">-- Drop any existing foreign table first (cannot replace a foreign table with a view directly)</span>
+<span class="kw">DROP FOREIGN TABLE IF EXISTS</span> nsr.ftbl_ifmis_payments;
+<span class="kw">CREATE VIEW</span> nsr.ftbl_ifmis_payments <span class="kw">AS</span>
 <span class="kw">SELECT</span> * <span class="kw">FROM</span> ifmis.disbursements;
 
 <span class="cmt">-- Step 6 (Transform inside PostgreSQL): find NSR beneficiaries NOT yet paid</span>
@@ -12354,7 +12356,9 @@ max_members <span class="kw">AS</span> (
 <span class="kw">ON CONFLICT DO NOTHING</span>;
 
 <span class="cmt">-- Step 5: Expose disbursements to the nsr schema via a view (mirrors what a foreign table does)</span>
-<span class="kw">CREATE OR REPLACE VIEW</span> nsr.ftbl_ifmis_payments <span class="kw">AS</span>
+<span class="cmt">-- Drop any existing foreign table first (cannot replace a foreign table with a view directly)</span>
+<span class="kw">DROP FOREIGN TABLE IF EXISTS</span> nsr.ftbl_ifmis_payments;
+<span class="kw">CREATE VIEW</span> nsr.ftbl_ifmis_payments <span class="kw">AS</span>
 <span class="kw">SELECT</span> * <span class="kw">FROM</span> ifmis.disbursements;
 
 <span class="cmt">-- Step 6 (Transform inside PostgreSQL): find NSR beneficiaries NOT yet paid</span>
