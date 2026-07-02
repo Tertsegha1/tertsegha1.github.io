@@ -17430,8 +17430,7 @@ function certMonitorRegister(btn) {
       var TOTAL_DAYS = 9;
       var doneCount = prog && prog.done ? Object.values(prog.done).filter(Boolean).length : 0;
       if (doneCount < TOTAL_DAYS) {
-        if (!confirm(p.name + ' has only completed ' + doneCount + ' of ' + TOTAL_DAYS + ' days.
-Register their certificate anyway?')) return;
+        if (!confirm(p.name + ' has only completed ' + doneCount + ' of ' + TOTAL_DAYS + ' days. Register their certificate anyway?')) return;
       }
       var id = certId(p.code);
       var safeId = id.replace(/[^a-zA-Z0-9_-]/g, '_');
