@@ -15490,10 +15490,11 @@ pg_restore -U postgres -d lab_nsr_restore -j 4 -F c backup.dump</pre>
             <th style="width:16%;text-align:center;">Last Download</th>
             <th style="width:10%;text-align:center;">Certificate ID</th>
             <th style="width:8%;text-align:center;">Preview</th>
+            <th style="width:8%;text-align:center;">Register</th>
           </tr>
         </thead>
         <tbody id="cert-monitor-body">
-          <tr><td colspan="8" style="color:#64748b;font-size:0.8rem;padding:12px;text-align:center;">Click ↺ Refresh to load data</td></tr>
+          <tr><td colspan="9" style="color:#64748b;font-size:0.8rem;padding:12px;text-align:center;">Click ↺ Refresh to load data</td></tr>
         </tbody>
       </table>
     </div>
@@ -17416,6 +17417,41 @@ function initCertificatePage() {
 
 
 
+function certMonitorRegister(btn) {
+  var code = btn.dataset.code;
+  var p = PARTICIPANTS.find(function(x){ return x.code === code; });
+  if (!p) return;
+  if (!window.CWR_FIREBASE || !window.CWR_FIREBASE.databaseURL || window.CWR_FIREBASE.databaseURL.includes('REPLACE')) {
+    alert('Firebase not configured.'); return;
+  }
+  var id = certId(p.code);
+  var safeId = id.replace(/[^a-zA-Z0-9_-]/g, '_');
+  var dateStr = new Date().toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric'});
+  btn.textContent = '…';
+  btn.disabled = true;
+  fetch(window.CWR_FIREBASE.databaseURL + '/nsr_certificates/' + safeId + '.json', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      certId: id,
+      name: p.name,
+      programme: 'PostgreSQL Database Fundamentals with Performance & Tuning',
+      issueDate: dateStr,
+      issuedTo: p.code,
+      verifiedAt: new Date().toISOString(),
+      registeredByInstructor: true
+    })
+  }).then(function() {
+    btn.textContent = '✓ Done';
+    btn.style.color = '#22c55e';
+    btn.style.borderColor = '#22c55e';
+  }).catch(function(e) {
+    btn.textContent = 'Err';
+    btn.disabled = false;
+    console.error(e);
+  });
+}
+
 function certMonitorPreview(code) {
   var p = PARTICIPANTS.find(function(x){ return x.code === code; });
   if (!p) return;
@@ -17531,6 +17567,7 @@ function certMonitorRefresh() {
         + '<td style="font-size:0.75rem;color:#94a3b8;text-align:center;">' + lastDl + '</td>'
         + '<td style="font-family:monospace;font-size:0.68rem;color:#fbbf24;text-align:center;">' + id + '</td>'
         + '<td style="text-align:center;"><button data-code="' + p.code + '" onclick="certMonitorPreview(this.dataset.code)" style="background:none;border:1px solid #2563eb;color:#7dd3fc;font-size:0.72rem;padding:2px 10px;border-radius:4px;cursor:pointer;font-family:inherit;">&#9654;</button></td>'
+        + '<td style="text-align:center;"><button data-code="' + p.code + '" onclick="certMonitorRegister(this)" style="background:none;border:1px solid #22c55e;color:#86efac;font-size:0.72rem;padding:2px 8px;border-radius:4px;cursor:pointer;font-family:inherit;">&#10003; Reg</button></td>'
         + '</tr>';
     });
     var summaryHtml = '<tr style="background:#0a1628;border-top:2px solid #1e3a5f;">'
@@ -17538,9 +17575,9 @@ function certMonitorRefresh() {
       + '<td style="text-align:center;color:#f59e0b;font-size:0.75rem;font-weight:700;">' + summary.anyProgress + ' active · ' + summary.allDone + ' complete</td>'
       + '<td style="text-align:center;color:#7dd3fc;font-size:0.75rem;font-weight:700;">' + summary.accessed + ' accessed</td>'
       + '<td style="text-align:center;color:#7dd3fc;font-size:0.75rem;font-weight:700;">' + summary.downloaded + ' downloaded</td>'
-      + '<td colspan="3"></td>'
+      + '<td colspan="4"></td>'
       + '</tr>';
-    tbody.innerHTML = (rows || '<tr><td colspan="8" style="color:#64748b;padding:12px;text-align:center;">No data yet.</td></tr>') + summaryHtml;
+    tbody.innerHTML = (rows || '<tr><td colspan="9" style="color:#64748b;padding:12px;text-align:center;">No data yet.</td></tr>') + summaryHtml;
     if (status) {
       var t = new Date().toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
       status.textContent = 'Updated ' + t;
