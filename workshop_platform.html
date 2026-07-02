@@ -15489,12 +15489,26 @@ pg_restore -U postgres -d lab_nsr_restore -j 4 -F c backup.dump</pre>
             <th style="width:12%;text-align:center;">Generated</th>
             <th style="width:10%;text-align:center;">Downloads</th>
             <th style="width:16%;text-align:center;">Last Download</th>
+            <th style="width:8%;text-align:center;">Preview</th>
           </tr>
         </thead>
         <tbody id="cert-monitor-body">
           <tr><td colspan="7" style="color:#64748b;font-size:0.8rem;padding:12px;text-align:center;">Click Refresh to load data</td></tr>
         </tbody>
       </table>
+    </div>
+    <!-- Instructor certificate preview panel -->
+    <div id="cert-monitor-preview" style="display:none;margin-top:20px;border-top:1px solid #1e3a5f;padding-top:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <span id="cert-monitor-preview-name" style="color:#e2e8f0;font-weight:700;font-size:1rem;"></span>
+        <div style="display:flex;gap:8px;">
+          <button onclick="certMonitorDownload()" style="background:#2563eb;border:none;color:#fff;font-size:0.75rem;padding:5px 14px;border-radius:5px;cursor:pointer;font-family:inherit;">&#8595; Download PNG</button>
+          <button onclick="document.getElementById('cert-monitor-preview').style.display='none'" style="background:none;border:1px solid #475569;color:#94a3b8;font-size:0.75rem;padding:5px 12px;border-radius:5px;cursor:pointer;font-family:inherit;">&#10005; Close</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <canvas id="cert-monitor-canvas" width="1400" height="990" style="width:100%;border:1px solid #1e3a5f;border-radius:6px;"></canvas>
+      </div>
     </div>
   </div>
 
@@ -17387,6 +17401,45 @@ function initCertificatePage() {
 }
 
 
+
+function certMonitorPreview(code) {
+  var p = PARTICIPANTS.find(function(x){ return x.code === code; });
+  if (!p) return;
+  var id = certId(p.code);
+  var dateStr = new Date().toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric'});
+  var panel = document.getElementById('cert-monitor-preview');
+  var nameEl = document.getElementById('cert-monitor-preview-name');
+  var canvas = document.getElementById('cert-monitor-canvas');
+  if (!panel || !canvas) return;
+
+  nameEl.textContent = p.name + '  —  ' + id;
+  panel.style.display = 'block';
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  // Draw immediately without QR, then overlay QR once loaded
+  drawCertificate(canvas, p.name, id, dateStr, null);
+
+  var verifyUrl = 'https://tertsegha1.github.io/postgresql-workshop.html?verify=' + encodeURIComponent(id);
+  var qrImg = new Image();
+  qrImg.crossOrigin = 'anonymous';
+  qrImg.onload = function() {
+    drawCertificate(canvas, p.name, id, dateStr, qrImg);
+  };
+  qrImg.onerror = function() {};
+  qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&color=0C2340&bgcolor=FFFFFF&data=' + encodeURIComponent(verifyUrl);
+}
+
+function certMonitorDownload() {
+  var canvas = document.getElementById('cert-monitor-canvas');
+  var nameEl = document.getElementById('cert-monitor-preview-name');
+  if (!canvas) return;
+  var namePart = (nameEl.textContent || 'certificate').split('—')[0].trim().replace(/\s+/g, '_');
+  var link = document.createElement('a');
+  link.download = 'AUKTIE_Certificate_' + namePart + '.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
 function certMonitorRefresh() {
   var status = document.getElementById('cert-monitor-status');
   var tbody  = document.getElementById('cert-monitor-body');
@@ -17429,6 +17482,7 @@ function certMonitorRefresh() {
           + '<td style="text-align:center;font-size:1.1rem;color:' + genColor + ';">' + generated + '</td>'
           + '<td style="text-align:center;">' + dlBadge + '</td>'
           + '<td style="font-size:0.75rem;color:#94a3b8;text-align:center;">' + lastDl + '</td>'
+          + '<td style="text-align:center;"><button data-code="' + p.code + '" onclick="certMonitorPreview(this.dataset.code)" style="background:none;border:1px solid #2563eb;color:#7dd3fc;font-size:0.72rem;padding:2px 10px;border-radius:4px;cursor:pointer;font-family:inherit;">&#9654; Preview</button></td>'
           + '</tr>';
       });
       tbody.innerHTML = rows || '<tr><td colspan="7" style="color:#64748b;padding:12px;text-align:center;">No certificate records yet.</td></tr>';
