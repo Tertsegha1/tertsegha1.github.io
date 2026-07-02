@@ -17533,12 +17533,9 @@ function certMonitorRefresh() {
       var rec  = certData[safeId];
       var prog = progData[p.code];
       // Progress
-      var doneCount = 0;
-      if (prog && prog.done) {
-        doneCount = Object.values(prog.done).filter(Boolean).length;
-      } else if (rec) {
-        doneCount = TOTAL_DAYS;
-      }
+      var doneCount = prog && prog.done ? Object.values(prog.done).filter(Boolean).length : 0;
+      // Cap at TOTAL_DAYS in case of stale keys in state.done
+      doneCount = Math.min(doneCount, TOTAL_DAYS);
       if (doneCount > 0) summary.anyProgress++;
       if (doneCount >= TOTAL_DAYS) summary.allDone++;
       var pct = Math.round(doneCount / TOTAL_DAYS * 100);
