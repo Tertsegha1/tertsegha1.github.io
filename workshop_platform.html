@@ -15483,17 +15483,17 @@ pg_restore -U postgres -d lab_nsr_restore -j 4 -F c backup.dump</pre>
         <thead>
           <tr>
             <th style="width:3%;">#</th>
-            <th style="width:25%;">Participant</th>
-            <th style="width:20%;">Certificate ID</th>
-            <th style="width:14%;">Issued</th>
-            <th style="width:12%;text-align:center;">Generated</th>
+            <th style="width:22%;">Participant</th>
+            <th style="width:17%;text-align:center;">Progress</th>
+            <th style="width:14%;text-align:center;">Cert Accessed</th>
             <th style="width:10%;text-align:center;">Downloads</th>
             <th style="width:16%;text-align:center;">Last Download</th>
+            <th style="width:10%;text-align:center;">Certificate ID</th>
             <th style="width:8%;text-align:center;">Preview</th>
           </tr>
         </thead>
         <tbody id="cert-monitor-body">
-          <tr><td colspan="7" style="color:#64748b;font-size:0.8rem;padding:12px;text-align:center;">Click Refresh to load data</td></tr>
+          <tr><td colspan="8" style="color:#64748b;font-size:0.8rem;padding:12px;text-align:center;">Click ↺ Refresh to load data</td></tr>
         </tbody>
       </table>
     </div>
@@ -16586,6 +16586,14 @@ function renderCohort() {
 function saveState() {
   if (!currentUser) return;
   localStorage.setItem(stateKey(currentUser), JSON.stringify(state));
+  if (currentUser !== 'INST' && window.CWR_FIREBASE && window.CWR_FIREBASE.databaseURL && !window.CWR_FIREBASE.databaseURL.includes('REPLACE')) {
+    var doneCount = Object.values(state.done || {}).filter(Boolean).length;
+    fetch(window.CWR_FIREBASE.databaseURL + '/nsr_progress/' + currentUser + '.json', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ done: state.done || {}, doneCount: doneCount, lastSeen: new Date().toISOString() })
+    }).catch(function(){});
+  }
 }
 
 // ===== QUIZ DATA & RENDERER =====
@@ -17380,6 +17388,12 @@ function initCertificatePage() {
             verifiedAt: new Date().toISOString()
           })
         }).catch(function(){});
+        // Log cert page access event
+        fetch(window.CWR_FIREBASE.databaseURL + '/nsr_certificates/' + safeId + '/accesses.json', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ at: new Date().toISOString(), ua: navigator.userAgent.slice(0, 80) })
+        }).catch(function(){});
       }
       // Generate QR code then draw certificate
       const qrImg = new Image();
@@ -17449,52 +17463,93 @@ function certMonitorRefresh() {
     return;
   }
   if (status) status.textContent = 'Loading…';
-  fetch(window.CWR_FIREBASE.databaseURL + '/nsr_certificates.json')
-    .then(function(r){ return r.json(); })
-    .then(function(data) {
-      var rows = '';
-      PARTICIPANTS.forEach(function(p, idx) {
-        if (p.name.indexOf('Spare') === 0) return;
-        var id = certId(p.code);
-        var safeId = id.replace(/[^a-zA-Z0-9_-]/g, '_');
-        var rec = data && data[safeId];
-        var generated = rec ? '✅' : '—';
-        var genColor  = rec ? '#22c55e' : '#475569';
-        var dlCount = 0, lastDl = '—';
-        if (rec && rec.downloads) {
-          var dlVals = Object.values(rec.downloads);
-          dlCount = dlVals.length;
-          var sorted = dlVals.map(function(d){ return d.at || ''; }).filter(Boolean).sort();
-          if (sorted.length) {
-            var d = new Date(sorted[sorted.length - 1]);
-            lastDl = d.toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'})
-              + ' ' + d.toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit'});
-          }
-        }
-        var dlBadge = dlCount > 0
-          ? '<span style="background:#1e3a5f;color:#7dd3fc;border-radius:999px;padding:1px 10px;font-size:0.8rem;font-weight:700;">' + dlCount + '</span>'
-          : '<span style="color:#475569">—</span>';
-        rows += '<tr>'
-          + '<td style="color:#64748b;">' + (idx + 1) + '</td>'
-          + '<td style="font-weight:600;">' + p.name + '<br><span style="color:#64748b;font-size:0.72rem;font-weight:400;">' + p.code + '</span></td>'
-          + '<td style="font-family:monospace;font-size:0.75rem;color:#fbbf24;">' + id + '</td>'
-          + '<td style="font-size:0.78rem;color:#94a3b8;">' + (rec && rec.issueDate ? rec.issueDate : '—') + '</td>'
-          + '<td style="text-align:center;font-size:1.1rem;color:' + genColor + ';">' + generated + '</td>'
-          + '<td style="text-align:center;">' + dlBadge + '</td>'
-          + '<td style="font-size:0.75rem;color:#94a3b8;text-align:center;">' + lastDl + '</td>'
-          + '<td style="text-align:center;"><button data-code="' + p.code + '" onclick="certMonitorPreview(this.dataset.code)" style="background:none;border:1px solid #2563eb;color:#7dd3fc;font-size:0.72rem;padding:2px 10px;border-radius:4px;cursor:pointer;font-family:inherit;">&#9654; Preview</button></td>'
-          + '</tr>';
-      });
-      tbody.innerHTML = rows || '<tr><td colspan="7" style="color:#64748b;padding:12px;text-align:center;">No certificate records yet.</td></tr>';
-      if (status) {
-        var t = new Date().toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
-        status.textContent = 'Updated ' + t;
+  Promise.all([
+    fetch(window.CWR_FIREBASE.databaseURL + '/nsr_certificates.json').then(function(r){ return r.json(); }).catch(function(){ return null; }),
+    fetch(window.CWR_FIREBASE.databaseURL + '/nsr_progress.json').then(function(r){ return r.json(); }).catch(function(){ return null; })
+  ]).then(function(results) {
+    var certData = results[0] || {};
+    var progData = results[1] || {};
+    var TOTAL_DAYS = 9;
+    function fmtTime(isoStr) {
+      if (!isoStr) return '—';
+      var d = new Date(isoStr);
+      return d.toLocaleDateString('en-GB', {day:'2-digit',month:'short'})
+        + ' ' + d.toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit'});
+    }
+    var rows = '';
+    var summary = {total:0, anyProgress:0, allDone:0, accessed:0, downloaded:0};
+    PARTICIPANTS.forEach(function(p, idx) {
+      if (p.name.indexOf('Spare') === 0) return;
+      summary.total++;
+      var id = certId(p.code);
+      var safeId = id.replace(/[^a-zA-Z0-9_-]/g, '_');
+      var rec  = certData[safeId];
+      var prog = progData[p.code];
+      // Progress
+      var doneCount = 0;
+      if (prog && prog.done) {
+        doneCount = Object.values(prog.done).filter(Boolean).length;
+      } else if (rec) {
+        doneCount = TOTAL_DAYS;
       }
-    })
-    .catch(function(e) {
-      if (status) status.textContent = 'Error: ' + e.message;
+      if (doneCount > 0) summary.anyProgress++;
+      if (doneCount >= TOTAL_DAYS) summary.allDone++;
+      var pct = Math.round(doneCount / TOTAL_DAYS * 100);
+      var barColor = doneCount >= TOTAL_DAYS ? '#22c55e' : doneCount > 0 ? '#f59e0b' : '#334155';
+      var progressCell = '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">'
+        + '<span style="font-size:0.72rem;font-weight:700;color:' + barColor + ';">' + doneCount + '/' + TOTAL_DAYS + '</span>'
+        + '<div style="width:72px;height:6px;background:#1e293b;border-radius:3px;overflow:hidden;">'
+        + '<div style="width:' + pct + '%;height:100%;background:' + barColor + ';border-radius:3px;"></div>'
+        + '</div></div>';
+      // Cert access
+      var firstAccess = '—';
+      if (rec && rec.accesses) {
+        var ats = Object.values(rec.accesses).map(function(a){ return a.at || ''; }).filter(Boolean).sort();
+        if (ats.length) { firstAccess = fmtTime(ats[0]); summary.accessed++; }
+      }
+      // Downloads
+      var dlCount = 0, lastDl = '—';
+      if (rec && rec.downloads) {
+        var dlVals = Object.values(rec.downloads);
+        dlCount = dlVals.length;
+        var sorted = dlVals.map(function(d){ return d.at || ''; }).filter(Boolean).sort();
+        if (sorted.length) { lastDl = fmtTime(sorted[sorted.length - 1]); summary.downloaded++; }
+      }
+      var dlBadge = dlCount > 0
+        ? '<span style="background:#1e3a5f;color:#7dd3fc;border-radius:999px;padding:1px 10px;font-size:0.8rem;font-weight:700;">' + dlCount + '</span>'
+        : '<span style="color:#475569">—</span>';
+      var lastSeen = prog && prog.lastSeen ? fmtTime(prog.lastSeen) : '';
+      rows += '<tr>'
+        + '<td style="color:#64748b;">' + (idx + 1) + '</td>'
+        + '<td style="font-weight:600;">' + p.name
+          + '<br><span style="color:#64748b;font-size:0.72rem;font-weight:400;">' + p.code + '</span>'
+          + (lastSeen ? '<br><span style="color:#475569;font-size:0.68rem;">seen ' + lastSeen + '</span>' : '')
+          + '</td>'
+        + '<td style="text-align:center;">' + progressCell + '</td>'
+        + '<td style="font-size:0.75rem;color:#94a3b8;text-align:center;">' + firstAccess + '</td>'
+        + '<td style="text-align:center;">' + dlBadge + '</td>'
+        + '<td style="font-size:0.75rem;color:#94a3b8;text-align:center;">' + lastDl + '</td>'
+        + '<td style="font-family:monospace;font-size:0.68rem;color:#fbbf24;text-align:center;">' + id + '</td>'
+        + '<td style="text-align:center;"><button data-code="' + p.code + '" onclick="certMonitorPreview(this.dataset.code)" style="background:none;border:1px solid #2563eb;color:#7dd3fc;font-size:0.72rem;padding:2px 10px;border-radius:4px;cursor:pointer;font-family:inherit;">&#9654;</button></td>'
+        + '</tr>';
     });
+    var summaryHtml = '<tr style="background:#0a1628;border-top:2px solid #1e3a5f;">'
+      + '<td colspan="2" style="color:#94a3b8;font-size:0.72rem;padding:8px 6px;font-weight:600;">SUMMARY (' + summary.total + ' participants)</td>'
+      + '<td style="text-align:center;color:#f59e0b;font-size:0.75rem;font-weight:700;">' + summary.anyProgress + ' active · ' + summary.allDone + ' complete</td>'
+      + '<td style="text-align:center;color:#7dd3fc;font-size:0.75rem;font-weight:700;">' + summary.accessed + ' accessed</td>'
+      + '<td style="text-align:center;color:#7dd3fc;font-size:0.75rem;font-weight:700;">' + summary.downloaded + ' downloaded</td>'
+      + '<td colspan="3"></td>'
+      + '</tr>';
+    tbody.innerHTML = (rows || '<tr><td colspan="8" style="color:#64748b;padding:12px;text-align:center;">No data yet.</td></tr>') + summaryHtml;
+    if (status) {
+      var t = new Date().toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+      status.textContent = 'Updated ' + t;
+    }
+  }).catch(function(e) {
+    if (status) status.textContent = 'Error: ' + e.message;
+  });
 }
+
 
 function drawSampleCertificate() {
   const canvas = document.getElementById('cert-sample-canvas');
