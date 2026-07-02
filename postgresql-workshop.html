@@ -17424,32 +17424,44 @@ function certMonitorRegister(btn) {
   if (!window.CWR_FIREBASE || !window.CWR_FIREBASE.databaseURL || window.CWR_FIREBASE.databaseURL.includes('REPLACE')) {
     alert('Firebase not configured.'); return;
   }
-  var id = certId(p.code);
-  var safeId = id.replace(/[^a-zA-Z0-9_-]/g, '_');
-  var dateStr = new Date().toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric'});
-  btn.textContent = '…';
-  btn.disabled = true;
-  fetch(window.CWR_FIREBASE.databaseURL + '/nsr_certificates/' + safeId + '.json', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      certId: id,
-      name: p.name,
-      programme: 'PostgreSQL Database Fundamentals with Performance & Tuning',
-      issueDate: dateStr,
-      issuedTo: p.code,
-      verifiedAt: new Date().toISOString(),
-      registeredByInstructor: true
-    })
-  }).then(function() {
-    btn.textContent = '✓ Done';
-    btn.style.color = '#22c55e';
-    btn.style.borderColor = '#22c55e';
-  }).catch(function(e) {
-    btn.textContent = 'Err';
-    btn.disabled = false;
-    console.error(e);
-  });
+  fetch(window.CWR_FIREBASE.databaseURL + '/nsr_progress/' + p.code + '.json')
+    .then(function(r){ return r.json(); })
+    .then(function(prog) {
+      var TOTAL_DAYS = 9;
+      var doneCount = prog && prog.done ? Object.values(prog.done).filter(Boolean).length : 0;
+      if (doneCount < TOTAL_DAYS) {
+        if (!confirm(p.name + ' has only completed ' + doneCount + ' of ' + TOTAL_DAYS + ' days.
+Register their certificate anyway?')) return;
+      }
+      var id = certId(p.code);
+      var safeId = id.replace(/[^a-zA-Z0-9_-]/g, '_');
+      var dateStr = new Date().toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric'});
+      btn.textContent = '…';
+      btn.disabled = true;
+      fetch(window.CWR_FIREBASE.databaseURL + '/nsr_certificates/' + safeId + '.json', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          certId: id,
+          name: p.name,
+          programme: 'PostgreSQL Database Fundamentals with Performance & Tuning',
+          issueDate: dateStr,
+          issuedTo: p.code,
+          verifiedAt: new Date().toISOString(),
+          registeredByInstructor: true
+        })
+      }).then(function() {
+        btn.textContent = '✓ Done';
+        btn.style.color = '#22c55e';
+        btn.style.borderColor = '#22c55e';
+      }).catch(function(e) {
+        btn.textContent = 'Err';
+        btn.disabled = false;
+      });
+    }).catch(function() {
+      if (!confirm('Could not verify progress for ' + p.name + '. Register anyway?')) return;
+      certMonitorRegister(btn);
+    });
 }
 
 function certMonitorPreview(code) {
