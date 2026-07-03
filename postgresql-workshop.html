@@ -15230,7 +15230,13 @@ $$;
     <div class="section-header"><div class="section-icon si-blue">🎤</div><h2>Final Presentations</h2></div>
     <div class="callout info"><div class="callout-title">Format</div>Each participant presents a 5-minute summary of the most valuable thing they learned and one specific change they will implement in their organisation's data systems. Prepare brief notes below.</div>
     <h3>My Presentation Notes</h3>
-    <div class="answer-area" style="min-height:120px">The most valuable thing I learned:<br><br>One specific change I will implement:<br><br>How I will measure success (a concrete metric or outcome):<br><br>One question I still have that I want to investigate:</div>
+    <textarea id="presentation-notes" oninput="savePresentationNotes()" placeholder="The most valuable thing I learned:
+
+One specific change I will implement:
+
+How I will measure success (a concrete metric or outcome):
+
+One question I still have that I want to investigate:" style="width:100%;box-sizing:border-box;min-height:180px;padding:12px;border:2px dashed var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-main);font-size:0.85rem;font-family:inherit;resize:vertical;line-height:1.6;"></textarea>
   </div>
 
   <!-- WHERE TO GO NEXT -->
@@ -16405,7 +16411,7 @@ function showPage(id) {
   if (nav) nav.classList.add('active');
   if (id === 'progress') renderProgress();
   if (id === 'certificate') initCertificatePage();
-  if (id === 'day8') loadReflection();
+  if (id === 'day8') { loadReflection(); loadPresentationNotes(); }
   if (id === 'day5') { setTimeout(function(){ if(typeof checkShowWelcome==='function') checkShowWelcome(); }, 80); }
   closeSidebar();
   window.scrollTo(0,0);
@@ -17630,6 +17636,19 @@ function loadReflection() {
     if (after    && saved.after)    after.value    = saved.after;
     if (takeaway && saved.takeaway) takeaway.value = saved.takeaway;
   });
+}
+
+function savePresentationNotes() {
+  var el = document.getElementById('presentation-notes');
+  if (!el) return;
+  state.presentationNotes = el.value;
+  saveState();
+}
+
+function loadPresentationNotes() {
+  var el = document.getElementById('presentation-notes');
+  if (!el) return;
+  if (state.presentationNotes) el.value = state.presentationNotes;
 }
 
 function drawSampleCertificate() {
