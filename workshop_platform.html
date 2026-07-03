@@ -15255,16 +15255,19 @@ $$;
   <div class="section">
     <div class="section-header"><div class="section-icon si-green">📊</div><h2>Programme Reflection</h2></div>
     <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:12px;">Rate your confidence honestly — 1 = not confident at all, 5 = could teach this to a colleague. The gaps are what to work on first when you get back.</p>
-    <table>
-      <tr><th>Day</th><th>Topic</th><th>Confidence before (1–5)</th><th>Confidence after (1–5)</th><th>Key takeaway in one sentence</th></tr>
-      <tr><td>D1</td><td>Foundations &amp; Architecture</td><td></td><td></td><td></td></tr>
-      <tr><td>D2</td><td>SQL Fundamentals</td><td></td><td></td><td></td></tr>
-      <tr><td>D3</td><td>Admin, Security &amp; Backup</td><td></td><td></td><td></td></tr>
-      <tr><td>D4</td><td>Study Visit</td><td></td><td></td><td></td></tr>
-      <tr><td>D5</td><td>Assessment</td><td></td><td></td><td></td></tr>
-      <tr><td>D6</td><td>Performance Tuning</td><td></td><td></td><td></td></tr>
-      <tr><td>D7</td><td>ETL/ELT &amp; Governance</td><td></td><td></td><td></td></tr>
+    <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;">
+      <tr><th style="white-space:nowrap;">Day</th><th>Topic</th><th style="white-space:nowrap;text-align:center;">Before (1–5)</th><th style="white-space:nowrap;text-align:center;">After (1–5)</th><th>Key Takeaway</th></tr>
+      <tr><td style="white-space:nowrap;font-weight:600;">D1</td><td>Foundations &amp; Architecture</td><td style="min-width:130px;"><select id="ref-d1-before" onchange="saveReflection()" style="background:var(--bg-card);color:var(--text-main);border:1px solid var(--border);border-radius:4px;padding:3px 6px;font-size:0.82rem;width:100%;"><option value="">—</option><option value="1">1 · Not at all</option><option value="2">2 · Slightly</option><option value="3">3 · Moderately</option><option value="4">4 · Confident</option><option value="5">5 · Could teach it</option></select></td><td style="min-width:130px;"><select id="ref-d1-after" onchange="saveReflection()" style="background:var(--bg-card);color:var(--text-main);border:1px solid var(--border);border-radius:4px;padding:3px 6px;font-size:0.82rem;width:100%;"><option value="">—</option><option value="1">1 · Not at all</option><option value="2">2 · Slightly</option><option value="3">3 · Moderately</option><option value="4">4 · Confident</option><option value="5">5 · Could teach it</option></select></td><td style="min-width:220px;"><input type="text" id="ref-d1-takeaway" oninput="saveReflection()" placeholder="Your key takeaway…" style="background:var(--bg-card);color:var(--text-main);border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-size:0.82rem;width:100%;box-sizing:border-box;"></td></tr>
+      <tr><td style="white-space:nowrap;font-weight:600;">D2</td><td>SQL Fundamentals</td><td style="min-width:130px;"><select id="ref-d2-before" onchange="saveReflection()" style="background:var(--bg-card);color:var(--text-main);border:1px solid var(--border);border-radius:4px;padding:3px 6px;font-size:0.82rem;width:100%;"><option value="">—</option><option value="1">1 · Not at all</option><option value="2">2 · Slightly</option><option value="3">3 · Moderately</option><option value="4">4 · Confident</option><option value="5">5 · Could teach it</option></select></td><td style="min-width:130px;"><select id="ref-d2-after" onchange="saveReflection()" style="background:var(--bg-card);color:var(--text-main);border:1px solid var(--border);border-radius:4px;padding:3px 6px;font-size:0.82rem;width:100%;"><option value="">—</option><option value="1">1 · Not at all</option><option value="2">2 · Slightly</option><option value="3">3 · Moderately</option><option value="4">4 · Confident</option><option value="5">5 · Could teach it</option></select></td><td style="min-width:220px;"><input type="text" id="ref-d2-takeaway" oninput="saveReflection()" placeholder="Your key takeaway…" style="background:var(--bg-card);color:var(--text-main);border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-size:0.82rem;width:100%;box-sizing:border-box;"></td></tr>
+      <tr><td style="white-space:nowrap;font-weight:600;">D3</td><td>Admin, Security &amp; Backup</td><td style="min-width:130px;"><select id="ref-d3-before" onchange="saveReflection()" style="background:var(--bg-card);color:var(--text-main);border:1px solid var(--border);border-radius:4px;padding:3px 6px;font-size:0.82rem;width:100%;"><option value="">—</option><option value="1">1 · Not at all</option><option value="2">2 · Slightly</option><option value="3">3 · Moderately</option><option value="4">4 · Confident</option><option value="5">5 · Could teach it</option></select></td><td style="min-width:130px;"><select id="ref-d3-after" onchange="saveReflection()" style="background:var(--bg-card);color:var(--text-main);border:1px solid var(--border);border-radius:4px;padding:3px 6px;font-size:0.82rem;width:100%;"><option value="">—</option><option value="1">1 · Not at all</option><option value="2">2 · Slightly</option><option value="3">3 · Moderately</option><option value="4">4 · Confident</option><option value="5">5 · Could teach it</option></select></td><td style="min-width:220px;"><input type="text" id="ref-d3-takeaway" oninput="saveReflection()" placeholder="Your key takeaway…" style="background:var(--bg-card);color:var(--text-main);border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-size:0.82rem;width:100%;box-sizing:border-box;"></td></tr>
+      <tr><td style="white-space:nowrap;font-weight:600;">D4</td><td>Study Visit</td><td style="min-width:130px;"><select id="ref-d4-before" onchange="saveReflection()" style="background:var(--bg-card);color:var(--text-main);border:1px solid var(--border);border-radius:4px;padding:3px 6px;font-size:0.82rem;width:100%;"><option value="">—</option><option value="1">1 · Not at all</option><option value="2">2 · Slightly</option><option value="3">3 · Moderately</option><option value="4">4 · Confident</option><option value="5">5 · Could teach it</option></select></td><td style="min-width:130px;"><select id="ref-d4-after" onchange="saveReflection()" style="background:var(--bg-card);color:var(--text-main);border:1px solid var(--border);border-radius:4px;padding:3px 6px;font-size:0.82rem;width:100%;"><option value="">—</option><option value="1">1 · Not at all</option><option value="2">2 · Slightly</option><option value="3">3 · Moderately</option><option value="4">4 · Confident</option><option value="5">5 · Could teach it</option></select></td><td style="min-width:220px;"><input type="text" id="ref-d4-takeaway" oninput="saveReflection()" placeholder="Your key takeaway…" style="background:var(--bg-card);color:var(--text-main);border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-size:0.82rem;width:100%;box-sizing:border-box;"></td></tr>
+      <tr><td style="white-space:nowrap;font-weight:600;">D5</td><td>Assessment</td><td style="min-width:130px;"><select id="ref-d5-before" onchange="saveReflection()" style="background:var(--bg-card);color:var(--text-main);border:1px solid var(--border);border-radius:4px;padding:3px 6px;font-size:0.82rem;width:100%;"><option value="">—</option><option value="1">1 · Not at all</option><option value="2">2 · Slightly</option><option value="3">3 · Moderately</option><option value="4">4 · Confident</option><option value="5">5 · Could teach it</option></select></td><td style="min-width:130px;"><select id="ref-d5-after" onchange="saveReflection()" style="background:var(--bg-card);color:var(--text-main);border:1px solid var(--border);border-radius:4px;padding:3px 6px;font-size:0.82rem;width:100%;"><option value="">—</option><option value="1">1 · Not at all</option><option value="2">2 · Slightly</option><option value="3">3 · Moderately</option><option value="4">4 · Confident</option><option value="5">5 · Could teach it</option></select></td><td style="min-width:220px;"><input type="text" id="ref-d5-takeaway" oninput="saveReflection()" placeholder="Your key takeaway…" style="background:var(--bg-card);color:var(--text-main);border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-size:0.82rem;width:100%;box-sizing:border-box;"></td></tr>
+      <tr><td style="white-space:nowrap;font-weight:600;">D6</td><td>Performance Tuning</td><td style="min-width:130px;"><select id="ref-d6-before" onchange="saveReflection()" style="background:var(--bg-card);color:var(--text-main);border:1px solid var(--border);border-radius:4px;padding:3px 6px;font-size:0.82rem;width:100%;"><option value="">—</option><option value="1">1 · Not at all</option><option value="2">2 · Slightly</option><option value="3">3 · Moderately</option><option value="4">4 · Confident</option><option value="5">5 · Could teach it</option></select></td><td style="min-width:130px;"><select id="ref-d6-after" onchange="saveReflection()" style="background:var(--bg-card);color:var(--text-main);border:1px solid var(--border);border-radius:4px;padding:3px 6px;font-size:0.82rem;width:100%;"><option value="">—</option><option value="1">1 · Not at all</option><option value="2">2 · Slightly</option><option value="3">3 · Moderately</option><option value="4">4 · Confident</option><option value="5">5 · Could teach it</option></select></td><td style="min-width:220px;"><input type="text" id="ref-d6-takeaway" oninput="saveReflection()" placeholder="Your key takeaway…" style="background:var(--bg-card);color:var(--text-main);border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-size:0.82rem;width:100%;box-sizing:border-box;"></td></tr>
+      <tr><td style="white-space:nowrap;font-weight:600;">D7</td><td>ETL/ELT &amp; Governance</td><td style="min-width:130px;"><select id="ref-d7-before" onchange="saveReflection()" style="background:var(--bg-card);color:var(--text-main);border:1px solid var(--border);border-radius:4px;padding:3px 6px;font-size:0.82rem;width:100%;"><option value="">—</option><option value="1">1 · Not at all</option><option value="2">2 · Slightly</option><option value="3">3 · Moderately</option><option value="4">4 · Confident</option><option value="5">5 · Could teach it</option></select></td><td style="min-width:130px;"><select id="ref-d7-after" onchange="saveReflection()" style="background:var(--bg-card);color:var(--text-main);border:1px solid var(--border);border-radius:4px;padding:3px 6px;font-size:0.82rem;width:100%;"><option value="">—</option><option value="1">1 · Not at all</option><option value="2">2 · Slightly</option><option value="3">3 · Moderately</option><option value="4">4 · Confident</option><option value="5">5 · Could teach it</option></select></td><td style="min-width:220px;"><input type="text" id="ref-d7-takeaway" oninput="saveReflection()" placeholder="Your key takeaway…" style="background:var(--bg-card);color:var(--text-main);border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-size:0.82rem;width:100%;box-sizing:border-box;"></td></tr>
+      <tr><td style="white-space:nowrap;font-weight:600;">D8</td><td>Programme Closure</td><td style="min-width:130px;"><select id="ref-d8-before" onchange="saveReflection()" style="background:var(--bg-card);color:var(--text-main);border:1px solid var(--border);border-radius:4px;padding:3px 6px;font-size:0.82rem;width:100%;"><option value="">—</option><option value="1">1 · Not at all</option><option value="2">2 · Slightly</option><option value="3">3 · Moderately</option><option value="4">4 · Confident</option><option value="5">5 · Could teach it</option></select></td><td style="min-width:130px;"><select id="ref-d8-after" onchange="saveReflection()" style="background:var(--bg-card);color:var(--text-main);border:1px solid var(--border);border-radius:4px;padding:3px 6px;font-size:0.82rem;width:100%;"><option value="">—</option><option value="1">1 · Not at all</option><option value="2">2 · Slightly</option><option value="3">3 · Moderately</option><option value="4">4 · Confident</option><option value="5">5 · Could teach it</option></select></td><td style="min-width:220px;"><input type="text" id="ref-d8-takeaway" oninput="saveReflection()" placeholder="Your key takeaway…" style="background:var(--bg-card);color:var(--text-main);border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-size:0.82rem;width:100%;box-sizing:border-box;"></td></tr>
     </table>
+    </div>
   </div>
 
   <div class="section">
@@ -16402,6 +16405,7 @@ function showPage(id) {
   if (nav) nav.classList.add('active');
   if (id === 'progress') renderProgress();
   if (id === 'certificate') initCertificatePage();
+  if (id === 'day8') loadReflection();
   if (id === 'day5') { setTimeout(function(){ if(typeof checkShowWelcome==='function') checkShowWelcome(); }, 80); }
   closeSidebar();
   window.scrollTo(0,0);
@@ -17595,6 +17599,38 @@ function certMonitorRefresh() {
   });
 }
 
+
+function saveReflection() {
+  if (!currentUser) return;
+  var r = state.reflection || {};
+  ['d1','d2','d3','d4','d5','d6','d7','d8'].forEach(function(day) {
+    var before   = document.getElementById('ref-' + day + '-before');
+    var after    = document.getElementById('ref-' + day + '-after');
+    var takeaway = document.getElementById('ref-' + day + '-takeaway');
+    if (before || after || takeaway) {
+      r[day] = {
+        before:   before   ? before.value   : (r[day] && r[day].before   || ''),
+        after:    after    ? after.value    : (r[day] && r[day].after    || ''),
+        takeaway: takeaway ? takeaway.value : (r[day] && r[day].takeaway || '')
+      };
+    }
+  });
+  state.reflection = r;
+  saveState();
+}
+
+function loadReflection() {
+  var r = state.reflection || {};
+  ['d1','d2','d3','d4','d5','d6','d7','d8'].forEach(function(day) {
+    var saved = r[day] || {};
+    var before   = document.getElementById('ref-' + day + '-before');
+    var after    = document.getElementById('ref-' + day + '-after');
+    var takeaway = document.getElementById('ref-' + day + '-takeaway');
+    if (before   && saved.before)   before.value   = saved.before;
+    if (after    && saved.after)    after.value    = saved.after;
+    if (takeaway && saved.takeaway) takeaway.value = saved.takeaway;
+  });
+}
 
 function drawSampleCertificate() {
   const canvas = document.getElementById('cert-sample-canvas');
