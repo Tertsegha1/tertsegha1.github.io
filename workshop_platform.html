@@ -14975,7 +14975,17 @@ $$;
       </div>
       <div class="exercise-body" style="display:none">
         <p>Before loading any data, confirm the NSR schema is in the expected state. Write queries to: (a) list all tables in the <code>nsr</code> schema, (b) show how many active households exist per state, and (c) confirm Plateau State (<code>'PL'</code>) is already in <code>nsr.states</code>. If it is missing, insert it.</p>
-        <textarea id="capstone-c1" oninput="saveCapstone()" placeholder="Write your SQL here…" style="width:100%;box-sizing:border-box;min-height:120px;padding:12px;border:2px dashed var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-main);font-size:0.85rem;font-family:monospace;resize:vertical;line-height:1.6;margin-top:12px;"></textarea>
+        <div style="margin-top:14px;border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+  <div style="background:#0a1628;padding:7px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">
+    <span style="color:#64748b;font-size:0.72rem;font-family:monospace;">postgresql://nsr_training &nbsp;·&nbsp; <span id="capstone-db-badge" style="color:#475569;">loading…</span></span>
+    <div style="display:flex;gap:6px;">
+      <button onclick="runCapstone('c1')" style="background:#1e3a5f;border:1px solid #2563eb;color:#7dd3fc;font-size:0.75rem;padding:3px 14px;border-radius:4px;cursor:pointer;font-family:inherit;">&#9654; Run</button>
+      <button onclick="clearCapstoneOut('c1')" style="background:none;border:1px solid #334155;color:#64748b;font-size:0.72rem;padding:3px 9px;border-radius:4px;cursor:pointer;font-family:inherit;">&#10005;</button>
+    </div>
+  </div>
+  <textarea id="capstone-c1" oninput="saveCapstone()" placeholder="Write your SQL here…" style="width:100%;box-sizing:border-box;min-height:140px;padding:12px;background:#071120;color:#e2e8f0;border:none;outline:none;font-size:0.85rem;font-family:monospace;resize:vertical;line-height:1.7;border-bottom:1px solid var(--border);display:block;"></textarea>
+  <div id="capstone-c1-out" style="min-height:36px;max-height:320px;overflow-y:auto;padding:10px 14px;background:#050c1e;font-family:monospace;font-size:0.76rem;color:#94a3b8;"><span style="color:#334155;">Run your query to see results here.</span></div>
+</div>
         <div class="answer-reveal" id="ans-d8-c1">
           <div class="callout tip"><div class="callout-title">Full Solution</div></div>
           <div class="code-block">
@@ -15038,7 +15048,17 @@ $$;
       </div>
       <div class="exercise-body" style="display:none">
         <p>Create a login role <code>nsr_plateau_officer</code> with a password. Grant it the minimum permissions needed to: read households and individuals in <code>nsr</code>, and insert into <code>nsr.stg_households</code>. Enable RLS on <code>nsr.households</code> and create a policy that restricts this role to Plateau State rows only. Test that a Kano household is invisible when logged in as the new role.</p>
-        <textarea id="capstone-c2" oninput="saveCapstone()" placeholder="Write your SQL here…" style="width:100%;box-sizing:border-box;min-height:120px;padding:12px;border:2px dashed var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-main);font-size:0.85rem;font-family:monospace;resize:vertical;line-height:1.6;margin-top:12px;"></textarea>
+        <div style="margin-top:14px;border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+  <div style="background:#0a1628;padding:7px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">
+    <span style="color:#64748b;font-size:0.72rem;font-family:monospace;">postgresql://nsr_training &nbsp;·&nbsp; <span id="capstone-db-badge" style="color:#475569;">loading…</span></span>
+    <div style="display:flex;gap:6px;">
+      <button onclick="runCapstone('c2')" style="background:#1e3a5f;border:1px solid #2563eb;color:#7dd3fc;font-size:0.75rem;padding:3px 14px;border-radius:4px;cursor:pointer;font-family:inherit;">&#9654; Run</button>
+      <button onclick="clearCapstoneOut('c2')" style="background:none;border:1px solid #334155;color:#64748b;font-size:0.72rem;padding:3px 9px;border-radius:4px;cursor:pointer;font-family:inherit;">&#10005;</button>
+    </div>
+  </div>
+  <textarea id="capstone-c2" oninput="saveCapstone()" placeholder="Write your SQL here…" style="width:100%;box-sizing:border-box;min-height:140px;padding:12px;background:#071120;color:#e2e8f0;border:none;outline:none;font-size:0.85rem;font-family:monospace;resize:vertical;line-height:1.7;border-bottom:1px solid var(--border);display:block;"></textarea>
+  <div id="capstone-c2-out" style="min-height:36px;max-height:320px;overflow-y:auto;padding:10px 14px;background:#050c1e;font-family:monospace;font-size:0.76rem;color:#94a3b8;"><span style="color:#334155;">Run your query to see results here.</span></div>
+</div>
         <div class="answer-reveal" id="ans-d8-c2">
           <div class="callout tip"><div class="callout-title">Full Solution</div></div>
           <div class="code-block">
@@ -15114,7 +15134,17 @@ $$;
       </div>
       <div class="exercise-body" style="display:none">
         <p>Insert three Plateau households directly (simulating a promoted batch). Then write a single query using a window function that shows: each household's PMT score, their rank within Plateau State by PMT score (lowest score = rank 1, highest poverty), and the average PMT score for all Plateau households alongside each row. Record a lineage entry for the batch.</p>
-        <textarea id="capstone-c3" oninput="saveCapstone()" placeholder="Write your SQL here…" style="width:100%;box-sizing:border-box;min-height:120px;padding:12px;border:2px dashed var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-main);font-size:0.85rem;font-family:monospace;resize:vertical;line-height:1.6;margin-top:12px;"></textarea>
+        <div style="margin-top:14px;border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+  <div style="background:#0a1628;padding:7px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">
+    <span style="color:#64748b;font-size:0.72rem;font-family:monospace;">postgresql://nsr_training &nbsp;·&nbsp; <span id="capstone-db-badge" style="color:#475569;">loading…</span></span>
+    <div style="display:flex;gap:6px;">
+      <button onclick="runCapstone('c3')" style="background:#1e3a5f;border:1px solid #2563eb;color:#7dd3fc;font-size:0.75rem;padding:3px 14px;border-radius:4px;cursor:pointer;font-family:inherit;">&#9654; Run</button>
+      <button onclick="clearCapstoneOut('c3')" style="background:none;border:1px solid #334155;color:#64748b;font-size:0.72rem;padding:3px 9px;border-radius:4px;cursor:pointer;font-family:inherit;">&#10005;</button>
+    </div>
+  </div>
+  <textarea id="capstone-c3" oninput="saveCapstone()" placeholder="Write your SQL here…" style="width:100%;box-sizing:border-box;min-height:140px;padding:12px;background:#071120;color:#e2e8f0;border:none;outline:none;font-size:0.85rem;font-family:monospace;resize:vertical;line-height:1.7;border-bottom:1px solid var(--border);display:block;"></textarea>
+  <div id="capstone-c3-out" style="min-height:36px;max-height:320px;overflow-y:auto;padding:10px 14px;background:#050c1e;font-family:monospace;font-size:0.76rem;color:#94a3b8;"><span style="color:#334155;">Run your query to see results here.</span></div>
+</div>
         <div class="answer-reveal" id="ans-d8-c3">
           <div class="callout tip"><div class="callout-title">Full Solution</div></div>
           <div class="code-block">
@@ -15179,7 +15209,17 @@ $$;
       </div>
       <div class="exercise-body" style="display:none">
         <p>Run <code>EXPLAIN (ANALYZE, BUFFERS)</code> on the window function query from C3. Identify: (a) which join strategy PostgreSQL chose, (b) whether an index was used on <code>lga_id</code>, (c) the <code>shared_blks_hit</code> count, and (d) what you would do differently if this query ran against 5 million Plateau households instead of 3.</p>
-        <textarea id="capstone-c4" oninput="saveCapstone()" placeholder="Paste the EXPLAIN output and your analysis here…" style="width:100%;box-sizing:border-box;min-height:120px;padding:12px;border:2px dashed var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-main);font-size:0.85rem;font-family:monospace;resize:vertical;line-height:1.6;margin-top:12px;"></textarea>
+        <div style="margin-top:14px;border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+  <div style="background:#0a1628;padding:7px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">
+    <span style="color:#64748b;font-size:0.72rem;font-family:monospace;">postgresql://nsr_training &nbsp;·&nbsp; <span id="capstone-db-badge" style="color:#475569;">loading…</span></span>
+    <div style="display:flex;gap:6px;">
+      <button onclick="runCapstone('c4')" style="background:#1e3a5f;border:1px solid #2563eb;color:#7dd3fc;font-size:0.75rem;padding:3px 14px;border-radius:4px;cursor:pointer;font-family:inherit;">&#9654; Run</button>
+      <button onclick="clearCapstoneOut('c4')" style="background:none;border:1px solid #334155;color:#64748b;font-size:0.72rem;padding:3px 9px;border-radius:4px;cursor:pointer;font-family:inherit;">&#10005;</button>
+    </div>
+  </div>
+  <textarea id="capstone-c4" oninput="saveCapstone()" placeholder="Paste the EXPLAIN output and your analysis here…" style="width:100%;box-sizing:border-box;min-height:140px;padding:12px;background:#071120;color:#e2e8f0;border:none;outline:none;font-size:0.85rem;font-family:monospace;resize:vertical;line-height:1.7;border-bottom:1px solid var(--border);display:block;"></textarea>
+  <div id="capstone-c4-out" style="min-height:36px;max-height:320px;overflow-y:auto;padding:10px 14px;background:#050c1e;font-family:monospace;font-size:0.76rem;color:#94a3b8;"><span style="color:#334155;">Run your query to see results here.</span></div>
+</div>
         <div class="answer-reveal" id="ans-d8-c4">
           <div class="callout tip"><div class="callout-title">Model Answer</div></div>
           <div class="code-block">
@@ -16411,7 +16451,7 @@ function showPage(id) {
   if (nav) nav.classList.add('active');
   if (id === 'progress') renderProgress();
   if (id === 'certificate') initCertificatePage();
-  if (id === 'day8') { loadReflection(); loadPresentationNotes(); loadCapstone(); }
+  if (id === 'day8') { loadReflection(); loadPresentationNotes(); loadCapstone(); getCapstoneDB(); }
   if (id === 'day5') { setTimeout(function(){ if(typeof checkShowWelcome==='function') checkShowWelcome(); }, 80); }
   closeSidebar();
   window.scrollTo(0,0);
@@ -17668,6 +17708,132 @@ function loadCapstone() {
     var el = document.getElementById('capstone-' + k);
     if (el && saved[k]) el.value = saved[k];
   });
+}
+
+
+// ===== CAPSTONE SQL TERMINAL (PGlite) =====
+var _capstonePG = null;
+var _capstonePGPromise = null;
+
+function getCapstoneDB() {
+  if (_capstonePG) return Promise.resolve(_capstonePG);
+  if (_capstonePGPromise) return _capstonePGPromise;
+  _capstonePGPromise = import('https://cdn.jsdelivr.net/npm/@electric-sql/pglite@0.2.17/dist/index.js')
+    .then(function(mod) {
+      var PGlite = mod.PGlite;
+      var db = new PGlite();
+      return db.exec([
+        "CREATE SCHEMA IF NOT EXISTS nsr;",
+        "CREATE TABLE IF NOT EXISTS nsr.states (state_code TEXT PRIMARY KEY, state_name TEXT NOT NULL);",
+        "CREATE TABLE IF NOT EXISTS nsr.lgas (lga_id SERIAL PRIMARY KEY, state_code TEXT REFERENCES nsr.states(state_code), lga_name TEXT NOT NULL);",
+        "CREATE TABLE IF NOT EXISTS nsr.households (household_id SERIAL PRIMARY KEY, household_code TEXT UNIQUE NOT NULL, lga_id INT REFERENCES nsr.lgas(lga_id), head_name TEXT, pmt_score NUMERIC(8,3), is_active BOOLEAN DEFAULT TRUE, enumeration_round INT DEFAULT 1);",
+        "CREATE TABLE IF NOT EXISTS nsr.individuals (individual_id SERIAL PRIMARY KEY, household_id INT REFERENCES nsr.households(household_id), full_name TEXT, date_of_birth DATE, gender CHAR(1));",
+        "CREATE TABLE IF NOT EXISTS nsr.stg_households (household_code TEXT, state_name TEXT, lga_name TEXT, head_name TEXT, pmt_score TEXT, import_batch TEXT, loaded_at TIMESTAMPTZ DEFAULT now());",
+        "CREATE TABLE IF NOT EXISTS nsr.data_lineage (id SERIAL PRIMARY KEY, table_name TEXT, source_system TEXT, record_count INT, batch_ref TEXT, lawful_basis TEXT, data_owner TEXT, created_at TIMESTAMPTZ DEFAULT now());",
+        "INSERT INTO nsr.states VALUES ('KN','Kano'),('LA','Lagos'),('KD','Kaduna'),('RV','Rivers'),('AN','Anambra'),('OY','Oyo') ON CONFLICT DO NOTHING;",
+        "INSERT INTO nsr.lgas(state_code,lga_name) VALUES ('KN','Kano Municipal'),('KN','Fagge'),('LA','Ikeja'),('LA','Lagos Island'),('KD','Kaduna North'),('RV','Port Harcourt'),('AN','Awka North'),('OY','Ibadan North') ON CONFLICT DO NOTHING;",
+        "INSERT INTO nsr.households(household_code,lga_id,head_name,pmt_score,enumeration_round) SELECT v.code,l.lga_id,v.head,v.score,1 FROM (VALUES ('KN-KM-001','Kano Municipal','Aminu Bello',22.400::numeric),('KN-FA-001','Fagge','Hauwa Sule',35.100::numeric),('LA-IK-001','Ikeja','Tunde Adeyemi',41.200::numeric),('LA-LI-001','Lagos Island','Ngozi Obi',28.750::numeric),('KD-KN-001','Kaduna North','Musa Ibrahim',19.300::numeric)) AS v(code,lga_name_v,head,score) JOIN nsr.lgas l ON l.lga_name=v.lga_name_v ON CONFLICT DO NOTHING;"
+      ].join('\n')).then(function() { return db; });
+    })
+    .then(function(db) {
+      _capstonePG = db;
+      var badges = document.querySelectorAll('#capstone-db-badge');
+      badges.forEach(function(b){ b.textContent = 'ready'; b.style.color = '#22c55e'; });
+      return db;
+    })
+    .catch(function(e) {
+      var badges = document.querySelectorAll('#capstone-db-badge');
+      badges.forEach(function(b){ b.textContent = 'error'; b.style.color = '#ef4444'; });
+      throw e;
+    });
+  return _capstonePGPromise;
+}
+
+function renderCapstoneResults(outEl, results, sql) {
+  if (!results || results.length === 0) {
+    outEl.innerHTML = '<span style="color:#22c55e;">&#10003; Query executed (no rows returned).</span>';
+    return;
+  }
+  var html = '';
+  results.forEach(function(res) {
+    if (!res.fields || res.fields.length === 0) {
+      var affected = res.affectedRows !== undefined ? res.affectedRows : 0;
+      html += '<div style="color:#22c55e;padding:2px 0;">&#10003; ' + affected + ' row(s) affected.</div>';
+      return;
+    }
+    // Table
+    html += '<div style="overflow-x:auto;margin-bottom:8px;">';
+    html += '<table style="border-collapse:collapse;font-size:0.74rem;min-width:100%;">';
+    html += '<tr style="background:#0a1628;">';
+    res.fields.forEach(function(f) {
+      html += '<th style="padding:4px 10px;text-align:left;color:#7dd3fc;border-bottom:1px solid #1e3a5f;white-space:nowrap;">' + escHtml(f.name) + '</th>';
+    });
+    html += '</tr>';
+    res.rows.forEach(function(row, ri) {
+      html += '<tr style="background:' + (ri % 2 === 0 ? '#071120' : '#050c1e') + '">';
+      res.fields.forEach(function(f) {
+        var val = row[f.name];
+        html += '<td style="padding:3px 10px;color:#e2e8f0;border-bottom:1px solid #0f1f3a;">' + (val === null ? '<span style="color:#475569">NULL</span>' : escHtml(String(val))) + '</td>';
+      });
+      html += '</tr>';
+    });
+    html += '</table>';
+    html += '<div style="color:#475569;font-size:0.7rem;margin-top:4px;">' + res.rows.length + ' row(s)</div>';
+    html += '</div>';
+  });
+  outEl.innerHTML = html;
+  // Hints per part
+  capstoneHint(outEl, results, sql);
+}
+
+function capstoneHint(outEl, results, sql) {
+  var sqlLower = sql.toLowerCase();
+  var hint = '';
+  var lastSelect = results.filter(function(r){ return r.fields && r.fields.length > 0; }).pop();
+  if (!lastSelect) return;
+  var cols = lastSelect.fields.map(function(f){ return f.name; });
+  // C3 window function check
+  if (sqlLower.indexOf('rank()') !== -1 || sqlLower.indexOf('poverty_rank') !== -1) {
+    var hasRank = cols.indexOf('poverty_rank') !== -1;
+    var hasAvg  = cols.indexOf('state_avg_pmt') !== -1 || cols.indexOf('state_avg') !== -1;
+    if (hasRank && hasAvg) {
+      hint = '<div style="color:#22c55e;margin-top:6px;font-size:0.72rem;">&#10003; Window function looks correct — poverty_rank and state average both present.</div>';
+    } else if (!hasRank) {
+      hint = '<div style="color:#f59e0b;margin-top:6px;font-size:0.72rem;">&#9651; Alias your RANK() column as <code style="color:#fbbf24">poverty_rank</code>.</div>';
+    }
+  }
+  // EXPLAIN check
+  if (sqlLower.indexOf('explain') !== -1) {
+    var planText = lastSelect.rows.map(function(r){ return Object.values(r).join(' '); }).join('\n');
+    hint = '<div style="color:#7dd3fc;margin-top:6px;font-size:0.72rem;">Plan retrieved. Look for: join strategy (Nested Loop / Hash Join), Seq Scan vs Index Scan on households, and the Sort node for the window ORDER BY.</div>';
+  }
+  if (hint) outEl.insertAdjacentHTML('beforeend', hint);
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function runCapstone(part) {
+  var ta  = document.getElementById('capstone-' + part);
+  var out = document.getElementById('capstone-' + part + '-out');
+  if (!ta || !out) return;
+  var sql = ta.value.trim();
+  if (!sql) { out.innerHTML = '<span style="color:#64748b;">No query to run.</span>'; return; }
+  out.innerHTML = '<span style="color:#475569;">Running&#8230;</span>';
+  getCapstoneDB().then(function(db) {
+    return db.exec(sql);
+  }).then(function(results) {
+    renderCapstoneResults(out, results, sql);
+  }).catch(function(e) {
+    var msg = e.message || String(e);
+    out.innerHTML = '<span style="color:#ef4444;">&#10007; ' + escHtml(msg) + '</span>';
+  });
+}
+
+function clearCapstoneOut(part) {
+  var out = document.getElementById('capstone-' + part + '-out');
+  if (out) out.innerHTML = '<span style="color:#334155;">Run your query to see results here.</span>';
 }
 
 function drawSampleCertificate() {
