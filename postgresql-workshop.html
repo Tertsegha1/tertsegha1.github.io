@@ -14975,7 +14975,7 @@ $$;
       </div>
       <div class="exercise-body" style="display:none">
         <p>Before loading any data, confirm the NSR schema is in the expected state. Write queries to: (a) list all tables in the <code>nsr</code> schema, (b) show how many active households exist per state, and (c) confirm Plateau State (<code>'PL'</code>) is already in <code>nsr.states</code>. If it is missing, insert it.</p>
-        <div class="answer-area">Write your SQL here</div>
+        <textarea id="capstone-c1" oninput="saveCapstone()" placeholder="Write your SQL here…" style="width:100%;box-sizing:border-box;min-height:120px;padding:12px;border:2px dashed var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-main);font-size:0.85rem;font-family:monospace;resize:vertical;line-height:1.6;margin-top:12px;"></textarea>
         <div class="answer-reveal" id="ans-d8-c1">
           <div class="callout tip"><div class="callout-title">Full Solution</div></div>
           <div class="code-block">
@@ -15038,7 +15038,7 @@ $$;
       </div>
       <div class="exercise-body" style="display:none">
         <p>Create a login role <code>nsr_plateau_officer</code> with a password. Grant it the minimum permissions needed to: read households and individuals in <code>nsr</code>, and insert into <code>nsr.stg_households</code>. Enable RLS on <code>nsr.households</code> and create a policy that restricts this role to Plateau State rows only. Test that a Kano household is invisible when logged in as the new role.</p>
-        <div class="answer-area">Write your SQL here</div>
+        <textarea id="capstone-c2" oninput="saveCapstone()" placeholder="Write your SQL here…" style="width:100%;box-sizing:border-box;min-height:120px;padding:12px;border:2px dashed var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-main);font-size:0.85rem;font-family:monospace;resize:vertical;line-height:1.6;margin-top:12px;"></textarea>
         <div class="answer-reveal" id="ans-d8-c2">
           <div class="callout tip"><div class="callout-title">Full Solution</div></div>
           <div class="code-block">
@@ -15114,7 +15114,7 @@ $$;
       </div>
       <div class="exercise-body" style="display:none">
         <p>Insert three Plateau households directly (simulating a promoted batch). Then write a single query using a window function that shows: each household's PMT score, their rank within Plateau State by PMT score (lowest score = rank 1, highest poverty), and the average PMT score for all Plateau households alongside each row. Record a lineage entry for the batch.</p>
-        <div class="answer-area">Write your SQL here</div>
+        <textarea id="capstone-c3" oninput="saveCapstone()" placeholder="Write your SQL here…" style="width:100%;box-sizing:border-box;min-height:120px;padding:12px;border:2px dashed var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-main);font-size:0.85rem;font-family:monospace;resize:vertical;line-height:1.6;margin-top:12px;"></textarea>
         <div class="answer-reveal" id="ans-d8-c3">
           <div class="callout tip"><div class="callout-title">Full Solution</div></div>
           <div class="code-block">
@@ -15179,7 +15179,7 @@ $$;
       </div>
       <div class="exercise-body" style="display:none">
         <p>Run <code>EXPLAIN (ANALYZE, BUFFERS)</code> on the window function query from C3. Identify: (a) which join strategy PostgreSQL chose, (b) whether an index was used on <code>lga_id</code>, (c) the <code>shared_blks_hit</code> count, and (d) what you would do differently if this query ran against 5 million Plateau households instead of 3.</p>
-        <div class="answer-area">Paste the EXPLAIN output and your analysis here</div>
+        <textarea id="capstone-c4" oninput="saveCapstone()" placeholder="Paste the EXPLAIN output and your analysis here…" style="width:100%;box-sizing:border-box;min-height:120px;padding:12px;border:2px dashed var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-main);font-size:0.85rem;font-family:monospace;resize:vertical;line-height:1.6;margin-top:12px;"></textarea>
         <div class="answer-reveal" id="ans-d8-c4">
           <div class="callout tip"><div class="callout-title">Model Answer</div></div>
           <div class="code-block">
@@ -16411,7 +16411,7 @@ function showPage(id) {
   if (nav) nav.classList.add('active');
   if (id === 'progress') renderProgress();
   if (id === 'certificate') initCertificatePage();
-  if (id === 'day8') { loadReflection(); loadPresentationNotes(); }
+  if (id === 'day8') { loadReflection(); loadPresentationNotes(); loadCapstone(); }
   if (id === 'day5') { setTimeout(function(){ if(typeof checkShowWelcome==='function') checkShowWelcome(); }, 80); }
   closeSidebar();
   window.scrollTo(0,0);
@@ -17649,6 +17649,25 @@ function loadPresentationNotes() {
   var el = document.getElementById('presentation-notes');
   if (!el) return;
   if (state.presentationNotes) el.value = state.presentationNotes;
+}
+
+function saveCapstone() {
+  ['c1','c2','c3','c4'].forEach(function(k) {
+    var el = document.getElementById('capstone-' + k);
+    if (el) {
+      state.capstone = state.capstone || {};
+      state.capstone[k] = el.value;
+    }
+  });
+  saveState();
+}
+
+function loadCapstone() {
+  var saved = state.capstone || {};
+  ['c1','c2','c3','c4'].forEach(function(k) {
+    var el = document.getElementById('capstone-' + k);
+    if (el && saved[k]) el.value = saved[k];
+  });
 }
 
 function drawSampleCertificate() {
