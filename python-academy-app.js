@@ -67,6 +67,55 @@ function switchAuthTab(tab){
   document.getElementById('auth-tab-login').classList.toggle('active', tab==='login');
   document.getElementById('auth-panel-create').style.display = tab==='create' ? 'block' : 'none';
   document.getElementById('auth-panel-login').style.display = tab==='login' ? 'block' : 'none';
+  document.getElementById('auth-panel-forgot').style.display = 'none';
+}
+
+function showForgotPassword(e){
+  if(e) e.preventDefault();
+  document.getElementById('auth-tab-create').classList.remove('active');
+  document.getElementById('auth-tab-login').classList.remove('active');
+  document.getElementById('auth-panel-create').style.display = 'none';
+  document.getElementById('auth-panel-login').style.display = 'none';
+  document.getElementById('forgot-error').textContent = '';
+  document.getElementById('forgot-error').style.color = 'var(--danger)';
+  document.getElementById('btn-forgot-send').disabled = false;
+  document.getElementById('btn-forgot-send').textContent = 'Send to My Instructor';
+  document.getElementById('auth-panel-forgot').style.display = 'block';
+}
+
+async function submitForgotPassword(){
+  const errEl = document.getElementById('forgot-error');
+  errEl.style.color = 'var(--danger)';
+  errEl.textContent = '';
+  const username = usernameKey(document.getElementById('forgot-username').value);
+  const name = document.getElementById('forgot-name').value.trim();
+  const cls = document.getElementById('forgot-class').value.trim();
+  if(!name){ errEl.textContent = 'Please enter your name so your instructor knows who this is.'; return; }
+  if(!fbOk()){ errEl.textContent = 'Cannot send right now — no connection to the server.'; return; }
+
+  const btn = document.getElementById('btn-forgot-send');
+  btn.disabled = true; btn.textContent = 'Sending...';
+  const payload = {
+    username: username || '(not given)',
+    displayName: name,
+    classCode: cls,
+    subject: '🔑 Forgotten password',
+    message: `${name} (username: ${username || 'not given'}${cls ? ', class ' + cls : ''}) has forgotten their password and can't log in. Please reset it for them from the Users & Passwords tab.`,
+    type: 'password_reset',
+    status: 'open',
+    createdAt: new Date().toISOString()
+  };
+  try{
+    const res = await fetch(fbUrl('/pyacademy/messages.json'), {method:'POST', body: JSON.stringify(payload)});
+    if(!res.ok) throw new Error('failed');
+    errEl.style.color = 'var(--success)';
+    errEl.textContent = '✅ Sent! Your instructor will reset your password and let you know.';
+    btn.textContent = 'Sent ✓';
+  }catch(e){
+    errEl.textContent = 'Could not send — please check your connection, or ask your instructor directly.';
+    btn.disabled = false;
+    btn.textContent = 'Send to My Instructor';
+  }
 }
 
 function loadRegistration(){

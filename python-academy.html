@@ -189,6 +189,8 @@ code,pre,textarea.code-editor{font-family:'Cascadia Code','Consolas',monospace;}
 .auth-tab.active{background:var(--brand);color:#fff;}
 .auth-error{color:var(--danger);font-size:0.8rem;text-align:left;min-height:16px;margin:-4px 0 6px;}
 .auth-hint{color:var(--text-muted);font-size:0.76rem;text-align:left;margin:-6px 0 10px;line-height:1.5;}
+.auth-hint a{color:var(--brand);font-weight:700;text-decoration:underline;cursor:pointer;}
+button.link-btn{background:none;border:none;padding:0;margin:0;color:var(--brand);font-weight:700;text-decoration:underline;cursor:pointer;font-size:0.76rem;font-family:inherit;width:auto;}
 
 @media(max-width:900px){
   #sidebar{transform:translateX(-100%);}
@@ -236,7 +238,17 @@ code,pre,textarea.code-editor{font-family:'Cascadia Code','Consolas',monospace;}
       <input type="password" id="login-password" placeholder="Your password" maxlength="60" autocomplete="current-password">
       <div class="auth-error" id="login-error"></div>
       <button id="btn-login" onclick="submitLogin()">Log In ▶</button>
-      <p class="auth-hint">Forgotten your password? Ask your instructor to reset it for you.</p>
+      <p class="auth-hint"><button type="button" class="link-btn" onclick="showForgotPassword()">Forgotten your password? Tap here to let your instructor know →</button></p>
+    </div>
+
+    <div id="auth-panel-forgot" style="display:none;">
+      <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:16px;text-align:left;">Your instructor isn't in the room with you, but a quick message will reach them. Fill in what you can remember and we'll let them know you need a password reset.</p>
+      <input type="text" id="forgot-username" placeholder="Your username (if you remember it)" maxlength="24">
+      <input type="text" id="forgot-name" placeholder="Your name">
+      <input type="text" id="forgot-class" placeholder="Class / teacher code (optional)" maxlength="30">
+      <div class="auth-error" id="forgot-error"></div>
+      <button id="btn-forgot-send" onclick="submitForgotPassword()">Send to My Instructor</button>
+      <p class="auth-hint"><button type="button" class="link-btn" onclick="switchAuthTab('login')">← Back to log in</button></p>
     </div>
   </div>
 </div>

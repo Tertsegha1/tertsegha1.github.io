@@ -77,6 +77,7 @@
     #panel-body-messages{padding:16px 24px;display:flex;flex-direction:column;gap:12px;}
     .msg-card{background:#181454;border:1px solid #2c2470;border-radius:10px;padding:14px 18px;}
     .msg-card.resolved{opacity:0.55;}
+    .msg-card.reset-request{border-left:3px solid #fbbf24;}
     .msg-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px;}
     .msg-subject{font-weight:700;font-size:0.9rem;color:#e2e8f0;}
     .msg-meta{font-size:0.68rem;color:#8b85c4;margin-top:2px;}
@@ -474,7 +475,11 @@
   /* ── Messages tab ── */
   function renderMessages(){
     var keys=Object.keys(messages).sort(function(a,b){
-      return new Date(messages[b].createdAt||0) - new Date(messages[a].createdAt||0);
+      var ma=messages[a], mb=messages[b];
+      var pa=(ma.type==='password_reset' && ma.status!=='resolved') ? 1 : 0;
+      var pb=(mb.type==='password_reset' && mb.status!=='resolved') ? 1 : 0;
+      if(pa!==pb) return pb-pa;
+      return new Date(mb.createdAt||0) - new Date(ma.createdAt||0);
     });
     var openCount=keys.filter(function(k){ return messages[k].status!=='resolved'; }).length;
     var badge=document.getElementById('msg-badge');
@@ -488,11 +493,15 @@
     body.innerHTML=keys.map(function(k){
       var m=messages[k];
       var resolved=m.status==='resolved';
-      var meta=[m.displayName||'Unknown student', m.classCode?('· '+m.classCode):'', m.createdAt?('· '+relTime(m.createdAt)):''].filter(Boolean).join(' ');
-      return '<div class="msg-card'+(resolved?' resolved':'')+'">'+
+      var isReset=m.type==='password_reset';
+      var meta=[m.displayName||'Unknown student', m.username?('· @'+m.username):'', m.classCode?('· '+m.classCode):'', m.createdAt?('· '+relTime(m.createdAt)):''].filter(Boolean).join(' ');
+      var resetBtn=(isReset && !resolved && m.username && users[m.username]) ?
+        '<button class="reset-btn" onclick="resetPassword(\''+m.username.replace(/'/g,"\\'")+'\')">🔑 Reset Password</button>' : '';
+      return '<div class="msg-card'+(resolved?' resolved':'')+(isReset?' reset-request':'')+'">'+
         '<div class="msg-top">'+
           '<div><div class="msg-subject">'+esc(m.subject||'(no subject)')+'</div><div class="msg-meta">'+esc(meta)+'</div></div>'+
           '<div style="display:flex;align-items:center;gap:8px;">'+
+            resetBtn+
             '<span class="status-badge '+(resolved?'resolved':'open')+'">'+(resolved?'Resolved':'Open')+'</span>'+
             '<button class="toggle-btn" onclick="toggleMessage(\''+k+'\',\''+(resolved?'open':'resolved')+'\')">Mark '+(resolved?'open':'resolved')+'</button>'+
           '</div>'+
