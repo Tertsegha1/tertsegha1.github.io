@@ -77,9 +77,9 @@ function isUnlocked(key){
 }
 
 function fbOk(){
-  return !!(window.CWR_FIREBASE && window.CWR_FIREBASE.databaseURL && !window.CWR_FIREBASE.databaseURL.includes('REPLACE'));
+  return !!(window.PYAC_FIREBASE && window.PYAC_FIREBASE.databaseURL && !window.PYAC_FIREBASE.databaseURL.includes('REPLACE'));
 }
-function fbUrl(path){ return window.CWR_FIREBASE.databaseURL + path; }
+function fbUrl(path){ return window.PYAC_FIREBASE.databaseURL + path; }
 function syncProgress(){
   if(!fbOk()) return;
   const name = localStorage.getItem('pyac_name');

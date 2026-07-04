@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Python Academy — Instructor Monitor</title>
-  <script src="firebase-config.js"></script>
+  <script src="firebase-config-pyacademy.js"></script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
     body{background:#0d0b26;color:#e2e8f0;font-family:system-ui,-apple-system,sans-serif;font-size:14px;min-height:100vh;}
@@ -105,8 +105,8 @@
 <div id="config-error">
   <h2>Firebase not configured</h2>
   <p>
-    Open <code>firebase-config.js</code>, replace the <code>databaseURL</code> placeholder with your Firebase
-    Realtime Database URL, then commit and push. Instructions are in the comments at the top of that file.<br><br>
+    Open <code>firebase-config-pyacademy.js</code> and check the <code>databaseURL</code> is set correctly.
+    Instructions are in the comments at the top of that file.<br><br>
     Until then, students' progress still works locally on their own device — you just won't see this live view.
   </p>
 </div>
@@ -151,8 +151,8 @@
   var participants={};
   var flashSet={};
 
-  if(!window.CWR_FIREBASE || !window.CWR_FIREBASE.databaseURL ||
-     window.CWR_FIREBASE.databaseURL.includes('REPLACE')){
+  if(!window.PYAC_FIREBASE || !window.PYAC_FIREBASE.databaseURL ||
+     window.PYAC_FIREBASE.databaseURL.includes('REPLACE')){
     document.getElementById('config-error').style.display='block';
     document.getElementById('stats').style.display='none';
     document.getElementById('prog-wrap').style.display='none';
@@ -160,7 +160,7 @@
     return;
   }
 
-  var DB=window.CWR_FIREBASE.databaseURL;
+  var DB=window.PYAC_FIREBASE.databaseURL;
   var PATH='/pyacademy/participants';
 
   function connect(){
