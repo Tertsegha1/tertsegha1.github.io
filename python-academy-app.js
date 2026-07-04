@@ -771,7 +771,7 @@ function maybeDrawCertificate(){
   ctx.textAlign = 'center';
   ctx.fillStyle = '#4338ca';
   ctx.font = '700 22px Segoe UI, sans-serif';
-  ctx.fillText('🐍 PYTHON ACADEMY', 600, 140);
+  ctx.fillText('🧑‍💻 PYTHON ACADEMY', 600, 140);
 
   ctx.font = '800 42px Segoe UI, sans-serif';
   ctx.fillStyle = '#211f3d';
