@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Python Academy — Instructor Monitor</title>
+  <script src="firebase-config.js"></script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{background:#0d0b26;color:#e2e8f0;font-family:system-ui,-apple-system,sans-serif;font-size:14px;min-height:100vh;}
+
+    #hdr{background:#181454;border-bottom:1px solid #2c2470;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;}
+    #hdr-left{display:flex;align-items:center;gap:12px;}
+    #hdr-left .logo{font-size:1.4rem;}
+    #hdr-title{font-weight:700;font-size:0.95rem;letter-spacing:0.4px;color:#e2e8f0;}
+    #hdr-sub{font-size:0.72rem;color:#8b85c4;}
+    #live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;margin-right:5px;animation:pulse 2s infinite;}
+    @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.35;}}
+    #status-pill{font-size:0.7rem;padding:3px 10px;border-radius:999px;border:1px solid #3730a3;color:#8b85c4;}
+    #status-pill.connected{border-color:#22c55e;color:#4ade80;}
+    #status-pill.error{border-color:#ef4444;color:#fca5a5;}
+
+    #stats{display:flex;gap:16px;padding:14px 24px;border-bottom:1px solid #2c2470;flex-wrap:wrap;}
+    .stat-card{background:#181454;border:1px solid #2c2470;border-radius:8px;padding:10px 18px;min-width:110px;}
+    .stat-val{font-size:1.6rem;font-weight:700;line-height:1;color:#e2e8f0;}
+    .stat-lbl{font-size:0.68rem;color:#8b85c4;text-transform:uppercase;letter-spacing:0.8px;margin-top:3px;}
+    .stat-card.green .stat-val{color:#4ade80;}
+    .stat-card.amber .stat-val{color:#fbbf24;}
+    .stat-card.red   .stat-val{color:#f87171;}
+
+    #prog-wrap{padding:12px 24px;border-bottom:1px solid #2c2470;}
+    #prog-label{font-size:0.7rem;color:#8b85c4;margin-bottom:6px;}
+    #prog-track{background:#2c2470;border-radius:999px;height:6px;overflow:hidden;}
+    #prog-fill{background:linear-gradient(90deg,#6366f1,#22c55e);height:100%;border-radius:999px;transition:width 0.6s ease;width:0%;}
+
+    #tbl-wrap{overflow-x:auto;padding:16px 24px;}
+    table{width:100%;border-collapse:collapse;min-width:900px;}
+    thead th{background:#181454;padding:8px 10px;text-align:center;font-size:0.64rem;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#8b85c4;border-bottom:1px solid #2c2470;white-space:nowrap;}
+    thead th:first-child{text-align:left;width:170px;}
+    tbody tr{border-bottom:1px solid #14103f;transition:background 0.15s;}
+    tbody tr:hover{background:#181454;}
+    tbody td{padding:9px 10px;text-align:center;font-size:0.8rem;}
+    tbody td:first-child{text-align:left;}
+
+    .p-name{font-weight:600;color:#e2e8f0;}
+    .p-meta{font-size:0.64rem;color:#8b85c4;margin-top:2px;}
+    .p-row-new{animation:flash 1.5s ease;}
+    @keyframes flash{0%{background:#1e3a2a;}100%{background:transparent;}}
+
+    .dot{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;font-size:0.68rem;font-weight:700;}
+    .dot-done{background:#14532d;color:#4ade80;border:1px solid #22c55e;}
+    .dot-todo{background:#241d5c;color:#5b5490;border:1px solid #3730a3;}
+
+    .score{font-weight:700;font-size:0.85rem;}
+    .score-full{color:#4ade80;}
+    .score-hi{color:#86efac;}
+    .score-mid{color:#fbbf24;}
+    .score-lo{color:#f87171;}
+    .score-0{color:#5b5490;}
+
+    .row-bar{display:inline-block;width:4px;height:26px;border-radius:2px;vertical-align:middle;margin-right:8px;}
+
+    #config-error{display:none;padding:40px 24px;text-align:center;}
+    #config-error h2{color:#f87171;font-size:1.1rem;margin-bottom:10px;}
+    #config-error p{color:#8b85c4;font-size:0.85rem;line-height:1.7;max-width:540px;margin:0 auto;}
+    #config-error code{background:#181454;border:1px solid #2c2470;padding:2px 7px;border-radius:4px;font-size:0.82rem;color:#7dd3fc;}
+
+    #empty{display:none;padding:60px 24px;text-align:center;color:#3d3675;font-size:0.9rem;}
+    #empty .icon{font-size:2.5rem;margin-bottom:12px;}
+
+    #footer{padding:12px 24px;color:#3d3675;font-size:0.68rem;border-top:1px solid #2c2470;margin-top:8px;}
+  </style>
+</head>
+<body>
+
+<div id="hdr">
+  <div id="hdr-left">
+    <span class="logo">🐍</span>
+    <div>
+      <div id="hdr-title">PYTHON ACADEMY — INSTRUCTOR MONITOR</div>
+      <div id="hdr-sub">Beginner Level · live class progress</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <span id="live-dot"></span>
+    <span id="status-pill">Connecting…</span>
+    <button onclick="location.reload()" style="background:none;border:1px solid #2c2470;color:#8b85c4;font-size:0.7rem;padding:3px 10px;border-radius:4px;cursor:pointer;font-family:inherit;">⟳ Refresh</button>
+    <a href="python-academy.html" style="font-size:0.7rem;padding:3px 10px;border-radius:4px;border:1px solid #2c2470;color:#8b85c4;text-decoration:none;">← Student view</a>
+  </div>
+</div>
+
+<div id="stats">
+  <div class="stat-card"><div id="s-total" class="stat-val">—</div><div class="stat-lbl">Students</div></div>
+  <div class="stat-card green"><div id="s-complete" class="stat-val">—</div><div class="stat-lbl">Certificate earned</div></div>
+  <div class="stat-card amber"><div id="s-progress" class="stat-val">—</div><div class="stat-lbl">In progress</div></div>
+  <div class="stat-card red"><div id="s-stuck" class="stat-val">—</div><div class="stat-lbl">Not started</div></div>
+  <div class="stat-card" style="margin-left:auto;"><div id="s-avg" class="stat-val">—</div><div class="stat-lbl">Avg steps done</div></div>
+</div>
+
+<div id="prog-wrap">
+  <div id="prog-label">Class completion — 0 of 0 steps done</div>
+  <div id="prog-track"><div id="prog-fill"></div></div>
+</div>
+
+<div id="config-error">
+  <h2>Firebase not configured</h2>
+  <p>
+    Open <code>firebase-config.js</code>, replace the <code>databaseURL</code> placeholder with your Firebase
+    Realtime Database URL, then commit and push. Instructions are in the comments at the top of that file.<br><br>
+    Until then, students' progress still works locally on their own device — you just won't see this live view.
+  </p>
+</div>
+
+<div id="empty">
+  <div class="icon">⏳</div>
+  <div>Waiting for students…</div>
+  <div style="font-size:0.75rem;margin-top:6px;color:#5b5490;">Students appear here as soon as they register and complete their first week.</div>
+</div>
+
+<div id="tbl-wrap" style="display:none;">
+  <table>
+    <thead>
+      <tr>
+        <th style="text-align:left;">Student</th>
+        <th title="Week 1 — Hello, Python!">W1</th>
+        <th title="Week 2 — Variables & Data">W2</th>
+        <th title="Week 3 — Input & Operators">W3</th>
+        <th title="Week 4 — Making Decisions">W4</th>
+        <th title="Mini Project 1 — Crack the Locker Code">MP1</th>
+        <th title="Week 5 — Loops">W5</th>
+        <th title="Week 6 — Lists">W6</th>
+        <th title="Week 7 — Strings & Ciphers">W7</th>
+        <th title="Week 8 — Functions">W8</th>
+        <th title="Week 9 — Dictionaries & Debug">W9</th>
+        <th title="Mini Project 2 — Escape the Computer Lab">MP2</th>
+        <th title="Certificate awarded">🎓</th>
+        <th>Score</th>
+      </tr>
+    </thead>
+    <tbody id="participants"></tbody>
+  </table>
+</div>
+
+<div id="footer">
+  Auto-refreshes every 4 s via Firebase Realtime Database · <span id="last-update">—</span>
+</div>
+
+<script>
+(function(){
+  var KEYS=['week1','week2','week3','week4','mp1','week5','week6','week7','week8','week9','mp2','cert'];
+  var participants={};
+  var flashSet={};
+
+  if(!window.CWR_FIREBASE || !window.CWR_FIREBASE.databaseURL ||
+     window.CWR_FIREBASE.databaseURL.includes('REPLACE')){
+    document.getElementById('config-error').style.display='block';
+    document.getElementById('stats').style.display='none';
+    document.getElementById('prog-wrap').style.display='none';
+    setStatus('error','Not configured');
+    return;
+  }
+
+  var DB=window.CWR_FIREBASE.databaseURL;
+  var PATH='/pyacademy/participants';
+
+  function connect(){
+    var es=new EventSource(DB+PATH+'.json');
+
+    es.addEventListener('put',function(e){
+      try{
+        var msg=JSON.parse(e.data);
+        if(msg.path==='/'&&msg.data){
+          participants={};
+          Object.keys(msg.data).forEach(function(k){ participants[k]=msg.data[k]; });
+        } else if(msg.path&&msg.data){
+          var key=msg.path.replace(/^\//,'');
+          participants[key]=msg.data;
+          flashRow(key);
+        } else if(msg.path&&msg.data===null){
+          var key2=msg.path.replace(/^\//,'');
+          delete participants[key2];
+        }
+        render();
+        setStatus('connected','Live');
+      }catch(err){}
+    });
+
+    es.addEventListener('patch',function(e){
+      try{
+        var msg=JSON.parse(e.data);
+        if(msg.data){
+          Object.keys(msg.data).forEach(function(k){ participants[k]=msg.data[k]; flashRow(k); });
+          render();
+          setStatus('connected','Live');
+        }
+      }catch(err){}
+    });
+
+    es.addEventListener('keep-alive',function(){ setStatus('connected','Live'); });
+
+    es.onerror=function(){
+      setStatus('error','Connection lost — retrying');
+      es.close();
+      setTimeout(connect,5000);
+    };
+  }
+
+  function poll(){
+    fetch(DB+PATH+'.json')
+      .then(function(r){return r.json();})
+      .then(function(data){
+        participants={};
+        if(data&&typeof data==='object'){
+          Object.keys(data).forEach(function(k){ participants[k]=data[k]; });
+        }
+        render();
+        setStatus('connected','Live');
+      })
+      .catch(function(){ setStatus('error','Fetch error'); });
+  }
+
+  function flashRow(key){ flashSet[key]=Date.now(); }
+
+  function score(p){
+    var b=(p&&p.beginner)||{};
+    return KEYS.filter(function(k){ return b[k]==='done'; }).length;
+  }
+
+  function render(){
+    var keys=Object.keys(participants).sort(function(a,b){
+      var sa=score(participants[a]), sb=score(participants[b]);
+      if(sb!==sa) return sb-sa;
+      return (participants[a].name||a).localeCompare(participants[b].name||b);
+    });
+
+    var tbody=document.getElementById('participants');
+    var tblWrap=document.getElementById('tbl-wrap');
+    var empty=document.getElementById('empty');
+
+    if(!keys.length){
+      tblWrap.style.display='none';
+      empty.style.display='block';
+      updateStats([]);
+      return;
+    }
+    empty.style.display='none';
+    tblWrap.style.display='block';
+
+    var rows=keys.map(function(k){
+      var p=participants[k];
+      var b=p.beginner||{};
+      var s=score(p);
+      var isNew=(flashSet[k]&&(Date.now()-flashSet[k])<2000);
+      delete flashSet[k];
+
+      var dotCells=KEYS.map(function(kk){
+        var st=b[kk]||'todo';
+        var cls = st==='done' ? 'dot-done' : 'dot-todo';
+        var ic = st==='done' ? '✓' : '○';
+        return '<td><span class="dot '+cls+'">'+ic+'</span></td>';
+      }).join('');
+
+      var barColor = s===KEYS.length ? '#22c55e' : s>=6 ? '#fbbf24' : s>0 ? '#818cf8' : '#f87171';
+      var scoreClass = s===KEYS.length ? 'score-full' : s>=8 ? 'score-hi' : s>=4 ? 'score-mid' : s>0 ? 'score-lo' : 'score-0';
+      var meta=[p.yearGroup?('Year '+p.yearGroup):'', p.classCode||''].filter(Boolean).join(' · ');
+      var ts=p.updated?relTime(p.updated):'—';
+
+      return '<tr'+(isNew?' class="p-row-new"':'')+'>'+
+        '<td>'+
+          '<span class="row-bar" style="background:'+barColor+';"></span>'+
+          '<span class="p-name">'+(p.name||k)+'</span>'+
+          '<div class="p-meta">'+meta+(meta?' · ':'')+ts+'</div>'+
+        '</td>'+
+        dotCells+
+        '<td><span class="score '+scoreClass+'">'+s+'/'+KEYS.length+'</span></td>'+
+      '</tr>';
+    });
+    tbody.innerHTML=rows.join('');
+
+    updateStats(keys.map(function(k){ return participants[k]; }));
+    document.getElementById('last-update').textContent='Last update: '+new Date().toLocaleTimeString();
+  }
+
+  function updateStats(list){
+    var total=list.length;
+    var complete=list.filter(function(p){ return score(p)===KEYS.length; }).length;
+    var notStarted=list.filter(function(p){ return score(p)===0; }).length;
+    var inProgress=total-complete-notStarted;
+    var totalPossible=total*KEYS.length;
+    var totalDone=list.reduce(function(a,p){ return a+score(p); },0);
+    var avg=total?Math.round((totalDone/total)*10)/10:0;
+    var pct=totalPossible?Math.round((totalDone/totalPossible)*100):0;
+
+    document.getElementById('s-total').textContent=total||'—';
+    document.getElementById('s-complete').textContent=complete||'—';
+    document.getElementById('s-progress').textContent=inProgress||'—';
+    document.getElementById('s-stuck').textContent=notStarted||'—';
+    document.getElementById('s-avg').textContent=total?(avg+'/'+KEYS.length):'—';
+
+    document.getElementById('prog-fill').style.width=pct+'%';
+    document.getElementById('prog-label').textContent=
+      'Class completion — '+totalDone+' of '+totalPossible+' steps done ('+pct+'%)';
+  }
+
+  function relTime(iso){
+    try{
+      var diff=Math.floor((Date.now()-new Date(iso).getTime())/1000);
+      if(diff<10) return 'just now';
+      if(diff<60) return diff+'s ago';
+      if(diff<3600) return Math.floor(diff/60)+'m ago';
+      return Math.floor(diff/3600)+'h ago';
+    }catch(e){ return iso; }
+  }
+
+  function setStatus(cls,text){
+    var pill=document.getElementById('status-pill');
+    pill.className=''; pill.classList.add(cls);
+    pill.textContent=text;
+  }
+
+  try{ connect(); }catch(e){}
+  setInterval(poll,4000);
+  setInterval(function(){ render(); },30000);
+
+})();
+</script>
+
+</body>
+</html>

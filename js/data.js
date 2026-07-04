@@ -284,6 +284,24 @@ const DATA = {
       ]
     },
     {
+      "icon": "🐍",
+      "badge": "EdTech · Secondary Schools",
+      "title": "Python Academy — Code Your World",
+      "desc": "A self-paced, browser-based Python programming pathway for secondary school students (Years 7–10, ages 12–16), built from scratch as an independent project. Three certificate-gated levels — Beginner, Intermediate, Advanced — each unlocked only after finishing the level before it. The Beginner level is fully live: 9 weeks of real-world, age-appropriate mini apps (a school announcement board, digital ID cards, a trip-cost calculator, a theme-park ride checker, a times-table trainer, a class leaderboard, a spy-club cipher, a board-game toolkit, a contact book), each week split into 3 short 45–60 minute sessions. Every week ends with real Python — executed live in the browser via Pyodide, not simulated — auto-graded practice exercises and a quiz. Two puzzle-style mini-projects (\"Crack the Locker Code\" mid-level, \"Escape the Computer Lab\" capstone) bookend the level, and finishing both unlocks a downloadable certificate plus the next level. A live instructor dashboard shows whole-class progress in real time via Firebase.",
+      "tech": [
+        "Python (Pyodide)",
+        "Vanilla JS",
+        "CodeMirror",
+        "Firebase Realtime DB",
+        "HTML/CSS",
+        "GitHub Pages"
+      ],
+      "links": [
+        { "label": "🐍 Launch Python Academy", "url": "python-academy.html" },
+        { "label": "📊 Instructor Dashboard", "url": "python-academy-instructor.html" }
+      ]
+    },
+    {
       "icon": "🤖",
       "badge": "2025–Present",
       "title": "MoSELA AutoML — General-Purpose Tabular AutoML Framework",
