@@ -110,6 +110,14 @@ code,pre,textarea.code-editor{font-family:'Cascadia Code','Consolas',monospace;}
 .test-row.fail{background:#fee2e2;color:#991b1b;}
 .test-row .ti{font-weight:800;}
 
+/* ===== FEEDBACK RATINGS ===== */
+.fb-row{margin-bottom:16px;}
+.fb-label{font-weight:700;font-size:0.9rem;margin-bottom:8px;}
+.fb-scale{display:flex;gap:8px;}
+.rate-btn{width:42px;height:42px;border-radius:10px;border:1px solid var(--border);background:#fff;font-weight:700;font-size:0.95rem;cursor:pointer;color:var(--text-muted);}
+.rate-btn:hover{border-color:var(--brand-light);}
+.rate-btn.active{background:var(--brand);border-color:var(--brand);color:#fff;}
+
 /* ===== QUIZ ===== */
 .quiz-card{background:#fbfbff;border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin:14px 0;}
 .quiz-q{font-weight:700;font-size:0.92rem;margin-bottom:12px;}
@@ -176,6 +184,11 @@ code,pre,textarea.code-editor{font-family:'Cascadia Code','Consolas',monospace;}
 .register-box input,.register-box select{width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:8px;font-size:0.92rem;margin-bottom:12px;font-family:inherit;}
 .register-box button{width:100%;background:var(--brand);color:#fff;border:none;padding:12px;border-radius:8px;font-weight:700;font-size:0.94rem;cursor:pointer;margin-top:6px;}
 .register-box button:hover{background:var(--brand-light);}
+.auth-tabs{display:flex;gap:6px;background:var(--surface2);border-radius:10px;padding:4px;margin-bottom:18px;}
+.auth-tab{flex:1;background:none;border:none;padding:9px 10px;border-radius:8px;font-weight:700;font-size:0.82rem;color:var(--text-muted);cursor:pointer;font-family:inherit;}
+.auth-tab.active{background:var(--brand);color:#fff;}
+.auth-error{color:var(--danger);font-size:0.8rem;text-align:left;min-height:16px;margin:-4px 0 6px;}
+.auth-hint{color:var(--text-muted);font-size:0.76rem;text-align:left;margin:-6px 0 10px;line-height:1.5;}
 
 @media(max-width:900px){
   #sidebar{transform:translateX(-100%);}
@@ -188,21 +201,43 @@ code,pre,textarea.code-editor{font-family:'Cascadia Code','Consolas',monospace;}
 </head>
 <body>
 
-<!-- ============ REGISTRATION OVERLAY ============ -->
+<!-- ============ AUTH OVERLAY ============ -->
 <div id="register-overlay">
   <div class="register-box">
     <h2>🧑‍💻 Welcome to Python Academy</h2>
-    <p>Enter your details to start earning your Beginner certificate. Your progress is saved on this device and shared with your instructor.</p>
-    <input type="text" id="reg-name" placeholder="Your first name + surname initial (e.g. Ada L.)" maxlength="40">
-    <select id="reg-year">
-      <option value="">Select your year group</option>
-      <option value="7">Year 7</option>
-      <option value="8">Year 8</option>
-      <option value="9">Year 9</option>
-      <option value="10">Year 10</option>
-    </select>
-    <input type="text" id="reg-class" placeholder="Class / teacher code (optional)" maxlength="30">
-    <button onclick="submitRegistration()">Start Learning 🚀</button>
+    <p>Create an account to start earning your Beginner certificate, or log in to continue on any device.</p>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="auth-tab-create" onclick="switchAuthTab('create')" type="button">Create Account</button>
+      <button class="auth-tab" id="auth-tab-login" onclick="switchAuthTab('login')" type="button">Log In</button>
+    </div>
+
+    <div id="auth-panel-create">
+      <input type="text" id="reg-username" placeholder="Choose a username (e.g. ada_l9)" maxlength="24" autocomplete="username">
+      <input type="text" id="reg-name" placeholder="Your first name + surname initial (e.g. Ada L.)" maxlength="40">
+      <select id="reg-year">
+        <option value="">Select your year group</option>
+        <option value="5">Year 5</option>
+        <option value="6">Year 6</option>
+        <option value="7">Year 7</option>
+        <option value="8">Year 8</option>
+        <option value="9">Year 9</option>
+        <option value="10">Year 10</option>
+      </select>
+      <input type="text" id="reg-class" placeholder="Class / teacher code (optional)" maxlength="30">
+      <input type="password" id="reg-password" placeholder="Choose a password (at least 4 characters)" maxlength="60" autocomplete="new-password">
+      <input type="password" id="reg-password2" placeholder="Type your password again" maxlength="60" autocomplete="new-password">
+      <p class="auth-hint">Use a simple password just for class — not one you use for email or games.</p>
+      <div class="auth-error" id="create-error"></div>
+      <button id="btn-create-account" onclick="submitCreateAccount()">Create Account &amp; Start Learning 🚀</button>
+    </div>
+
+    <div id="auth-panel-login" style="display:none;">
+      <input type="text" id="login-username" placeholder="Your username" maxlength="24" autocomplete="username">
+      <input type="password" id="login-password" placeholder="Your password" maxlength="60" autocomplete="current-password">
+      <div class="auth-error" id="login-error"></div>
+      <button id="btn-login" onclick="submitLogin()">Log In ▶</button>
+      <p class="auth-hint">Forgotten your password? Ask your instructor to reset it for you.</p>
+    </div>
   </div>
 </div>
 
@@ -248,7 +283,10 @@ code,pre,textarea.code-editor{font-family:'Cascadia Code','Consolas',monospace;}
     <a class="nav-item" onclick="navGo('a_hub')" id="nav-a_hub"><span class="nb">➡️</span> Start Advanced</a>
   </div>
   <div class="nav-section">
-    <a class="nav-item" onclick="if(confirm('Reset ALL your progress? This cannot be undone.'))resetProgress();" style="color:#f87171;"><span class="nb">↺</span> Reset progress</a>
+    <a class="nav-item" onclick="showPage('contact')" id="nav-contact"><span class="nb">✉️</span> Contact / Help</a>
+  </div>
+  <div class="nav-section">
+    <a class="nav-item" onclick="logOut()" style="color:#f87171;"><span class="nb">↪</span> Log out</a>
   </div>
 </div>
 
@@ -259,7 +297,7 @@ code,pre,textarea.code-editor{font-family:'Cascadia Code','Consolas',monospace;}
   <div class="page active" id="page-hub">
     <div class="hero">
       <h1>Code Your World — the Python Academy</h1>
-      <div class="meta">A hands-on Python programming pathway for secondary school students (Years 7–10).<br>
+      <div class="meta">A hands-on Python programming pathway for school students (Years 5–10, ages 10–16).<br>
       Real-world projects, real Python running in your browser, and a certificate at the end of every level.</div>
       <div class="badges">
         <span class="badge">🧑‍💻 Real in-browser Python (Pyodide)</span>
@@ -334,6 +372,20 @@ code,pre,textarea.code-editor{font-family:'Cascadia Code','Consolas',monospace;}
   <div class="page" id="page-a_hub">
     <div class="hero"><h1>🌳 Level 3 — Advanced</h1><div class="meta">Coming soon</div></div>
     <div class="card" id="a-hub-body"></div>
+  </div>
+
+  <!-- ---------- CONTACT / HELP ---------- -->
+  <div class="page" id="page-contact">
+    <div class="hero"><h1>✉️ Contact / Help</h1><div class="meta">Stuck on something, found a bug, or have a question? Send a message straight to your instructor.</div></div>
+    <div class="card">
+      <h2>Send a message</h2>
+      <label style="font-weight:700;font-size:0.85rem;color:var(--text-muted);">Subject</label>
+      <input type="text" id="contact-subject" placeholder="e.g. Week 4 exercise won't pass" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;margin:8px 0 14px;font-family:inherit;font-size:0.9rem;">
+      <label style="font-weight:700;font-size:0.85rem;color:var(--text-muted);">Message</label>
+      <textarea id="contact-message" rows="6" placeholder="Describe what's happening..." style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.9rem;margin:8px 0 14px;resize:vertical;"></textarea>
+      <div id="contact-status" style="font-size:0.85rem;margin-bottom:10px;min-height:20px;"></div>
+      <button class="run-btn" style="padding:10px 22px;font-size:0.85rem;" onclick="submitContactMessage()">Send Message</button>
+    </div>
   </div>
 
 </div>

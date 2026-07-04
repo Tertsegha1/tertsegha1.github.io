@@ -37,29 +37,143 @@ function shortenError(msg){
 }
 
 /* ---------------------------------------------------------------------
-   Registration
+   Password hashing (PBKDF2 via Web Crypto) — the plaintext password is
+   never stored or transmitted; only a salted hash is. Nobody, including
+   the instructor, can recover a student's actual password from this.
    --------------------------------------------------------------------- */
+function bytesToHex(bytes){ return Array.from(bytes).map(b=>b.toString(16).padStart(2,'0')).join(''); }
+function hexToBytes(hex){
+  const arr = new Uint8Array(hex.length/2);
+  for(let i=0;i<arr.length;i++) arr[i] = parseInt(hex.substr(i*2,2),16);
+  return arr;
+}
+async function hashPassword(password, saltHex){
+  const salt = saltHex ? hexToBytes(saltHex) : crypto.getRandomValues(new Uint8Array(16));
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), {name:'PBKDF2'}, false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits({name:'PBKDF2', salt, iterations:150000, hash:'SHA-256'}, keyMaterial, 256);
+  return { salt: bytesToHex(salt), hash: bytesToHex(new Uint8Array(bits)) };
+}
+
+/* ---------------------------------------------------------------------
+   Auth: create account / log in / log out
+   Each student's full progress snapshot lives in Firebase keyed by their
+   username, so logging in on any device restores exactly where they left off.
+   --------------------------------------------------------------------- */
+function usernameKey(u){ return String(u||'').trim().toLowerCase().replace(/[^a-z0-9_.-]/g,''); }
+
+function switchAuthTab(tab){
+  document.getElementById('auth-tab-create').classList.toggle('active', tab==='create');
+  document.getElementById('auth-tab-login').classList.toggle('active', tab==='login');
+  document.getElementById('auth-panel-create').style.display = tab==='create' ? 'block' : 'none';
+  document.getElementById('auth-panel-login').style.display = tab==='login' ? 'block' : 'none';
+}
+
 function loadRegistration(){
-  const name = localStorage.getItem('pyac_name');
-  if(name){
+  const username = localStorage.getItem('pyac_username');
+  if(username){
     document.getElementById('register-overlay').style.display = 'none';
-    document.getElementById('student-chip-name').textContent = name;
+    document.getElementById('student-chip-name').textContent = localStorage.getItem('pyac_name') || username;
   }
 }
-function submitRegistration(){
+
+function clearLocalSession(){
+  Object.keys(localStorage).filter(k=>k.startsWith('pyac_')).forEach(k=>localStorage.removeItem(k));
+}
+
+async function submitCreateAccount(){
+  const errEl = document.getElementById('create-error');
+  errEl.textContent = '';
+  const username = usernameKey(document.getElementById('reg-username').value);
   const name = document.getElementById('reg-name').value.trim();
   const year = document.getElementById('reg-year').value;
   const cls = document.getElementById('reg-class').value.trim();
-  if(!name || !year){
-    alert('Please enter your name and select your year group.');
-    return;
+  const pw = document.getElementById('reg-password').value;
+  const pw2 = document.getElementById('reg-password2').value;
+
+  if(username.length < 3){ errEl.textContent = 'Choose a username with at least 3 characters (letters, numbers, _ . -).'; return; }
+  if(!name){ errEl.textContent = 'Please enter your name.'; return; }
+  if(!year){ errEl.textContent = 'Please select your year group.'; return; }
+  if(pw.length < 4){ errEl.textContent = 'Your password must be at least 4 characters.'; return; }
+  if(pw !== pw2){ errEl.textContent = 'Passwords do not match.'; return; }
+  if(!fbOk()){ errEl.textContent = 'Creating an account needs an internet connection — please check yours and try again.'; return; }
+
+  const btn = document.getElementById('btn-create-account');
+  btn.disabled = true; btn.textContent = 'Creating account...';
+  try{
+    const existing = await fetch(fbUrl('/pyacademy/users/'+encodeURIComponent(username)+'.json')).then(r=>r.json());
+    if(existing){
+      errEl.textContent = 'That username is already taken — choose another, or log in instead.';
+      return;
+    }
+    const {salt, hash} = await hashPassword(pw);
+    const record = {
+      username, displayName: name, yearGroup: year, classCode: cls,
+      passwordSalt: salt, passwordHash: hash,
+      createdAt: new Date().toISOString(),
+      updated: new Date().toISOString(),
+      passwordEvents: [{type:'created', at: new Date().toISOString()}],
+      progress: {}
+    };
+    const res = await fetch(fbUrl('/pyacademy/users/'+encodeURIComponent(username)+'.json'), {
+      method:'PUT', body: JSON.stringify(record)
+    });
+    if(!res.ok) throw new Error('write failed');
+
+    clearLocalSession();
+    localStorage.setItem('pyac_username', username);
+    localStorage.setItem('pyac_name', name);
+    localStorage.setItem('pyac_year', year);
+    localStorage.setItem('pyac_class', cls);
+    document.getElementById('register-overlay').style.display = 'none';
+    document.getElementById('student-chip-name').textContent = name;
+    initApp();
+  }catch(e){
+    errEl.textContent = 'Something went wrong creating your account — please try again.';
+  }finally{
+    btn.disabled = false; btn.textContent = 'Create Account & Start Learning 🚀';
   }
-  localStorage.setItem('pyac_name', name);
-  localStorage.setItem('pyac_year', year);
-  localStorage.setItem('pyac_class', cls);
-  document.getElementById('register-overlay').style.display = 'none';
-  document.getElementById('student-chip-name').textContent = name;
-  syncProgress();
+}
+
+async function submitLogin(){
+  const errEl = document.getElementById('login-error');
+  errEl.textContent = '';
+  const username = usernameKey(document.getElementById('login-username').value);
+  const pw = document.getElementById('login-password').value;
+  if(!username || !pw){ errEl.textContent = 'Please enter your username and password.'; return; }
+  if(!fbOk()){ errEl.textContent = 'Logging in needs an internet connection — please check yours and try again.'; return; }
+
+  const btn = document.getElementById('btn-login');
+  btn.disabled = true; btn.textContent = 'Logging in...';
+  try{
+    const record = await fetch(fbUrl('/pyacademy/users/'+encodeURIComponent(username)+'.json')).then(r=>r.json());
+    if(!record){ errEl.textContent = 'No account with that username. Create one instead?'; return; }
+    const {hash} = await hashPassword(pw, record.passwordSalt);
+    if(hash !== record.passwordHash){ errEl.textContent = "Incorrect password. Ask your instructor to reset it if you've forgotten."; return; }
+
+    clearLocalSession();
+    localStorage.setItem('pyac_username', username);
+    localStorage.setItem('pyac_name', record.displayName || username);
+    localStorage.setItem('pyac_year', record.yearGroup || '');
+    localStorage.setItem('pyac_class', record.classCode || '');
+    const prog = record.progress || {};
+    Object.keys(prog).forEach(k=>{ if(k.startsWith('pyac_')) localStorage.setItem(k, prog[k]); });
+
+    document.getElementById('register-overlay').style.display = 'none';
+    document.getElementById('student-chip-name').textContent = record.displayName || username;
+    initApp();
+    toast('Welcome back, ' + (record.displayName || username) + '!');
+  }catch(e){
+    errEl.textContent = 'Something went wrong logging in — please try again.';
+  }finally{
+    btn.disabled = false; btn.textContent = 'Log In ▶';
+  }
+}
+
+function logOut(){
+  if(!confirm('Log out? Your progress is saved to your account, so you can log back in anytime.')) return;
+  clearLocalSession();
+  location.reload();
 }
 
 /* ---------------------------------------------------------------------
@@ -80,27 +194,62 @@ function fbOk(){
   return !!(window.PYAC_FIREBASE && window.PYAC_FIREBASE.databaseURL && !window.PYAC_FIREBASE.databaseURL.includes('REPLACE'));
 }
 function fbUrl(path){ return window.PYAC_FIREBASE.databaseURL + path; }
+
+function collectProgressSnapshot(){
+  const snap = {};
+  Object.keys(localStorage).forEach(k=>{
+    if(k.startsWith('pyac_') && k !== 'pyac_username') snap[k] = localStorage.getItem(k);
+  });
+  return snap;
+}
+
 function syncProgress(){
   if(!fbOk()) return;
-  const name = localStorage.getItem('pyac_name');
-  if(!name) return;
-  const safe = name.replace(/[.#$\[\]/]/g,'_');
-  const data = {
-    name,
+  const username = localStorage.getItem('pyac_username');
+  if(!username) return;
+  const updates = {
+    displayName: localStorage.getItem('pyac_name') || '',
     yearGroup: localStorage.getItem('pyac_year') || '',
     classCode: localStorage.getItem('pyac_class') || '',
     updated: new Date().toISOString(),
-    beginner: {}
+    progress: collectProgressSnapshot()
   };
-  CHAIN.forEach(k=>{ data.beginner[k] = getStatus(k); });
-  fetch(fbUrl('/pyacademy/participants/'+encodeURIComponent(safe)+'.json'), {
-    method:'PUT', body: JSON.stringify(data)
+  // PATCH (not PUT) so password fields on this user record are left untouched
+  fetch(fbUrl('/pyacademy/users/'+encodeURIComponent(username)+'.json'), {
+    method:'PATCH', body: JSON.stringify(updates)
   }).catch(()=>{});
 }
 
-function resetProgress(){
-  Object.keys(localStorage).filter(k=>k.startsWith('pyac_')).forEach(k=>localStorage.removeItem(k));
-  location.reload();
+/* ---------------------------------------------------------------------
+   Contact / Help
+   --------------------------------------------------------------------- */
+async function submitContactMessage(){
+  const subject = document.getElementById('contact-subject').value.trim();
+  const message = document.getElementById('contact-message').value.trim();
+  const statusEl = document.getElementById('contact-status');
+  if(!message){ statusEl.style.color = 'var(--danger)'; statusEl.textContent = 'Please write a message before sending.'; return; }
+  if(!fbOk()){ statusEl.style.color = 'var(--danger)'; statusEl.textContent = 'Cannot send right now — no connection to the server.'; return; }
+  statusEl.style.color = 'var(--text-muted)'; statusEl.textContent = 'Sending...';
+  const payload = {
+    username: localStorage.getItem('pyac_username') || '',
+    displayName: localStorage.getItem('pyac_name') || 'Unknown student',
+    classCode: localStorage.getItem('pyac_class') || '',
+    subject: subject || '(no subject)',
+    message,
+    status: 'open',
+    createdAt: new Date().toISOString()
+  };
+  try{
+    const res = await fetch(fbUrl('/pyacademy/messages.json'), {method:'POST', body: JSON.stringify(payload)});
+    if(!res.ok) throw new Error('failed');
+    statusEl.style.color = 'var(--success)';
+    statusEl.textContent = '✅ Message sent — your instructor will get back to you.';
+    document.getElementById('contact-subject').value = '';
+    document.getElementById('contact-message').value = '';
+  }catch(e){
+    statusEl.style.color = 'var(--danger)';
+    statusEl.textContent = 'Could not send your message — please try again.';
+  }
 }
 
 /* ---------------------------------------------------------------------
@@ -145,7 +294,7 @@ function navGo(pageArg){
     mountEditorsIn('page-'+pageArg);
     if(chainKey === 'mp1') refreshMP1CompleteState();
     else if(chainKey === 'mp2') refreshMP2CompleteState();
-    else if(chainKey === 'cert') maybeDrawCertificate();
+    else if(chainKey === 'cert'){ maybeDrawCertificate(); refreshCertCompleteState(); }
   }
 }
 
@@ -347,6 +496,7 @@ async function runSandbox(editorId, outId, weekKey){
     outEl.textContent = text || '(no output)';
     if(weekKey){
       localStorage.setItem('pyac_b_sandbox_'+weekKey, 'done');
+      syncProgress();
       refreshDayCompleteState(weekKey, 1);
     }
   }catch(e){
@@ -384,6 +534,7 @@ async function checkExercise(weekKey, exIdx, editorId, outId, testsId){
   const ex = week.exercises[exIdx];
   await runAndGrade(editorId, outId, testsId, ex.tests, (allPass)=>{
     localStorage.setItem(`pyac_b_ex_${weekKey}_${exIdx}`, allPass?'pass':'fail');
+    syncProgress();
     refreshDayCompleteState(weekKey, exIdx===0 ? 2 : 3);
   });
 }
@@ -392,6 +543,7 @@ async function checkMP1Stage(stageKey, editorId, outId, testsId){
   const stage = BEGINNER_MP1.stages.find(s=>s.key===stageKey);
   await runAndGrade(editorId, outId, testsId, stage.tests, (allPass)=>{
     localStorage.setItem(`pyac_b_mp1stage_${stageKey}`, allPass?'pass':'fail');
+    syncProgress();
     const badge = document.getElementById(`badge-mp1-${stageKey}`);
     if(badge){ badge.textContent = allPass ? '✓ Complete' : 'Try again'; badge.className = 'stage-badge'+(allPass?' pass':''); }
     refreshMP1CompleteState();
@@ -402,6 +554,7 @@ async function checkMP2Door(doorKey, editorId, outId, testsId){
   const door = BEGINNER_MP2.doors.find(d=>d.key===doorKey);
   await runAndGrade(editorId, outId, testsId, door.tests, (allPass)=>{
     localStorage.setItem(`pyac_b_mp2door_${doorKey}`, allPass?'pass':'fail');
+    syncProgress();
     const badge = document.getElementById(`badge-mp2-${doorKey}`);
     if(badge){ badge.textContent = allPass ? '✓ Complete' : 'Try again'; badge.className = 'stage-badge'+(allPass?' pass':''); }
     refreshMP2CompleteState();
@@ -435,6 +588,7 @@ function answerQuiz(weekKey, qIdx, optIdx){
   const already = localStorage.getItem(`pyac_b_quiz_${weekKey}_${qIdx}`);
   if(already !== null) return;
   localStorage.setItem(`pyac_b_quiz_${weekKey}_${qIdx}`, String(optIdx));
+  syncProgress();
   const el = document.getElementById(`quizq-${weekKey}-${qIdx}`);
   if(el) el.innerHTML = quizQuestionHtml(weekKey, qIdx);
   updateQuizScoreBanner(weekKey);
@@ -601,7 +755,7 @@ function dayHtml(week, d){
 const currentDayView = {};
 
 function dayStatus(wk, d){ return localStorage.getItem(`pyac_b_day_${wk}_${d}`) || 'todo'; }
-function setDayStatus(wk, d, val){ localStorage.setItem(`pyac_b_day_${wk}_${d}`, val); }
+function setDayStatus(wk, d, val){ localStorage.setItem(`pyac_b_day_${wk}_${d}`, val); syncProgress(); }
 function dayUnlocked(wk, d){
   if(d <= 1) return true;
   return dayStatus(wk, d-1) === 'done';
@@ -732,14 +886,90 @@ function renderMP2Page(){
    --------------------------------------------------------------------- */
 function renderCertPage(){
   const alreadyDone = getStatus('cert') === 'done';
+  const feedbackDone = localStorage.getItem('pyac_b_feedback_beginner') === 'done';
   return `<div class="hero"><h1>🎓 Your Beginner Certificate</h1><div class="meta">Congratulations on finishing Level 1!</div></div>
     <div class="card cert-wrap">
       <canvas id="cert-canvas" width="1200" height="850"></canvas><br>
       <button class="download-btn" onclick="downloadCertificate()">⬇ Download Certificate</button>
-      <div style="margin-top:18px;">
-        <button class="complete-btn" id="complete-btn-cert" onclick="markStepComplete('cert')">${alreadyDone?'✓ Intermediate Unlocked':'🚀 Unlock Intermediate Level'}</button>
-      </div>
+    </div>
+    <div class="card" id="feedback-card">
+      <h2>📝 Quick feedback before you go</h2>
+      <p>Help us make the next level even better — this takes under a minute.</p>
+      ${ratingRow('enjoy','How much did you enjoy this level?')}
+      ${ratingRow('clarity','How clear were the lessons?')}
+      ${ratingRow('confidence','How confident do you feel with Python now?')}
+      <label style="font-weight:700;font-size:0.85rem;color:var(--text-muted);display:block;margin-top:16px;">Anything you'd like to tell us? (optional)</label>
+      <textarea id="fb-comment" rows="3" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.9rem;margin-top:8px;resize:vertical;" placeholder="What did you like? What could be better?" ${feedbackDone?'disabled':''}></textarea>
+      <div id="feedback-status" style="font-size:0.85rem;margin:10px 0;"></div>
+      <button class="complete-btn" id="feedback-submit-btn" onclick="submitFeedback('beginner')" ${feedbackDone?'disabled':''}>${feedbackDone?'✓ Feedback submitted — thank you!':'Submit Feedback'}</button>
+    </div>
+    <div class="complete-bar">
+      <div>Submit your feedback above to unlock Intermediate:</div>
+      <ul class="req-list" id="reqlist-cert"></ul>
+      <button class="complete-btn" id="complete-btn-cert" onclick="markStepComplete('cert')" disabled>${alreadyDone?'✓ Intermediate Unlocked':'🚀 Unlock Intermediate Level'}</button>
     </div>`;
+}
+
+const _feedbackRatings = {};
+function ratingRow(qKey, label){
+  let opts = '';
+  for(let i=1;i<=5;i++){
+    opts += `<button type="button" class="rate-btn" data-v="${i}" onclick="setRating('${qKey}',${i})">${i}</button>`;
+  }
+  return `<div class="fb-row"><div class="fb-label">${escapeHtml(label)}</div><div class="fb-scale" id="fbscale-${qKey}">${opts}</div></div>`;
+}
+function setRating(qKey, val){
+  _feedbackRatings[qKey] = val;
+  const scale = document.getElementById('fbscale-'+qKey);
+  if(scale){
+    scale.querySelectorAll('.rate-btn').forEach(b=>{
+      b.classList.toggle('active', parseInt(b.dataset.v,10) === val);
+    });
+  }
+}
+
+async function submitFeedback(level){
+  const statusEl = document.getElementById('feedback-status');
+  const required = ['enjoy','clarity','confidence'];
+  const missing = required.filter(k => !_feedbackRatings[k]);
+  if(missing.length){ statusEl.style.color='var(--danger)'; statusEl.textContent = 'Please rate all three questions above.'; return; }
+  if(!fbOk()){ statusEl.style.color='var(--danger)'; statusEl.textContent = 'Cannot submit right now — no connection to the server.'; return; }
+  statusEl.style.color='var(--text-muted)'; statusEl.textContent = 'Submitting...';
+  const payload = {
+    username: localStorage.getItem('pyac_username') || '',
+    displayName: localStorage.getItem('pyac_name') || '',
+    classCode: localStorage.getItem('pyac_class') || '',
+    yearGroup: localStorage.getItem('pyac_year') || '',
+    level,
+    ratings: Object.assign({}, _feedbackRatings),
+    comment: (document.getElementById('fb-comment') || {}).value || '',
+    submittedAt: new Date().toISOString()
+  };
+  try{
+    const res = await fetch(fbUrl('/pyacademy/feedback/'+level+'.json'), {method:'POST', body: JSON.stringify(payload)});
+    if(!res.ok) throw new Error('failed');
+    localStorage.setItem('pyac_b_feedback_'+level, 'done');
+    syncProgress();
+    statusEl.style.color = 'var(--success)';
+    statusEl.textContent = '✅ Thank you for your feedback!';
+    const btn = document.getElementById('feedback-submit-btn');
+    if(btn){ btn.disabled = true; btn.textContent = '✓ Feedback submitted — thank you!'; }
+    const comment = document.getElementById('fb-comment');
+    if(comment) comment.disabled = true;
+    refreshCertCompleteState();
+  }catch(e){
+    statusEl.style.color = 'var(--danger)';
+    statusEl.textContent = 'Could not submit feedback — please try again.';
+  }
+}
+
+function refreshCertCompleteState(){
+  const feedbackDone = localStorage.getItem('pyac_b_feedback_beginner') === 'done';
+  const done = getStatus('cert') === 'done';
+  const btn = document.getElementById('complete-btn-cert');
+  if(btn) btn.disabled = !feedbackDone || done;
+  const reqList = document.getElementById('reqlist-cert');
+  if(reqList) reqList.innerHTML = `<li class="${feedbackDone?'met':''}">Submit the feedback form above</li>`;
 }
 
 function getCertId(){

@@ -8,6 +8,7 @@
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
     body{background:#0d0b26;color:#e2e8f0;font-family:system-ui,-apple-system,sans-serif;font-size:14px;min-height:100vh;}
+    button{font-family:inherit;}
 
     #hdr{background:#181454;border-bottom:1px solid #2c2470;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;}
     #hdr-left{display:flex;align-items:center;gap:12px;}
@@ -19,6 +20,15 @@
     #status-pill{font-size:0.7rem;padding:3px 10px;border-radius:999px;border:1px solid #3730a3;color:#8b85c4;}
     #status-pill.connected{border-color:#22c55e;color:#4ade80;}
     #status-pill.error{border-color:#ef4444;color:#fca5a5;}
+
+    /* ── Tabs ── */
+    #tabs{display:flex;gap:6px;padding:12px 24px 0;border-bottom:1px solid #2c2470;}
+    .tab-btn{background:none;border:none;color:#8b85c4;font-size:0.82rem;font-weight:700;padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent;}
+    .tab-btn:hover{color:#c7c2f0;}
+    .tab-btn.active{color:#e2e8f0;border-bottom-color:#6366f1;}
+    .tab-badge{background:#ef4444;color:#fff;border-radius:999px;padding:1px 7px;font-size:0.63rem;margin-left:4px;}
+    .tab-panel{display:none;}
+    .tab-panel.active{display:block;}
 
     #stats{display:flex;gap:16px;padding:14px 24px;border-bottom:1px solid #2c2470;flex-wrap:wrap;}
     .stat-card{background:#181454;border:1px solid #2c2470;border-radius:8px;padding:10px 18px;min-width:110px;}
@@ -33,7 +43,7 @@
     #prog-track{background:#2c2470;border-radius:999px;height:6px;overflow:hidden;}
     #prog-fill{background:linear-gradient(90deg,#6366f1,#22c55e);height:100%;border-radius:999px;transition:width 0.6s ease;width:0%;}
 
-    #tbl-wrap{overflow-x:auto;padding:16px 24px;}
+    .tbl-wrap{overflow-x:auto;padding:16px 24px;}
     table{width:100%;border-collapse:collapse;min-width:900px;}
     thead th{background:#181454;padding:8px 10px;text-align:center;font-size:0.64rem;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#8b85c4;border-bottom:1px solid #2c2470;white-space:nowrap;}
     thead th:first-child{text-align:left;width:170px;}
@@ -60,13 +70,37 @@
 
     .row-bar{display:inline-block;width:4px;height:26px;border-radius:2px;vertical-align:middle;margin-right:8px;}
 
+    .reset-btn{background:none;border:1px solid #3730a3;color:#a5b4fc;font-size:0.7rem;padding:4px 10px;border-radius:6px;cursor:pointer;}
+    .reset-btn:hover{background:#1e1b4b;}
+
+    /* ── Messages ── */
+    #panel-body-messages{padding:16px 24px;display:flex;flex-direction:column;gap:12px;}
+    .msg-card{background:#181454;border:1px solid #2c2470;border-radius:10px;padding:14px 18px;}
+    .msg-card.resolved{opacity:0.55;}
+    .msg-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px;}
+    .msg-subject{font-weight:700;font-size:0.9rem;color:#e2e8f0;}
+    .msg-meta{font-size:0.68rem;color:#8b85c4;margin-top:2px;}
+    .msg-body{font-size:0.83rem;color:#c7c2f0;line-height:1.6;white-space:pre-wrap;margin:8px 0;}
+    .status-badge{font-size:0.65rem;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap;}
+    .status-badge.open{background:#78350f;color:#fbbf24;}
+    .status-badge.resolved{background:#14532d;color:#4ade80;}
+    .toggle-btn{background:none;border:1px solid #3730a3;color:#a5b4fc;font-size:0.7rem;padding:4px 10px;border-radius:6px;cursor:pointer;}
+
+    /* ── Feedback ── */
+    #panel-body-feedback{padding:16px 24px;}
+    .fb-stats{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;}
+    .fb-comment-card{background:#181454;border:1px solid #2c2470;border-radius:10px;padding:14px 18px;margin-bottom:10px;}
+    .fb-comment-meta{font-size:0.68rem;color:#8b85c4;margin-bottom:6px;}
+    .fb-comment-ratings{font-size:0.7rem;color:#a5b4fc;margin-bottom:6px;}
+    .fb-comment-text{font-size:0.83rem;color:#e2e8f0;line-height:1.6;}
+
     #config-error{display:none;padding:40px 24px;text-align:center;}
     #config-error h2{color:#f87171;font-size:1.1rem;margin-bottom:10px;}
     #config-error p{color:#8b85c4;font-size:0.85rem;line-height:1.7;max-width:540px;margin:0 auto;}
     #config-error code{background:#181454;border:1px solid #2c2470;padding:2px 7px;border-radius:4px;font-size:0.82rem;color:#7dd3fc;}
 
-    #empty{display:none;padding:60px 24px;text-align:center;color:#3d3675;font-size:0.9rem;}
-    #empty .icon{font-size:2.5rem;margin-bottom:12px;}
+    .empty{display:none;padding:60px 24px;text-align:center;color:#3d3675;font-size:0.9rem;}
+    .empty .icon{font-size:2.5rem;margin-bottom:12px;}
 
     #footer{padding:12px 24px;color:#3d3675;font-size:0.68rem;border-top:1px solid #2c2470;margin-top:8px;}
   </style>
@@ -78,28 +112,22 @@
     <span class="logo">🧑‍💻</span>
     <div>
       <div id="hdr-title">PYTHON ACADEMY — INSTRUCTOR MONITOR</div>
-      <div id="hdr-sub">Beginner Level · live class progress</div>
+      <div id="hdr-sub">Beginner Level · live class data</div>
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:12px;">
     <span id="live-dot"></span>
     <span id="status-pill">Connecting…</span>
-    <button onclick="location.reload()" style="background:none;border:1px solid #2c2470;color:#8b85c4;font-size:0.7rem;padding:3px 10px;border-radius:4px;cursor:pointer;font-family:inherit;">⟳ Refresh</button>
+    <button onclick="location.reload()" style="background:none;border:1px solid #2c2470;color:#8b85c4;font-size:0.7rem;padding:3px 10px;border-radius:4px;cursor:pointer;">⟳ Refresh</button>
     <a href="python-academy.html" style="font-size:0.7rem;padding:3px 10px;border-radius:4px;border:1px solid #2c2470;color:#8b85c4;text-decoration:none;">← Student view</a>
   </div>
 </div>
 
-<div id="stats">
-  <div class="stat-card"><div id="s-total" class="stat-val">—</div><div class="stat-lbl">Students</div></div>
-  <div class="stat-card green"><div id="s-complete" class="stat-val">—</div><div class="stat-lbl">Certificate earned</div></div>
-  <div class="stat-card amber"><div id="s-progress" class="stat-val">—</div><div class="stat-lbl">In progress</div></div>
-  <div class="stat-card red"><div id="s-stuck" class="stat-val">—</div><div class="stat-lbl">Not started</div></div>
-  <div class="stat-card" style="margin-left:auto;"><div id="s-avg" class="stat-val">—</div><div class="stat-lbl">Avg steps done</div></div>
-</div>
-
-<div id="prog-wrap">
-  <div id="prog-label">Class completion — 0 of 0 steps done</div>
-  <div id="prog-track"><div id="prog-fill"></div></div>
+<div id="tabs">
+  <button class="tab-btn active" data-tab="progress" onclick="switchTab('progress')">📊 Progress</button>
+  <button class="tab-btn" data-tab="users" onclick="switchTab('users')">🔑 Users &amp; Passwords</button>
+  <button class="tab-btn" data-tab="messages" onclick="switchTab('messages')">✉️ Messages <span id="msg-badge" class="tab-badge" style="display:none;"></span></button>
+  <button class="tab-btn" data-tab="feedback" onclick="switchTab('feedback')">📝 Feedback</button>
 </div>
 
 <div id="config-error">
@@ -111,88 +139,154 @@
   </p>
 </div>
 
-<div id="empty">
-  <div class="icon">⏳</div>
-  <div>Waiting for students…</div>
-  <div style="font-size:0.75rem;margin-top:6px;color:#5b5490;">Students appear here as soon as they register and complete their first week.</div>
+<!-- ============ PROGRESS TAB ============ -->
+<div class="tab-panel active" id="tabpanel-progress">
+  <div id="stats">
+    <div class="stat-card"><div id="s-total" class="stat-val">—</div><div class="stat-lbl">Students</div></div>
+    <div class="stat-card green"><div id="s-complete" class="stat-val">—</div><div class="stat-lbl">Certificate earned</div></div>
+    <div class="stat-card amber"><div id="s-progress" class="stat-val">—</div><div class="stat-lbl">In progress</div></div>
+    <div class="stat-card red"><div id="s-stuck" class="stat-val">—</div><div class="stat-lbl">Not started</div></div>
+    <div class="stat-card" style="margin-left:auto;"><div id="s-avg" class="stat-val">—</div><div class="stat-lbl">Avg steps done</div></div>
+  </div>
+  <div id="prog-wrap">
+    <div id="prog-label">Class completion — 0 of 0 steps done</div>
+    <div id="prog-track"><div id="prog-fill"></div></div>
+  </div>
+  <div class="empty" id="empty-progress">
+    <div class="icon">⏳</div>
+    <div>Waiting for students…</div>
+    <div style="font-size:0.75rem;margin-top:6px;color:#5b5490;">Students appear here as soon as they create an account and complete their first week.</div>
+  </div>
+  <div class="tbl-wrap" id="tbl-wrap-progress" style="display:none;">
+    <table>
+      <thead>
+        <tr>
+          <th style="text-align:left;">Student</th>
+          <th title="Week 1 — Hello, Python!">W1</th>
+          <th title="Week 2 — Variables & Data">W2</th>
+          <th title="Week 3 — Input & Operators">W3</th>
+          <th title="Week 4 — Making Decisions">W4</th>
+          <th title="Mini Project 1 — Crack the Locker Code">MP1</th>
+          <th title="Week 5 — Loops">W5</th>
+          <th title="Week 6 — Lists">W6</th>
+          <th title="Week 7 — Strings & Ciphers">W7</th>
+          <th title="Week 8 — Functions">W8</th>
+          <th title="Week 9 — Dictionaries & Debug">W9</th>
+          <th title="Mini Project 2 — Escape the Computer Lab">MP2</th>
+          <th title="Certificate awarded">🎓</th>
+          <th>Score</th>
+        </tr>
+      </thead>
+      <tbody id="participants"></tbody>
+    </table>
+  </div>
+  <div id="footer">
+    Auto-refreshes every 4 s via Firebase Realtime Database · <span id="last-update">—</span>
+  </div>
 </div>
 
-<div id="tbl-wrap" style="display:none;">
-  <table>
-    <thead>
-      <tr>
-        <th style="text-align:left;">Student</th>
-        <th title="Week 1 — Hello, Python!">W1</th>
-        <th title="Week 2 — Variables & Data">W2</th>
-        <th title="Week 3 — Input & Operators">W3</th>
-        <th title="Week 4 — Making Decisions">W4</th>
-        <th title="Mini Project 1 — Crack the Locker Code">MP1</th>
-        <th title="Week 5 — Loops">W5</th>
-        <th title="Week 6 — Lists">W6</th>
-        <th title="Week 7 — Strings & Ciphers">W7</th>
-        <th title="Week 8 — Functions">W8</th>
-        <th title="Week 9 — Dictionaries & Debug">W9</th>
-        <th title="Mini Project 2 — Escape the Computer Lab">MP2</th>
-        <th title="Certificate awarded">🎓</th>
-        <th>Score</th>
-      </tr>
-    </thead>
-    <tbody id="participants"></tbody>
-  </table>
+<!-- ============ USERS & PASSWORDS TAB ============ -->
+<div class="tab-panel" id="tabpanel-users">
+  <div class="empty" id="empty-users">
+    <div class="icon">🔑</div>
+    <div>No accounts yet</div>
+  </div>
+  <div class="tbl-wrap" id="tbl-wrap-users" style="display:none;">
+    <p style="color:#8b85c4;font-size:0.78rem;margin-bottom:12px;max-width:640px;line-height:1.6;">
+      Passwords are securely hashed — nobody, including you, can view a student's actual password. If a student
+      forgets theirs, use <strong>Reset Password</strong> below to set them a new one (you'll see the new password
+      once, to pass on to them).
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th style="text-align:left;">Username</th>
+          <th style="text-align:left;">Name</th>
+          <th>Year</th>
+          <th style="text-align:left;">Class</th>
+          <th>Account created</th>
+          <th>Last password change</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="users-body"></tbody>
+    </table>
+  </div>
 </div>
 
-<div id="footer">
-  Auto-refreshes every 4 s via Firebase Realtime Database · <span id="last-update">—</span>
+<!-- ============ MESSAGES TAB ============ -->
+<div class="tab-panel" id="tabpanel-messages">
+  <div class="empty" id="empty-messages">
+    <div class="icon">✉️</div>
+    <div>No messages yet</div>
+    <div style="font-size:0.75rem;margin-top:6px;color:#5b5490;">Messages students send from the Contact / Help page will show up here.</div>
+  </div>
+  <div id="panel-body-messages"></div>
+</div>
+
+<!-- ============ FEEDBACK TAB ============ -->
+<div class="tab-panel" id="tabpanel-feedback">
+  <div class="empty" id="empty-feedback">
+    <div class="icon">📝</div>
+    <div>No feedback yet</div>
+    <div style="font-size:0.75rem;margin-top:6px;color:#5b5490;">Feedback appears here once students submit it on the certificate page.</div>
+  </div>
+  <div id="panel-body-feedback"></div>
 </div>
 
 <script>
 (function(){
   var KEYS=['week1','week2','week3','week4','mp1','week5','week6','week7','week8','week9','mp2','cert'];
-  var participants={};
+  var users={};
+  var messages={};
+  var feedback={};
   var flashSet={};
 
   if(!window.PYAC_FIREBASE || !window.PYAC_FIREBASE.databaseURL ||
      window.PYAC_FIREBASE.databaseURL.includes('REPLACE')){
     document.getElementById('config-error').style.display='block';
-    document.getElementById('stats').style.display='none';
-    document.getElementById('prog-wrap').style.display='none';
+    document.getElementById('tabs').style.display='none';
+    document.querySelectorAll('.tab-panel').forEach(function(p){p.style.display='none';});
     setStatus('error','Not configured');
     return;
   }
 
   var DB=window.PYAC_FIREBASE.databaseURL;
-  var PATH='/pyacademy/participants';
 
+  /* ── Tab switching ── */
+  window.switchTab = function(name){
+    document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.tab===name); });
+    document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.toggle('active', p.id==='tabpanel-'+name); });
+  };
+
+  /* ── Realtime progress feed (SSE + polling fallback) ── */
   function connect(){
-    var es=new EventSource(DB+PATH+'.json');
+    var es=new EventSource(DB+'/pyacademy/users.json');
 
     es.addEventListener('put',function(e){
       try{
         var msg=JSON.parse(e.data);
         if(msg.path==='/'&&msg.data){
-          participants={};
-          Object.keys(msg.data).forEach(function(k){ participants[k]=msg.data[k]; });
+          users={};
+          Object.keys(msg.data).forEach(function(k){ users[k]=msg.data[k]; });
         } else if(msg.path&&msg.data){
-          var key=msg.path.replace(/^\//,'');
-          participants[key]=msg.data;
+          var key=msg.path.replace(/^\//,'').split('/')[0];
+          if(msg.path.split('/').length<=2){ users[key]=msg.data; } else { fullPoll(); }
           flashRow(key);
         } else if(msg.path&&msg.data===null){
-          var key2=msg.path.replace(/^\//,'');
-          delete participants[key2];
+          var key2=msg.path.replace(/^\//,'').split('/')[0];
+          if(msg.path.split('/').length<=2) delete users[key2];
         }
-        render();
+        renderProgress();
+        renderUsers();
         setStatus('connected','Live');
       }catch(err){}
     });
 
     es.addEventListener('patch',function(e){
       try{
-        var msg=JSON.parse(e.data);
-        if(msg.data){
-          Object.keys(msg.data).forEach(function(k){ participants[k]=msg.data[k]; flashRow(k); });
-          render();
-          setStatus('connected','Live');
-        }
+        fullPoll();
+        setStatus('connected','Live');
       }catch(err){}
     });
 
@@ -205,37 +299,43 @@
     };
   }
 
-  function poll(){
-    fetch(DB+PATH+'.json')
-      .then(function(r){return r.json();})
-      .then(function(data){
-        participants={};
-        if(data&&typeof data==='object'){
-          Object.keys(data).forEach(function(k){ participants[k]=data[k]; });
-        }
-        render();
-        setStatus('connected','Live');
-      })
-      .catch(function(){ setStatus('error','Fetch error'); });
+  function fullPoll(){
+    fetch(DB+'/pyacademy/users.json').then(function(r){return r.json();}).then(function(data){
+      users = (data && typeof data==='object') ? data : {};
+      renderProgress();
+      renderUsers();
+      setStatus('connected','Live');
+    }).catch(function(){ setStatus('error','Fetch error'); });
+
+    fetch(DB+'/pyacademy/messages.json').then(function(r){return r.json();}).then(function(data){
+      messages = (data && typeof data==='object') ? data : {};
+      renderMessages();
+    }).catch(function(){});
+
+    fetch(DB+'/pyacademy/feedback/beginner.json').then(function(r){return r.json();}).then(function(data){
+      feedback = (data && typeof data==='object') ? data : {};
+      renderFeedback();
+    }).catch(function(){});
   }
 
   function flashRow(key){ flashSet[key]=Date.now(); }
 
+  /* ── Progress tab ── */
   function score(p){
-    var b=(p&&p.beginner)||{};
-    return KEYS.filter(function(k){ return b[k]==='done'; }).length;
+    var prog=(p&&p.progress)||{};
+    return KEYS.filter(function(k){ return prog['pyac_b_status_'+k]==='done'; }).length;
   }
 
-  function render(){
-    var keys=Object.keys(participants).sort(function(a,b){
-      var sa=score(participants[a]), sb=score(participants[b]);
+  function renderProgress(){
+    var keys=Object.keys(users).sort(function(a,b){
+      var sa=score(users[a]), sb=score(users[b]);
       if(sb!==sa) return sb-sa;
-      return (participants[a].name||a).localeCompare(participants[b].name||b);
+      return (users[a].displayName||a).localeCompare(users[b].displayName||b);
     });
 
     var tbody=document.getElementById('participants');
-    var tblWrap=document.getElementById('tbl-wrap');
-    var empty=document.getElementById('empty');
+    var tblWrap=document.getElementById('tbl-wrap-progress');
+    var empty=document.getElementById('empty-progress');
 
     if(!keys.length){
       tblWrap.style.display='none';
@@ -247,14 +347,13 @@
     tblWrap.style.display='block';
 
     var rows=keys.map(function(k){
-      var p=participants[k];
-      var b=p.beginner||{};
+      var p=users[k];
+      var prog=p.progress||{};
       var s=score(p);
       var isNew=(flashSet[k]&&(Date.now()-flashSet[k])<2000);
-      delete flashSet[k];
 
       var dotCells=KEYS.map(function(kk){
-        var st=b[kk]||'todo';
+        var st=prog['pyac_b_status_'+kk]||'todo';
         var cls = st==='done' ? 'dot-done' : 'dot-todo';
         var ic = st==='done' ? '✓' : '○';
         return '<td><span class="dot '+cls+'">'+ic+'</span></td>';
@@ -268,8 +367,8 @@
       return '<tr'+(isNew?' class="p-row-new"':'')+'>'+
         '<td>'+
           '<span class="row-bar" style="background:'+barColor+';"></span>'+
-          '<span class="p-name">'+(p.name||k)+'</span>'+
-          '<div class="p-meta">'+meta+(meta?' · ':'')+ts+'</div>'+
+          '<span class="p-name">'+esc(p.displayName||k)+'</span>'+
+          '<div class="p-meta">'+esc(meta)+(meta?' · ':'')+ts+'</div>'+
         '</td>'+
         dotCells+
         '<td><span class="score '+scoreClass+'">'+s+'/'+KEYS.length+'</span></td>'+
@@ -277,7 +376,7 @@
     });
     tbody.innerHTML=rows.join('');
 
-    updateStats(keys.map(function(k){ return participants[k]; }));
+    updateStats(keys.map(function(k){ return users[k]; }));
     document.getElementById('last-update').textContent='Last update: '+new Date().toLocaleTimeString();
   }
 
@@ -302,15 +401,165 @@
       'Class completion — '+totalDone+' of '+totalPossible+' steps done ('+pct+'%)';
   }
 
+  /* ── Users & Passwords tab ── */
+  function renderUsers(){
+    var keys=Object.keys(users).sort(function(a,b){
+      return (users[a].displayName||a).localeCompare(users[b].displayName||b);
+    });
+    var tblWrap=document.getElementById('tbl-wrap-users');
+    var empty=document.getElementById('empty-users');
+    if(!keys.length){ tblWrap.style.display='none'; empty.style.display='block'; return; }
+    empty.style.display='none'; tblWrap.style.display='block';
+
+    var rows=keys.map(function(username){
+      var u=users[username];
+      var events=u.passwordEvents||[];
+      var lastEvent=events.length?events[events.length-1]:null;
+      var created=u.createdAt?new Date(u.createdAt).toLocaleDateString():'—';
+      var lastChange=lastEvent?relTime(lastEvent.at):'—';
+      return '<tr>'+
+        '<td style="text-align:left;font-family:monospace;">'+esc(username)+'</td>'+
+        '<td style="text-align:left;">'+esc(u.displayName||'')+'</td>'+
+        '<td>'+esc(u.yearGroup||'—')+'</td>'+
+        '<td style="text-align:left;">'+esc(u.classCode||'—')+'</td>'+
+        '<td>'+created+'</td>'+
+        '<td>'+lastChange+'</td>'+
+        '<td><button class="reset-btn" onclick="resetPassword(\''+username.replace(/'/g,"\\'")+'\')">Reset Password</button></td>'+
+      '</tr>';
+    });
+    document.getElementById('users-body').innerHTML=rows.join('');
+  }
+
+  /* Password hashing — must match python-academy-app.js exactly */
+  function bytesToHex(bytes){ return Array.from(bytes).map(function(b){return b.toString(16).padStart(2,'0');}).join(''); }
+  async function hashPassword(password){
+    var salt=crypto.getRandomValues(new Uint8Array(16));
+    var enc=new TextEncoder();
+    var keyMaterial=await crypto.subtle.importKey('raw', enc.encode(password), {name:'PBKDF2'}, false, ['deriveBits']);
+    var bits=await crypto.subtle.deriveBits({name:'PBKDF2', salt:salt, iterations:150000, hash:'SHA-256'}, keyMaterial, 256);
+    return { salt: bytesToHex(salt), hash: bytesToHex(new Uint8Array(bits)) };
+  }
+
+  window.resetPassword = async function(username){
+    var u=users[username];
+    if(!u) return;
+    var name=u.displayName||username;
+    var newPw=prompt('Enter a NEW password for '+name+' (at least 4 characters), or leave blank to auto-generate one:');
+    if(newPw===null) return;
+    newPw=newPw.trim();
+    if(!newPw){
+      newPw=Math.random().toString(36).slice(2,8);
+    }
+    if(newPw.length<4){ alert('Password must be at least 4 characters.'); return; }
+
+    var h=await hashPassword(newPw);
+    var events=(u.passwordEvents||[]).slice();
+    events.push({type:'instructor_reset', at:new Date().toISOString()});
+    var updates={
+      passwordSalt: h.salt,
+      passwordHash: h.hash,
+      passwordEvents: events,
+      updated: new Date().toISOString()
+    };
+    try{
+      var res=await fetch(DB+'/pyacademy/users/'+encodeURIComponent(username)+'.json', {method:'PATCH', body:JSON.stringify(updates)});
+      if(!res.ok) throw new Error('failed');
+      alert('New password for '+name+':\n\n'+newPw+'\n\nMake sure to tell them before they try to log in again.');
+      fullPoll();
+    }catch(e){
+      alert('Could not reset the password — please check your connection and try again.');
+    }
+  };
+
+  /* ── Messages tab ── */
+  function renderMessages(){
+    var keys=Object.keys(messages).sort(function(a,b){
+      return new Date(messages[b].createdAt||0) - new Date(messages[a].createdAt||0);
+    });
+    var openCount=keys.filter(function(k){ return messages[k].status!=='resolved'; }).length;
+    var badge=document.getElementById('msg-badge');
+    if(openCount>0){ badge.style.display='inline-block'; badge.textContent=openCount; } else { badge.style.display='none'; }
+
+    var body=document.getElementById('panel-body-messages');
+    var empty=document.getElementById('empty-messages');
+    if(!keys.length){ empty.style.display='block'; body.innerHTML=''; return; }
+    empty.style.display='none';
+
+    body.innerHTML=keys.map(function(k){
+      var m=messages[k];
+      var resolved=m.status==='resolved';
+      var meta=[m.displayName||'Unknown student', m.classCode?('· '+m.classCode):'', m.createdAt?('· '+relTime(m.createdAt)):''].filter(Boolean).join(' ');
+      return '<div class="msg-card'+(resolved?' resolved':'')+'">'+
+        '<div class="msg-top">'+
+          '<div><div class="msg-subject">'+esc(m.subject||'(no subject)')+'</div><div class="msg-meta">'+esc(meta)+'</div></div>'+
+          '<div style="display:flex;align-items:center;gap:8px;">'+
+            '<span class="status-badge '+(resolved?'resolved':'open')+'">'+(resolved?'Resolved':'Open')+'</span>'+
+            '<button class="toggle-btn" onclick="toggleMessage(\''+k+'\',\''+(resolved?'open':'resolved')+'\')">Mark '+(resolved?'open':'resolved')+'</button>'+
+          '</div>'+
+        '</div>'+
+        '<div class="msg-body">'+esc(m.message||'')+'</div>'+
+      '</div>';
+    }).join('');
+  }
+
+  window.toggleMessage = function(key, newStatus){
+    fetch(DB+'/pyacademy/messages/'+key+'.json', {method:'PATCH', body:JSON.stringify({status:newStatus})})
+      .then(function(){ fullPoll(); }).catch(function(){});
+  };
+
+  /* ── Feedback tab ── */
+  function renderFeedback(){
+    var keys=Object.keys(feedback);
+    var body=document.getElementById('panel-body-feedback');
+    var empty=document.getElementById('empty-feedback');
+    if(!keys.length){ empty.style.display='block'; body.innerHTML=''; return; }
+    empty.style.display='none';
+
+    var sums={enjoy:0,clarity:0,confidence:0};
+    var counts={enjoy:0,clarity:0,confidence:0};
+    keys.forEach(function(k){
+      var r=(feedback[k].ratings)||{};
+      ['enjoy','clarity','confidence'].forEach(function(q){
+        if(r[q]){ sums[q]+=r[q]; counts[q]++; }
+      });
+    });
+    function avg(q){ return counts[q] ? (sums[q]/counts[q]).toFixed(1) : '—'; }
+
+    var statsHtml='<div class="fb-stats">'+
+      '<div class="stat-card"><div class="stat-val">'+keys.length+'</div><div class="stat-lbl">Responses</div></div>'+
+      '<div class="stat-card green"><div class="stat-val">'+avg('enjoy')+'/5</div><div class="stat-lbl">Enjoyment</div></div>'+
+      '<div class="stat-card amber"><div class="stat-val">'+avg('clarity')+'/5</div><div class="stat-lbl">Clarity</div></div>'+
+      '<div class="stat-card"><div class="stat-val">'+avg('confidence')+'/5</div><div class="stat-lbl">Confidence</div></div>'+
+    '</div>';
+
+    var sortedKeys=keys.slice().sort(function(a,b){ return new Date(feedback[b].submittedAt||0) - new Date(feedback[a].submittedAt||0); });
+    var commentsHtml=sortedKeys.map(function(k){
+      var f=feedback[k];
+      var r=f.ratings||{};
+      var meta=[f.displayName||'Anonymous', f.classCode?('· '+f.classCode):'', f.submittedAt?('· '+relTime(f.submittedAt)):''].filter(Boolean).join(' ');
+      var ratingsLine='Enjoyment '+(r.enjoy||'—')+'/5 · Clarity '+(r.clarity||'—')+'/5 · Confidence '+(r.confidence||'—')+'/5';
+      return '<div class="fb-comment-card">'+
+        '<div class="fb-comment-meta">'+esc(meta)+'</div>'+
+        '<div class="fb-comment-ratings">'+ratingsLine+'</div>'+
+        (f.comment?('<div class="fb-comment-text">'+esc(f.comment)+'</div>'):'<div class="fb-comment-text" style="color:#5b5490;">(no comment left)</div>')+
+      '</div>';
+    }).join('');
+
+    body.innerHTML=statsHtml+commentsHtml;
+  }
+
   function relTime(iso){
     try{
       var diff=Math.floor((Date.now()-new Date(iso).getTime())/1000);
       if(diff<10) return 'just now';
       if(diff<60) return diff+'s ago';
       if(diff<3600) return Math.floor(diff/60)+'m ago';
-      return Math.floor(diff/3600)+'h ago';
+      if(diff<86400) return Math.floor(diff/3600)+'h ago';
+      return Math.floor(diff/86400)+'d ago';
     }catch(e){ return iso; }
   }
+
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
   function setStatus(cls,text){
     var pill=document.getElementById('status-pill');
@@ -319,8 +568,9 @@
   }
 
   try{ connect(); }catch(e){}
-  setInterval(poll,4000);
-  setInterval(function(){ render(); },30000);
+  fullPoll();
+  setInterval(fullPoll,4000);
+  setInterval(function(){ renderProgress(); renderMessages(); renderFeedback(); },30000);
 
 })();
 </script>
