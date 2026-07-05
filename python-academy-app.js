@@ -7,6 +7,14 @@
 const CHAIN = ['week1','week2','week3','week4','mp1','week5','week6','week7','week8','week9','mp2','cert'];
 window._editors = window._editors || {};
 
+// The guest demo account is for prospective schools to sample the platform —
+// it's capped at the end of Week 1 so evaluating the demo isn't a substitute
+// for actually subscribing.
+const GUEST_CAP_KEY = 'week1';
+function isGuestCapped(key){
+  return localStorage.getItem('pyac_is_guest') === 'true' && CHAIN.indexOf(key) > CHAIN.indexOf(GUEST_CAP_KEY);
+}
+
 /* ---------------------------------------------------------------------
    Small utilities
    --------------------------------------------------------------------- */
@@ -297,6 +305,7 @@ function setStatus(key,val){
 }
 function isUnlocked(key){
   if(INSTRUCTOR_PREVIEW) return true;
+  if(isGuestCapped(key)) return false;
   const idx = CHAIN.indexOf(key);
   if(idx <= 0) return true;
   return getStatus(CHAIN[idx-1]) === 'done';
@@ -400,6 +409,10 @@ function navGo(pageArg){
     return;
   }
   const chainKey = pageArg.replace(/^b_/,'');
+  if(isGuestCapped(chainKey)){
+    toast("🎓 That's the end of the free demo — get in touch to unlock the full 9-week course!");
+    return;
+  }
   if(!isUnlocked(chainKey)){
     toast('Complete the previous step first to unlock this.');
     return;
@@ -770,7 +783,13 @@ function markStepComplete(key){
     const btn = document.getElementById('complete-btn-cert');
     if(btn) btn.textContent = '✓ Intermediate Unlocked';
   }
-  toast(key === 'cert' ? 'Intermediate level unlocked! 🎉' : 'Step complete — the next one is unlocked! 🎉');
+  if(key === 'cert'){
+    toast('Intermediate level unlocked! 🎉');
+  } else if(isGuestCapped(CHAIN[CHAIN.indexOf(key)+1])){
+    toast("🎓 That's the end of the free demo — get in touch to unlock the full 9-week course!");
+  } else {
+    toast('Step complete — the next one is unlocked! 🎉');
+  }
 }
 
 /* ---------------------------------------------------------------------
