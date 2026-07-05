@@ -168,6 +168,7 @@
   <button class="tab-btn" data-tab="users" onclick="switchTab('users')">🔑 Users &amp; Passwords</button>
   <button class="tab-btn" data-tab="messages" onclick="switchTab('messages')">✉️ Messages <span id="msg-badge" class="tab-badge" style="display:none;"></span></button>
   <button class="tab-btn" data-tab="feedback" onclick="switchTab('feedback')">📝 Feedback</button>
+  <button class="tab-btn" data-tab="certificates" onclick="switchTab('certificates')">🎓 Certificates</button>
 </div>
 
 <div id="config-error">
@@ -316,6 +317,36 @@
   <div id="panel-body-feedback"></div>
 </div>
 
+<!-- ============ CERTIFICATES TAB ============ -->
+<div class="tab-panel" id="tabpanel-certificates">
+  <div style="padding:16px 24px;">
+    <p style="color:#8b85c4;font-size:0.8rem;margin-bottom:16px;max-width:680px;line-height:1.6;">
+      Every certificate issued to a student is listed here, so you can check who has completed the course and
+      spot-verify a certificate ID without leaving this dashboard. The public verify page only ever looks up one
+      ID at a time — this table is the "list all" view for you as instructor.
+    </p>
+    <div class="empty" id="empty-certificates">
+      <div class="icon">🎓</div>
+      <div>No certificates awarded yet</div>
+      <div style="font-size:0.75rem;margin-top:6px;color:#5b5490;">Certificates appear here as soon as a student completes the level and their certificate is generated.</div>
+    </div>
+    <div class="tbl-wrap" id="tbl-wrap-certificates" style="display:none;">
+      <table>
+        <thead>
+          <tr>
+            <th style="text-align:left;">Student</th>
+            <th style="text-align:left;">Level</th>
+            <th>Awarded</th>
+            <th style="text-align:left;">Certificate ID</th>
+            <th>Verify</th>
+          </tr>
+        </thead>
+        <tbody id="certificates-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 </div><!-- /dashboard-root -->
 
 <script>
@@ -397,6 +428,7 @@ setInterval(async function(){
   var messages={};
   var feedback={};
   var passcodes={};
+  var certificates={};
   var flashSet={};
 
   if(!window.PYAC_FIREBASE || !window.PYAC_FIREBASE.databaseURL ||
@@ -484,6 +516,11 @@ setInterval(async function(){
     fetchJson('/pyacademy/passcodes.json').then(function(data){
       passcodes = (data && typeof data==='object') ? data : {};
       renderPasscodes();
+    }).catch(function(){});
+
+    fetchJson('/pyacademy/certificates.json').then(function(data){
+      certificates = (data && typeof data==='object') ? data : {};
+      renderCertificates();
     }).catch(function(){});
   }
 
@@ -794,6 +831,31 @@ setInterval(async function(){
       alert('Could not update that passcode — please check your connection and try again.');
     }
   };
+
+  /* ── Certificates tab ── */
+  function renderCertificates(){
+    var keys=Object.keys(certificates).sort(function(a,b){
+      return new Date(certificates[b].awardedAt||0) - new Date(certificates[a].awardedAt||0);
+    });
+    var tblWrap=document.getElementById('tbl-wrap-certificates');
+    var empty=document.getElementById('empty-certificates');
+    if(!keys.length){ tblWrap.style.display='none'; empty.style.display='block'; return; }
+    empty.style.display='none'; tblWrap.style.display='block';
+
+    document.getElementById('certificates-body').innerHTML=keys.map(function(certId){
+      var c=certificates[certId];
+      var awarded='—';
+      try{ awarded=new Date(c.awardedAt).toLocaleDateString(); }catch(e){}
+      var verifyUrl='python-academy-verify.html?id='+encodeURIComponent(certId);
+      return '<tr>'+
+        '<td style="text-align:left;">'+esc(c.displayName||c.username||'—')+'</td>'+
+        '<td style="text-align:left;">'+esc(c.level||'Beginner')+'</td>'+
+        '<td>'+awarded+'</td>'+
+        '<td style="text-align:left;font-family:monospace;">'+esc(certId)+'</td>'+
+        '<td><a class="reset-btn" style="text-decoration:none;display:inline-block;" href="'+verifyUrl+'" target="_blank">Verify ↗</a></td>'+
+      '</tr>';
+    }).join('');
+  }
 
   function relTime(iso){
     try{
