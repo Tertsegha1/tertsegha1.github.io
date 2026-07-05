@@ -130,9 +130,12 @@ function clearLocalSession(){
   Object.keys(localStorage).filter(k=>k.startsWith('pyac_')).forEach(k=>localStorage.removeItem(k));
 }
 
+function passcodeKey(p){ return String(p||'').trim().toUpperCase().replace(/\s+/g,''); }
+
 async function submitCreateAccount(){
   const errEl = document.getElementById('create-error');
   errEl.textContent = '';
+  const passcode = passcodeKey(document.getElementById('reg-passcode').value);
   const username = usernameKey(document.getElementById('reg-username').value);
   const name = document.getElementById('reg-name').value.trim();
   const year = document.getElementById('reg-year').value;
@@ -140,6 +143,7 @@ async function submitCreateAccount(){
   const pw = document.getElementById('reg-password').value;
   const pw2 = document.getElementById('reg-password2').value;
 
+  if(!passcode){ errEl.textContent = 'Please enter the access passcode your instructor gave you.'; return; }
   if(username.length < 3){ errEl.textContent = 'Choose a username with at least 3 characters (letters, numbers, _ . -).'; return; }
   if(!name){ errEl.textContent = 'Please enter your name.'; return; }
   if(!year){ errEl.textContent = 'Please select your year group.'; return; }
@@ -150,6 +154,11 @@ async function submitCreateAccount(){
   const btn = document.getElementById('btn-create-account');
   btn.disabled = true; btn.textContent = 'Creating account...';
   try{
+    const codeRecord = await fetch(fbUrl('/pyacademy/passcodes/'+encodeURIComponent(passcode)+'.json')).then(r=>r.json());
+    if(!codeRecord || codeRecord.active === false){
+      errEl.textContent = "That passcode isn't valid — ask your instructor for the current one.";
+      return;
+    }
     const existing = await fetch(fbUrl('/pyacademy/users/'+encodeURIComponent(username)+'.json')).then(r=>r.json());
     if(existing){
       errEl.textContent = 'That username is already taken — choose another, or log in instead.';
@@ -159,6 +168,7 @@ async function submitCreateAccount(){
     const record = {
       username, displayName: name, yearGroup: year, classCode: cls,
       passwordSalt: salt, passwordHash: hash,
+      passcodeUsed: passcode,
       createdAt: new Date().toISOString(),
       updated: new Date().toISOString(),
       passwordEvents: [{type:'created', at: new Date().toISOString()}],
@@ -168,6 +178,12 @@ async function submitCreateAccount(){
       method:'PUT', body: JSON.stringify(record)
     });
     if(!res.ok) throw new Error('write failed');
+
+    const usedBy = Object.assign({}, codeRecord.usedBy || {});
+    usedBy[username] = new Date().toISOString();
+    fetch(fbUrl('/pyacademy/passcodes/'+encodeURIComponent(passcode)+'.json'), {
+      method:'PATCH', body: JSON.stringify({usedCount: (codeRecord.usedCount||0)+1, usedBy})
+    }).catch(()=>{});
 
     clearLocalSession();
     localStorage.setItem('pyac_username', username);
@@ -234,6 +250,7 @@ function setStatus(key,val){
   syncProgress();
 }
 function isUnlocked(key){
+  if(INSTRUCTOR_PREVIEW) return true;
   const idx = CHAIN.indexOf(key);
   if(idx <= 0) return true;
   return getStatus(CHAIN[idx-1]) === 'done';
@@ -321,12 +338,12 @@ function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('o
 
 function navGo(pageArg){
   if(pageArg === 'i_hub'){
-    if(getStatus('cert') !== 'done'){ toast('Finish your Beginner certificate first to unlock Intermediate!'); return; }
+    if(!INSTRUCTOR_PREVIEW && getStatus('cert') !== 'done'){ toast('Finish your Beginner certificate first to unlock Intermediate!'); return; }
     showPage('page-i_hub');
     return;
   }
   if(pageArg === 'a_hub'){
-    if(localStorage.getItem('pyac_i_status_cert') !== 'done'){ toast('Finish Intermediate level first to unlock Advanced!'); return; }
+    if(!INSTRUCTOR_PREVIEW && localStorage.getItem('pyac_i_status_cert') !== 'done'){ toast('Finish Intermediate level first to unlock Advanced!'); return; }
     showPage('page-a_hub');
     return;
   }
@@ -408,7 +425,7 @@ function refreshHubCards(){
   const iCard = document.getElementById('lc-intermediate');
   const iStatusEl = document.getElementById('lc-intermediate-status');
   if(iCard && iStatusEl){
-    if(beginnerDone){
+    if(beginnerDone || INSTRUCTOR_PREVIEW){
       iCard.classList.remove('locked');
       iCard.onclick = ()=>navGo('i_hub');
       iStatusEl.textContent = 'Unlocked — start now!';
@@ -424,7 +441,7 @@ function refreshHubCards(){
   const aCard = document.getElementById('lc-advanced');
   const aStatusEl = document.getElementById('lc-advanced-status');
   if(aCard && aStatusEl){
-    if(advancedUnlocked){
+    if(advancedUnlocked || INSTRUCTOR_PREVIEW){
       aCard.classList.remove('locked');
       aCard.onclick = ()=>navGo('a_hub');
       aStatusEl.textContent = 'Unlocked — start now!';
@@ -584,7 +601,7 @@ async function checkExercise(weekKey, exIdx, editorId, outId, testsId){
   await runAndGrade(editorId, outId, testsId, ex.tests, (allPass)=>{
     localStorage.setItem(`pyac_b_ex_${weekKey}_${exIdx}`, allPass?'pass':'fail');
     syncProgress();
-    refreshDayCompleteState(weekKey, exIdx===0 ? 2 : 3);
+    refreshDayCompleteState(weekKey, exIdx < 2 ? 2 : 3);
   });
 }
 
@@ -716,15 +733,16 @@ function editorBlock(editorId, starter, outId, runCallExpr, label){
     <div class="console empty" id="${outId}"></div>`;
 }
 
-function renderExercise(wk, i, ex){
+function renderExercise(wk, i, ex, displayNum){
   const editorId = `cm-${wk}-ex${i}`;
   const outId = `out-${wk}-ex${i}`;
   const testsId = `tests-${wk}-ex${i}`;
+  const n = displayNum || (i+1);
   return `<div class="exercise">
-    <div class="ex-title">${i+1}. ${escapeHtml(ex.title)}</div>
+    <div class="ex-title">${n}. ${escapeHtml(ex.title)}</div>
     <p>${ex.desc}</p>
     <div class="editor-wrap">
-      <div class="editor-toolbar"><span class="et-label">EXERCISE ${i+1}</span>
+      <div class="editor-toolbar"><span class="et-label">EXERCISE ${n}</span>
         <button class="run-btn" id="btn-${editorId}" onclick="checkExercise('${wk}',${i},'${editorId}','${outId}','${testsId}')">▶ Run &amp; Check</button></div>
       <textarea class="code-editor" id="${editorId}">${escapeHtml(ex.starter)}</textarea>
     </div>
@@ -763,6 +781,11 @@ function dayHtml(week, d){
         <p>Edit the code below, then press Run. This one isn't graded — just explore!</p>
         ${editorBlock('cm-'+wk+'-sandbox', week.sandboxStarter, 'out-'+wk+'-sandbox', `runSandbox('cm-${wk}-sandbox','out-${wk}-sandbox','${wk}')`, 'SANDBOX')}
       </div>
+      <div class="card">
+        <h2>🔎 Another example — try this too!</h2>
+        <p>Here's the same idea from a slightly different angle. Run it, then try changing a value or two.</p>
+        ${editorBlock('cm-'+wk+'-sandbox2', week.sandboxStarter2, 'out-'+wk+'-sandbox2', `runSandbox('cm-${wk}-sandbox2','out-${wk}-sandbox2','${wk}')`, 'SANDBOX')}
+      </div>
       <div class="complete-bar">
         <div>Run the sandbox code at least once, then move on to Day 2:</div>
         <ul class="req-list" id="reqlist-${wk}-day1"></ul>
@@ -772,19 +795,21 @@ function dayHtml(week, d){
   if(d === 2){
     return `
       <div class="card">
-        <h2>📝 Practice — Exercise 1</h2>
-        ${renderExercise(wk,0,week.exercises[0])}
+        <h2>📝 Practice — Exercises</h2>
+        ${renderExercise(wk,0,week.exercises[0],1)}
+        ${renderExercise(wk,1,week.exercises[1],2)}
       </div>
       <div class="complete-bar">
-        <div>Pass the exercise above to unlock Day 3:</div>
+        <div>Pass both exercises above to unlock Day 3:</div>
         <ul class="req-list" id="reqlist-${wk}-day2"></ul>
         <button class="complete-btn" id="complete-btn-${wk}-day2" onclick="markDayComplete('${wk}',2)" disabled>✓ Mark Day 2 Complete — Unlock Day 3</button>
       </div>`;
   }
   return `
     <div class="card">
-      <h2>📝 Practice — Exercise 2</h2>
-      ${renderExercise(wk,1,week.exercises[1])}
+      <h2>📝 Practice — Exercises</h2>
+      ${renderExercise(wk,2,week.exercises[2],1)}
+      ${renderExercise(wk,3,week.exercises[3],2)}
     </div>
     <div class="card">
       <h2>🧠 Quick quiz</h2>
@@ -806,6 +831,7 @@ const currentDayView = {};
 function dayStatus(wk, d){ return localStorage.getItem(`pyac_b_day_${wk}_${d}`) || 'todo'; }
 function setDayStatus(wk, d, val){ localStorage.setItem(`pyac_b_day_${wk}_${d}`, val); syncProgress(); }
 function dayUnlocked(wk, d){
+  if(INSTRUCTOR_PREVIEW) return true;
   if(d <= 1) return true;
   return dayStatus(wk, d-1) === 'done';
 }
@@ -847,16 +873,22 @@ function refreshDayCompleteState(wk, d){
     met = localStorage.getItem('pyac_b_sandbox_'+wk) === 'done';
     if(reqList) reqList.innerHTML = `<li class="${met?'met':''}">Run the sandbox code at least once</li>`;
   } else if(d === 2){
-    met = localStorage.getItem(`pyac_b_ex_${wk}_0`) === 'pass';
-    if(reqList) reqList.innerHTML = `<li class="${met?'met':''}">Pass Exercise 1</li>`;
+    const ex0Ok = localStorage.getItem(`pyac_b_ex_${wk}_0`) === 'pass';
+    const ex1Ok = localStorage.getItem(`pyac_b_ex_${wk}_1`) === 'pass';
+    met = ex0Ok && ex1Ok;
+    if(reqList) reqList.innerHTML =
+      `<li class="${ex0Ok?'met':''}">Pass Exercise 1</li>` +
+      `<li class="${ex1Ok?'met':''}">Pass Exercise 2</li>`;
   } else {
     const q = quizScore(wk);
     const quizOk = q.correct >= Math.ceil(q.total * 0.75);
-    const exOk = localStorage.getItem(`pyac_b_ex_${wk}_1`) === 'pass';
-    met = quizOk && exOk;
+    const ex2Ok = localStorage.getItem(`pyac_b_ex_${wk}_2`) === 'pass';
+    const ex3Ok = localStorage.getItem(`pyac_b_ex_${wk}_3`) === 'pass';
+    met = quizOk && ex2Ok && ex3Ok;
     if(reqList) reqList.innerHTML =
       `<li class="${quizOk?'met':''}">Score at least 75% on the quiz</li>` +
-      `<li class="${exOk?'met':''}">Pass Exercise 2</li>`;
+      `<li class="${ex2Ok?'met':''}">Pass Exercise 1</li>` +
+      `<li class="${ex3Ok?'met':''}">Pass Exercise 2</li>`;
   }
   btn.disabled = !met || done;
   if(done) btn.textContent = `✓ Day ${d} complete`;
@@ -1120,6 +1152,46 @@ function initApp(){
     you earn your Intermediate certificate.</p>`;
   refreshSidebarLocks();
   refreshHubCards();
-  showPage('hub');
+  if(INSTRUCTOR_PREVIEW){
+    enterPreviewMode();
+  } else {
+    showPage('hub');
+  }
 }
 document.addEventListener('DOMContentLoaded', initApp);
+
+/* ---------------------------------------------------------------------
+   Instructor preview mode — opened from the dashboard with
+   ?instructor=1&go=<pageArg>&day=<n> to jump straight to any content,
+   bypassing every lock. Nothing here touches localStorage's username, so
+   syncProgress() never fires — no risk of writing preview data to a
+   real account.
+   --------------------------------------------------------------------- */
+const INSTRUCTOR_PREVIEW = new URLSearchParams(location.search).get('instructor') === '1';
+
+function enterPreviewMode(){
+  document.getElementById('register-overlay').style.display = 'none';
+  document.getElementById('student-chip-name').textContent = '👁 Instructor Preview';
+  showPreviewBanner();
+  const params = new URLSearchParams(location.search);
+  const go = params.get('go');
+  const day = params.get('day');
+  if(go){
+    navGo(go);
+    const chainKey = go.replace(/^b_/,'');
+    if(day && chainKey.startsWith('week')) goToDay(chainKey, parseInt(day,10));
+  } else {
+    showPage('hub');
+  }
+}
+
+function showPreviewBanner(){
+  const b = document.createElement('div');
+  b.id = 'preview-banner';
+  b.style.cssText = 'position:fixed;top:0;left:0;right:0;height:32px;line-height:32px;background:#f59e0b;color:#1e1b4b;text-align:center;font-weight:700;font-size:0.8rem;z-index:5000;';
+  b.textContent = '👁 Instructor Preview Mode — browsing freely, nothing here is saved to any student account';
+  document.body.appendChild(b);
+  document.getElementById('header').style.top = '32px';
+  document.getElementById('sidebar').style.top = 'calc(var(--header-h) + 32px)';
+  document.getElementById('main').style.paddingTop = 'calc(var(--header-h) + 32px)';
+}

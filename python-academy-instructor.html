@@ -73,6 +73,14 @@
     .reset-btn{background:none;border:1px solid #3730a3;color:#a5b4fc;font-size:0.7rem;padding:4px 10px;border-radius:6px;cursor:pointer;}
     .reset-btn:hover{background:#1e1b4b;}
 
+    /* ── Content tab ── */
+    #content-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;}
+    .content-card{background:#181454;border:1px solid #2c2470;border-radius:10px;padding:14px 16px;}
+    .content-card-title{font-weight:700;font-size:0.85rem;margin-bottom:10px;color:#e2e8f0;}
+    .content-day-links{display:flex;gap:8px;flex-wrap:wrap;}
+    .content-day-link{background:#241d5c;border:1px solid #3730a3;color:#a5b4fc;font-size:0.72rem;padding:5px 12px;border-radius:6px;text-decoration:none;font-weight:700;}
+    .content-day-link:hover{background:#312a6b;}
+
     /* ── Messages ── */
     #panel-body-messages{padding:16px 24px;display:flex;flex-direction:column;gap:12px;}
     .msg-card{background:#181454;border:1px solid #2c2470;border-radius:10px;padding:14px 18px;}
@@ -126,6 +134,8 @@
 
 <div id="tabs">
   <button class="tab-btn active" data-tab="progress" onclick="switchTab('progress')">📊 Progress</button>
+  <button class="tab-btn" data-tab="content" onclick="switchTab('content')">📚 Content</button>
+  <button class="tab-btn" data-tab="access" onclick="switchTab('access')">🔐 Access</button>
   <button class="tab-btn" data-tab="users" onclick="switchTab('users')">🔑 Users &amp; Passwords</button>
   <button class="tab-btn" data-tab="messages" onclick="switchTab('messages')">✉️ Messages <span id="msg-badge" class="tab-badge" style="display:none;"></span></button>
   <button class="tab-btn" data-tab="feedback" onclick="switchTab('feedback')">📝 Feedback</button>
@@ -186,6 +196,47 @@
   </div>
 </div>
 
+<!-- ============ CONTENT TAB ============ -->
+<div class="tab-panel" id="tabpanel-content">
+  <div style="padding:16px 24px;">
+    <p style="color:#8b85c4;font-size:0.8rem;margin-bottom:16px;max-width:680px;line-height:1.6;">
+      Jump straight into any week's content exactly as students see it — everything opens unlocked in a new tab,
+      and nothing you do there is saved to any student's account.
+    </p>
+    <div id="content-grid"></div>
+  </div>
+</div>
+
+<!-- ============ ACCESS CONTROL TAB ============ -->
+<div class="tab-panel" id="tabpanel-access">
+  <div style="padding:16px 24px;">
+    <p style="color:#8b85c4;font-size:0.8rem;margin-bottom:16px;max-width:680px;line-height:1.6;">
+      New accounts can only be created with a valid passcode below — share one with your class (verbally, on a
+      handout, or in an email) so only your students can register. Revoke a code any time to stop it working;
+      existing accounts created with it are unaffected.
+    </p>
+    <button class="reset-btn" style="margin-bottom:16px;" onclick="generatePasscode()">➕ Generate New Passcode</button>
+    <div class="empty" id="empty-passcodes">
+      <div class="icon">🔐</div>
+      <div>No passcodes yet — generate one so students can register</div>
+    </div>
+    <div class="tbl-wrap" id="tbl-wrap-passcodes" style="display:none;">
+      <table>
+        <thead>
+          <tr>
+            <th style="text-align:left;">Passcode</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Times used</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="passcodes-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <!-- ============ USERS & PASSWORDS TAB ============ -->
 <div class="tab-panel" id="tabpanel-users">
   <div class="empty" id="empty-users">
@@ -241,6 +292,7 @@
   var users={};
   var messages={};
   var feedback={};
+  var passcodes={};
   var flashSet={};
 
   if(!window.PYAC_FIREBASE || !window.PYAC_FIREBASE.databaseURL ||
@@ -316,6 +368,11 @@
     fetch(DB+'/pyacademy/feedback/beginner.json').then(function(r){return r.json();}).then(function(data){
       feedback = (data && typeof data==='object') ? data : {};
       renderFeedback();
+    }).catch(function(){});
+
+    fetch(DB+'/pyacademy/passcodes.json').then(function(r){return r.json();}).then(function(data){
+      passcodes = (data && typeof data==='object') ? data : {};
+      renderPasscodes();
     }).catch(function(){});
   }
 
@@ -557,6 +614,56 @@
     body.innerHTML=statsHtml+commentsHtml;
   }
 
+  /* ── Access control (passcodes) ── */
+  function renderPasscodes(){
+    var keys=Object.keys(passcodes).sort(function(a,b){
+      return new Date(passcodes[b].createdAt||0) - new Date(passcodes[a].createdAt||0);
+    });
+    var tblWrap=document.getElementById('tbl-wrap-passcodes');
+    var empty=document.getElementById('empty-passcodes');
+    if(!keys.length){ tblWrap.style.display='none'; empty.style.display='block'; return; }
+    empty.style.display='none'; tblWrap.style.display='block';
+
+    document.getElementById('passcodes-body').innerHTML=keys.map(function(code){
+      var p=passcodes[code];
+      var active=p.active!==false;
+      var created=p.createdAt?new Date(p.createdAt).toLocaleDateString():'—';
+      var used=p.usedCount||0;
+      return '<tr>'+
+        '<td style="text-align:left;font-family:monospace;font-weight:700;letter-spacing:1px;">'+esc(code)+'</td>'+
+        '<td><span class="status-badge '+(active?'open':'resolved')+'">'+(active?'Active':'Revoked')+'</span></td>'+
+        '<td>'+created+'</td>'+
+        '<td>'+used+'</td>'+
+        '<td><button class="reset-btn" onclick="togglePasscode(\''+code+'\','+(active?'false':'true')+')">'+(active?'Revoke':'Reactivate')+'</button></td>'+
+      '</tr>';
+    }).join('');
+  }
+
+  window.generatePasscode = async function(){
+    var chars='ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // no 0/O/1/I/L to avoid confusion
+    var code='';
+    for(var i=0;i<6;i++){ code+=chars.charAt(Math.floor(Math.random()*chars.length)); }
+    var record={createdAt:new Date().toISOString(), active:true, usedCount:0, usedBy:{}};
+    try{
+      var res=await fetch(DB+'/pyacademy/passcodes/'+code+'.json', {method:'PUT', body:JSON.stringify(record)});
+      if(!res.ok) throw new Error('failed');
+      alert('New passcode created:\n\n'+code+'\n\nShare this with your students so they can register.');
+      fullPoll();
+    }catch(e){
+      alert('Could not create a passcode — please check your connection and try again.');
+    }
+  };
+
+  window.togglePasscode = async function(code, makeActive){
+    try{
+      var res=await fetch(DB+'/pyacademy/passcodes/'+code+'.json', {method:'PATCH', body:JSON.stringify({active:makeActive})});
+      if(!res.ok) throw new Error('failed');
+      fullPoll();
+    }catch(e){
+      alert('Could not update that passcode — please check your connection and try again.');
+    }
+  };
+
   function relTime(iso){
     try{
       var diff=Math.floor((Date.now()-new Date(iso).getTime())/1000);
@@ -575,6 +682,29 @@
     pill.className=''; pill.classList.add(cls);
     pill.textContent=text;
   }
+
+  /* ── Content tab ── */
+  var WEEK_TITLES=['Hello, Python!','Variables & Data','Input & Operators','Making Decisions','Loops','Lists','Strings & Ciphers','Functions','Dictionaries & Debug'];
+  function buildContentGrid(){
+    var html=WEEK_TITLES.map(function(title,i){
+      var n=i+1;
+      var dayLinks=[1,2,3].map(function(d){
+        return '<a class="content-day-link" href="python-academy.html?instructor=1&go=b_week'+n+'&day='+d+'" target="_blank">Day '+d+'</a>';
+      }).join('');
+      return '<div class="content-card">'+
+        '<div class="content-card-title">Week '+n+' — '+esc(title)+'</div>'+
+        '<div class="content-day-links">'+dayLinks+'</div>'+
+      '</div>';
+    }).join('');
+    html += '<div class="content-card"><div class="content-card-title">🧩 Mini Project 1 — Crack the Locker Code</div>'+
+      '<div class="content-day-links"><a class="content-day-link" href="python-academy.html?instructor=1&go=b_mp1" target="_blank">Open</a></div></div>';
+    html += '<div class="content-card"><div class="content-card-title">🧩 Mini Project 2 — Escape the Computer Lab</div>'+
+      '<div class="content-day-links"><a class="content-day-link" href="python-academy.html?instructor=1&go=b_mp2" target="_blank">Open</a></div></div>';
+    html += '<div class="content-card"><div class="content-card-title">🎓 Certificate page</div>'+
+      '<div class="content-day-links"><a class="content-day-link" href="python-academy.html?instructor=1&go=b_cert" target="_blank">Open</a></div></div>';
+    document.getElementById('content-grid').innerHTML=html;
+  }
+  buildContentGrid();
 
   try{ connect(); }catch(e){}
   fullPoll();

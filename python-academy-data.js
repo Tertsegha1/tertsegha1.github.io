@@ -37,6 +37,11 @@ print("Good morning, Riverside Academy!")
 print("Today's lunch: Pizza Friday 🍕")
 # Add your own announcement below this line
 `,
+  sandboxStarter2:`# The digital sign refreshes every 30 seconds — here's another batch
+# The comment above this line is ignored by Python, just like this one
+print("Next assembly: Friday period 1")
+print("Well done Year 8 for 100% attendance this week! 🏆")
+`,
   exercises:[
     {
       title:'Fix the broken sign',
@@ -50,6 +55,19 @@ print('Don't forget your PE kit!')`,
       ]
     },
     {
+      title:'Print your school timetable',
+      desc:`Write three separate print() lines: one that includes the words "Room 12", one that includes the word
+        "Friday" (e.g. announcing a Friday lesson or trip), and one with your own message. Use comments above at
+        least one line to say what it announces.`,
+      starter:`# TODO: print three lines - one mentioning "Room 12", one mentioning "Friday", and one of your own
+
+`,
+      tests:[
+        {type:'output', contains:['Room 12'], label:'Output mentions "Room 12"'},
+        {type:'output', contains:['Friday'], label:'Output mentions "Friday"'}
+      ]
+    },
+    {
       title:'Add your own announcement',
       desc:`Keep the existing line below, then add ONE more print() line announcing the school's upcoming
         "Sports Day" event. Your line must include the words "Sports Day".`,
@@ -58,6 +76,17 @@ print('Don't forget your PE kit!')`,
 `,
       tests:[
         {type:'output', contains:['Sports Day'], label:'Announcement mentions Sports Day'}
+      ]
+    },
+    {
+      title:'Fix the library sign',
+      desc:`The library's opening-hours sign is broken again — two mistakes are stopping it from running at all.
+        Fix both lines so the sign runs with no errors and shows both messages.`,
+      starter:`print("Welcome to the library) # opening hours 9-5
+print("Please be quiet")`,
+      tests:[
+        {type:'output', contains:['Welcome to the library'], label:'Prints the welcome message'},
+        {type:'output', contains:['Please be quiet'], label:'Prints the quiet reminder'}
       ]
     }
   ],
@@ -113,6 +142,13 @@ has_bus_pass = True
 print(f"ID CARD — {name}, Year {year_group}, Bus pass: {has_bus_pass}")
 print(type(name), type(year_group), type(has_bus_pass))
 `,
+  sandboxStarter2:`class_size = 28
+average_mark = 67.5
+teacher_name = "Ms Chen"
+is_trip_day = False
+for value in [class_size, average_mark, teacher_name, is_trip_day]:
+    print(value, "->", type(value))
+`,
   exercises:[
     {
       title:'Build your own ID card',
@@ -131,6 +167,22 @@ print(f"ID CARD — {name}, Year {year_group}, Bus pass: {has_bus_pass}")`,
       ]
     },
     {
+      title:'Class register',
+      desc:`Fill in three variables about a lesson — subject as text, teacher as text, and is_double_period as
+        True or False — then run the code to print the register line.`,
+      starter:`# TODO: fill these in with real values
+subject = ""
+teacher = ""
+is_double_period = False
+
+print(f"{subject} with {teacher}, double period: {is_double_period}")`,
+      tests:[
+        {type:'assert', expr:`isinstance(subject, str) and len(subject.strip()) > 0`, label:'subject is a non-empty piece of text'},
+        {type:'assert', expr:`isinstance(teacher, str) and len(teacher.strip()) > 0`, label:'teacher is a non-empty piece of text'},
+        {type:'assert', expr:`isinstance(is_double_period, bool)`, label:'is_double_period is True or False'}
+      ]
+    },
+    {
       title:'Fix the type bug',
       desc:`The office stored a student's age as text by mistake, so calculating next year's age crashes the
         program. Fix the bug so the code runs and correctly prints "Next year you'll be 14".`,
@@ -139,6 +191,17 @@ next_year_age = age + 1
 print(f"Next year you'll be {next_year_age}")`,
       tests:[
         {type:'output', contains:["Next year you'll be 14"], label:'Correctly prints next year\'s age'}
+      ]
+    },
+    {
+      title:'Fix the temperature bug',
+      desc:`The weather board stores today's temperature as text by mistake, so adding the "feels like" adjustment
+        crashes the program. Fix the bug so it runs and prints "It feels like 23 degrees".`,
+      starter:`temperature = "20"   # bug: this should be a whole number, not text
+feels_like = temperature + 3
+print(f"It feels like {feels_like} degrees")`,
+      tests:[
+        {type:'output', contains:['It feels like 23 degrees'], label:'Correctly prints the adjusted temperature'}
       ]
     }
   ],
@@ -192,6 +255,13 @@ people = int(input("How many people are going on the trip? "))
 ticket_price = 6
 print(f"{name}, the total cost for {people} people is £{people * ticket_price}")
 `,
+  sandboxStarter2:`# Order of operations matters, just like in maths
+ticket_price = 8
+group_size = 5
+discount = 2
+total = group_size * ticket_price - discount
+print(f"Total for the group: £{total}")
+`,
   exercises:[
     {
       title:'Trip cost calculator',
@@ -207,6 +277,19 @@ print(f"{name}, the total cost for {people} people is £{people * ticket_price}"
       ]
     },
     {
+      title:'Sweet shop change',
+      desc:`Write a function change_due(paid, cost) that returns how much change is due, rounded to 2 decimal
+        places using round(...). For example, someone paying £5 for something costing £3.50 is owed £1.50.`,
+      starter:`def change_due(paid, cost):
+    # TODO: return round(paid - cost, 2)
+    pass`,
+      tests:[
+        {type:'assert', expr:`change_due(5, 3.5) == 1.5`, label:'change_due(5, 3.5) == 1.5'},
+        {type:'assert', expr:`change_due(10, 10) == 0`, label:'change_due(10, 10) == 0'},
+        {type:'assert', expr:`change_due(2, 1.2) == 0.8`, label:'change_due(2, 1.2) == 0.8'}
+      ]
+    },
+    {
       title:'Fair snack split',
       desc:`Write a function split_pizza(slices, friends) that returns a tuple of
         (slices_each, leftover) using // and % — how many whole slices each friend gets, and how many
@@ -218,6 +301,19 @@ print(f"{name}, the total cost for {people} people is £{people * ticket_price}"
         {type:'assert', expr:`split_pizza(10, 3) == (3, 1)`, label:'split_pizza(10, 3) == (3, 1)'},
         {type:'assert', expr:`split_pizza(8, 4) == (2, 0)`, label:'split_pizza(8, 4) == (2, 0)'},
         {type:'assert', expr:`split_pizza(7, 2) == (3, 1)`, label:'split_pizza(7, 2) == (3, 1)'}
+      ]
+    },
+    {
+      title:'Pack the supplies',
+      desc:`Write a function pack_supplies(total_pens, pens_per_pack) that returns a tuple of
+        (full_packs, leftover) — how many full packs of pens you can make, and how many pens are left over.`,
+      starter:`def pack_supplies(total_pens, pens_per_pack):
+    # TODO: return (full_packs, leftover)
+    pass`,
+      tests:[
+        {type:'assert', expr:`pack_supplies(23, 5) == (4, 3)`, label:'pack_supplies(23, 5) == (4, 3)'},
+        {type:'assert', expr:`pack_supplies(10, 2) == (5, 0)`, label:'pack_supplies(10, 2) == (5, 0)'},
+        {type:'assert', expr:`pack_supplies(7, 10) == (0, 7)`, label:'pack_supplies(7, 10) == (0, 7)'}
       ]
     }
   ],
@@ -274,6 +370,13 @@ if height_cm >= 140:
 else:
     print("Sorry, not tall enough yet.")
 `,
+  sandboxStarter2:`age = 14
+has_permission_slip = True
+if age >= 12 and has_permission_slip:
+    print("You can join the trip!")
+else:
+    print("Sorry, you can't join this trip.")
+`,
   exercises:[
     {
       title:'Ride height checker',
@@ -289,6 +392,20 @@ else:
       ]
     },
     {
+      title:'Locker size picker',
+      desc:`Write a function locker_size(items_count) that returns "Small" for 2 items or fewer, "Medium" for
+        3-5 items, and "Large" for more than 5.`,
+      starter:`def locker_size(items_count):
+    # TODO: return "Small", "Medium" or "Large"
+    pass`,
+      tests:[
+        {type:'assert', expr:`locker_size(1) == "Small"`, label:'locker_size(1) == "Small"'},
+        {type:'assert', expr:`locker_size(2) == "Small"`, label:'locker_size(2) == "Small" (boundary)'},
+        {type:'assert', expr:`locker_size(4) == "Medium"`, label:'locker_size(4) == "Medium"'},
+        {type:'assert', expr:`locker_size(7) == "Large"`, label:'locker_size(7) == "Large"'}
+      ]
+    },
+    {
       title:'Grade calculator',
       desc:`Write a function grade_from_score(score) that returns "A" for 90+, "B" for 80-89, "C" for 70-79,
         "D" for 60-69, and "F" below 60.`,
@@ -300,6 +417,20 @@ else:
         {type:'assert', expr:`grade_from_score(82) == "B"`, label:'grade_from_score(82) == "B"'},
         {type:'assert', expr:`grade_from_score(60) == "D"`, label:'grade_from_score(60) == "D"'},
         {type:'assert', expr:`grade_from_score(45) == "F"`, label:'grade_from_score(45) == "F"'}
+      ]
+    },
+    {
+      title:'Weather outfit picker',
+      desc:`Write a function weather_outfit(temp_c, is_raining) that returns "Raincoat" if is_raining is True
+        (whatever the temperature), otherwise "Coat" if temp_c is below 10, otherwise "T-shirt".`,
+      starter:`def weather_outfit(temp_c, is_raining):
+    # TODO: return "Raincoat", "Coat" or "T-shirt"
+    pass`,
+      tests:[
+        {type:'assert', expr:`weather_outfit(5, True) == "Raincoat"`, label:'weather_outfit(5, True) == "Raincoat"'},
+        {type:'assert', expr:`weather_outfit(5, False) == "Coat"`, label:'weather_outfit(5, False) == "Coat"'},
+        {type:'assert', expr:`weather_outfit(20, False) == "T-shirt"`, label:'weather_outfit(20, False) == "T-shirt"'},
+        {type:'assert', expr:`weather_outfit(20, True) == "Raincoat"`, label:'weather_outfit(20, True) == "Raincoat"'}
       ]
     }
   ],
@@ -356,6 +487,13 @@ while count >= 1:
     count = count - 1
 print("Liftoff! 🚀")
 `,
+  sandboxStarter2:`# A nested loop can draw a simple pattern - here's a rocket launch pad decoration
+for row in range(3):
+    line = ""
+    for col in range(5):
+        line += "🚀"
+    print(line)
+`,
   exercises:[
     {
       title:'Countdown list',
@@ -372,6 +510,20 @@ print("Liftoff! 🚀")
       ]
     },
     {
+      title:'Even numbers finder',
+      desc:`Write a function even_numbers_up_to(n) that returns a list of every even number from 2 up to and
+        including n.`,
+      starter:`def even_numbers_up_to(n):
+    result = []
+    # TODO: use a loop to add each even number up to n
+    return result`,
+      tests:[
+        {type:'assert', expr:`even_numbers_up_to(10) == [2, 4, 6, 8, 10]`, label:'even_numbers_up_to(10) == [2, 4, 6, 8, 10]'},
+        {type:'assert', expr:`even_numbers_up_to(1) == []`, label:'even_numbers_up_to(1) == []'},
+        {type:'assert', expr:`even_numbers_up_to(6) == [2, 4, 6]`, label:'even_numbers_up_to(6) == [2, 4, 6]'}
+      ]
+    },
+    {
       title:'Times table trainer',
       desc:`Write a function times_table(n) that returns a list of the first 10 multiples of n
         (n×1 up to n×10).`,
@@ -383,6 +535,21 @@ print("Liftoff! 🚀")
         {type:'assert', expr:`times_table(2) == [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]`, label:'times_table(2) is correct'},
         {type:'assert', expr:`len(times_table(3)) == 10`, label:'times_table(n) always has 10 items'},
         {type:'assert', expr:`times_table(5)[0] == 5 and times_table(5)[9] == 50`, label:'times_table(5) starts at 5 and ends at 50'}
+      ]
+    },
+    {
+      title:'Sum it up',
+      desc:`Write a function sum_up_to(n) that returns the sum of every whole number from 1 up to and including
+        n, using a while loop.`,
+      starter:`def sum_up_to(n):
+    total = 0
+    count = 1
+    # TODO: use a while loop to add up 1 .. n
+    return total`,
+      tests:[
+        {type:'assert', expr:`sum_up_to(5) == 15`, label:'sum_up_to(5) == 15'},
+        {type:'assert', expr:`sum_up_to(1) == 1`, label:'sum_up_to(1) == 1'},
+        {type:'assert', expr:`sum_up_to(10) == 55`, label:'sum_up_to(10) == 55'}
       ]
     }
   ],
@@ -432,6 +599,11 @@ for i in range(len(names)):
     print(f"{names[i]}: {scores[i]} points")
 print("Sorted scores:", sorted(scores, reverse=True))
 `,
+  sandboxStarter2:`# Slicing lets you grab just part of a list
+scores = [45, 92, 67, 88, 71]
+top_three = sorted(scores, reverse=True)[:3]
+print("Top 3 scores:", top_three)
+`,
   exercises:[
     {
       title:'Find the top scorer',
@@ -449,6 +621,19 @@ print("Sorted scores:", sorted(scores, reverse=True))
       ]
     },
     {
+      title:'House points average',
+      desc:`Write a function average_house_points(points) that returns the average of a list of numbers,
+        rounded to 1 decimal place.`,
+      starter:`def average_house_points(points):
+    # TODO: return the average, rounded to 1 decimal place
+    pass`,
+      tests:[
+        {type:'assert', expr:`average_house_points([10, 20, 30]) == 20.0`, label:'average_house_points([10,20,30]) == 20.0'},
+        {type:'assert', expr:`average_house_points([5, 5]) == 5.0`, label:'average_house_points([5,5]) == 5.0'},
+        {type:'assert', expr:`average_house_points([1, 2, 3, 4]) == 2.5`, label:'average_house_points([1,2,3,4]) == 2.5'}
+      ]
+    },
+    {
       title:'Sort the scores',
       desc:`Write a function sort_scores_desc(scores) that returns the scores list sorted from highest to
         lowest.`,
@@ -459,6 +644,20 @@ print("Sorted scores:", sorted(scores, reverse=True))
         {type:'assert', expr:`sort_scores_desc([3, 9, 1]) == [9, 3, 1]`, label:'sort_scores_desc([3,9,1]) == [9,3,1]'},
         {type:'assert', expr:`sort_scores_desc([5, 5, 2]) == [5, 5, 2]`, label:'Handles ties correctly'},
         {type:'assert', expr:`sort_scores_desc([]) == []`, label:'Handles an empty list'}
+      ]
+    },
+    {
+      title:'Drop the lowest score',
+      desc:`Write a function remove_lowest_score(scores) that returns a new list with only the first occurrence
+        of the lowest score removed.`,
+      starter:`def remove_lowest_score(scores):
+    result = scores.copy()
+    # TODO: remove the first occurrence of the lowest value from result
+    return result`,
+      tests:[
+        {type:'assert', expr:`remove_lowest_score([5, 2, 8, 2]) == [5, 8, 2]`, label:'remove_lowest_score([5,2,8,2]) == [5,8,2]'},
+        {type:'assert', expr:`remove_lowest_score([3, 3, 3]) == [3, 3]`, label:'remove_lowest_score([3,3,3]) == [3,3]'},
+        {type:'assert', expr:`remove_lowest_score([9]) == []`, label:'remove_lowest_score([9]) == []'}
       ]
     }
   ],
@@ -513,6 +712,12 @@ for ch in message:
         result += ch
 print("Secret message:", result)
 `,
+  sandboxStarter2:`# Splitting and joining text is another handy string trick
+raw = "meet,me,at,the,library"
+words = raw.split(",")
+message = " ".join(words)
+print(message)
+`,
   exercises:[
     {
       title:'Clean up messy names',
@@ -525,6 +730,21 @@ print("Secret message:", result)
         {type:'assert', expr:`clean_name("  ada LOVELACE  ") == "Ada Lovelace"`, label:'Cleans "  ada LOVELACE  "'},
         {type:'assert', expr:`clean_name("grace HOPPER") == "Grace Hopper"`, label:'Cleans "grace HOPPER"'},
         {type:'assert', expr:`clean_name("alan turing") == "Alan Turing"`, label:'Cleans "alan turing"'}
+      ]
+    },
+    {
+      title:'Find the initials',
+      desc:`Write a function initials(full_name) that returns the capital initials of each word in a name, e.g.
+        initials("ada lovelace") should return "AL".`,
+      starter:`def initials(full_name):
+    words = full_name.split()
+    result = ""
+    # TODO: add the uppercase first letter of each word to result
+    return result`,
+      tests:[
+        {type:'assert', expr:`initials("ada lovelace") == "AL"`, label:'initials("ada lovelace") == "AL"'},
+        {type:'assert', expr:`initials("grace hopper") == "GH"`, label:'initials("grace hopper") == "GH"'},
+        {type:'assert', expr:`initials("alan mathison turing") == "AMT"`, label:'initials("alan mathison turing") == "AMT"'}
       ]
     },
     {
@@ -542,6 +762,20 @@ print("Secret message:", result)
         {type:'assert', expr:`caesar_shift("abc", 1) == "bcd"`, label:'caesar_shift("abc", 1) == "bcd"'},
         {type:'assert', expr:`caesar_shift("xyz", 3) == "abc"`, label:'caesar_shift("xyz", 3) == "abc" (wraps around)'},
         {type:'assert', expr:`caesar_shift("hello world", 2) == "jgnnq yqtnf"`, label:'caesar_shift("hello world", 2) == "jgnnq yqtnf"'}
+      ]
+    },
+    {
+      title:'Count the vowels',
+      desc:`Write a function count_vowels(text) that returns how many vowels (a, e, i, o, u — either case)
+        appear in text.`,
+      starter:`def count_vowels(text):
+    count = 0
+    # TODO: loop over text.lower() and count the vowels
+    return count`,
+      tests:[
+        {type:'assert', expr:`count_vowels("hello") == 2`, label:'count_vowels("hello") == 2'},
+        {type:'assert', expr:`count_vowels("PYTHON") == 1`, label:'count_vowels("PYTHON") == 1'},
+        {type:'assert', expr:`count_vowels("bcdfg") == 0`, label:'count_vowels("bcdfg") == 0'}
       ]
     }
   ],
@@ -598,6 +832,17 @@ def roll_dice(sides=6):
 print("You rolled:", roll_dice())
 print("D20 roll:", roll_dice(20))
 `,
+  sandboxStarter2:`# Functions can call other functions - here two dice rolls are added together
+import random
+
+def roll_dice(sides=6):
+    return random.randint(1, sides)
+
+def roll_twice(sides=6):
+    return roll_dice(sides) + roll_dice(sides)
+
+print("Two dice total:", roll_twice())
+`,
   exercises:[
     {
       title:'Dice roller',
@@ -614,6 +859,18 @@ def roll_dice(sides=6):
       ]
     },
     {
+      title:'Welcome message with a default',
+      desc:`Write a function greet_player(name, game="Python Quest") that returns f"Welcome to {game}, {name}!" —
+        using a default parameter value so game doesn't have to be given every time.`,
+      starter:`def greet_player(name, game="Python Quest"):
+    # TODO: return the welcome message using an f-string
+    pass`,
+      tests:[
+        {type:'assert', expr:`greet_player("Ada") == "Welcome to Python Quest, Ada!"`, label:'greet_player("Ada") uses the default game'},
+        {type:'assert', expr:`greet_player("Sam", "Chess Club") == "Welcome to Chess Club, Sam!"`, label:'greet_player("Sam", "Chess Club") overrides the default'}
+      ]
+    },
+    {
       title:'Average score',
       desc:`Write a function average_score(scores) that returns the mean of a list of numbers, rounded to
         1 decimal place.`,
@@ -624,6 +881,20 @@ def roll_dice(sides=6):
         {type:'assert', expr:`average_score([10, 20, 30]) == 20.0`, label:'average_score([10,20,30]) == 20.0'},
         {type:'assert', expr:`average_score([5, 5, 5, 5]) == 5.0`, label:'average_score([5,5,5,5]) == 5.0'},
         {type:'assert', expr:`average_score([1, 2]) == 1.5`, label:'average_score([1,2]) == 1.5'}
+      ]
+    },
+    {
+      title:'Apply a bonus',
+      desc:`Write a function apply_bonus(scores, bonus) that returns a NEW list with bonus added to every
+        score in scores.`,
+      starter:`def apply_bonus(scores, bonus):
+    result = []
+    # TODO: add bonus to each score and append it to result
+    return result`,
+      tests:[
+        {type:'assert', expr:`apply_bonus([10, 20, 30], 5) == [15, 25, 35]`, label:'apply_bonus([10,20,30], 5) == [15,25,35]'},
+        {type:'assert', expr:`apply_bonus([], 5) == []`, label:'apply_bonus([], 5) == []'},
+        {type:'assert', expr:`apply_bonus([0], 10) == [10]`, label:'apply_bonus([0], 10) == [10]'}
       ]
     }
   ],
@@ -676,6 +947,11 @@ name = "Ada"
 print(f"{name} is in {directory.get(name, 'Not found')}")
 print(f"Zoe is in {directory.get('Zoe', 'Not found')}")
 `,
+  sandboxStarter2:`# Looping over a dictionary with .items() gives you both the key and value
+directory = {"Ada": "Year 9", "Sam": "Year 8", "Lee": "Year 10"}
+for name, year in directory.items():
+    print(f"{name} is in {year}")
+`,
   exercises:[
     {
       title:'Student lookup',
@@ -691,6 +967,21 @@ print(f"Zoe is in {directory.get('Zoe', 'Not found')}")
       ]
     },
     {
+      title:'Count the pets',
+      desc:`Write a function count_pets(pets) where pets is a list of animal-type strings, that returns a
+        dictionary counting how many times each type appears, e.g. count_pets(["cat","dog","cat"]) should
+        return {"cat": 2, "dog": 1}.`,
+      starter:`def count_pets(pets):
+    result = {}
+    # TODO: count each type of pet using result.get(pet, 0) + 1
+    return result`,
+      tests:[
+        {type:'assert', expr:`count_pets(["cat","dog","cat"]) == {"cat":2,"dog":1}`, label:'count_pets(["cat","dog","cat"]) counts correctly'},
+        {type:'assert', expr:`count_pets([]) == {}`, label:'count_pets([]) == {}'},
+        {type:'assert', expr:`count_pets(["fish"]) == {"fish":1}`, label:'count_pets(["fish"]) == {"fish":1}'}
+      ]
+    },
+    {
       title:'Bug hunt',
       desc:`This code has THREE bugs in it (a wrong comparison symbol, a missing indent, and mixing text with a
         number). Fix all three so the program runs with no errors and prints "Score is 85".`,
@@ -701,6 +992,20 @@ else:
 print("Score is " + score)`,
       tests:[
         {type:'output', contains:['Score is 85'], label:'Program runs and prints "Score is 85"'}
+      ]
+    },
+    {
+      title:'Bug hunt: the missing locker',
+      desc:`This code has ONE bug — a missing indent — that stops it from running. Fix it so the program runs
+        with no errors. Since "Zoe" isn't in scores, it should print "Zoe scored no score recorded".`,
+      starter:`scores = {"Ada": 90, "Sam": 75}
+name = "Zoe"
+if name in scores:
+print(f"{name} scored {scores[name]}")
+else:
+    print(f"{name} scored {scores.get(name, 'no score recorded')}")`,
+      tests:[
+        {type:'output', contains:['Zoe scored no score recorded'], label:'Program runs and prints "Zoe scored no score recorded"'}
       ]
     }
   ],
