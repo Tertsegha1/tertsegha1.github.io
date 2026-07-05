@@ -370,6 +370,11 @@ function showPage(id){
 function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('open'); }
 
 function navGo(pageArg){
+  if(!INSTRUCTOR_PREVIEW && !localStorage.getItem('pyac_username')){
+    document.getElementById('register-overlay').style.display = 'flex';
+    toast('Create an account or log in to open this content.');
+    return;
+  }
   if(pageArg === 'i_hub'){
     if(!INSTRUCTOR_PREVIEW && getStatus('cert') !== 'done'){ toast('Finish your Beginner certificate first to unlock Intermediate!'); return; }
     showPage('page-i_hub');
