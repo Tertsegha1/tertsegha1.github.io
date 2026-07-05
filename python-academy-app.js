@@ -1100,21 +1100,22 @@ function renderCertPage(){
   const nextName = meta.next ? LEVEL_META[meta.next].name : null;
   const unlockLine = nextName ? `Submit your feedback above to unlock ${nextName}:` : 'Submit your feedback above to complete the programme:';
   const unlockBtnLabel = alreadyDone ? `✓ ${nextName ? nextName+' Unlocked' : 'Programme Complete'}` : (nextName ? `🚀 Unlock ${nextName} Level` : '🚀 Finish the Programme');
+  _feedbackRatings[lvl] = {}; // never leak a rating entered on one level's cert page into another's
   return `<div class="hero"><h1>🎓 Your ${escapeHtml(meta.name)} Certificate</h1><div class="meta">Congratulations on finishing Level ${meta.num}!</div></div>
     <div class="card cert-wrap">
-      <canvas id="cert-canvas" width="1200" height="850"></canvas><br>
+      <canvas id="cert-canvas-${lvl}" width="1200" height="850"></canvas><br>
       <button class="download-btn" onclick="downloadCertificate()">⬇ Download Certificate</button>
     </div>
-    <div class="card" id="feedback-card">
+    <div class="card" id="feedback-card-${lvl}">
       <h2>📝 Quick feedback before you go</h2>
       <p>Help us make the next level even better — this takes under a minute.</p>
       ${ratingRow('enjoy','How much did you enjoy this level?')}
       ${ratingRow('clarity','How clear were the lessons?')}
       ${ratingRow('confidence','How confident do you feel with Python now?')}
       <label style="font-weight:700;font-size:0.85rem;color:var(--text-muted);display:block;margin-top:16px;">Anything you'd like to tell us? (optional)</label>
-      <textarea id="fb-comment" rows="3" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.9rem;margin-top:8px;resize:vertical;" placeholder="What did you like? What could be better?" ${feedbackDone?'disabled':''}></textarea>
-      <div id="feedback-status" style="font-size:0.85rem;margin:10px 0;"></div>
-      <button class="complete-btn" id="feedback-submit-btn" onclick="submitFeedback('${meta.slug}')" ${feedbackDone?'disabled':''}>${feedbackDone?'✓ Feedback submitted — thank you!':'Submit Feedback'}</button>
+      <textarea id="fb-comment-${lvl}" rows="3" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.9rem;margin-top:8px;resize:vertical;" placeholder="What did you like? What could be better?" ${feedbackDone?'disabled':''}></textarea>
+      <div id="feedback-status-${lvl}" style="font-size:0.85rem;margin:10px 0;"></div>
+      <button class="complete-btn" id="feedback-submit-btn-${lvl}" onclick="submitFeedback('${meta.slug}')" ${feedbackDone?'disabled':''}>${feedbackDone?'✓ Feedback submitted — thank you!':'Submit Feedback'}</button>
     </div>
     <div class="complete-bar">
       <div>${unlockLine}</div>
@@ -1123,17 +1124,17 @@ function renderCertPage(){
     </div>`;
 }
 
-const _feedbackRatings = {};
+const _feedbackRatings = {b:{}, i:{}, a:{}};
 function ratingRow(qKey, label){
   let opts = '';
   for(let i=1;i<=5;i++){
     opts += `<button type="button" class="rate-btn" data-v="${i}" onclick="setRating('${qKey}',${i})">${i}</button>`;
   }
-  return `<div class="fb-row"><div class="fb-label">${escapeHtml(label)}</div><div class="fb-scale" id="fbscale-${qKey}">${opts}</div></div>`;
+  return `<div class="fb-row"><div class="fb-label">${escapeHtml(label)}</div><div class="fb-scale" id="fbscale-${CURRENT_LEVEL}-${qKey}">${opts}</div></div>`;
 }
 function setRating(qKey, val){
-  _feedbackRatings[qKey] = val;
-  const scale = document.getElementById('fbscale-'+qKey);
+  _feedbackRatings[CURRENT_LEVEL][qKey] = val;
+  const scale = document.getElementById(`fbscale-${CURRENT_LEVEL}-${qKey}`);
   if(scale){
     scale.querySelectorAll('.rate-btn').forEach(b=>{
       b.classList.toggle('active', parseInt(b.dataset.v,10) === val);
@@ -1142,9 +1143,11 @@ function setRating(qKey, val){
 }
 
 async function submitFeedback(level){
-  const statusEl = document.getElementById('feedback-status');
+  const lvl = CURRENT_LEVEL;
+  const statusEl = document.getElementById(`feedback-status-${lvl}`);
+  const ratings = _feedbackRatings[lvl];
   const required = ['enjoy','clarity','confidence'];
-  const missing = required.filter(k => !_feedbackRatings[k]);
+  const missing = required.filter(k => !ratings[k]);
   if(missing.length){ statusEl.style.color='var(--danger)'; statusEl.textContent = 'Please rate all three questions above.'; return; }
   if(!fbOk()){ statusEl.style.color='var(--danger)'; statusEl.textContent = 'Cannot submit right now — no connection to the server.'; return; }
   statusEl.style.color='var(--text-muted)'; statusEl.textContent = 'Submitting...';
@@ -1154,20 +1157,20 @@ async function submitFeedback(level){
     classCode: localStorage.getItem('pyac_class') || '',
     yearGroup: localStorage.getItem('pyac_year') || '',
     level,
-    ratings: Object.assign({}, _feedbackRatings),
-    comment: (document.getElementById('fb-comment') || {}).value || '',
+    ratings: Object.assign({}, ratings),
+    comment: (document.getElementById(`fb-comment-${lvl}`) || {}).value || '',
     submittedAt: new Date().toISOString()
   };
   try{
     const res = await fetch(fbUrl('/pyacademy/feedback/'+level+'.json'), {method:'POST', body: JSON.stringify(payload)});
     if(!res.ok) throw new Error('failed');
-    localStorage.setItem(`pyac_${CURRENT_LEVEL}_feedback_${level}`, 'done');
+    localStorage.setItem(`pyac_${lvl}_feedback_${level}`, 'done');
     syncProgress();
     statusEl.style.color = 'var(--success)';
     statusEl.textContent = '✅ Thank you for your feedback!';
-    const btn = document.getElementById('feedback-submit-btn');
+    const btn = document.getElementById(`feedback-submit-btn-${lvl}`);
     if(btn){ btn.disabled = true; btn.textContent = '✓ Feedback submitted — thank you!'; }
-    const comment = document.getElementById('fb-comment');
+    const comment = document.getElementById(`fb-comment-${lvl}`);
     if(comment) comment.disabled = true;
     refreshCertCompleteState();
   }catch(e){
@@ -1235,7 +1238,7 @@ function drawQrCode(ctx, text, x, y, size){
 }
 
 function maybeDrawCertificate(){
-  const canvas = document.getElementById('cert-canvas');
+  const canvas = document.getElementById(`cert-canvas-${CURRENT_LEVEL}`);
   if(!canvas) return;
   const ctx = canvas.getContext('2d');
   const name = localStorage.getItem('pyac_name') || 'Student';
@@ -1305,7 +1308,7 @@ function maybeDrawCertificate(){
 }
 
 function downloadCertificate(){
-  const canvas = document.getElementById('cert-canvas');
+  const canvas = document.getElementById(`cert-canvas-${CURRENT_LEVEL}`);
   if(!canvas) return;
   const link = document.createElement('a');
   link.download = `python-academy-${currentLevelSlug()}-certificate.png`;
