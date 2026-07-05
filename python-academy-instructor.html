@@ -75,8 +75,22 @@
     .reset-btn{background:none;border:1px solid #3730a3;color:#a5b4fc;font-size:0.7rem;padding:4px 10px;border-radius:6px;cursor:pointer;}
     .reset-btn:hover{background:#1e1b4b;}
 
+    /* ── Level selector (Progress tab) ── */
+    #progress-level-tabs{display:flex;gap:8px;padding:14px 24px 0;}
+    .level-tab-btn{background:none;border:1px solid #2c2470;color:#8b85c4;font-size:0.76rem;font-weight:700;padding:6px 16px;border-radius:20px;cursor:pointer;font-family:inherit;}
+    .level-tab-btn:hover{color:#c7c2f0;}
+    .level-tab-btn.active{background:#241d5c;border-color:#6366f1;color:#e2e8f0;}
+
+    /* ── Content tab level sections ── */
+    .content-level-title{font-size:0.78rem;font-weight:700;color:#8b85c4;text-transform:uppercase;letter-spacing:0.6px;margin:20px 0 10px;}
+    .content-level-title:first-child{margin-top:0;}
+
+    /* ── Feedback tab level sections ── */
+    .feedback-level-section{margin-bottom:28px;}
+    .feedback-level-title{font-size:0.85rem;font-weight:700;color:#e2e8f0;margin-bottom:10px;}
+
     /* ── Content tab ── */
-    #content-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;}
+    .content-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;}
     .content-card{background:#181454;border:1px solid #2c2470;border-radius:10px;padding:14px 16px;}
     .content-card-title{font-weight:700;font-size:0.85rem;margin-bottom:10px;color:#e2e8f0;}
     .content-day-links{display:flex;gap:8px;flex-wrap:wrap;}
@@ -149,7 +163,7 @@
     <span class="logo">🧑‍💻</span>
     <div>
       <div id="hdr-title">PYTHON ACADEMY — INSTRUCTOR MONITOR</div>
-      <div id="hdr-sub">Beginner Level · live class data</div>
+      <div id="hdr-sub">All levels · live class data</div>
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:12px;">
@@ -182,6 +196,11 @@
 
 <!-- ============ PROGRESS TAB ============ -->
 <div class="tab-panel active" id="tabpanel-progress">
+  <div id="progress-level-tabs">
+    <button class="level-tab-btn active" data-level="b" onclick="switchProgressLevel('b')">🌱 Beginner</button>
+    <button class="level-tab-btn" data-level="i" onclick="switchProgressLevel('i')">🌿 Intermediate</button>
+    <button class="level-tab-btn" data-level="a" onclick="switchProgressLevel('a')">🌳 Advanced</button>
+  </div>
   <div id="stats">
     <div class="stat-card"><div id="s-total" class="stat-val">—</div><div class="stat-lbl">Students</div></div>
     <div class="stat-card green"><div id="s-complete" class="stat-val">—</div><div class="stat-lbl">Certificate earned</div></div>
@@ -200,24 +219,7 @@
   </div>
   <div class="tbl-wrap" id="tbl-wrap-progress" style="display:none;">
     <table>
-      <thead>
-        <tr>
-          <th style="text-align:left;">Student</th>
-          <th title="Week 1 — Hello, Python!">W1</th>
-          <th title="Week 2 — Variables & Data">W2</th>
-          <th title="Week 3 — Input & Operators">W3</th>
-          <th title="Week 4 — Making Decisions">W4</th>
-          <th title="Mini Project 1 — Crack the Locker Code">MP1</th>
-          <th title="Week 5 — Loops">W5</th>
-          <th title="Week 6 — Lists">W6</th>
-          <th title="Week 7 — Strings & Ciphers">W7</th>
-          <th title="Week 8 — Functions">W8</th>
-          <th title="Week 9 — Dictionaries & Debug">W9</th>
-          <th title="Mini Project 2 — Escape the Computer Lab">MP2</th>
-          <th title="Certificate awarded">🎓</th>
-          <th>Score</th>
-        </tr>
-      </thead>
+      <thead id="progress-thead"></thead>
       <tbody id="participants"></tbody>
     </table>
   </div>
@@ -233,7 +235,12 @@
       Jump straight into any week's content exactly as students see it — everything opens unlocked in a new tab,
       and nothing you do there is saved to any student's account.
     </p>
-    <div id="content-grid"></div>
+    <div class="content-level-title">🌱 Level 1 — Beginner</div>
+    <div id="content-grid-b" class="content-grid"></div>
+    <div class="content-level-title">🌿 Level 2 — Intermediate</div>
+    <div id="content-grid-i" class="content-grid"></div>
+    <div class="content-level-title">🌳 Level 3 — Advanced</div>
+    <div id="content-grid-a" class="content-grid"></div>
   </div>
 </div>
 
@@ -424,9 +431,18 @@ setInterval(async function(){
 <script>
 (function(){
   var KEYS=['week1','week2','week3','week4','mp1','week5','week6','week7','week8','week9','mp2','cert'];
+  var LEVEL_TITLES={
+    b:{name:'Beginner', mp1:'Mini Project 1 — Crack the Locker Code', mp2:'Mini Project 2 — Escape the Computer Lab',
+       weeks:['Hello, Python!','Variables & Data','Input & Operators','Making Decisions','Loops','Lists','Strings & Ciphers','Functions','Dictionaries & Debug']},
+    i:{name:'Intermediate', mp1:'Mini Project 1 — Recover the Class Register', mp2:'Mini Project 2 — Build the Club Directory System',
+       weeks:['Tuples & Sets','Reading & Writing Files','Working with CSV Data','Error Handling & Validation','Modules & the Standard Library','Classes & Objects','Inheritance & Encapsulation','Working with JSON','Recursion & Debugging']},
+    a:{name:'Advanced', mp1:'Mini Project 1', mp2:'Mini Project 2',
+       weeks:['Algorithmic Thinking','Searching & Sorting','Recursion in Practice','Real Data Files','Multi-Class Systems','Testing & Debugging','API-Style Data','Capstone — Build','Capstone — Polish']}
+  };
+  var progressLevel='b';
   var users={};
   var messages={};
-  var feedback={};
+  var feedback={b:{}, i:{}, a:{}};
   var passcodes={};
   var certificates={};
   var flashSet={};
@@ -509,7 +525,15 @@ setInterval(async function(){
     }).catch(function(){});
 
     fetchJson('/pyacademy/feedback/beginner.json').then(function(data){
-      feedback = (data && typeof data==='object') ? data : {};
+      feedback.b = (data && typeof data==='object') ? data : {};
+      renderFeedback();
+    }).catch(function(){});
+    fetchJson('/pyacademy/feedback/intermediate.json').then(function(data){
+      feedback.i = (data && typeof data==='object') ? data : {};
+      renderFeedback();
+    }).catch(function(){});
+    fetchJson('/pyacademy/feedback/advanced.json').then(function(data){
+      feedback.a = (data && typeof data==='object') ? data : {};
       renderFeedback();
     }).catch(function(){});
 
@@ -527,14 +551,36 @@ setInterval(async function(){
   function flashRow(key){ flashSet[key]=Date.now(); }
 
   /* ── Progress tab ── */
-  function score(p){
+  function score(p, level){
     var prog=(p&&p.progress)||{};
-    return KEYS.filter(function(k){ return prog['pyac_b_status_'+k]==='done'; }).length;
+    return KEYS.filter(function(k){ return prog['pyac_'+(level||progressLevel)+'_status_'+k]==='done'; }).length;
+  }
+
+  window.switchProgressLevel = function(level){
+    progressLevel=level;
+    document.querySelectorAll('.level-tab-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.level===level); });
+    buildProgressTableHeader(level);
+    renderProgress();
+  };
+
+  function buildProgressTableHeader(level){
+    var titles=LEVEL_TITLES[level];
+    var ths=['<th style="text-align:left;">Student</th>'];
+    titles.weeks.forEach(function(title,i){
+      var n=i+1;
+      ths.push('<th title="Week '+n+' — '+esc(title)+'">W'+n+'</th>');
+      if(n===4) ths.push('<th title="'+esc(titles.mp1)+'">MP1</th>');
+    });
+    ths.push('<th title="'+esc(titles.mp2)+'">MP2</th>');
+    ths.push('<th title="Certificate awarded">🎓</th>');
+    ths.push('<th>Score</th>');
+    document.getElementById('progress-thead').innerHTML='<tr>'+ths.join('')+'</tr>';
   }
 
   function renderProgress(){
+    var level=progressLevel;
     var keys=Object.keys(users).filter(function(k){ return !users[k].isGuest; }).sort(function(a,b){
-      var sa=score(users[a]), sb=score(users[b]);
+      var sa=score(users[a],level), sb=score(users[b],level);
       if(sb!==sa) return sb-sa;
       return (users[a].displayName||a).localeCompare(users[b].displayName||b);
     });
@@ -546,7 +592,7 @@ setInterval(async function(){
     if(!keys.length){
       tblWrap.style.display='none';
       empty.style.display='block';
-      updateStats([]);
+      updateStats([], level);
       return;
     }
     empty.style.display='none';
@@ -555,11 +601,11 @@ setInterval(async function(){
     var rows=keys.map(function(k){
       var p=users[k];
       var prog=p.progress||{};
-      var s=score(p);
+      var s=score(p,level);
       var isNew=(flashSet[k]&&(Date.now()-flashSet[k])<2000);
 
       var dotCells=KEYS.map(function(kk){
-        var st=prog['pyac_b_status_'+kk]||'todo';
+        var st=prog['pyac_'+level+'_status_'+kk]||'todo';
         var cls = st==='done' ? 'dot-done' : 'dot-todo';
         var ic = st==='done' ? '✓' : '○';
         return '<td><span class="dot '+cls+'">'+ic+'</span></td>';
@@ -582,17 +628,17 @@ setInterval(async function(){
     });
     tbody.innerHTML=rows.join('');
 
-    updateStats(keys.map(function(k){ return users[k]; }));
+    updateStats(keys.map(function(k){ return users[k]; }), level);
     document.getElementById('last-update').textContent='Last update: '+new Date().toLocaleTimeString();
   }
 
-  function updateStats(list){
+  function updateStats(list, level){
     var total=list.length;
-    var complete=list.filter(function(p){ return score(p)===KEYS.length; }).length;
-    var notStarted=list.filter(function(p){ return score(p)===0; }).length;
+    var complete=list.filter(function(p){ return score(p,level)===KEYS.length; }).length;
+    var notStarted=list.filter(function(p){ return score(p,level)===0; }).length;
     var inProgress=total-complete-notStarted;
     var totalPossible=total*KEYS.length;
-    var totalDone=list.reduce(function(a,p){ return a+score(p); },0);
+    var totalDone=list.reduce(function(a,p){ return a+score(p,level); },0);
     var avg=total?Math.round((totalDone/total)*10)/10:0;
     var pct=totalPossible?Math.round((totalDone/totalPossible)*100):0;
 
@@ -722,17 +768,14 @@ setInterval(async function(){
   };
 
   /* ── Feedback tab ── */
-  function renderFeedback(){
-    var keys=Object.keys(feedback);
-    var body=document.getElementById('panel-body-feedback');
-    var empty=document.getElementById('empty-feedback');
-    if(!keys.length){ empty.style.display='block'; body.innerHTML=''; return; }
-    empty.style.display='none';
+  function renderFeedbackSection(levelFeedback){
+    var keys=Object.keys(levelFeedback);
+    if(!keys.length) return '<p style="color:#5b5490;font-size:0.82rem;margin-bottom:8px;">No feedback yet for this level.</p>';
 
     var sums={enjoy:0,clarity:0,confidence:0};
     var counts={enjoy:0,clarity:0,confidence:0};
     keys.forEach(function(k){
-      var r=(feedback[k].ratings)||{};
+      var r=(levelFeedback[k].ratings)||{};
       ['enjoy','clarity','confidence'].forEach(function(q){
         if(r[q]){ sums[q]+=r[q]; counts[q]++; }
       });
@@ -746,9 +789,9 @@ setInterval(async function(){
       '<div class="stat-card"><div class="stat-val">'+avg('confidence')+'/5</div><div class="stat-lbl">Confidence</div></div>'+
     '</div>';
 
-    var sortedKeys=keys.slice().sort(function(a,b){ return new Date(feedback[b].submittedAt||0) - new Date(feedback[a].submittedAt||0); });
+    var sortedKeys=keys.slice().sort(function(a,b){ return new Date(levelFeedback[b].submittedAt||0) - new Date(levelFeedback[a].submittedAt||0); });
     var commentsHtml=sortedKeys.map(function(k){
-      var f=feedback[k];
+      var f=levelFeedback[k];
       var r=f.ratings||{};
       var meta=[f.displayName||'Anonymous', f.classCode?('· '+f.classCode):'', f.submittedAt?('· '+relTime(f.submittedAt)):''].filter(Boolean).join(' ');
       var ratingsLine='Enjoyment '+(r.enjoy||'—')+'/5 · Clarity '+(r.clarity||'—')+'/5 · Confidence '+(r.confidence||'—')+'/5';
@@ -759,7 +802,20 @@ setInterval(async function(){
       '</div>';
     }).join('');
 
-    body.innerHTML=statsHtml+commentsHtml;
+    return statsHtml+commentsHtml;
+  }
+
+  function renderFeedback(){
+    var totalCount=Object.keys(feedback.b).length+Object.keys(feedback.i).length+Object.keys(feedback.a).length;
+    var body=document.getElementById('panel-body-feedback');
+    var empty=document.getElementById('empty-feedback');
+    if(!totalCount){ empty.style.display='block'; body.innerHTML=''; return; }
+    empty.style.display='none';
+
+    body.innerHTML=
+      '<div class="feedback-level-section"><div class="feedback-level-title">🌱 Beginner</div>'+renderFeedbackSection(feedback.b)+'</div>'+
+      '<div class="feedback-level-section"><div class="feedback-level-title">🌿 Intermediate</div>'+renderFeedbackSection(feedback.i)+'</div>'+
+      '<div class="feedback-level-section"><div class="feedback-level-title">🌳 Advanced</div>'+renderFeedbackSection(feedback.a)+'</div>';
   }
 
   /* ── Access control (passcodes) ── */
@@ -877,27 +933,33 @@ setInterval(async function(){
   }
 
   /* ── Content tab ── */
-  var WEEK_TITLES=['Hello, Python!','Variables & Data','Input & Operators','Making Decisions','Loops','Lists','Strings & Ciphers','Functions','Dictionaries & Debug'];
-  function buildContentGrid(){
-    var html=WEEK_TITLES.map(function(title,i){
+  function buildContentGridForLevel(level){
+    var titles=LEVEL_TITLES[level];
+    var html=titles.weeks.map(function(title,i){
       var n=i+1;
       var dayLinks=[1,2,3].map(function(d){
-        return '<a class="content-day-link" href="python-academy.html?instructor=1&go=b_week'+n+'&day='+d+'" target="_blank">Day '+d+'</a>';
+        return '<a class="content-day-link" href="python-academy.html?instructor=1&go='+level+'_week'+n+'&day='+d+'" target="_blank">Day '+d+'</a>';
       }).join('');
       return '<div class="content-card">'+
         '<div class="content-card-title">Week '+n+' — '+esc(title)+'</div>'+
         '<div class="content-day-links">'+dayLinks+'</div>'+
       '</div>';
     }).join('');
-    html += '<div class="content-card"><div class="content-card-title">🧩 Mini Project 1 — Crack the Locker Code</div>'+
-      '<div class="content-day-links"><a class="content-day-link" href="python-academy.html?instructor=1&go=b_mp1" target="_blank">Open</a></div></div>';
-    html += '<div class="content-card"><div class="content-card-title">🧩 Mini Project 2 — Escape the Computer Lab</div>'+
-      '<div class="content-day-links"><a class="content-day-link" href="python-academy.html?instructor=1&go=b_mp2" target="_blank">Open</a></div></div>';
+    html += '<div class="content-card"><div class="content-card-title">🧩 '+esc(titles.mp1)+'</div>'+
+      '<div class="content-day-links"><a class="content-day-link" href="python-academy.html?instructor=1&go='+level+'_mp1" target="_blank">Open</a></div></div>';
+    html += '<div class="content-card"><div class="content-card-title">🧩 '+esc(titles.mp2)+'</div>'+
+      '<div class="content-day-links"><a class="content-day-link" href="python-academy.html?instructor=1&go='+level+'_mp2" target="_blank">Open</a></div></div>';
     html += '<div class="content-card"><div class="content-card-title">🎓 Certificate page</div>'+
-      '<div class="content-day-links"><a class="content-day-link" href="python-academy.html?instructor=1&go=b_cert" target="_blank">Open</a></div></div>';
-    document.getElementById('content-grid').innerHTML=html;
+      '<div class="content-day-links"><a class="content-day-link" href="python-academy.html?instructor=1&go='+level+'_cert" target="_blank">Open</a></div></div>';
+    document.getElementById('content-grid-'+level).innerHTML=html;
+  }
+  function buildContentGrid(){
+    buildContentGridForLevel('b');
+    buildContentGridForLevel('i');
+    buildContentGridForLevel('a');
   }
   buildContentGrid();
+  buildProgressTableHeader('b');
 
   var started = false;
   window.startDashboard = function(){
