@@ -179,10 +179,12 @@ async function submitCreateAccount(){
     });
     if(!res.ok) throw new Error('write failed');
 
+    // Passcodes are single-use: deactivate this one immediately so nobody else
+    // can register with it, even if they saw it written down or shared.
     const usedBy = Object.assign({}, codeRecord.usedBy || {});
     usedBy[username] = new Date().toISOString();
     fetch(fbUrl('/pyacademy/passcodes/'+encodeURIComponent(passcode)+'.json'), {
-      method:'PATCH', body: JSON.stringify({usedCount: (codeRecord.usedCount||0)+1, usedBy})
+      method:'PATCH', body: JSON.stringify({usedCount: (codeRecord.usedCount||0)+1, usedBy, active:false})
     }).catch(()=>{});
 
     clearLocalSession();
@@ -221,18 +223,33 @@ async function submitLogin(){
     localStorage.setItem('pyac_name', record.displayName || username);
     localStorage.setItem('pyac_year', record.yearGroup || '');
     localStorage.setItem('pyac_class', record.classCode || '');
-    const prog = record.progress || {};
-    Object.keys(prog).forEach(k=>{ if(k.startsWith('pyac_')) localStorage.setItem(k, prog[k]); });
+
+    if(record.isGuest){
+      // The demo account always starts fresh — ignore whatever progress a
+      // previous visitor's demo session may have left on the server record,
+      // and never sync this session's progress back up either.
+      localStorage.setItem('pyac_is_guest', 'true');
+    } else {
+      const prog = record.progress || {};
+      Object.keys(prog).forEach(k=>{ if(k.startsWith('pyac_')) localStorage.setItem(k, prog[k]); });
+    }
 
     document.getElementById('register-overlay').style.display = 'none';
     document.getElementById('student-chip-name').textContent = record.displayName || username;
     initApp();
-    toast('Welcome back, ' + (record.displayName || username) + '!');
+    toast(record.isGuest ? 'Welcome to the live demo! Explore freely — nothing here is permanent.' : 'Welcome back, ' + (record.displayName || username) + '!');
   }catch(e){
     errEl.textContent = 'Something went wrong logging in — please try again.';
   }finally{
     btn.disabled = false; btn.textContent = 'Log In ▶';
   }
+}
+
+function doGuestLogin(){
+  switchAuthTab('login');
+  document.getElementById('login-username').value = 'guest';
+  document.getElementById('login-password').value = 'GuestDemo2026';
+  submitLogin();
 }
 
 function logOut(){
@@ -271,6 +288,7 @@ function collectProgressSnapshot(){
 
 function syncProgress(){
   if(!fbOk()) return;
+  if(localStorage.getItem('pyac_is_guest') === 'true') return; // demo sessions never persist
   const username = localStorage.getItem('pyac_username');
   if(!username) return;
   const updates = {
@@ -1062,6 +1080,45 @@ function getCertId(){
   return id;
 }
 
+const CERT_VERIFY_BASE = 'https://drtertseghaanande.com/python-academy-verify.html';
+
+async function registerCertificate(certId, name){
+  if(!fbOk()) return;
+  if(localStorage.getItem('pyac_is_guest') === 'true') return; // keep demo certs out of the public verification table
+  try{
+    const existing = await fetch(fbUrl('/pyacademy/certificates/'+encodeURIComponent(certId)+'.json')).then(r=>r.json());
+    if(existing) return; // already registered — never overwrite
+    await fetch(fbUrl('/pyacademy/certificates/'+encodeURIComponent(certId)+'.json'), {
+      method:'PUT',
+      body: JSON.stringify({
+        username: localStorage.getItem('pyac_username') || '',
+        displayName: name,
+        level: 'Beginner',
+        awardedAt: new Date().toISOString()
+      })
+    });
+  }catch(e){}
+}
+
+function drawQrCode(ctx, text, x, y, size){
+  if(typeof qrcode === 'undefined') return; // library failed to load — skip gracefully, certificate still works
+  const qr = qrcode(0, 'M');
+  qr.addData(text);
+  qr.make();
+  const moduleCount = qr.getModuleCount();
+  const cellSize = size / moduleCount;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(x, y, size, size);
+  ctx.fillStyle = '#211f3d';
+  for(let row=0; row<moduleCount; row++){
+    for(let col=0; col<moduleCount; col++){
+      if(qr.isDark(row,col)){
+        ctx.fillRect(x + col*cellSize, y + row*cellSize, Math.ceil(cellSize), Math.ceil(cellSize));
+      }
+    }
+  }
+}
+
 function maybeDrawCertificate(){
   const canvas = document.getElementById('cert-canvas');
   if(!canvas) return;
@@ -1122,9 +1179,13 @@ function maybeDrawCertificate(){
   ctx.font = '400 13px Segoe UI, sans-serif'; ctx.fillStyle = '#6b6890';
   ctx.fillText('Programme Director', 250, 730);
 
-  ctx.textAlign = 'right';
-  ctx.font = '700 46px Segoe UI, sans-serif'; ctx.fillStyle = '#f59e0b';
-  ctx.fillText('🌱', 950, 700);
+  const verifyUrl = CERT_VERIFY_BASE + '?id=' + encodeURIComponent(certId);
+  drawQrCode(ctx, verifyUrl, 845, 615, 105);
+  ctx.textAlign = 'center';
+  ctx.font = '400 11px Segoe UI, sans-serif'; ctx.fillStyle = '#6b6890';
+  ctx.fillText('Scan to verify', 897, 736);
+
+  registerCertificate(certId, name);
 }
 
 function downloadCertificate(){

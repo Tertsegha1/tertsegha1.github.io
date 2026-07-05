@@ -240,11 +240,12 @@
 <div class="tab-panel" id="tabpanel-access">
   <div style="padding:16px 24px;">
     <p style="color:#8b85c4;font-size:0.8rem;margin-bottom:16px;max-width:680px;line-height:1.6;">
-      New accounts can only be created with a valid passcode below — share one with your class (verbally, on a
-      handout, or in an email) so only your students can register. Revoke a code any time to stop it working;
-      existing accounts created with it are unaffected.
+      New accounts can only be created with a valid passcode below. <strong>Each passcode works only once</strong> —
+      it deactivates itself the moment someone registers with it, so the same code can't be reused or passed
+      around. Generate one per student (e.g. one for each name on your register) and hand them out individually,
+      or generate a batch in one go below. Revoke an unused code any time to stop it working.
     </p>
-    <button class="reset-btn" style="margin-bottom:16px;" onclick="generatePasscode()">➕ Generate New Passcode</button>
+    <button class="reset-btn" style="margin-bottom:16px;" onclick="generatePasscode()">➕ Generate Passcode(s)</button>
     <div class="empty" id="empty-passcodes">
       <div class="icon">🔐</div>
       <div>No passcodes yet — generate one so students can register</div>
@@ -495,7 +496,7 @@ setInterval(async function(){
   }
 
   function renderProgress(){
-    var keys=Object.keys(users).sort(function(a,b){
+    var keys=Object.keys(users).filter(function(k){ return !users[k].isGuest; }).sort(function(a,b){
       var sa=score(users[a]), sb=score(users[b]);
       if(sb!==sa) return sb-sa;
       return (users[a].displayName||a).localeCompare(users[b].displayName||b);
@@ -571,7 +572,7 @@ setInterval(async function(){
 
   /* ── Users & Passwords tab ── */
   function renderUsers(){
-    var keys=Object.keys(users).sort(function(a,b){
+    var keys=Object.keys(users).filter(function(k){ return !users[k].isGuest; }).sort(function(a,b){
       return (users[a].displayName||a).localeCompare(users[b].displayName||b);
     });
     var tblWrap=document.getElementById('tbl-wrap-users');
@@ -749,17 +750,37 @@ setInterval(async function(){
     }).join('');
   }
 
-  window.generatePasscode = async function(){
+  function makePasscodeString(){
     var chars='ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // no 0/O/1/I/L to avoid confusion
     var code='';
     for(var i=0;i<6;i++){ code+=chars.charAt(Math.floor(Math.random()*chars.length)); }
-    var record={createdAt:new Date().toISOString(), active:true, usedCount:0, usedBy:{}};
-    try{
-      var res=await fetch(DB+'/pyacademy/passcodes/'+code+'.json'+window.authUrlSuffix(), {method:'PUT', body:JSON.stringify(record)});
-      if(!res.ok) throw new Error('failed');
-      alert('New passcode created:\n\n'+code+'\n\nShare this with your students so they can register.');
+    return code;
+  }
+
+  window.generatePasscode = async function(){
+    var qtyInput = prompt('How many one-time passcodes do you want to generate? (e.g. one per student)', '1');
+    if(qtyInput===null) return;
+    var qty = parseInt(qtyInput,10);
+    if(!qty || qty<1) qty=1;
+    if(qty>100) qty=100; // sanity cap
+
+    var created=[];
+    for(var i=0;i<qty;i++){
+      var code=makePasscodeString();
+      var record={createdAt:new Date().toISOString(), active:true, usedCount:0, usedBy:{}};
+      try{
+        var res=await fetch(DB+'/pyacademy/passcodes/'+code+'.json'+window.authUrlSuffix(), {method:'PUT', body:JSON.stringify(record)});
+        if(res.ok) created.push(code);
+      }catch(e){}
+    }
+
+    if(created.length){
+      var msg = created.length===1
+        ? 'New one-time passcode created:\n\n'+created[0]+'\n\nEach code can only be used once — share it with one student.'
+        : 'Created '+created.length+' one-time passcodes (each works once — give one to each student):\n\n'+created.join('\n');
+      alert(msg);
       fullPoll();
-    }catch(e){
+    } else {
       alert('Could not create a passcode — please check your connection and try again.');
     }
   };

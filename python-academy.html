@@ -212,6 +212,7 @@ button.link-btn{background:none;border:none;padding:0;margin:0;color:var(--brand
       <button class="auth-tab active" id="auth-tab-create" onclick="switchAuthTab('create')" type="button">Create Account</button>
       <button class="auth-tab" id="auth-tab-login" onclick="switchAuthTab('login')" type="button">Log In</button>
     </div>
+    <button type="button" class="link-btn" style="display:block;margin:0 auto 16px;font-size:0.82rem;" onclick="doGuestLogin()">🎮 Just want to look around? Try a live demo — no signup needed</button>
 
     <div id="auth-panel-create">
       <input type="text" id="reg-passcode" placeholder="🔐 Access passcode (from your instructor)" maxlength="20" style="text-transform:uppercase;">
@@ -406,6 +407,7 @@ button.link-btn{background:none;border:none;padding:0;margin:0;color:var(--brand
 <script src="firebase-config-pyacademy.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="python-academy-data.js"></script>
 <script src="python-academy-app.js"></script>
 </body>

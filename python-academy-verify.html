@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verify Certificate — Python Academy</title>
+<script src="firebase-config-pyacademy.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --brand:#4338ca; --brand-light:#6366f1; --success:#16a34a; --danger:#dc2626;
+  --bg:#f7f7fb; --surface:#ffffff; --border:#e3e1f7; --text:#211f3d; --text-muted:#6b6890;
+}
+body{font-family:'Segoe UI',system-ui,-apple-system,Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:40px 36px;max-width:480px;width:100%;text-align:center;box-shadow:0 10px 30px rgba(67,56,202,0.08);}
+.logo{font-size:1.4rem;font-weight:800;color:var(--brand);margin-bottom:22px;}
+.icon{font-size:3rem;margin-bottom:14px;}
+h1{font-size:1.3rem;margin-bottom:10px;}
+p{color:var(--text-muted);font-size:0.92rem;line-height:1.6;margin-bottom:8px;}
+.result{display:none;}
+.result.show{display:block;}
+.detail-box{background:#f7f7fb;border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-top:18px;text-align:left;font-size:0.88rem;}
+.detail-box div{margin-bottom:6px;}
+.detail-box span{font-weight:700;color:var(--text);}
+.valid h1{color:var(--success);}
+.invalid h1{color:var(--danger);}
+.loading{color:var(--text-muted);font-size:0.9rem;}
+a.home-link{display:inline-block;margin-top:22px;color:var(--brand);font-weight:700;text-decoration:none;font-size:0.85rem;}
+a.home-link:hover{text-decoration:underline;}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="logo">🧑‍💻 Python Academy</div>
+  <div id="loading" class="loading">Checking certificate…</div>
+
+  <div id="valid-result" class="result valid">
+    <div class="icon">✅</div>
+    <h1>Verified Certificate</h1>
+    <p>This certificate ID matches a real completion record.</p>
+    <div class="detail-box">
+      <div>Name: <span id="v-name"></span></div>
+      <div>Level: <span id="v-level"></span></div>
+      <div>Awarded: <span id="v-date"></span></div>
+      <div>Certificate ID: <span id="v-id"></span></div>
+    </div>
+  </div>
+
+  <div id="invalid-result" class="result invalid">
+    <div class="icon">❌</div>
+    <h1>Certificate Not Found</h1>
+    <p>We couldn't find a certificate matching this ID. It may have been mistyped, or this isn't a genuine Python Academy certificate.</p>
+  </div>
+
+  <a class="home-link" href="python-academy.html">🐍 Visit Python Academy →</a>
+</div>
+
+<script>
+(function(){
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  var params = new URLSearchParams(window.location.search);
+  var certId = params.get('id');
+  var loadingEl = document.getElementById('loading');
+  var validEl = document.getElementById('valid-result');
+  var invalidEl = document.getElementById('invalid-result');
+
+  if(!certId || !window.PYAC_FIREBASE || !window.PYAC_FIREBASE.databaseURL){
+    loadingEl.style.display = 'none';
+    invalidEl.classList.add('show');
+  } else {
+    fetch(window.PYAC_FIREBASE.databaseURL + '/pyacademy/certificates/' + encodeURIComponent(certId) + '.json')
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        loadingEl.style.display = 'none';
+        if(data && data.displayName){
+          document.getElementById('v-name').textContent = data.displayName;
+          document.getElementById('v-level').textContent = data.level || 'Beginner';
+          document.getElementById('v-id').textContent = certId;
+          var awarded = '—';
+          try{ awarded = new Date(data.awardedAt).toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric'}); }catch(e){}
+          document.getElementById('v-date').textContent = awarded;
+          validEl.classList.add('show');
+        } else {
+          invalidEl.classList.add('show');
+        }
+      })
+      .catch(function(){
+        loadingEl.style.display = 'none';
+        invalidEl.classList.add('show');
+      });
+  }
+})();
+</script>
+
+</body>
+</html>
