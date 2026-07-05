@@ -290,7 +290,11 @@ function doGuestLogin(){
 }
 
 function logOut(){
-  if(!confirm('Log out? Your progress is saved to your account, so you can log back in anytime.')) return;
+  const isGuest = localStorage.getItem('pyac_is_guest') === 'true';
+  const msg = isGuest
+    ? "Log out of the demo? Nothing you did here was saved — you can start a fresh demo anytime."
+    : 'Log out? Your progress is saved to your account, so you can log back in anytime.';
+  if(!confirm(msg)) return;
   clearLocalSession();
   location.reload();
 }
