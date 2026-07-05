@@ -178,7 +178,9 @@ code,pre,textarea.code-editor{font-family:'Cascadia Code','Consolas',monospace;}
 
 /* ===== REGISTER OVERLAY ===== */
 #register-overlay{position:fixed;inset:0;background:rgba(30,27,75,0.92);display:flex;align-items:center;justify-content:center;z-index:2000;}
-.register-box{background:#fff;border-radius:18px;padding:36px 34px;max-width:420px;width:92%;text-align:center;}
+.register-box{background:#fff;border-radius:18px;padding:36px 34px;max-width:420px;width:92%;text-align:center;position:relative;}
+.auth-close-btn{position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.3rem;line-height:1;color:var(--text-muted);cursor:pointer;padding:4px 8px;border-radius:6px;}
+.auth-close-btn:hover{background:var(--surface2);color:var(--text);}
 .register-box h2{color:var(--brand);margin-bottom:8px;font-size:1.3rem;}
 .register-box p{color:var(--text-muted);font-size:0.88rem;margin-bottom:20px;}
 .register-box input,.register-box select{width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:8px;font-size:0.92rem;margin-bottom:12px;font-family:inherit;}
@@ -206,6 +208,7 @@ button.link-btn{background:none;border:none;padding:0;margin:0;color:var(--brand
 <!-- ============ AUTH OVERLAY ============ -->
 <div id="register-overlay">
   <div class="register-box">
+    <button type="button" class="auth-close-btn" onclick="dismissAuthOverlay()" title="Close and just look around" aria-label="Close">✕</button>
     <h2>🧑‍💻 Welcome to Python Academy</h2>
     <p>Create an account to start earning your Beginner certificate, or log in to continue on any device.</p>
     <div class="auth-tabs">
@@ -265,7 +268,7 @@ button.link-btn{background:none;border:none;padding:0;margin:0;color:var(--brand
     <span id="progress-label">0% complete</span>
     <div id="progress-bar-wrap"><div id="progress-bar"></div></div>
   </div>
-  <div id="student-chip" onclick="showPage('hub')">👤 <span id="student-chip-name">Guest</span></div>
+  <div id="student-chip" onclick="onStudentChipClick()">👤 <span id="student-chip-name">Log In / Sign Up</span></div>
 </div>
 
 <!-- ============ SIDEBAR ============ -->

@@ -130,6 +130,21 @@ function clearLocalSession(){
   Object.keys(localStorage).filter(k=>k.startsWith('pyac_')).forEach(k=>localStorage.removeItem(k));
 }
 
+// Lets a visitor close the sign-in overlay and browse the hub/marketing
+// content without an account, then reopen it later from the header chip
+// whenever they're ready to create an account or log in.
+function dismissAuthOverlay(){
+  document.getElementById('register-overlay').style.display = 'none';
+}
+
+function onStudentChipClick(){
+  if(localStorage.getItem('pyac_username')){
+    showPage('hub');
+  } else {
+    document.getElementById('register-overlay').style.display = 'flex';
+  }
+}
+
 function passcodeKey(p){ return String(p||'').trim().toUpperCase().replace(/\s+/g,''); }
 
 async function submitCreateAccount(){
