@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Python Academy — Instructor Monitor</title>
   <script src="firebase-config-pyacademy.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
     body{background:#0d0b26;color:#e2e8f0;font-family:system-ui,-apple-system,sans-serif;font-size:14px;min-height:100vh;}
@@ -112,10 +114,36 @@
     .empty .icon{font-size:2.5rem;margin-bottom:12px;}
 
     #footer{padding:12px 24px;color:#3d3675;font-size:0.68rem;border-top:1px solid #2c2470;margin-top:8px;}
+
+    /* ── Login gate ── */
+    #login-overlay{position:fixed;inset:0;background:#0d0b26;display:flex;align-items:center;justify-content:center;z-index:2000;}
+    .login-box{background:#181454;border:1px solid #2c2470;border-radius:16px;padding:34px 32px;max-width:380px;width:92%;text-align:center;}
+    .login-box h2{color:#e2e8f0;margin-bottom:8px;font-size:1.2rem;}
+    .login-box p{color:#8b85c4;font-size:0.82rem;margin-bottom:20px;line-height:1.5;}
+    .login-box input{width:100%;padding:11px 14px;border:1px solid #2c2470;background:#0d0b26;color:#e2e8f0;border-radius:8px;font-size:0.9rem;margin-bottom:12px;font-family:inherit;}
+    .login-box button{width:100%;background:#6366f1;color:#fff;border:none;padding:12px;border-radius:8px;font-weight:700;font-size:0.9rem;cursor:pointer;margin-top:4px;}
+    .login-box button:hover{background:#818cf8;}
+    .login-box .link-btn{background:none;border:none;color:#a5b4fc;font-size:0.76rem;text-decoration:underline;cursor:pointer;margin-top:12px;padding:0;font-family:inherit;}
+    .login-error{color:#f87171;font-size:0.78rem;text-align:left;min-height:16px;margin:-4px 0 6px;}
+    #dashboard-root{display:none;}
+    #signout-btn{background:none;border:1px solid #2c2470;color:#8b85c4;font-size:0.7rem;padding:3px 10px;border-radius:4px;cursor:pointer;font-family:inherit;}
   </style>
 </head>
 <body>
 
+<div id="login-overlay">
+  <div class="login-box">
+    <h2>🔐 Instructor Sign In</h2>
+    <p>This dashboard shows student accounts, passcodes and private messages — only you should be able to see it.</p>
+    <input type="email" id="login-email" placeholder="Instructor email" autocomplete="username">
+    <input type="password" id="login-pw" placeholder="Password" autocomplete="current-password">
+    <div class="login-error" id="auth-error"></div>
+    <button id="signin-btn" onclick="doSignIn()">Sign In</button>
+    <button type="button" class="link-btn" onclick="doForgotPassword()">Forgotten your password?</button>
+  </div>
+</div>
+
+<div id="dashboard-root">
 <div id="hdr">
   <div id="hdr-left">
     <span class="logo">🧑‍💻</span>
@@ -129,6 +157,7 @@
     <span id="status-pill">Connecting…</span>
     <button onclick="location.reload()" style="background:none;border:1px solid #2c2470;color:#8b85c4;font-size:0.7rem;padding:3px 10px;border-radius:4px;cursor:pointer;">⟳ Refresh</button>
     <a href="python-academy.html" style="font-size:0.7rem;padding:3px 10px;border-radius:4px;border:1px solid #2c2470;color:#8b85c4;text-decoration:none;">← Student view</a>
+    <button id="signout-btn" onclick="doSignOut()">Sign out</button>
   </div>
 </div>
 
@@ -286,6 +315,80 @@
   <div id="panel-body-feedback"></div>
 </div>
 
+</div><!-- /dashboard-root -->
+
+<script>
+firebase.initializeApp(window.PYAC_FIREBASE);
+const auth = firebase.auth();
+
+function showError(msg){
+  document.getElementById('auth-error').textContent = msg;
+}
+
+async function doSignIn(){
+  showError('');
+  const email = document.getElementById('login-email').value.trim();
+  const pw = document.getElementById('login-pw').value;
+  if(!email || !pw){ showError('Please enter your email and password.'); return; }
+  const btn = document.getElementById('signin-btn');
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  try{
+    await auth.signInWithEmailAndPassword(email, pw);
+  }catch(e){
+    showError('Incorrect email or password.');
+  }finally{
+    btn.disabled = false; btn.textContent = 'Sign In';
+  }
+}
+
+async function doForgotPassword(){
+  showError('');
+  const email = document.getElementById('login-email').value.trim();
+  if(!email){ showError('Enter your email above first, then tap this again.'); return; }
+  try{
+    await auth.sendPasswordResetEmail(email);
+    showError('');
+    alert('A password reset email has been sent to ' + email + '. Check your inbox.');
+  }catch(e){
+    showError('Could not send a reset email — check the address and try again.');
+  }
+}
+
+function doSignOut(){
+  auth.signOut();
+}
+
+// The dashboard talks to the Realtime Database over plain REST/SSE (not the
+// Firebase SDK's realtime client), so being "signed in" on the page doesn't by
+// itself authenticate those requests — the ID token has to be attached to each
+// one manually via ?auth=<token>.
+window.PYAC_ID_TOKEN = null;
+window.authUrlSuffix = function(){
+  return window.PYAC_ID_TOKEN ? '?auth=' + window.PYAC_ID_TOKEN : '';
+};
+
+auth.onAuthStateChanged(async function(user){
+  if(user){
+    window.PYAC_ID_TOKEN = await user.getIdToken();
+    document.getElementById('login-overlay').style.display = 'none';
+    document.getElementById('dashboard-root').style.display = 'block';
+    if(window.startDashboard) window.startDashboard();
+  } else {
+    window.PYAC_ID_TOKEN = null;
+    document.getElementById('login-overlay').style.display = 'flex';
+    document.getElementById('dashboard-root').style.display = 'none';
+  }
+});
+
+// ID tokens expire after an hour — refresh it periodically so a long-open
+// dashboard tab doesn't silently start failing its authenticated reads.
+setInterval(async function(){
+  if(auth.currentUser){
+    window.PYAC_ID_TOKEN = await auth.currentUser.getIdToken(true);
+  }
+}, 50 * 60 * 1000);
+</script>
+
 <script>
 (function(){
   var KEYS=['week1','week2','week3','week4','mp1','week5','week6','week7','week8','week9','mp2','cert'];
@@ -314,7 +417,7 @@
 
   /* ── Realtime progress feed (SSE + polling fallback) ── */
   function connect(){
-    var es=new EventSource(DB+'/pyacademy/users.json');
+    var es=new EventSource(DB+'/pyacademy/users.json'+window.authUrlSuffix());
 
     es.addEventListener('put',function(e){
       try{
@@ -352,25 +455,32 @@
     };
   }
 
+  function fetchJson(path){
+    return fetch(DB+path+window.authUrlSuffix()).then(function(r){
+      if(!r.ok) return null; // e.g. permission denied — never treat the error body as data
+      return r.json();
+    });
+  }
+
   function fullPoll(){
-    fetch(DB+'/pyacademy/users.json').then(function(r){return r.json();}).then(function(data){
+    fetchJson('/pyacademy/users.json').then(function(data){
       users = (data && typeof data==='object') ? data : {};
       renderProgress();
       renderUsers();
       setStatus('connected','Live');
     }).catch(function(){ setStatus('error','Fetch error'); });
 
-    fetch(DB+'/pyacademy/messages.json').then(function(r){return r.json();}).then(function(data){
+    fetchJson('/pyacademy/messages.json').then(function(data){
       messages = (data && typeof data==='object') ? data : {};
       renderMessages();
     }).catch(function(){});
 
-    fetch(DB+'/pyacademy/feedback/beginner.json').then(function(r){return r.json();}).then(function(data){
+    fetchJson('/pyacademy/feedback/beginner.json').then(function(data){
       feedback = (data && typeof data==='object') ? data : {};
       renderFeedback();
     }).catch(function(){});
 
-    fetch(DB+'/pyacademy/passcodes.json').then(function(r){return r.json();}).then(function(data){
+    fetchJson('/pyacademy/passcodes.json').then(function(data){
       passcodes = (data && typeof data==='object') ? data : {};
       renderPasscodes();
     }).catch(function(){});
@@ -520,7 +630,7 @@
       updated: new Date().toISOString()
     };
     try{
-      var res=await fetch(DB+'/pyacademy/users/'+encodeURIComponent(username)+'.json', {method:'PATCH', body:JSON.stringify(updates)});
+      var res=await fetch(DB+'/pyacademy/users/'+encodeURIComponent(username)+'.json'+window.authUrlSuffix(), {method:'PATCH', body:JSON.stringify(updates)});
       if(!res.ok) throw new Error('failed');
       alert('New password for '+name+':\n\n'+newPw+'\n\nMake sure to tell them before they try to log in again.');
       fullPoll();
@@ -645,7 +755,7 @@
     for(var i=0;i<6;i++){ code+=chars.charAt(Math.floor(Math.random()*chars.length)); }
     var record={createdAt:new Date().toISOString(), active:true, usedCount:0, usedBy:{}};
     try{
-      var res=await fetch(DB+'/pyacademy/passcodes/'+code+'.json', {method:'PUT', body:JSON.stringify(record)});
+      var res=await fetch(DB+'/pyacademy/passcodes/'+code+'.json'+window.authUrlSuffix(), {method:'PUT', body:JSON.stringify(record)});
       if(!res.ok) throw new Error('failed');
       alert('New passcode created:\n\n'+code+'\n\nShare this with your students so they can register.');
       fullPoll();
@@ -656,7 +766,7 @@
 
   window.togglePasscode = async function(code, makeActive){
     try{
-      var res=await fetch(DB+'/pyacademy/passcodes/'+code+'.json', {method:'PATCH', body:JSON.stringify({active:makeActive})});
+      var res=await fetch(DB+'/pyacademy/passcodes/'+code+'.json'+window.authUrlSuffix(), {method:'PATCH', body:JSON.stringify({active:makeActive})});
       if(!res.ok) throw new Error('failed');
       fullPoll();
     }catch(e){
@@ -706,10 +816,15 @@
   }
   buildContentGrid();
 
-  try{ connect(); }catch(e){}
-  fullPoll();
-  setInterval(fullPoll,4000);
-  setInterval(function(){ renderProgress(); renderMessages(); renderFeedback(); },30000);
+  var started = false;
+  window.startDashboard = function(){
+    if(started) return; // don't double-start if onAuthStateChanged fires more than once
+    started = true;
+    try{ connect(); }catch(e){}
+    fullPoll();
+    setInterval(fullPoll,4000);
+    setInterval(function(){ renderProgress(); renderMessages(); renderFeedback(); },30000);
+  };
 
 })();
 </script>
