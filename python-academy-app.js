@@ -118,11 +118,25 @@ async function submitForgotPassword(){
   }
 }
 
+// The overlay is position:fixed, but the page underneath it can still
+// scroll independently (its content is taller than the viewport) unless we
+// explicitly lock it — otherwise a mouse wheel or touch-scroll over the
+// backdrop leaks through to the hub content behind the modal instead of
+// scrolling the modal itself.
+function setAuthOverlayVisible(visible){
+  document.getElementById('register-overlay').style.display = visible ? 'flex' : 'none';
+  document.body.style.overflow = visible ? 'hidden' : '';
+}
+
 function loadRegistration(){
   const username = localStorage.getItem('pyac_username');
   if(username){
-    document.getElementById('register-overlay').style.display = 'none';
+    setAuthOverlayVisible(false);
     document.getElementById('student-chip-name').textContent = localStorage.getItem('pyac_name') || username;
+  } else {
+    // The overlay is already visible by default (see its CSS), but the page
+    // hasn't been told to lock background scroll yet until this runs.
+    setAuthOverlayVisible(true);
   }
 }
 
@@ -134,14 +148,14 @@ function clearLocalSession(){
 // content without an account, then reopen it later from the header chip
 // whenever they're ready to create an account or log in.
 function dismissAuthOverlay(){
-  document.getElementById('register-overlay').style.display = 'none';
+  setAuthOverlayVisible(false);
 }
 
 function onStudentChipClick(){
   if(localStorage.getItem('pyac_username')){
     showPage('hub');
   } else {
-    document.getElementById('register-overlay').style.display = 'flex';
+    setAuthOverlayVisible(true);
   }
 }
 
@@ -207,7 +221,7 @@ async function submitCreateAccount(){
     localStorage.setItem('pyac_name', name);
     localStorage.setItem('pyac_year', year);
     localStorage.setItem('pyac_class', cls);
-    document.getElementById('register-overlay').style.display = 'none';
+    setAuthOverlayVisible(false);
     document.getElementById('student-chip-name').textContent = name;
     initApp();
   }catch(e){
@@ -249,7 +263,7 @@ async function submitLogin(){
       Object.keys(prog).forEach(k=>{ if(k.startsWith('pyac_')) localStorage.setItem(k, prog[k]); });
     }
 
-    document.getElementById('register-overlay').style.display = 'none';
+    setAuthOverlayVisible(false);
     document.getElementById('student-chip-name').textContent = record.displayName || username;
     initApp();
     toast(record.isGuest ? 'Welcome to the live demo! Explore freely — nothing here is permanent.' : 'Welcome back, ' + (record.displayName || username) + '!');
@@ -371,7 +385,7 @@ function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('o
 
 function navGo(pageArg){
   if(!INSTRUCTOR_PREVIEW && !localStorage.getItem('pyac_username')){
-    document.getElementById('register-overlay').style.display = 'flex';
+    setAuthOverlayVisible(true);
     toast('Create an account or log in to open this content.');
     return;
   }
@@ -1251,7 +1265,7 @@ document.addEventListener('DOMContentLoaded', initApp);
 const INSTRUCTOR_PREVIEW = new URLSearchParams(location.search).get('instructor') === '1';
 
 function enterPreviewMode(){
-  document.getElementById('register-overlay').style.display = 'none';
+  setAuthOverlayVisible(false);
   document.getElementById('student-chip-name').textContent = '👁 Instructor Preview';
   showPreviewBanner();
   const params = new URLSearchParams(location.search);
