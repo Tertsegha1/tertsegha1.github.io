@@ -335,11 +335,35 @@ button.link-btn{background:none;border:none;padding:0;margin:0;color:var(--brand
   </div>
   <div class="nav-section">
     <div class="nav-section-title">Level 2 <span class="lvl-badge">Intermediate</span></div>
-    <a class="nav-item" onclick="navGo('i_hub')" id="nav-i_hub"><span class="nb">➡️</span> Start Intermediate</a>
+    <a class="nav-item" onclick="navGo('i_hub')" id="nav-i_hub"><span class="nb">➡️</span> Intermediate Overview</a>
+    <a class="nav-item" onclick="navGo('i_week1')" id="nav-i_week1"><span class="nb">W1</span> Tuples &amp; Sets <span class="nav-check">✓</span></a>
+    <a class="nav-item" onclick="navGo('i_week2')" id="nav-i_week2"><span class="nb">W2</span> Reading &amp; Writing Files <span class="nav-check">✓</span></a>
+    <a class="nav-item" onclick="navGo('i_week3')" id="nav-i_week3"><span class="nb">W3</span> Working with CSV Data <span class="nav-check">✓</span></a>
+    <a class="nav-item" onclick="navGo('i_week4')" id="nav-i_week4"><span class="nb">W4</span> Error Handling <span class="nav-check">✓</span></a>
+    <a class="nav-item" onclick="navGo('i_mp1')" id="nav-i_mp1"><span class="nb">🧩</span> Mini Project 1 <span class="nav-check">✓</span></a>
+    <a class="nav-item" onclick="navGo('i_week5')" id="nav-i_week5"><span class="nb">W5</span> Modules &amp; Std Library <span class="nav-check">✓</span></a>
+    <a class="nav-item" onclick="navGo('i_week6')" id="nav-i_week6"><span class="nb">W6</span> Classes &amp; Objects <span class="nav-check">✓</span></a>
+    <a class="nav-item" onclick="navGo('i_week7')" id="nav-i_week7"><span class="nb">W7</span> Inheritance <span class="nav-check">✓</span></a>
+    <a class="nav-item" onclick="navGo('i_week8')" id="nav-i_week8"><span class="nb">W8</span> Working with JSON <span class="nav-check">✓</span></a>
+    <a class="nav-item" onclick="navGo('i_week9')" id="nav-i_week9"><span class="nb">W9</span> Recursion &amp; Debugging <span class="nav-check">✓</span></a>
+    <a class="nav-item" onclick="navGo('i_mp2')" id="nav-i_mp2"><span class="nb">🧩</span> Mini Project 2 <span class="nav-check">✓</span></a>
+    <a class="nav-item" onclick="navGo('i_cert')" id="nav-i_cert"><span class="nb">🎓</span> Certificate <span class="nav-check">✓</span></a>
   </div>
   <div class="nav-section">
     <div class="nav-section-title">Level 3 <span class="lvl-badge">Advanced</span></div>
-    <a class="nav-item" onclick="navGo('a_hub')" id="nav-a_hub"><span class="nb">➡️</span> Start Advanced</a>
+    <a class="nav-item" onclick="navGo('a_hub')" id="nav-a_hub"><span class="nb">➡️</span> Advanced Overview</a>
+    <a class="nav-item" onclick="navGo('a_week1')" id="nav-a_week1"><span class="nb">W1</span> Algorithmic Thinking <span class="nav-check">✓</span></a>
+    <a class="nav-item" onclick="navGo('a_week2')" id="nav-a_week2"><span class="nb">W2</span> Searching &amp; Sorting <span class="nav-check">✓</span></a>
+    <a class="nav-item" onclick="navGo('a_week3')" id="nav-a_week3"><span class="nb">W3</span> Recursion in Practice <span class="nav-check">✓</span></a>
+    <a class="nav-item" onclick="navGo('a_week4')" id="nav-a_week4"><span class="nb">W4</span> Real Data Files <span class="nav-check">✓</span></a>
+    <a class="nav-item" onclick="navGo('a_mp1')" id="nav-a_mp1"><span class="nb">🧩</span> Mini Project 1 <span class="nav-check">✓</span></a>
+    <a class="nav-item" onclick="navGo('a_week5')" id="nav-a_week5"><span class="nb">W5</span> Multi-Class Systems <span class="nav-check">✓</span></a>
+    <a class="nav-item" onclick="navGo('a_week6')" id="nav-a_week6"><span class="nb">W6</span> Testing &amp; Debugging <span class="nav-check">✓</span></a>
+    <a class="nav-item" onclick="navGo('a_week7')" id="nav-a_week7"><span class="nb">W7</span> API-Style Data <span class="nav-check">✓</span></a>
+    <a class="nav-item" onclick="navGo('a_week8')" id="nav-a_week8"><span class="nb">W8</span> Capstone — Build <span class="nav-check">✓</span></a>
+    <a class="nav-item" onclick="navGo('a_week9')" id="nav-a_week9"><span class="nb">W9</span> Capstone — Polish <span class="nav-check">✓</span></a>
+    <a class="nav-item" onclick="navGo('a_mp2')" id="nav-a_mp2"><span class="nb">🧩</span> Mini Project 2 <span class="nav-check">✓</span></a>
+    <a class="nav-item" onclick="navGo('a_cert')" id="nav-a_cert"><span class="nb">🎓</span> Certificate <span class="nav-check">✓</span></a>
   </div>
   <div class="nav-section">
     <a class="nav-item" onclick="showPage('contact')" id="nav-contact"><span class="nb">✉️</span> Contact / Help</a>
@@ -423,15 +447,61 @@ button.link-btn{background:none;border:none;padding:0;margin:0;color:var(--brand
   <div class="page" id="page-b_mp2"></div>
   <div class="page" id="page-b_cert"></div>
 
-  <!-- ---------- INTERMEDIATE / ADVANCED PLACEHOLDERS ---------- -->
+  <!-- ---------- INTERMEDIATE LEVEL HUB ---------- -->
   <div class="page" id="page-i_hub">
-    <div class="hero"><h1>🌿 Level 2 — Intermediate</h1><div class="meta">Coming soon</div></div>
-    <div class="card" id="i-hub-body"></div>
+    <div class="hero">
+      <h1>🌿 Level 2 — Intermediate: Beyond the Basics</h1>
+      <div class="meta">9 weeks · 2 puzzle mini-projects · 1 certificate</div>
+    </div>
+    <div class="card">
+      <h2>What you'll build</h2>
+      <p>Across this level you'll build a class register system with real file storage, a data-driven CSV report, a small library of your own reusable modules, an object-oriented contact book, and a JSON-powered mini app — before combining everything into a capstone project of your own design.</p>
+      <div class="week-progress-bar" id="i-progress-strip"></div>
+      <button class="run-btn" style="padding:10px 22px;font-size:0.85rem;" onclick="navGo('i_week1')">Continue where I left off →</button>
+    </div>
   </div>
+
+  <!-- ---------- INTERMEDIATE WEEK PAGES (rendered by JS) ---------- -->
+  <div class="page" id="page-i_week1"></div>
+  <div class="page" id="page-i_week2"></div>
+  <div class="page" id="page-i_week3"></div>
+  <div class="page" id="page-i_week4"></div>
+  <div class="page" id="page-i_mp1"></div>
+  <div class="page" id="page-i_week5"></div>
+  <div class="page" id="page-i_week6"></div>
+  <div class="page" id="page-i_week7"></div>
+  <div class="page" id="page-i_week8"></div>
+  <div class="page" id="page-i_week9"></div>
+  <div class="page" id="page-i_mp2"></div>
+  <div class="page" id="page-i_cert"></div>
+
+  <!-- ---------- ADVANCED LEVEL HUB ---------- -->
   <div class="page" id="page-a_hub">
-    <div class="hero"><h1>🌳 Level 3 — Advanced</h1><div class="meta">Coming soon</div></div>
-    <div class="card" id="a-hub-body"></div>
+    <div class="hero">
+      <h1>🌳 Level 3 — Advanced: Algorithms &amp; Real Projects</h1>
+      <div class="meta">9 weeks · 2 puzzle mini-projects · 1 certificate</div>
+    </div>
+    <div class="card">
+      <h2>What you'll build</h2>
+      <p>Across this level you'll compare searching and sorting strategies, analyse real data files, design a multi-class system, write your own tests, work with API-style JSON data, and finish with a two-week capstone project you design and build yourself from start to finish.</p>
+      <div class="week-progress-bar" id="a-progress-strip"></div>
+      <button class="run-btn" style="padding:10px 22px;font-size:0.85rem;" onclick="navGo('a_week1')">Continue where I left off →</button>
+    </div>
   </div>
+
+  <!-- ---------- ADVANCED WEEK PAGES (rendered by JS) ---------- -->
+  <div class="page" id="page-a_week1"></div>
+  <div class="page" id="page-a_week2"></div>
+  <div class="page" id="page-a_week3"></div>
+  <div class="page" id="page-a_week4"></div>
+  <div class="page" id="page-a_mp1"></div>
+  <div class="page" id="page-a_week5"></div>
+  <div class="page" id="page-a_week6"></div>
+  <div class="page" id="page-a_week7"></div>
+  <div class="page" id="page-a_week8"></div>
+  <div class="page" id="page-a_week9"></div>
+  <div class="page" id="page-a_mp2"></div>
+  <div class="page" id="page-a_cert"></div>
 
   <!-- ---------- CONTACT / HELP ---------- -->
   <div class="page" id="page-contact">
@@ -453,7 +523,7 @@ button.link-btn{background:none;border:none;padding:0;margin:0;color:var(--brand
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
-<script src="python-academy-data.js"></script>
-<script src="python-academy-app.js"></script>
+<script src="python-academy-data.js?v=2"></script>
+<script src="python-academy-app.js?v=2"></script>
 </body>
 </html>

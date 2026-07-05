@@ -7,6 +7,38 @@
 const CHAIN = ['week1','week2','week3','week4','mp1','week5','week6','week7','week8','week9','mp2','cert'];
 window._editors = window._editors || {};
 
+/* ---------------------------------------------------------------------
+   Multi-level support (Beginner 'b' / Intermediate 'i' / Advanced 'a')
+   Only one .page is ever active at a time (see showPage()), so a single
+   CURRENT_LEVEL flag is safe — set once at the top of navGo()/enterPreviewMode()
+   before anything else runs, then read by the render/grading/status functions
+   below. The sidebar and hub cards are visible for all three levels at once
+   though, so those specific functions explicitly loop over LEVELS instead of
+   relying on CURRENT_LEVEL.
+   --------------------------------------------------------------------- */
+const LEVELS = ['b','i','a'];
+const LEVEL_META = {
+  b: {num:1, name:'Beginner', short:'B', slug:'beginner', tagline:'Foundations of Python', next:'i'},
+  i: {num:2, name:'Intermediate', short:'I', slug:'intermediate', tagline:'Beyond the Basics', next:'a'},
+  a: {num:3, name:'Advanced', short:'A', slug:'advanced', tagline:'Algorithms & Real Projects', next:null}
+};
+let CURRENT_LEVEL = 'b';
+
+function levelOf(pageArg){
+  const m = String(pageArg||'').match(/^([bia])_/);
+  return m ? m[1] : 'b';
+}
+function stripLevelPrefix(pageArg){
+  return String(pageArg||'').replace(/^[bia]_/,'');
+}
+function currentWeeks(){ return CURRENT_LEVEL==='b' ? BEGINNER_WEEKS : CURRENT_LEVEL==='i' ? INTERMEDIATE_WEEKS : ADVANCED_WEEKS; }
+function currentMP1(){ return CURRENT_LEVEL==='b' ? BEGINNER_MP1 : CURRENT_LEVEL==='i' ? INTERMEDIATE_MP1 : ADVANCED_MP1; }
+function currentMP2(){ return CURRENT_LEVEL==='b' ? BEGINNER_MP2 : CURRENT_LEVEL==='i' ? INTERMEDIATE_MP2 : ADVANCED_MP2; }
+function weeksFor(level){ return level==='b' ? BEGINNER_WEEKS : level==='i' ? INTERMEDIATE_WEEKS : ADVANCED_WEEKS; }
+function currentLevelName(){ return LEVEL_META[CURRENT_LEVEL].name; }
+function currentLevelShort(){ return LEVEL_META[CURRENT_LEVEL].short; }
+function currentLevelSlug(){ return LEVEL_META[CURRENT_LEVEL].slug; }
+
 // The guest demo account is for prospective schools to sample the platform —
 // it's capped at the end of Week 1 so evaluating the demo isn't a substitute
 // for actually subscribing.
@@ -302,17 +334,20 @@ function logOut(){
 /* ---------------------------------------------------------------------
    Progress chain (localStorage) + Firebase sync
    --------------------------------------------------------------------- */
-function getStatus(key){ return localStorage.getItem('pyac_b_status_'+key) || 'todo'; }
-function setStatus(key,val){
-  localStorage.setItem('pyac_b_status_'+key, val);
+// level defaults to CURRENT_LEVEL — pass an explicit 'b'/'i'/'a' only when you
+// need a level other than whichever page is currently active (e.g. checking
+// whether Beginner's cert is done while about to show the Intermediate hub).
+function getStatus(key, level){ return localStorage.getItem('pyac_'+(level||CURRENT_LEVEL)+'_status_'+key) || 'todo'; }
+function setStatus(key,val, level){
+  localStorage.setItem('pyac_'+(level||CURRENT_LEVEL)+'_status_'+key, val);
   syncProgress();
 }
-function isUnlocked(key){
+function isUnlocked(key, level){
   if(INSTRUCTOR_PREVIEW) return true;
   if(isGuestCapped(key)) return false;
   const idx = CHAIN.indexOf(key);
   if(idx <= 0) return true;
-  return getStatus(CHAIN[idx-1]) === 'done';
+  return getStatus(CHAIN[idx-1], level) === 'done';
 }
 
 function fbOk(){
@@ -402,17 +437,20 @@ function navGo(pageArg){
     toast('Create an account or log in to open this content.');
     return;
   }
+  CURRENT_LEVEL = levelOf(pageArg);
   if(pageArg === 'i_hub'){
-    if(!INSTRUCTOR_PREVIEW && getStatus('cert') !== 'done'){ toast('Finish your Beginner certificate first to unlock Intermediate!'); return; }
+    if(!INSTRUCTOR_PREVIEW && getStatus('cert','b') !== 'done'){ toast('Finish your Beginner certificate first to unlock Intermediate!'); return; }
     showPage('page-i_hub');
+    refreshLevelHubStrip('i');
     return;
   }
   if(pageArg === 'a_hub'){
-    if(!INSTRUCTOR_PREVIEW && localStorage.getItem('pyac_i_status_cert') !== 'done'){ toast('Finish Intermediate level first to unlock Advanced!'); return; }
+    if(!INSTRUCTOR_PREVIEW && getStatus('cert','i') !== 'done'){ toast('Finish Intermediate level first to unlock Advanced!'); return; }
     showPage('page-a_hub');
+    refreshLevelHubStrip('a');
     return;
   }
-  const chainKey = pageArg.replace(/^b_/,'');
+  const chainKey = stripLevelPrefix(pageArg);
   if(isGuestCapped(chainKey)){
     toast("🎓 That's the end of the free demo — get in touch to unlock the full 9-week course!");
     return;
@@ -438,7 +476,7 @@ function renderPageIfNeeded(pageArg, chainKey){
   if(container.dataset.rendered) return;
   let html = '';
   if(chainKey.startsWith('week')){
-    const week = BEGINNER_WEEKS.find(w=>w.key === chainKey);
+    const week = currentWeeks().find(w=>w.key === chainKey);
     html = renderWeekPage(week);
   } else if(chainKey === 'mp1'){
     html = renderMP1Page();
@@ -455,36 +493,38 @@ function renderPageIfNeeded(pageArg, chainKey){
    Sidebar / hub state refresh
    --------------------------------------------------------------------- */
 function refreshSidebarLocks(){
-  CHAIN.forEach(key=>{
-    const navEl = document.getElementById('nav-b_'+key);
-    if(!navEl) return;
-    navEl.classList.toggle('locked', !isUnlocked(key));
-    navEl.classList.toggle('done', getStatus(key) === 'done');
+  LEVELS.forEach(level=>{
+    CHAIN.forEach(key=>{
+      const navEl = document.getElementById(`nav-${level}_${key}`);
+      if(!navEl) return;
+      navEl.classList.toggle('locked', !isUnlocked(key, level));
+      navEl.classList.toggle('done', getStatus(key, level) === 'done');
+    });
+    refreshLevelHubStrip(level);
   });
   const iNav = document.getElementById('nav-i_hub');
-  if(iNav) iNav.classList.toggle('locked', getStatus('cert') !== 'done');
+  if(iNav) iNav.classList.toggle('locked', getStatus('cert','b') !== 'done');
   const aNav = document.getElementById('nav-a_hub');
-  if(aNav) aNav.classList.toggle('locked', localStorage.getItem('pyac_i_status_cert') !== 'done');
-  refreshBeginnerStrip();
+  if(aNav) aNav.classList.toggle('locked', getStatus('cert','i') !== 'done');
 }
 
-function refreshBeginnerStrip(){
-  const el = document.getElementById('beginner-progress-strip');
+function refreshLevelHubStrip(level){
+  const el = document.getElementById(level+'-progress-strip');
   if(!el) return;
   const labelMap = {week1:'W1',week2:'W2',week3:'W3',week4:'W4',mp1:'MP1',week5:'W5',week6:'W6',week7:'W7',week8:'W8',week9:'W9',mp2:'MP2',cert:'🎓'};
-  el.innerHTML = CHAIN.map(k=>`<span class="wp-step ${getStatus(k)==='done'?'ok':''}">${labelMap[k]}</span>`).join('');
+  el.innerHTML = CHAIN.map(k=>`<span class="wp-step ${getStatus(k,level)==='done'?'ok':''}">${labelMap[k]}</span>`).join('');
 }
 
 function refreshHubCards(){
   const total = CHAIN.length;
-  const doneCount = CHAIN.filter(k=>getStatus(k)==='done').length;
+  const doneCount = CHAIN.filter(k=>getStatus(k,'b')==='done').length;
   const pct = Math.round((doneCount/total)*100);
   const pbar = document.getElementById('progress-bar');
   if(pbar) pbar.style.width = pct+'%';
   const plabel = document.getElementById('progress-label');
   if(plabel) plabel.textContent = pct+'% complete';
 
-  const beginnerDone = getStatus('cert') === 'done';
+  const beginnerDone = getStatus('cert','b') === 'done';
   const bStatusEl = document.getElementById('lc-beginner-status');
   if(bStatusEl){
     bStatusEl.textContent = beginnerDone ? '✓ Certificate earned' : (doneCount>0 ? `In progress · ${doneCount}/${total}` : 'Not started');
@@ -494,11 +534,13 @@ function refreshHubCards(){
   const iCard = document.getElementById('lc-intermediate');
   const iStatusEl = document.getElementById('lc-intermediate-status');
   if(iCard && iStatusEl){
+    const iDoneCount = CHAIN.filter(k=>getStatus(k,'i')==='done').length;
+    const iCertDone = getStatus('cert','i') === 'done';
     if(beginnerDone || INSTRUCTOR_PREVIEW){
       iCard.classList.remove('locked');
       iCard.onclick = ()=>navGo('i_hub');
-      iStatusEl.textContent = 'Unlocked — start now!';
-      iStatusEl.className = 'lc-status progress';
+      iStatusEl.textContent = iCertDone ? '✓ Certificate earned' : (iDoneCount>0 ? `In progress · ${iDoneCount}/${total}` : 'Unlocked — start now!');
+      iStatusEl.className = 'lc-status ' + (iCertDone ? 'done' : 'progress');
     } else {
       iCard.classList.add('locked');
       iCard.onclick = null;
@@ -506,15 +548,17 @@ function refreshHubCards(){
       iStatusEl.className = 'lc-status locked-s';
     }
   }
-  const advancedUnlocked = localStorage.getItem('pyac_i_status_cert') === 'done';
+  const advancedUnlocked = getStatus('cert','i') === 'done';
   const aCard = document.getElementById('lc-advanced');
   const aStatusEl = document.getElementById('lc-advanced-status');
   if(aCard && aStatusEl){
+    const aDoneCount = CHAIN.filter(k=>getStatus(k,'a')==='done').length;
+    const aCertDone = getStatus('cert','a') === 'done';
     if(advancedUnlocked || INSTRUCTOR_PREVIEW){
       aCard.classList.remove('locked');
       aCard.onclick = ()=>navGo('a_hub');
-      aStatusEl.textContent = 'Unlocked — start now!';
-      aStatusEl.className = 'lc-status progress';
+      aStatusEl.textContent = aCertDone ? '✓ Certificate earned' : (aDoneCount>0 ? `In progress · ${aDoneCount}/${total}` : 'Unlocked — start now!');
+      aStatusEl.className = 'lc-status ' + (aCertDone ? 'done' : 'progress');
     } else {
       aCard.classList.add('locked');
       aCard.onclick = null;
@@ -630,7 +674,7 @@ async function runSandbox(editorId, outId, weekKey){
     const text = (output||'') + (error ? ('\n'+error) : '');
     outEl.textContent = text || '(no output)';
     if(weekKey){
-      localStorage.setItem('pyac_b_sandbox_'+weekKey, 'done');
+      localStorage.setItem('pyac_'+CURRENT_LEVEL+'_sandbox_'+weekKey, 'done');
       syncProgress();
       refreshDayCompleteState(weekKey, 1);
     }
@@ -665,32 +709,32 @@ async function runAndGrade(editorId, outId, testsId, tests, onDone){
 }
 
 async function checkExercise(weekKey, exIdx, editorId, outId, testsId){
-  const week = BEGINNER_WEEKS.find(w=>w.key===weekKey);
+  const week = currentWeeks().find(w=>w.key===weekKey);
   const ex = week.exercises[exIdx];
   await runAndGrade(editorId, outId, testsId, ex.tests, (allPass)=>{
-    localStorage.setItem(`pyac_b_ex_${weekKey}_${exIdx}`, allPass?'pass':'fail');
+    localStorage.setItem(`pyac_${CURRENT_LEVEL}_ex_${weekKey}_${exIdx}`, allPass?'pass':'fail');
     syncProgress();
     refreshDayCompleteState(weekKey, exIdx < 2 ? 2 : 3);
   });
 }
 
 async function checkMP1Stage(stageKey, editorId, outId, testsId){
-  const stage = BEGINNER_MP1.stages.find(s=>s.key===stageKey);
+  const stage = currentMP1().stages.find(s=>s.key===stageKey);
   await runAndGrade(editorId, outId, testsId, stage.tests, (allPass)=>{
-    localStorage.setItem(`pyac_b_mp1stage_${stageKey}`, allPass?'pass':'fail');
+    localStorage.setItem(`pyac_${CURRENT_LEVEL}_mp1stage_${stageKey}`, allPass?'pass':'fail');
     syncProgress();
-    const badge = document.getElementById(`badge-mp1-${stageKey}`);
+    const badge = document.getElementById(`badge-${CURRENT_LEVEL}_mp1-${stageKey}`);
     if(badge){ badge.textContent = allPass ? '✓ Complete' : 'Try again'; badge.className = 'stage-badge'+(allPass?' pass':''); }
     refreshMP1CompleteState();
   });
 }
 
 async function checkMP2Door(doorKey, editorId, outId, testsId){
-  const door = BEGINNER_MP2.doors.find(d=>d.key===doorKey);
+  const door = currentMP2().doors.find(d=>d.key===doorKey);
   await runAndGrade(editorId, outId, testsId, door.tests, (allPass)=>{
-    localStorage.setItem(`pyac_b_mp2door_${doorKey}`, allPass?'pass':'fail');
+    localStorage.setItem(`pyac_${CURRENT_LEVEL}_mp2door_${doorKey}`, allPass?'pass':'fail');
     syncProgress();
-    const badge = document.getElementById(`badge-mp2-${doorKey}`);
+    const badge = document.getElementById(`badge-${CURRENT_LEVEL}_mp2-${doorKey}`);
     if(badge){ badge.textContent = allPass ? '✓ Complete' : 'Try again'; badge.className = 'stage-badge'+(allPass?' pass':''); }
     refreshMP2CompleteState();
   });
@@ -700,9 +744,9 @@ async function checkMP2Door(doorKey, editorId, outId, testsId){
    Quiz
    --------------------------------------------------------------------- */
 function quizQuestionHtml(weekKey, qIdx){
-  const week = BEGINNER_WEEKS.find(w=>w.key===weekKey);
+  const week = currentWeeks().find(w=>w.key===weekKey);
   const q = week.quiz[qIdx];
-  const answered = localStorage.getItem(`pyac_b_quiz_${weekKey}_${qIdx}`);
+  const answered = localStorage.getItem(`pyac_${CURRENT_LEVEL}_quiz_${weekKey}_${qIdx}`);
   const answeredIdx = answered !== null ? parseInt(answered,10) : null;
   const optsHtml = q.options.map((opt,i)=>{
     let cls = 'quiz-opt';
@@ -720,28 +764,28 @@ function quizQuestionHtml(weekKey, qIdx){
 }
 
 function answerQuiz(weekKey, qIdx, optIdx){
-  const already = localStorage.getItem(`pyac_b_quiz_${weekKey}_${qIdx}`);
+  const already = localStorage.getItem(`pyac_${CURRENT_LEVEL}_quiz_${weekKey}_${qIdx}`);
   if(already !== null) return;
-  localStorage.setItem(`pyac_b_quiz_${weekKey}_${qIdx}`, String(optIdx));
+  localStorage.setItem(`pyac_${CURRENT_LEVEL}_quiz_${weekKey}_${qIdx}`, String(optIdx));
   syncProgress();
-  const el = document.getElementById(`quizq-${weekKey}-${qIdx}`);
+  const el = document.getElementById(`quizq-${CURRENT_LEVEL}_${weekKey}-${qIdx}`);
   if(el) el.innerHTML = quizQuestionHtml(weekKey, qIdx);
   updateQuizScoreBanner(weekKey);
   refreshDayCompleteState(weekKey, 3);
 }
 
 function quizScore(weekKey){
-  const week = BEGINNER_WEEKS.find(w=>w.key===weekKey);
+  const week = currentWeeks().find(w=>w.key===weekKey);
   let correct = 0, answeredCount = 0;
   week.quiz.forEach((q,i)=>{
-    const a = localStorage.getItem(`pyac_b_quiz_${weekKey}_${i}`);
+    const a = localStorage.getItem(`pyac_${CURRENT_LEVEL}_quiz_${weekKey}_${i}`);
     if(a !== null){ answeredCount++; if(parseInt(a,10) === q.correct) correct++; }
   });
   return {correct, answeredCount, total: week.quiz.length};
 }
 
 function updateQuizScoreBanner(weekKey){
-  const el = document.getElementById('quiz-score-banner-'+weekKey);
+  const el = document.getElementById(`quiz-score-banner-${CURRENT_LEVEL}_${weekKey}`);
   if(!el) return;
   const s = quizScore(weekKey);
   const remaining = s.total - s.answeredCount;
@@ -752,27 +796,27 @@ function updateQuizScoreBanner(weekKey){
    Mini project completion
    --------------------------------------------------------------------- */
 function refreshMP1CompleteState(){
-  const allDone = BEGINNER_MP1.stages.every(s=>localStorage.getItem(`pyac_b_mp1stage_${s.key}`) === 'pass');
+  const allDone = currentMP1().stages.every(s=>localStorage.getItem(`pyac_${CURRENT_LEVEL}_mp1stage_${s.key}`) === 'pass');
   const done = getStatus('mp1') === 'done';
-  const btn = document.getElementById('complete-btn-mp1');
+  const btn = document.getElementById(`complete-btn-${CURRENT_LEVEL}_mp1`);
   if(btn){ btn.disabled = !allDone || done; btn.textContent = done ? '✓ Mini Project 1 complete' : '✓ Mark Mini Project 1 Complete'; }
-  const reqList = document.getElementById('reqlist-mp1');
+  const reqList = document.getElementById(`reqlist-${CURRENT_LEVEL}_mp1`);
   if(reqList){
-    reqList.innerHTML = BEGINNER_MP1.stages.map(s=>
-      `<li class="${localStorage.getItem('pyac_b_mp1stage_'+s.key)==='pass'?'met':''}">${escapeHtml(s.title)}</li>`
+    reqList.innerHTML = currentMP1().stages.map(s=>
+      `<li class="${localStorage.getItem('pyac_'+CURRENT_LEVEL+'_mp1stage_'+s.key)==='pass'?'met':''}">${escapeHtml(s.title)}</li>`
     ).join('');
   }
 }
 
 function refreshMP2CompleteState(){
-  const allDone = BEGINNER_MP2.doors.every(d=>localStorage.getItem(`pyac_b_mp2door_${d.key}`) === 'pass');
+  const allDone = currentMP2().doors.every(d=>localStorage.getItem(`pyac_${CURRENT_LEVEL}_mp2door_${d.key}`) === 'pass');
   const done = getStatus('mp2') === 'done';
-  const btn = document.getElementById('complete-btn-mp2');
+  const btn = document.getElementById(`complete-btn-${CURRENT_LEVEL}_mp2`);
   if(btn){ btn.disabled = !allDone || done; btn.textContent = done ? '✓ Mini Project 2 complete' : '✓ Mark Mini Project 2 Complete'; }
-  const reqList = document.getElementById('reqlist-mp2');
+  const reqList = document.getElementById(`reqlist-${CURRENT_LEVEL}_mp2`);
   if(reqList){
-    reqList.innerHTML = BEGINNER_MP2.doors.map(d=>
-      `<li class="${localStorage.getItem('pyac_b_mp2door_'+d.key)==='pass'?'met':''}">${escapeHtml(d.title)}</li>`
+    reqList.innerHTML = currentMP2().doors.map(d=>
+      `<li class="${localStorage.getItem('pyac_'+CURRENT_LEVEL+'_mp2door_'+d.key)==='pass'?'met':''}">${escapeHtml(d.title)}</li>`
     ).join('');
   }
 }
@@ -784,11 +828,13 @@ function markStepComplete(key){
   if(key === 'mp1') refreshMP1CompleteState();
   else if(key === 'mp2') refreshMP2CompleteState();
   else if(key === 'cert'){
-    const btn = document.getElementById('complete-btn-cert');
-    if(btn) btn.textContent = '✓ Intermediate Unlocked';
+    const nextLevel = LEVEL_META[CURRENT_LEVEL].next;
+    const btn = document.getElementById(`complete-btn-${CURRENT_LEVEL}_cert`);
+    if(btn) btn.textContent = nextLevel ? `✓ ${LEVEL_META[nextLevel].name} Unlocked` : '✓ Programme Complete';
   }
   if(key === 'cert'){
-    toast('Intermediate level unlocked! 🎉');
+    const nextLevel = LEVEL_META[CURRENT_LEVEL].next;
+    toast(nextLevel ? `${LEVEL_META[nextLevel].name} level unlocked! 🎉` : "You've completed the whole programme! 🎉");
   } else if(isGuestCapped(CHAIN[CHAIN.indexOf(key)+1])){
     toast("🎓 That's the end of the free demo — get in touch to unlock the full 9-week course!");
   } else {
@@ -809,9 +855,9 @@ function editorBlock(editorId, starter, outId, runCallExpr, label){
 }
 
 function renderExercise(wk, i, ex, displayNum){
-  const editorId = `cm-${wk}-ex${i}`;
-  const outId = `out-${wk}-ex${i}`;
-  const testsId = `tests-${wk}-ex${i}`;
+  const editorId = `cm-${CURRENT_LEVEL}_${wk}-ex${i}`;
+  const outId = `out-${CURRENT_LEVEL}_${wk}-ex${i}`;
+  const testsId = `tests-${CURRENT_LEVEL}_${wk}-ex${i}`;
   const n = displayNum || (i+1);
   return `<div class="exercise">
     <div class="ex-title">${n}. ${escapeHtml(ex.title)}</div>
@@ -828,21 +874,23 @@ function renderExercise(wk, i, ex, displayNum){
 
 function renderWeekPage(week){
   const wk = week.key;
+  const lvl = CURRENT_LEVEL;
   return `
     <div class="hero"><h1>Week ${week.num} — ${escapeHtml(week.title)}</h1>
       <div class="meta">${escapeHtml(week.scenarioTag)} · split into 3 short sessions, about 45–60 minutes each</div></div>
-    <div class="day-tabs" id="daytabs-${wk}">
-      <button class="day-tab" id="daytab-${wk}-1" onclick="goToDay('${wk}',1)">Day 1<span class="dt-sub">Learn the idea · ~45–50 min</span></button>
-      <button class="day-tab" id="daytab-${wk}-2" onclick="goToDay('${wk}',2)">Day 2<span class="dt-sub">Practice · ~45–50 min</span></button>
-      <button class="day-tab" id="daytab-${wk}-3" onclick="goToDay('${wk}',3)">Day 3<span class="dt-sub">Apply &amp; quiz · ~50–60 min</span></button>
+    <div class="day-tabs" id="daytabs-${lvl}_${wk}">
+      <button class="day-tab" id="daytab-${lvl}_${wk}-1" onclick="goToDay('${wk}',1)">Day 1<span class="dt-sub">Learn the idea · ~45–50 min</span></button>
+      <button class="day-tab" id="daytab-${lvl}_${wk}-2" onclick="goToDay('${wk}',2)">Day 2<span class="dt-sub">Practice · ~45–50 min</span></button>
+      <button class="day-tab" id="daytab-${lvl}_${wk}-3" onclick="goToDay('${wk}',3)">Day 3<span class="dt-sub">Apply &amp; quiz · ~50–60 min</span></button>
     </div>
-    <div class="day-content" id="day-${wk}-1">${dayHtml(week,1)}</div>
-    <div class="day-content" id="day-${wk}-2">${dayHtml(week,2)}</div>
-    <div class="day-content" id="day-${wk}-3">${dayHtml(week,3)}</div>`;
+    <div class="day-content" id="day-${lvl}_${wk}-1">${dayHtml(week,1)}</div>
+    <div class="day-content" id="day-${lvl}_${wk}-2">${dayHtml(week,2)}</div>
+    <div class="day-content" id="day-${lvl}_${wk}-3">${dayHtml(week,3)}</div>`;
 }
 
 function dayHtml(week, d){
   const wk = week.key;
+  const lvl = CURRENT_LEVEL;
   if(d === 1){
     return `
       <div class="scenario-box"><div class="sb-tag">The Scenario</div><p>${week.scenario}</p></div>
@@ -854,17 +902,17 @@ function dayHtml(week, d){
       <div class="card">
         <h2>🧑‍💻 Try it yourself</h2>
         <p>Edit the code below, then press Run. This one isn't graded — just explore!</p>
-        ${editorBlock('cm-'+wk+'-sandbox', week.sandboxStarter, 'out-'+wk+'-sandbox', `runSandbox('cm-${wk}-sandbox','out-${wk}-sandbox','${wk}')`, 'SANDBOX')}
+        ${editorBlock(`cm-${lvl}_${wk}-sandbox`, week.sandboxStarter, `out-${lvl}_${wk}-sandbox`, `runSandbox('cm-${lvl}_${wk}-sandbox','out-${lvl}_${wk}-sandbox','${wk}')`, 'SANDBOX')}
       </div>
       <div class="card">
         <h2>🔎 Another example — try this too!</h2>
         <p>Here's the same idea from a slightly different angle. Run it, then try changing a value or two.</p>
-        ${editorBlock('cm-'+wk+'-sandbox2', week.sandboxStarter2, 'out-'+wk+'-sandbox2', `runSandbox('cm-${wk}-sandbox2','out-${wk}-sandbox2','${wk}')`, 'SANDBOX')}
+        ${editorBlock(`cm-${lvl}_${wk}-sandbox2`, week.sandboxStarter2, `out-${lvl}_${wk}-sandbox2`, `runSandbox('cm-${lvl}_${wk}-sandbox2','out-${lvl}_${wk}-sandbox2','${wk}')`, 'SANDBOX')}
       </div>
       <div class="complete-bar">
         <div>Run the sandbox code at least once, then move on to Day 2:</div>
-        <ul class="req-list" id="reqlist-${wk}-day1"></ul>
-        <button class="complete-btn" id="complete-btn-${wk}-day1" onclick="markDayComplete('${wk}',1)" disabled>✓ Mark Day 1 Complete — Unlock Day 2</button>
+        <ul class="req-list" id="reqlist-${lvl}_${wk}-day1"></ul>
+        <button class="complete-btn" id="complete-btn-${lvl}_${wk}-day1" onclick="markDayComplete('${wk}',1)" disabled>✓ Mark Day 1 Complete — Unlock Day 2</button>
       </div>`;
   }
   if(d === 2){
@@ -876,8 +924,8 @@ function dayHtml(week, d){
       </div>
       <div class="complete-bar">
         <div>Pass both exercises above to unlock Day 3:</div>
-        <ul class="req-list" id="reqlist-${wk}-day2"></ul>
-        <button class="complete-btn" id="complete-btn-${wk}-day2" onclick="markDayComplete('${wk}',2)" disabled>✓ Mark Day 2 Complete — Unlock Day 3</button>
+        <ul class="req-list" id="reqlist-${lvl}_${wk}-day2"></ul>
+        <button class="complete-btn" id="complete-btn-${lvl}_${wk}-day2" onclick="markDayComplete('${wk}',2)" disabled>✓ Mark Day 2 Complete — Unlock Day 3</button>
       </div>`;
   }
   return `
@@ -888,13 +936,13 @@ function dayHtml(week, d){
     </div>
     <div class="card">
       <h2>🧠 Quick quiz</h2>
-      ${week.quiz.map((q,i)=>`<div class="quiz-card" id="quizq-${wk}-${i}">${quizQuestionHtml(wk,i)}</div>`).join('')}
-      <div id="quiz-score-banner-${wk}" style="font-size:0.82rem;font-weight:700;margin-top:6px;"></div>
+      ${week.quiz.map((q,i)=>`<div class="quiz-card" id="quizq-${lvl}_${wk}-${i}">${quizQuestionHtml(wk,i)}</div>`).join('')}
+      <div id="quiz-score-banner-${lvl}_${wk}" style="font-size:0.82rem;font-weight:700;margin-top:6px;"></div>
     </div>
     <div class="complete-bar">
       <div>Finish the requirements below to complete Week ${week.num}:</div>
-      <ul class="req-list" id="reqlist-${wk}-day3"></ul>
-      <button class="complete-btn" id="complete-btn-${wk}-day3" onclick="markDayComplete('${wk}',3)" disabled>✓ Mark Day 3 Complete — Finish Week ${week.num}</button>
+      <ul class="req-list" id="reqlist-${lvl}_${wk}-day3"></ul>
+      <button class="complete-btn" id="complete-btn-${lvl}_${wk}-day3" onclick="markDayComplete('${wk}',3)" disabled>✓ Mark Day 3 Complete — Finish Week ${week.num}</button>
     </div>`;
 }
 
@@ -903,8 +951,8 @@ function dayHtml(week, d){
    --------------------------------------------------------------------- */
 const currentDayView = {};
 
-function dayStatus(wk, d){ return localStorage.getItem(`pyac_b_day_${wk}_${d}`) || 'todo'; }
-function setDayStatus(wk, d, val){ localStorage.setItem(`pyac_b_day_${wk}_${d}`, val); syncProgress(); }
+function dayStatus(wk, d){ return localStorage.getItem(`pyac_${CURRENT_LEVEL}_day_${wk}_${d}`) || 'todo'; }
+function setDayStatus(wk, d, val){ localStorage.setItem(`pyac_${CURRENT_LEVEL}_day_${wk}_${d}`, val); syncProgress(); }
 function dayUnlocked(wk, d){
   if(INSTRUCTOR_PREVIEW) return true;
   if(d <= 1) return true;
@@ -919,18 +967,18 @@ function defaultDayFor(wk){
 function goToDay(wk, d){
   if(!dayUnlocked(wk, d)){ toast('Complete Day '+(d-1)+' first to unlock this.'); return; }
   for(let i=1;i<=3;i++){
-    const el = document.getElementById(`day-${wk}-${i}`);
+    const el = document.getElementById(`day-${CURRENT_LEVEL}_${wk}-${i}`);
     if(el) el.classList.toggle('active', i===d);
   }
   currentDayView[wk] = d;
-  mountEditorsIn(`day-${wk}-${d}`);
+  mountEditorsIn(`day-${CURRENT_LEVEL}_${wk}-${d}`);
   refreshDayCompleteState(wk, d);
   refreshDayTabs(wk);
 }
 
 function refreshDayTabs(wk){
   for(let d=1; d<=3; d++){
-    const tab = document.getElementById(`daytab-${wk}-${d}`);
+    const tab = document.getElementById(`daytab-${CURRENT_LEVEL}_${wk}-${d}`);
     if(!tab) continue;
     tab.classList.toggle('locked', !dayUnlocked(wk,d));
     tab.classList.toggle('done', dayStatus(wk,d) === 'done');
@@ -939,17 +987,17 @@ function refreshDayTabs(wk){
 }
 
 function refreshDayCompleteState(wk, d){
-  const btn = document.getElementById(`complete-btn-${wk}-day${d}`);
+  const btn = document.getElementById(`complete-btn-${CURRENT_LEVEL}_${wk}-day${d}`);
   if(!btn) return;
   const done = dayStatus(wk,d) === 'done';
-  const reqList = document.getElementById(`reqlist-${wk}-day${d}`);
+  const reqList = document.getElementById(`reqlist-${CURRENT_LEVEL}_${wk}-day${d}`);
   let met;
   if(d === 1){
-    met = localStorage.getItem('pyac_b_sandbox_'+wk) === 'done';
+    met = localStorage.getItem(`pyac_${CURRENT_LEVEL}_sandbox_${wk}`) === 'done';
     if(reqList) reqList.innerHTML = `<li class="${met?'met':''}">Run the sandbox code at least once</li>`;
   } else if(d === 2){
-    const ex0Ok = localStorage.getItem(`pyac_b_ex_${wk}_0`) === 'pass';
-    const ex1Ok = localStorage.getItem(`pyac_b_ex_${wk}_1`) === 'pass';
+    const ex0Ok = localStorage.getItem(`pyac_${CURRENT_LEVEL}_ex_${wk}_0`) === 'pass';
+    const ex1Ok = localStorage.getItem(`pyac_${CURRENT_LEVEL}_ex_${wk}_1`) === 'pass';
     met = ex0Ok && ex1Ok;
     if(reqList) reqList.innerHTML =
       `<li class="${ex0Ok?'met':''}">Pass Exercise 1</li>` +
@@ -957,8 +1005,8 @@ function refreshDayCompleteState(wk, d){
   } else {
     const q = quizScore(wk);
     const quizOk = q.correct >= Math.ceil(q.total * 0.75);
-    const ex2Ok = localStorage.getItem(`pyac_b_ex_${wk}_2`) === 'pass';
-    const ex3Ok = localStorage.getItem(`pyac_b_ex_${wk}_3`) === 'pass';
+    const ex2Ok = localStorage.getItem(`pyac_${CURRENT_LEVEL}_ex_${wk}_2`) === 'pass';
+    const ex3Ok = localStorage.getItem(`pyac_${CURRENT_LEVEL}_ex_${wk}_3`) === 'pass';
     met = quizOk && ex2Ok && ex3Ok;
     if(reqList) reqList.innerHTML =
       `<li class="${quizOk?'met':''}">Score at least 75% on the quiz</li>` +
@@ -982,14 +1030,16 @@ function markDayComplete(wk, d){
 }
 
 function renderMP1Page(){
-  let html = `<div class="puzzle-hero"><h1>🧩 ${escapeHtml(BEGINNER_MP1.title)}</h1><p>${BEGINNER_MP1.intro}</p></div>
-    <div class="callout new-trick"><strong>New trick:</strong> ${BEGINNER_MP1.newTrick}</div>`;
-  BEGINNER_MP1.stages.forEach((st,i)=>{
-    const editorId = `cm-mp1-${st.key}`;
-    const outId = `out-mp1-${st.key}`;
-    const testsId = `tests-mp1-${st.key}`;
+  const lvl = CURRENT_LEVEL;
+  const mp1 = currentMP1();
+  let html = `<div class="puzzle-hero"><h1>🧩 ${escapeHtml(mp1.title)}</h1><p>${mp1.intro}</p></div>
+    <div class="callout new-trick"><strong>New trick:</strong> ${mp1.newTrick}</div>`;
+  mp1.stages.forEach((st,i)=>{
+    const editorId = `cm-${lvl}_mp1-${st.key}`;
+    const outId = `out-${lvl}_mp1-${st.key}`;
+    const testsId = `tests-${lvl}_mp1-${st.key}`;
     html += `<div class="stage-card">
-      <div class="stage-badge" id="badge-mp1-${st.key}">Not started</div>
+      <div class="stage-badge" id="badge-${lvl}_mp1-${st.key}">Not started</div>
       <h3>${escapeHtml(st.title)}</h3>
       <p>${st.desc}</p>
       <div class="editor-wrap">
@@ -1003,21 +1053,23 @@ function renderMP1Page(){
   });
   html += `<div class="complete-bar" style="background:#0b1120;border-color:#1e293b;color:#e2e8f0;">
     <div>Complete all three stages to unlock Week 5 and the rest of the level.</div>
-    <ul class="req-list" id="reqlist-mp1" style="color:#cbd5e1;"></ul>
-    <button class="complete-btn" id="complete-btn-mp1" onclick="markStepComplete('mp1')" disabled>✓ Mark Mini Project 1 Complete</button>
+    <ul class="req-list" id="reqlist-${lvl}_mp1" style="color:#cbd5e1;"></ul>
+    <button class="complete-btn" id="complete-btn-${lvl}_mp1" onclick="markStepComplete('mp1')" disabled>✓ Mark Mini Project 1 Complete</button>
   </div>`;
   return html;
 }
 
 function renderMP2Page(){
-  let html = `<div class="puzzle-hero"><h1>🧩 ${escapeHtml(BEGINNER_MP2.title)}</h1><p>${BEGINNER_MP2.intro}</p></div>
-    <div class="callout new-trick">${BEGINNER_MP2.fixtureNote}<pre class="code-block">${escapeHtml(BEGINNER_MP2.fixtureCode)}</pre></div>`;
-  BEGINNER_MP2.doors.forEach((d,i)=>{
-    const editorId = `cm-mp2-${d.key}`;
-    const outId = `out-mp2-${d.key}`;
-    const testsId = `tests-mp2-${d.key}`;
+  const lvl = CURRENT_LEVEL;
+  const mp2 = currentMP2();
+  let html = `<div class="puzzle-hero"><h1>🧩 ${escapeHtml(mp2.title)}</h1><p>${mp2.intro}</p></div>
+    <div class="callout new-trick">${mp2.fixtureNote}<pre class="code-block">${escapeHtml(mp2.fixtureCode)}</pre></div>`;
+  mp2.doors.forEach((d,i)=>{
+    const editorId = `cm-${lvl}_mp2-${d.key}`;
+    const outId = `out-${lvl}_mp2-${d.key}`;
+    const testsId = `tests-${lvl}_mp2-${d.key}`;
     html += `<div class="stage-card">
-      <div class="stage-badge" id="badge-mp2-${d.key}">Not started</div>
+      <div class="stage-badge" id="badge-${lvl}_mp2-${d.key}">Not started</div>
       <h3>${escapeHtml(d.title)}</h3>
       <p>${d.desc}</p>
       <div class="editor-wrap">
@@ -1030,9 +1082,9 @@ function renderMP2Page(){
     </div>`;
   });
   html += `<div class="complete-bar" style="background:#0b1120;border-color:#1e293b;color:#e2e8f0;">
-    <div>Open all three doors to unlock your Beginner Certificate!</div>
-    <ul class="req-list" id="reqlist-mp2" style="color:#cbd5e1;"></ul>
-    <button class="complete-btn" id="complete-btn-mp2" onclick="markStepComplete('mp2')" disabled>✓ Mark Mini Project 2 Complete</button>
+    <div>Open all three doors to unlock your ${escapeHtml(currentLevelName())} Certificate!</div>
+    <ul class="req-list" id="reqlist-${lvl}_mp2" style="color:#cbd5e1;"></ul>
+    <button class="complete-btn" id="complete-btn-${lvl}_mp2" onclick="markStepComplete('mp2')" disabled>✓ Mark Mini Project 2 Complete</button>
   </div>`;
   return html;
 }
@@ -1041,9 +1093,14 @@ function renderMP2Page(){
    Certificate
    --------------------------------------------------------------------- */
 function renderCertPage(){
+  const lvl = CURRENT_LEVEL;
+  const meta = LEVEL_META[lvl];
   const alreadyDone = getStatus('cert') === 'done';
-  const feedbackDone = localStorage.getItem('pyac_b_feedback_beginner') === 'done';
-  return `<div class="hero"><h1>🎓 Your Beginner Certificate</h1><div class="meta">Congratulations on finishing Level 1!</div></div>
+  const feedbackDone = localStorage.getItem(`pyac_${lvl}_feedback_${meta.slug}`) === 'done';
+  const nextName = meta.next ? LEVEL_META[meta.next].name : null;
+  const unlockLine = nextName ? `Submit your feedback above to unlock ${nextName}:` : 'Submit your feedback above to complete the programme:';
+  const unlockBtnLabel = alreadyDone ? `✓ ${nextName ? nextName+' Unlocked' : 'Programme Complete'}` : (nextName ? `🚀 Unlock ${nextName} Level` : '🚀 Finish the Programme');
+  return `<div class="hero"><h1>🎓 Your ${escapeHtml(meta.name)} Certificate</h1><div class="meta">Congratulations on finishing Level ${meta.num}!</div></div>
     <div class="card cert-wrap">
       <canvas id="cert-canvas" width="1200" height="850"></canvas><br>
       <button class="download-btn" onclick="downloadCertificate()">⬇ Download Certificate</button>
@@ -1057,12 +1114,12 @@ function renderCertPage(){
       <label style="font-weight:700;font-size:0.85rem;color:var(--text-muted);display:block;margin-top:16px;">Anything you'd like to tell us? (optional)</label>
       <textarea id="fb-comment" rows="3" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.9rem;margin-top:8px;resize:vertical;" placeholder="What did you like? What could be better?" ${feedbackDone?'disabled':''}></textarea>
       <div id="feedback-status" style="font-size:0.85rem;margin:10px 0;"></div>
-      <button class="complete-btn" id="feedback-submit-btn" onclick="submitFeedback('beginner')" ${feedbackDone?'disabled':''}>${feedbackDone?'✓ Feedback submitted — thank you!':'Submit Feedback'}</button>
+      <button class="complete-btn" id="feedback-submit-btn" onclick="submitFeedback('${meta.slug}')" ${feedbackDone?'disabled':''}>${feedbackDone?'✓ Feedback submitted — thank you!':'Submit Feedback'}</button>
     </div>
     <div class="complete-bar">
-      <div>Submit your feedback above to unlock Intermediate:</div>
-      <ul class="req-list" id="reqlist-cert"></ul>
-      <button class="complete-btn" id="complete-btn-cert" onclick="markStepComplete('cert')" disabled>${alreadyDone?'✓ Intermediate Unlocked':'🚀 Unlock Intermediate Level'}</button>
+      <div>${unlockLine}</div>
+      <ul class="req-list" id="reqlist-${lvl}_cert"></ul>
+      <button class="complete-btn" id="complete-btn-${lvl}_cert" onclick="markStepComplete('cert')" disabled>${unlockBtnLabel}</button>
     </div>`;
 }
 
@@ -1104,7 +1161,7 @@ async function submitFeedback(level){
   try{
     const res = await fetch(fbUrl('/pyacademy/feedback/'+level+'.json'), {method:'POST', body: JSON.stringify(payload)});
     if(!res.ok) throw new Error('failed');
-    localStorage.setItem('pyac_b_feedback_'+level, 'done');
+    localStorage.setItem(`pyac_${CURRENT_LEVEL}_feedback_${level}`, 'done');
     syncProgress();
     statusEl.style.color = 'var(--success)';
     statusEl.textContent = '✅ Thank you for your feedback!';
@@ -1120,19 +1177,20 @@ async function submitFeedback(level){
 }
 
 function refreshCertCompleteState(){
-  const feedbackDone = localStorage.getItem('pyac_b_feedback_beginner') === 'done';
+  const meta = LEVEL_META[CURRENT_LEVEL];
+  const feedbackDone = localStorage.getItem(`pyac_${CURRENT_LEVEL}_feedback_${meta.slug}`) === 'done';
   const done = getStatus('cert') === 'done';
-  const btn = document.getElementById('complete-btn-cert');
+  const btn = document.getElementById(`complete-btn-${CURRENT_LEVEL}_cert`);
   if(btn) btn.disabled = !feedbackDone || done;
-  const reqList = document.getElementById('reqlist-cert');
+  const reqList = document.getElementById(`reqlist-${CURRENT_LEVEL}_cert`);
   if(reqList) reqList.innerHTML = `<li class="${feedbackDone?'met':''}">Submit the feedback form above</li>`;
 }
 
 function getCertId(){
-  let id = localStorage.getItem('pyac_b_cert_id');
+  let id = localStorage.getItem(`pyac_${CURRENT_LEVEL}_cert_id`);
   if(!id){
-    id = 'PYAC-B-' + Math.random().toString(36).slice(2,8).toUpperCase();
-    localStorage.setItem('pyac_b_cert_id', id);
+    id = 'PYAC-' + currentLevelShort() + '-' + Math.random().toString(36).slice(2,8).toUpperCase();
+    localStorage.setItem(`pyac_${CURRENT_LEVEL}_cert_id`, id);
   }
   return id;
 }
@@ -1150,7 +1208,7 @@ async function registerCertificate(certId, name){
       body: JSON.stringify({
         username: localStorage.getItem('pyac_username') || '',
         displayName: name,
-        level: 'Beginner',
+        level: currentLevelName(),
         awardedAt: new Date().toISOString()
       })
     });
@@ -1202,9 +1260,10 @@ function maybeDrawCertificate(){
   ctx.fillStyle = '#211f3d';
   ctx.fillText('Certificate of Completion', 600, 200);
 
+  const meta = LEVEL_META[CURRENT_LEVEL];
   ctx.font = '400 18px Segoe UI, sans-serif';
   ctx.fillStyle = '#6b6890';
-  ctx.fillText('Level 1 · Beginner — Foundations of Python', 600, 236);
+  ctx.fillText(`Level ${meta.num} · ${meta.name} — ${meta.tagline}`, 600, 236);
 
   ctx.font = '400 20px Segoe UI, sans-serif';
   ctx.fillStyle = '#211f3d';
@@ -1221,7 +1280,7 @@ function maybeDrawCertificate(){
   ctx.fillStyle = '#211f3d';
   ctx.fillText('has successfully completed all 9 weeks and both puzzle mini-projects of', 600, 450);
   ctx.font = '700 20px Segoe UI, sans-serif';
-  ctx.fillText('the Python Academy Beginner Level', 600, 480);
+  ctx.fillText(`the Python Academy ${meta.name} Level`, 600, 480);
 
   ctx.font = '400 15px Segoe UI, sans-serif';
   ctx.fillStyle = '#6b6890';
@@ -1249,7 +1308,7 @@ function downloadCertificate(){
   const canvas = document.getElementById('cert-canvas');
   if(!canvas) return;
   const link = document.createElement('a');
-  link.download = 'python-academy-beginner-certificate.png';
+  link.download = `python-academy-${currentLevelSlug()}-certificate.png`;
   link.href = canvas.toDataURL('image/png');
   link.click();
 }
@@ -1259,15 +1318,6 @@ function downloadCertificate(){
    --------------------------------------------------------------------- */
 function initApp(){
   loadRegistration();
-  document.getElementById('i-hub-body').innerHTML =
-    `<p>The Intermediate level is being written — it will build on everything from Beginner with deeper data
-    structures, file handling, error handling, and an introduction to object-oriented programming, using the same
-    project-based, real-world approach.</p><p>It unlocks automatically the moment you earn your Beginner
-    certificate.</p>`;
-  document.getElementById('a-hub-body').innerHTML =
-    `<p>The Advanced level caps off the programme with algorithms and problem solving, working with real data
-    files, simple APIs, and a final capstone project you design yourself.</p><p>It unlocks automatically the moment
-    you earn your Intermediate certificate.</p>`;
   refreshSidebarLocks();
   refreshHubCards();
   if(INSTRUCTOR_PREVIEW){
@@ -1296,7 +1346,7 @@ function enterPreviewMode(){
   const day = params.get('day');
   if(go){
     navGo(go);
-    const chainKey = go.replace(/^b_/,'');
+    const chainKey = stripLevelPrefix(go);
     if(day && chainKey.startsWith('week')) goToDay(chainKey, parseInt(day,10));
   } else {
     showPage('hub');
