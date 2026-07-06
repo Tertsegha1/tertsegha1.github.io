@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Verify Certificate — Python Academy</title>
+<title>Verify Certificate — CodeCraft Academy</title>
 <script src="firebase-config-pyacademy.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -32,7 +32,7 @@ a.home-link:hover{text-decoration:underline;}
 <body>
 
 <div class="card">
-  <div class="logo">🧑‍💻 Python Academy</div>
+  <div class="logo">⚡ CodeCraft Academy</div>
   <div id="loading" class="loading">Checking certificate…</div>
 
   <div id="valid-result" class="result valid">
@@ -41,6 +41,7 @@ a.home-link:hover{text-decoration:underline;}
     <p>This certificate ID matches a real completion record.</p>
     <div class="detail-box">
       <div>Name: <span id="v-name"></span></div>
+      <div>Track: <span id="v-subject"></span></div>
       <div>Level: <span id="v-level"></span></div>
       <div>Awarded: <span id="v-date"></span></div>
       <div>Certificate ID: <span id="v-id"></span></div>
@@ -50,10 +51,10 @@ a.home-link:hover{text-decoration:underline;}
   <div id="invalid-result" class="result invalid">
     <div class="icon">❌</div>
     <h1>Certificate Not Found</h1>
-    <p>We couldn't find a certificate matching this ID. It may have been mistyped, or this isn't a genuine Python Academy certificate.</p>
+    <p>We couldn't find a certificate matching this ID. It may have been mistyped, or this isn't a genuine CodeCraft Academy certificate.</p>
   </div>
 
-  <a class="home-link" href="python-academy.html">🧑‍💻 Visit Python Academy →</a>
+  <a class="home-link" href="subject-select.html">⚡ Visit CodeCraft Academy →</a>
 </div>
 
 <script>
@@ -66,16 +67,28 @@ a.home-link:hover{text-decoration:underline;}
   var validEl = document.getElementById('valid-result');
   var invalidEl = document.getElementById('invalid-result');
 
+  // Cert IDs encode which subject issued them: Python (back-compat) is
+  // PYAC-{levelShort}-{random} (3 parts); every other subject is
+  // PYAC-{subjectShort}-{levelShort}-{random} (4 parts) — see getCertId()
+  // in python-academy-app.js. Use that to look up the right Firebase subtree.
+  var SHORT_TO_SUBJECT = {WD:'wd', R:'r', ML:'ml'};
+  function fbBaseForCertId(id){
+    var parts = String(id||'').split('-');
+    if(parts.length >= 4 && SHORT_TO_SUBJECT[parts[1]]) return '/pyacademy/' + SHORT_TO_SUBJECT[parts[1]];
+    return '/pyacademy';
+  }
+
   if(!certId || !window.PYAC_FIREBASE || !window.PYAC_FIREBASE.databaseURL){
     loadingEl.style.display = 'none';
     invalidEl.classList.add('show');
   } else {
-    fetch(window.PYAC_FIREBASE.databaseURL + '/pyacademy/certificates/' + encodeURIComponent(certId) + '.json')
+    fetch(window.PYAC_FIREBASE.databaseURL + fbBaseForCertId(certId) + '/certificates/' + encodeURIComponent(certId) + '.json')
       .then(function(r){ return r.json(); })
       .then(function(data){
         loadingEl.style.display = 'none';
         if(data && data.displayName){
           document.getElementById('v-name').textContent = data.displayName;
+          document.getElementById('v-subject').textContent = data.subject || 'Python Academy';
           document.getElementById('v-level').textContent = data.level || 'Beginner';
           document.getElementById('v-id').textContent = certId;
           var awarded = '—';

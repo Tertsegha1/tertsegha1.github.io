@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CodeCraft Academy — Pick Your Track</title>
+<meta name="description" content="CodeCraft Academy — hands-on coding and data skills for school students. Pick a track: Python, Web Design, R, or AutoML — real work running in the browser, with a certificate at the end of every level.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="CodeCraft Academy — Pick Your Track">
+<meta property="og:description" content="Hands-on coding and data skills for school students. Pick a track: Python, Web Design, R, or AutoML.">
+<meta property="og:url" content="https://drtertseghaanande.com/subject-select.html">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --brand:#4338ca; --brand-light:#6366f1; --accent:#f59e0b;
+  --bg:#f7f7fb; --surface:#ffffff; --border:#e3e1f7;
+  --text:#211f3d; --text-muted:#6b6890;
+}
+html{font-size:16px;}
+body{font-family:'Segoe UI',system-ui,-apple-system,Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;}
+.wrap{max-width:1040px;margin:0 auto;padding:48px 24px 64px;}
+.hero{background:linear-gradient(135deg,var(--brand) 0%,var(--brand-light) 100%);color:#fff;border-radius:18px;padding:44px 38px;margin-bottom:34px;position:relative;overflow:hidden;text-align:center;}
+.hero::after{content:'⚡';position:absolute;right:10px;bottom:-30px;font-size:9rem;opacity:0.12;}
+.hero h1{font-size:2.1rem;font-weight:800;line-height:1.25;margin-bottom:10px;}
+.hero .meta{opacity:0.9;font-size:1rem;max-width:640px;margin:0 auto;}
+.subject-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;}
+@media(max-width:760px){.subject-grid{grid-template-columns:1fr;}}
+.subject-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:26px;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s;text-decoration:none;color:inherit;display:block;}
+.subject-card:hover{transform:translateY(-4px);box-shadow:0 12px 28px rgba(67,56,202,0.16);}
+.subject-card .sc-icon{font-size:2.4rem;margin-bottom:10px;}
+.subject-card .sc-title{font-weight:800;font-size:1.2rem;color:var(--brand);margin-bottom:6px;}
+.subject-card .sc-desc{font-size:0.9rem;color:var(--text-muted);margin-bottom:14px;min-height:58px;}
+.subject-card .sc-cta{font-size:0.82rem;font-weight:700;color:var(--brand);}
+footer{text-align:center;margin-top:40px;font-size:0.8rem;color:var(--text-muted);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <h1>⚡ CodeCraft Academy</h1>
+    <div class="meta">Real coding and data skills for school students — running right in the browser, with a certificate at the end of every level. Pick a track to get started.</div>
+  </div>
+  <div class="subject-grid">
+    <a class="subject-card" href="python-academy.html">
+      <div class="sc-icon">🧑‍💻</div>
+      <div class="sc-title">Python Academy</div>
+      <div class="sc-desc">Learn real Python — variables, loops, functions, and more — through hands-on scenarios and puzzle mini-projects.</div>
+      <div class="sc-cta">Start Python Academy →</div>
+    </a>
+    <a class="subject-card" href="web-design-academy.html">
+      <div class="sc-icon">🎨</div>
+      <div class="sc-title">Web Design Academy</div>
+      <div class="sc-desc">Build real web pages with HTML, CSS, and light JavaScript — from structure to styling to responsive layouts.</div>
+      <div class="sc-cta">Start Web Design Academy →</div>
+    </a>
+    <a class="subject-card" href="r-academy.html">
+      <div class="sc-icon">📊</div>
+      <div class="sc-title">R Academy</div>
+      <div class="sc-desc">Learn R for working with data — vectors, data frames, and visualizing real datasets, all in the browser.</div>
+      <div class="sc-cta">Start R Academy →</div>
+    </a>
+    <a class="subject-card" href="automl-academy.html">
+      <div class="sc-icon">🤖</div>
+      <div class="sc-title">AutoML Academy</div>
+      <div class="sc-desc">Explore machine learning with scikit-learn and pandas — train and evaluate simple models on real data.</div>
+      <div class="sc-cta">Start AutoML Academy →</div>
+    </a>
+  </div>
+  <footer>Already have an account? Open your track above and log in from there.</footer>
+</div>
+</body>
+</html>

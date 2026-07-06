@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Python Academy — Instructor Monitor</title>
+  <title>CodeCraft Academy — Instructor Monitor</title>
   <script src="firebase-config-pyacademy.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
@@ -77,9 +77,10 @@
 
     /* ── Level selector (Progress tab) ── */
     #progress-level-tabs{display:flex;gap:8px;padding:14px 24px 0;}
-    .level-tab-btn{background:none;border:1px solid #2c2470;color:#8b85c4;font-size:0.76rem;font-weight:700;padding:6px 16px;border-radius:20px;cursor:pointer;font-family:inherit;}
-    .level-tab-btn:hover{color:#c7c2f0;}
-    .level-tab-btn.active{background:#241d5c;border-color:#6366f1;color:#e2e8f0;}
+    #subject-tabs{display:flex;gap:8px;padding:14px 24px 0;border-bottom:1px solid #241d5c;padding-bottom:14px;}
+    .level-tab-btn,.subject-tab-btn{background:none;border:1px solid #2c2470;color:#8b85c4;font-size:0.76rem;font-weight:700;padding:6px 16px;border-radius:20px;cursor:pointer;font-family:inherit;}
+    .level-tab-btn:hover,.subject-tab-btn:hover{color:#c7c2f0;}
+    .level-tab-btn.active,.subject-tab-btn.active{background:#241d5c;border-color:#6366f1;color:#e2e8f0;}
 
     /* ── Content tab level sections ── */
     .content-level-title{font-size:0.78rem;font-weight:700;color:#8b85c4;text-transform:uppercase;letter-spacing:0.6px;margin:20px 0 10px;}
@@ -160,17 +161,17 @@
 <div id="dashboard-root">
 <div id="hdr">
   <div id="hdr-left">
-    <span class="logo">🧑‍💻</span>
+    <span class="logo">⚡</span>
     <div>
-      <div id="hdr-title">PYTHON ACADEMY — INSTRUCTOR MONITOR</div>
-      <div id="hdr-sub">All levels · live class data</div>
+      <div id="hdr-title">CODECRAFT ACADEMY — INSTRUCTOR MONITOR</div>
+      <div id="hdr-sub">Python Academy · All levels · live class data</div>
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:12px;">
     <span id="live-dot"></span>
     <span id="status-pill">Connecting…</span>
     <button onclick="location.reload()" style="background:none;border:1px solid #2c2470;color:#8b85c4;font-size:0.7rem;padding:3px 10px;border-radius:4px;cursor:pointer;">⟳ Refresh</button>
-    <a href="python-academy.html" style="font-size:0.7rem;padding:3px 10px;border-radius:4px;border:1px solid #2c2470;color:#8b85c4;text-decoration:none;">← Student view</a>
+    <a href="subject-select.html" style="font-size:0.7rem;padding:3px 10px;border-radius:4px;border:1px solid #2c2470;color:#8b85c4;text-decoration:none;">← Student view</a>
     <button id="signout-btn" onclick="doSignOut()">Sign out</button>
   </div>
 </div>
@@ -183,6 +184,13 @@
   <button class="tab-btn" data-tab="messages" onclick="switchTab('messages')">✉️ Messages <span id="msg-badge" class="tab-badge" style="display:none;"></span></button>
   <button class="tab-btn" data-tab="feedback" onclick="switchTab('feedback')">📝 Feedback</button>
   <button class="tab-btn" data-tab="certificates" onclick="switchTab('certificates')">🎓 Certificates</button>
+</div>
+
+<div id="subject-tabs">
+  <button class="subject-tab-btn active" data-subject="py" onclick="switchProgressSubject('py')">🧑‍💻 Python</button>
+  <button class="subject-tab-btn" data-subject="wd" onclick="switchProgressSubject('wd')">🎨 Web Design</button>
+  <button class="subject-tab-btn" data-subject="r" onclick="switchProgressSubject('r')">📊 R</button>
+  <button class="subject-tab-btn" data-subject="ml" onclick="switchProgressSubject('ml')">🤖 AutoML</button>
 </div>
 
 <div id="config-error">
@@ -431,21 +439,49 @@ setInterval(async function(){
 <script>
 (function(){
   var KEYS=['week1','week2','week3','week4','mp1','week5','week6','week7','week8','week9','mp2','cert'];
+  var SUBJECTS=['py','wd','r','ml'];
+  // wd/r/ml ship with a Phase 0 placeholder chain (just week1 + cert) until
+  // each subject's real curriculum is authored — mirrors SUBJECT_META.chain
+  // in python-academy-app.js. null means "full 12-step chain" (Python).
+  var SUBJECT_CHAIN={py:null, wd:['week1','cert'], r:['week1','cert'], ml:['week1','cert']};
+  var SUBJECT_HREF={py:'python-academy.html', wd:'web-design-academy.html', r:'r-academy.html', ml:'automl-academy.html'};
+  var SUBJECT_NAME={py:'Python Academy', wd:'Web Design Academy', r:'R Academy', ml:'AutoML Academy'};
   var LEVEL_TITLES={
-    b:{name:'Beginner', mp1:'Mini Project 1 — Crack the Locker Code', mp2:'Mini Project 2 — Escape the Computer Lab',
-       weeks:['Hello, Python!','Variables & Data','Input & Operators','Making Decisions','Loops','Lists','Strings & Ciphers','Functions','Dictionaries & Debug']},
-    i:{name:'Intermediate', mp1:'Mini Project 1 — Recover the Class Register', mp2:'Mini Project 2 — Build the Club Directory System',
-       weeks:['Tuples & Sets','Reading & Writing Files','Working with CSV Data','Error Handling & Validation','Modules & the Standard Library','Classes & Objects','Inheritance & Encapsulation','Working with JSON','Recursion & Debugging']},
-    a:{name:'Advanced', mp1:'Mini Project 1', mp2:'Mini Project 2',
-       weeks:['Algorithmic Thinking','Searching & Sorting','Recursion in Practice','Real Data Files','Multi-Class Systems','Testing & Debugging','API-Style Data','Capstone — Build','Capstone — Polish']}
+    py:{
+      b:{name:'Beginner', mp1:'Mini Project 1 — Crack the Locker Code', mp2:'Mini Project 2 — Escape the Computer Lab',
+         weeks:['Hello, Python!','Variables & Data','Input & Operators','Making Decisions','Loops','Lists','Strings & Ciphers','Functions','Dictionaries & Debug']},
+      i:{name:'Intermediate', mp1:'Mini Project 1 — Recover the Class Register', mp2:'Mini Project 2 — Build the Club Directory System',
+         weeks:['Tuples & Sets','Reading & Writing Files','Working with CSV Data','Error Handling & Validation','Modules & the Standard Library','Classes & Objects','Inheritance & Encapsulation','Working with JSON','Recursion & Debugging']},
+      a:{name:'Advanced', mp1:'Mini Project 1', mp2:'Mini Project 2',
+         weeks:['Algorithmic Thinking','Searching & Sorting','Recursion in Practice','Real Data Files','Multi-Class Systems','Testing & Debugging','API-Style Data','Capstone — Build','Capstone — Polish']}
+    },
+    wd:{
+      b:{name:'Beginner', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Your First Web Page']},
+      i:{name:'Intermediate', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Your First Web Page']},
+      a:{name:'Advanced', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Your First Web Page']}
+    },
+    r:{
+      b:{name:'Beginner', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Getting Started with R']},
+      i:{name:'Intermediate', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Getting Started with R']},
+      a:{name:'Advanced', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Getting Started with R']}
+    },
+    ml:{
+      b:{name:'Beginner', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Meet Your First Model']},
+      i:{name:'Intermediate', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Meet Your First Model']},
+      a:{name:'Advanced', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Meet Your First Model']}
+    }
   };
   var progressLevel='b';
-  var users={};
-  var messages={};
-  var feedback={b:{}, i:{}, a:{}};
-  var passcodes={};
-  var certificates={};
+  var progressSubject='py';
+  var users={py:{}, wd:{}, r:{}, ml:{}};
+  var messages={py:{}, wd:{}, r:{}, ml:{}};
+  var feedback={py:{b:{},i:{},a:{}}, wd:{b:{},i:{},a:{}}, r:{b:{},i:{},a:{}}, ml:{b:{},i:{},a:{}}};
+  var passcodes={py:{}, wd:{}, r:{}, ml:{}};
+  var certificates={py:{}, wd:{}, r:{}, ml:{}};
   var flashSet={};
+
+  function subjPrefixFor(subject){ return subject==='py' ? '' : subject+'_'; }
+  function fbBaseFor(subject){ return subject==='py' ? '/pyacademy' : '/pyacademy/'+subject; }
 
   if(!window.PYAC_FIREBASE || !window.PYAC_FIREBASE.databaseURL ||
      window.PYAC_FIREBASE.databaseURL.includes('REPLACE')){
@@ -464,7 +500,12 @@ setInterval(async function(){
     document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.toggle('active', p.id==='tabpanel-'+name); });
   };
 
-  /* ── Realtime progress feed (SSE + polling fallback) ── */
+  /* ── Realtime progress feed (SSE + polling fallback) ──
+     SSE stays Python-only for now — one live connection per additional
+     subject would multiply the instructor's open connections for little
+     benefit at Phase-0 traffic levels. Other subjects update via the 4s
+     fullPoll() below instead, which is "live enough" while their student
+     counts are small. */
   function connect(){
     var es=new EventSource(DB+'/pyacademy/users.json'+window.authUrlSuffix());
 
@@ -472,15 +513,15 @@ setInterval(async function(){
       try{
         var msg=JSON.parse(e.data);
         if(msg.path==='/'&&msg.data){
-          users={};
-          Object.keys(msg.data).forEach(function(k){ users[k]=msg.data[k]; });
+          users.py={};
+          Object.keys(msg.data).forEach(function(k){ users.py[k]=msg.data[k]; });
         } else if(msg.path&&msg.data){
           var key=msg.path.replace(/^\//,'').split('/')[0];
-          if(msg.path.split('/').length<=2){ users[key]=msg.data; } else { fullPoll(); }
+          if(msg.path.split('/').length<=2){ users.py[key]=msg.data; } else { fullPoll(); }
           flashRow(key);
         } else if(msg.path&&msg.data===null){
           var key2=msg.path.replace(/^\//,'').split('/')[0];
-          if(msg.path.split('/').length<=2) delete users[key2];
+          if(msg.path.split('/').length<=2) delete users.py[key2];
         }
         renderProgress();
         renderUsers();
@@ -512,48 +553,48 @@ setInterval(async function(){
   }
 
   function fullPoll(){
-    fetchJson('/pyacademy/users.json').then(function(data){
-      users = (data && typeof data==='object') ? data : {};
-      renderProgress();
-      renderUsers();
-      setStatus('connected','Live');
-    }).catch(function(){ setStatus('error','Fetch error'); });
+    SUBJECTS.forEach(function(subject){
+      var base=fbBaseFor(subject);
 
-    fetchJson('/pyacademy/messages.json').then(function(data){
-      messages = (data && typeof data==='object') ? data : {};
-      renderMessages();
-    }).catch(function(){});
+      fetchJson(base+'/users.json').then(function(data){
+        users[subject] = (data && typeof data==='object') ? data : {};
+        renderProgress();
+        renderUsers();
+        setStatus('connected','Live');
+      }).catch(function(){ if(subject===progressSubject) setStatus('error','Fetch error'); });
 
-    fetchJson('/pyacademy/feedback/beginner.json').then(function(data){
-      feedback.b = (data && typeof data==='object') ? data : {};
-      renderFeedback();
-    }).catch(function(){});
-    fetchJson('/pyacademy/feedback/intermediate.json').then(function(data){
-      feedback.i = (data && typeof data==='object') ? data : {};
-      renderFeedback();
-    }).catch(function(){});
-    fetchJson('/pyacademy/feedback/advanced.json').then(function(data){
-      feedback.a = (data && typeof data==='object') ? data : {};
-      renderFeedback();
-    }).catch(function(){});
+      fetchJson(base+'/messages.json').then(function(data){
+        messages[subject] = (data && typeof data==='object') ? data : {};
+        renderMessages();
+      }).catch(function(){});
 
-    fetchJson('/pyacademy/passcodes.json').then(function(data){
-      passcodes = (data && typeof data==='object') ? data : {};
-      renderPasscodes();
-    }).catch(function(){});
+      ['beginner','intermediate','advanced'].forEach(function(slug, i){
+        var lvl=['b','i','a'][i];
+        fetchJson(base+'/feedback/'+slug+'.json').then(function(data){
+          feedback[subject][lvl] = (data && typeof data==='object') ? data : {};
+          renderFeedback();
+        }).catch(function(){});
+      });
 
-    fetchJson('/pyacademy/certificates.json').then(function(data){
-      certificates = (data && typeof data==='object') ? data : {};
-      renderCertificates();
-    }).catch(function(){});
+      fetchJson(base+'/passcodes.json').then(function(data){
+        passcodes[subject] = (data && typeof data==='object') ? data : {};
+        renderPasscodes();
+      }).catch(function(){});
+
+      fetchJson(base+'/certificates.json').then(function(data){
+        certificates[subject] = (data && typeof data==='object') ? data : {};
+        renderCertificates();
+      }).catch(function(){});
+    });
   }
 
   function flashRow(key){ flashSet[key]=Date.now(); }
 
   /* ── Progress tab ── */
-  function score(p, level){
+  function score(p, level, subject){
     var prog=(p&&p.progress)||{};
-    return KEYS.filter(function(k){ return prog['pyac_'+(level||progressLevel)+'_status_'+k]==='done'; }).length;
+    var sp=subjPrefixFor(subject||progressSubject);
+    return KEYS.filter(function(k){ return prog['pyac_'+sp+(level||progressLevel)+'_status_'+k]==='done'; }).length;
   }
 
   window.switchProgressLevel = function(level){
@@ -563,15 +604,30 @@ setInterval(async function(){
     renderProgress();
   };
 
+  window.switchProgressSubject = function(subject){
+    progressSubject=subject;
+    document.querySelectorAll('.subject-tab-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.subject===subject); });
+    document.getElementById('hdr-sub').textContent=SUBJECT_NAME[subject]+' · All levels · live class data';
+    buildProgressTableHeader(progressLevel);
+    renderProgress();
+    renderUsers();
+    renderMessages();
+    renderFeedback();
+    renderPasscodes();
+    renderCertificates();
+    buildContentGrid();
+  };
+
   function buildProgressTableHeader(level){
-    var titles=LEVEL_TITLES[level];
+    var titles=LEVEL_TITLES[progressSubject][level];
+    var chain=SUBJECT_CHAIN[progressSubject];
     var ths=['<th style="text-align:left;">Student</th>'];
     titles.weeks.forEach(function(title,i){
       var n=i+1;
       ths.push('<th title="Week '+n+' — '+esc(title)+'">W'+n+'</th>');
-      if(n===4) ths.push('<th title="'+esc(titles.mp1)+'">MP1</th>');
+      if(n===4 && (!chain || chain.indexOf('mp1')>=0)) ths.push('<th title="'+esc(titles.mp1)+'">MP1</th>');
     });
-    ths.push('<th title="'+esc(titles.mp2)+'">MP2</th>');
+    if(!chain || chain.indexOf('mp2')>=0) ths.push('<th title="'+esc(titles.mp2)+'">MP2</th>');
     ths.push('<th title="Certificate awarded">🎓</th>');
     ths.push('<th>Score</th>');
     document.getElementById('progress-thead').innerHTML='<tr>'+ths.join('')+'</tr>';
@@ -579,10 +635,11 @@ setInterval(async function(){
 
   function renderProgress(){
     var level=progressLevel;
-    var keys=Object.keys(users).filter(function(k){ return !users[k].isGuest; }).sort(function(a,b){
-      var sa=score(users[a],level), sb=score(users[b],level);
+    var subjectUsers=users[progressSubject]||{};
+    var keys=Object.keys(subjectUsers).filter(function(k){ return !subjectUsers[k].isGuest; }).sort(function(a,b){
+      var sa=score(subjectUsers[a],level), sb=score(subjectUsers[b],level);
       if(sb!==sa) return sb-sa;
-      return (users[a].displayName||a).localeCompare(users[b].displayName||b);
+      return (subjectUsers[a].displayName||a).localeCompare(subjectUsers[b].displayName||b);
     });
 
     var tbody=document.getElementById('participants');
@@ -599,13 +656,14 @@ setInterval(async function(){
     tblWrap.style.display='block';
 
     var rows=keys.map(function(k){
-      var p=users[k];
+      var p=subjectUsers[k];
       var prog=p.progress||{};
       var s=score(p,level);
       var isNew=(flashSet[k]&&(Date.now()-flashSet[k])<2000);
+      var sp=subjPrefixFor(progressSubject);
 
       var dotCells=KEYS.map(function(kk){
-        var st=prog['pyac_'+level+'_status_'+kk]||'todo';
+        var st=prog['pyac_'+sp+level+'_status_'+kk]||'todo';
         var cls = st==='done' ? 'dot-done' : 'dot-todo';
         var ic = st==='done' ? '✓' : '○';
         return '<td><span class="dot '+cls+'">'+ic+'</span></td>';
@@ -628,7 +686,7 @@ setInterval(async function(){
     });
     tbody.innerHTML=rows.join('');
 
-    updateStats(keys.map(function(k){ return users[k]; }), level);
+    updateStats(keys.map(function(k){ return subjectUsers[k]; }), level);
     document.getElementById('last-update').textContent='Last update: '+new Date().toLocaleTimeString();
   }
 
@@ -655,8 +713,9 @@ setInterval(async function(){
 
   /* ── Users & Passwords tab ── */
   function renderUsers(){
-    var keys=Object.keys(users).filter(function(k){ return !users[k].isGuest; }).sort(function(a,b){
-      return (users[a].displayName||a).localeCompare(users[b].displayName||b);
+    var subjectUsers=users[progressSubject]||{};
+    var keys=Object.keys(subjectUsers).filter(function(k){ return !subjectUsers[k].isGuest; }).sort(function(a,b){
+      return (subjectUsers[a].displayName||a).localeCompare(subjectUsers[b].displayName||b);
     });
     var tblWrap=document.getElementById('tbl-wrap-users');
     var empty=document.getElementById('empty-users');
@@ -664,7 +723,7 @@ setInterval(async function(){
     empty.style.display='none'; tblWrap.style.display='block';
 
     var rows=keys.map(function(username){
-      var u=users[username];
+      var u=subjectUsers[username];
       var events=u.passwordEvents||[];
       var lastEvent=events.length?events[events.length-1]:null;
       var created=u.createdAt?new Date(u.createdAt).toLocaleDateString():'—';
@@ -693,7 +752,7 @@ setInterval(async function(){
   }
 
   window.resetPassword = async function(username){
-    var u=users[username];
+    var u=(users[progressSubject]||{})[username];
     if(!u) return;
     var name=u.displayName||username;
     var newPw=prompt('Enter a NEW password for '+name+' (at least 4 characters), or leave blank to auto-generate one:');
@@ -714,7 +773,7 @@ setInterval(async function(){
       updated: new Date().toISOString()
     };
     try{
-      var res=await fetch(DB+'/pyacademy/users/'+encodeURIComponent(username)+'.json'+window.authUrlSuffix(), {method:'PATCH', body:JSON.stringify(updates)});
+      var res=await fetch(DB+fbBaseFor(progressSubject)+'/users/'+encodeURIComponent(username)+'.json'+window.authUrlSuffix(), {method:'PATCH', body:JSON.stringify(updates)});
       if(!res.ok) throw new Error('failed');
       alert('New password for '+name+':\n\n'+newPw+'\n\nMake sure to tell them before they try to log in again.');
       fullPoll();
@@ -725,14 +784,16 @@ setInterval(async function(){
 
   /* ── Messages tab ── */
   function renderMessages(){
-    var keys=Object.keys(messages).sort(function(a,b){
-      var ma=messages[a], mb=messages[b];
+    var subjectMessages=messages[progressSubject]||{};
+    var subjectUsers=users[progressSubject]||{};
+    var keys=Object.keys(subjectMessages).sort(function(a,b){
+      var ma=subjectMessages[a], mb=subjectMessages[b];
       var pa=(ma.type==='password_reset' && ma.status!=='resolved') ? 1 : 0;
       var pb=(mb.type==='password_reset' && mb.status!=='resolved') ? 1 : 0;
       if(pa!==pb) return pb-pa;
       return new Date(mb.createdAt||0) - new Date(ma.createdAt||0);
     });
-    var openCount=keys.filter(function(k){ return messages[k].status!=='resolved'; }).length;
+    var openCount=keys.filter(function(k){ return subjectMessages[k].status!=='resolved'; }).length;
     var badge=document.getElementById('msg-badge');
     if(openCount>0){ badge.style.display='inline-block'; badge.textContent=openCount; } else { badge.style.display='none'; }
 
@@ -742,11 +803,11 @@ setInterval(async function(){
     empty.style.display='none';
 
     body.innerHTML=keys.map(function(k){
-      var m=messages[k];
+      var m=subjectMessages[k];
       var resolved=m.status==='resolved';
       var isReset=m.type==='password_reset';
       var meta=[m.displayName||'Unknown student', m.username?('· @'+m.username):'', m.classCode?('· '+m.classCode):'', m.createdAt?('· '+relTime(m.createdAt)):''].filter(Boolean).join(' ');
-      var resetBtn=(isReset && !resolved && m.username && users[m.username]) ?
+      var resetBtn=(isReset && !resolved && m.username && subjectUsers[m.username]) ?
         '<button class="reset-btn" onclick="resetPassword(\''+m.username.replace(/'/g,"\\'")+'\')">🔑 Reset Password</button>' : '';
       return '<div class="msg-card'+(resolved?' resolved':'')+(isReset?' reset-request':'')+'">'+
         '<div class="msg-top">'+
@@ -763,7 +824,7 @@ setInterval(async function(){
   }
 
   window.toggleMessage = function(key, newStatus){
-    fetch(DB+'/pyacademy/messages/'+key+'.json', {method:'PATCH', body:JSON.stringify({status:newStatus})})
+    fetch(DB+fbBaseFor(progressSubject)+'/messages/'+key+'.json'+window.authUrlSuffix(), {method:'PATCH', body:JSON.stringify({status:newStatus})})
       .then(function(){ fullPoll(); }).catch(function(){});
   };
 
@@ -806,22 +867,26 @@ setInterval(async function(){
   }
 
   function renderFeedback(){
-    var totalCount=Object.keys(feedback.b).length+Object.keys(feedback.i).length+Object.keys(feedback.a).length;
+    var subjectFeedback=feedback[progressSubject]||{b:{},i:{},a:{}};
+    var totalCount=Object.keys(subjectFeedback.b).length+Object.keys(subjectFeedback.i).length+Object.keys(subjectFeedback.a).length;
     var body=document.getElementById('panel-body-feedback');
     var empty=document.getElementById('empty-feedback');
     if(!totalCount){ empty.style.display='block'; body.innerHTML=''; return; }
     empty.style.display='none';
 
     body.innerHTML=
-      '<div class="feedback-level-section"><div class="feedback-level-title">🌱 Beginner</div>'+renderFeedbackSection(feedback.b)+'</div>'+
-      '<div class="feedback-level-section"><div class="feedback-level-title">🌿 Intermediate</div>'+renderFeedbackSection(feedback.i)+'</div>'+
-      '<div class="feedback-level-section"><div class="feedback-level-title">🌳 Advanced</div>'+renderFeedbackSection(feedback.a)+'</div>';
+      '<div class="feedback-level-section"><div class="feedback-level-title">🌱 Beginner</div>'+renderFeedbackSection(subjectFeedback.b)+'</div>'+
+      '<div class="feedback-level-section"><div class="feedback-level-title">🌿 Intermediate</div>'+renderFeedbackSection(subjectFeedback.i)+'</div>'+
+      '<div class="feedback-level-section"><div class="feedback-level-title">🌳 Advanced</div>'+renderFeedbackSection(subjectFeedback.a)+'</div>';
   }
 
-  /* ── Access control (passcodes) ── */
+  /* ── Access control (passcodes) ──
+     Passcodes are scoped by the current subject pill — generating one for
+     "Web Design" writes into /pyacademy/wd/passcodes, not Python's pool. */
   function renderPasscodes(){
-    var keys=Object.keys(passcodes).sort(function(a,b){
-      return new Date(passcodes[b].createdAt||0) - new Date(passcodes[a].createdAt||0);
+    var subjectPasscodes=passcodes[progressSubject]||{};
+    var keys=Object.keys(subjectPasscodes).sort(function(a,b){
+      return new Date(subjectPasscodes[b].createdAt||0) - new Date(subjectPasscodes[a].createdAt||0);
     });
     var tblWrap=document.getElementById('tbl-wrap-passcodes');
     var empty=document.getElementById('empty-passcodes');
@@ -829,7 +894,7 @@ setInterval(async function(){
     empty.style.display='none'; tblWrap.style.display='block';
 
     document.getElementById('passcodes-body').innerHTML=keys.map(function(code){
-      var p=passcodes[code];
+      var p=subjectPasscodes[code];
       var active=p.active!==false;
       var created=p.createdAt?new Date(p.createdAt).toLocaleDateString():'—';
       var used=p.usedCount||0;
@@ -851,7 +916,7 @@ setInterval(async function(){
   }
 
   window.generatePasscode = async function(){
-    var qtyInput = prompt('How many one-time passcodes do you want to generate? (e.g. one per student)', '1');
+    var qtyInput = prompt('How many one-time '+SUBJECT_NAME[progressSubject]+' passcodes do you want to generate? (e.g. one per student)', '1');
     if(qtyInput===null) return;
     var qty = parseInt(qtyInput,10);
     if(!qty || qty<1) qty=1;
@@ -862,15 +927,15 @@ setInterval(async function(){
       var code=makePasscodeString();
       var record={createdAt:new Date().toISOString(), active:true, usedCount:0, usedBy:{}};
       try{
-        var res=await fetch(DB+'/pyacademy/passcodes/'+code+'.json'+window.authUrlSuffix(), {method:'PUT', body:JSON.stringify(record)});
+        var res=await fetch(DB+fbBaseFor(progressSubject)+'/passcodes/'+code+'.json'+window.authUrlSuffix(), {method:'PUT', body:JSON.stringify(record)});
         if(res.ok) created.push(code);
       }catch(e){}
     }
 
     if(created.length){
       var msg = created.length===1
-        ? 'New one-time passcode created:\n\n'+created[0]+'\n\nEach code can only be used once — share it with one student.'
-        : 'Created '+created.length+' one-time passcodes (each works once — give one to each student):\n\n'+created.join('\n');
+        ? 'New one-time '+SUBJECT_NAME[progressSubject]+' passcode created:\n\n'+created[0]+'\n\nEach code can only be used once — share it with one student.'
+        : 'Created '+created.length+' one-time '+SUBJECT_NAME[progressSubject]+' passcodes (each works once — give one to each student):\n\n'+created.join('\n');
       alert(msg);
       fullPoll();
     } else {
@@ -880,7 +945,7 @@ setInterval(async function(){
 
   window.togglePasscode = async function(code, makeActive){
     try{
-      var res=await fetch(DB+'/pyacademy/passcodes/'+code+'.json'+window.authUrlSuffix(), {method:'PATCH', body:JSON.stringify({active:makeActive})});
+      var res=await fetch(DB+fbBaseFor(progressSubject)+'/passcodes/'+code+'.json'+window.authUrlSuffix(), {method:'PATCH', body:JSON.stringify({active:makeActive})});
       if(!res.ok) throw new Error('failed');
       fullPoll();
     }catch(e){
@@ -890,8 +955,9 @@ setInterval(async function(){
 
   /* ── Certificates tab ── */
   function renderCertificates(){
-    var keys=Object.keys(certificates).sort(function(a,b){
-      return new Date(certificates[b].awardedAt||0) - new Date(certificates[a].awardedAt||0);
+    var subjectCerts=certificates[progressSubject]||{};
+    var keys=Object.keys(subjectCerts).sort(function(a,b){
+      return new Date(subjectCerts[b].awardedAt||0) - new Date(subjectCerts[a].awardedAt||0);
     });
     var tblWrap=document.getElementById('tbl-wrap-certificates');
     var empty=document.getElementById('empty-certificates');
@@ -899,7 +965,7 @@ setInterval(async function(){
     empty.style.display='none'; tblWrap.style.display='block';
 
     document.getElementById('certificates-body').innerHTML=keys.map(function(certId){
-      var c=certificates[certId];
+      var c=subjectCerts[certId];
       var awarded='—';
       try{ awarded=new Date(c.awardedAt).toLocaleDateString(); }catch(e){}
       var verifyUrl='python-academy-verify.html?id='+encodeURIComponent(certId);
@@ -932,25 +998,35 @@ setInterval(async function(){
     pill.textContent=text;
   }
 
-  /* ── Content tab ── */
+  /* ── Content tab ──
+     Links point at whichever subject's shell file is currently selected;
+     placeholder subjects (short chain, single un-split week) skip the
+     Day 1/2/3 split and MP1/MP2 cards Python's full chain has. */
   function buildContentGridForLevel(level){
-    var titles=LEVEL_TITLES[level];
+    var subject=progressSubject;
+    var titles=LEVEL_TITLES[subject][level];
+    var href=SUBJECT_HREF[subject];
+    var chain=SUBJECT_CHAIN[subject];
     var html=titles.weeks.map(function(title,i){
       var n=i+1;
-      var dayLinks=[1,2,3].map(function(d){
-        return '<a class="content-day-link" href="python-academy.html?instructor=1&go='+level+'_week'+n+'&day='+d+'" target="_blank">Day '+d+'</a>';
-      }).join('');
+      var dayLinks = subject==='py'
+        ? [1,2,3].map(function(d){ return '<a class="content-day-link" href="'+href+'?instructor=1&go='+level+'_week'+n+'&day='+d+'" target="_blank">Day '+d+'</a>'; }).join('')
+        : '<a class="content-day-link" href="'+href+'?instructor=1&go='+level+'_week'+n+'" target="_blank">Open</a>';
       return '<div class="content-card">'+
         '<div class="content-card-title">Week '+n+' — '+esc(title)+'</div>'+
         '<div class="content-day-links">'+dayLinks+'</div>'+
       '</div>';
     }).join('');
-    html += '<div class="content-card"><div class="content-card-title">🧩 '+esc(titles.mp1)+'</div>'+
-      '<div class="content-day-links"><a class="content-day-link" href="python-academy.html?instructor=1&go='+level+'_mp1" target="_blank">Open</a></div></div>';
-    html += '<div class="content-card"><div class="content-card-title">🧩 '+esc(titles.mp2)+'</div>'+
-      '<div class="content-day-links"><a class="content-day-link" href="python-academy.html?instructor=1&go='+level+'_mp2" target="_blank">Open</a></div></div>';
+    if(!chain || chain.indexOf('mp1')>=0){
+      html += '<div class="content-card"><div class="content-card-title">🧩 '+esc(titles.mp1)+'</div>'+
+        '<div class="content-day-links"><a class="content-day-link" href="'+href+'?instructor=1&go='+level+'_mp1" target="_blank">Open</a></div></div>';
+    }
+    if(!chain || chain.indexOf('mp2')>=0){
+      html += '<div class="content-card"><div class="content-card-title">🧩 '+esc(titles.mp2)+'</div>'+
+        '<div class="content-day-links"><a class="content-day-link" href="'+href+'?instructor=1&go='+level+'_mp2" target="_blank">Open</a></div></div>';
+    }
     html += '<div class="content-card"><div class="content-card-title">🎓 Certificate page</div>'+
-      '<div class="content-day-links"><a class="content-day-link" href="python-academy.html?instructor=1&go='+level+'_cert" target="_blank">Open</a></div></div>';
+      '<div class="content-day-links"><a class="content-day-link" href="'+href+'?instructor=1&go='+level+'_cert" target="_blank">Open</a></div></div>';
     document.getElementById('content-grid-'+level).innerHTML=html;
   }
   function buildContentGrid(){
