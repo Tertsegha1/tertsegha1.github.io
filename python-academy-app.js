@@ -59,7 +59,7 @@ function currentLevelShort(){ return LEVEL_META[CURRENT_LEVEL].short; }
 function currentLevelSlug(){ return LEVEL_META[CURRENT_LEVEL].slug; }
 
 /* ---------------------------------------------------------------------
-   Multi-subject support (Codify Academy tracks)
+   Multi-subject support (Codify tracks)
    CURRENT_SUBJECT is fixed for the lifetime of a shell file (each subject
    is its own HTML file — python-academy.html, web-design-academy.html,
    r-academy.html, automl-academy.html, cybersecurity-academy.html,
@@ -1531,7 +1531,7 @@ function maybeDrawCertificate(){
   ctx.fillText(`${subjMeta.icon} ${subjMeta.academyName.toUpperCase()}`, 600, 140);
   ctx.font = '400 12px Segoe UI, sans-serif';
   ctx.fillStyle = '#6b6890';
-  ctx.fillText('A Codify Academy Track', 600, 160);
+  ctx.fillText('A Codify Track', 600, 160);
 
   ctx.font = '800 42px Segoe UI, sans-serif';
   ctx.fillStyle = '#211f3d';
