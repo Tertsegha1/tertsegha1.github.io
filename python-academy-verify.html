@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Verify Certificate — CodeCraft Academy</title>
+<title>Verify Certificate — Codify Academy</title>
 <script src="firebase-config-pyacademy.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -32,7 +32,7 @@ a.home-link:hover{text-decoration:underline;}
 <body>
 
 <div class="card">
-  <div class="logo">⚡ CodeCraft Academy</div>
+  <div class="logo">⚡ Codify Academy</div>
   <div id="loading" class="loading">Checking certificate…</div>
 
   <div id="valid-result" class="result valid">
@@ -51,10 +51,10 @@ a.home-link:hover{text-decoration:underline;}
   <div id="invalid-result" class="result invalid">
     <div class="icon">❌</div>
     <h1>Certificate Not Found</h1>
-    <p>We couldn't find a certificate matching this ID. It may have been mistyped, or this isn't a genuine CodeCraft Academy certificate.</p>
+    <p>We couldn't find a certificate matching this ID. It may have been mistyped, or this isn't a genuine Codify Academy certificate.</p>
   </div>
 
-  <a class="home-link" href="subject-select.html">⚡ Visit CodeCraft Academy →</a>
+  <a class="home-link" href="subject-select.html">⚡ Visit Codify Academy →</a>
 </div>
 
 <script>
@@ -71,7 +71,7 @@ a.home-link:hover{text-decoration:underline;}
   // PYAC-{levelShort}-{random} (3 parts); every other subject is
   // PYAC-{subjectShort}-{levelShort}-{random} (4 parts) — see getCertId()
   // in python-academy-app.js. Use that to look up the right Firebase subtree.
-  var SHORT_TO_SUBJECT = {WD:'wd', R:'r', ML:'ml'};
+  var SHORT_TO_SUBJECT = {WD:'wd', R:'r', ML:'ml', CY:'cy', DS:'ds'};
   function fbBaseForCertId(id){
     var parts = String(id||'').split('-');
     if(parts.length >= 4 && SHORT_TO_SUBJECT[parts[1]]) return '/pyacademy/' + SHORT_TO_SUBJECT[parts[1]];

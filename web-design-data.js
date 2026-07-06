@@ -2,7 +2,7 @@
    Web Design Academy — Phase 0 placeholder content
    One placeholder week, reused across all 3 levels (Beginner/Intermediate/
    Advanced) until each level's real curriculum is authored in its own
-   build phase (see the CodeCraft Academy multi-subject plan).
+   build phase (see the Codify Academy multi-subject plan).
    Grading uses dom/dom-count/dom-attr test types against a sandboxed
    iframe render of the student's HTML (see execIsolatedDom in app.js) —
    there is no console/stdout for this subject.

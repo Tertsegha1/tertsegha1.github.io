@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>CodeCraft Academy — Instructor Monitor</title>
+  <title>Codify Academy — Instructor Monitor</title>
   <script src="firebase-config-pyacademy.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
@@ -163,7 +163,7 @@
   <div id="hdr-left">
     <span class="logo">⚡</span>
     <div>
-      <div id="hdr-title">CODECRAFT ACADEMY — INSTRUCTOR MONITOR</div>
+      <div id="hdr-title">CODIFY ACADEMY — INSTRUCTOR MONITOR</div>
       <div id="hdr-sub">Python Academy · All levels · live class data</div>
     </div>
   </div>
@@ -191,6 +191,8 @@
   <button class="subject-tab-btn" data-subject="wd" onclick="switchProgressSubject('wd')">🎨 Web Design</button>
   <button class="subject-tab-btn" data-subject="r" onclick="switchProgressSubject('r')">📊 R</button>
   <button class="subject-tab-btn" data-subject="ml" onclick="switchProgressSubject('ml')">🤖 AutoML</button>
+  <button class="subject-tab-btn" data-subject="cy" onclick="switchProgressSubject('cy')">🛡️ Cybersecurity</button>
+  <button class="subject-tab-btn" data-subject="ds" onclick="switchProgressSubject('ds')">📈 Data Science</button>
 </div>
 
 <div id="config-error">
@@ -439,13 +441,14 @@ setInterval(async function(){
 <script>
 (function(){
   var KEYS=['week1','week2','week3','week4','mp1','week5','week6','week7','week8','week9','mp2','cert'];
-  var SUBJECTS=['py','wd','r','ml'];
-  // wd/r/ml ship with a Phase 0 placeholder chain (just week1 + cert) until
-  // each subject's real curriculum is authored — mirrors SUBJECT_META.chain
-  // in python-academy-app.js. null means "full 12-step chain" (Python).
-  var SUBJECT_CHAIN={py:null, wd:['week1','cert'], r:['week1','cert'], ml:['week1','cert']};
-  var SUBJECT_HREF={py:'python-academy.html', wd:'web-design-academy.html', r:'r-academy.html', ml:'automl-academy.html'};
-  var SUBJECT_NAME={py:'Python Academy', wd:'Web Design Academy', r:'R Academy', ml:'AutoML Academy'};
+  var SUBJECTS=['py','wd','r','ml','cy','ds'];
+  // wd/r/ml/cy/ds ship with a Phase 0 placeholder chain (just week1 + cert)
+  // until each subject's real curriculum is authored — mirrors
+  // SUBJECT_META.chain in python-academy-app.js. null means "full 12-step
+  // chain" (Python).
+  var SUBJECT_CHAIN={py:null, wd:['week1','cert'], r:['week1','cert'], ml:['week1','cert'], cy:['week1','cert'], ds:['week1','cert']};
+  var SUBJECT_HREF={py:'python-academy.html', wd:'web-design-academy.html', r:'r-academy.html', ml:'automl-academy.html', cy:'cybersecurity-academy.html', ds:'data-science-academy.html'};
+  var SUBJECT_NAME={py:'Python Academy', wd:'Web Design Academy', r:'R Academy', ml:'AutoML Academy', cy:'Cybersecurity Academy', ds:'Data Science Academy'};
   var LEVEL_TITLES={
     py:{
       b:{name:'Beginner', mp1:'Mini Project 1 — Crack the Locker Code', mp2:'Mini Project 2 — Escape the Computer Lab',
@@ -469,15 +472,25 @@ setInterval(async function(){
       b:{name:'Beginner', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Meet Your First Model']},
       i:{name:'Intermediate', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Meet Your First Model']},
       a:{name:'Advanced', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Meet Your First Model']}
+    },
+    cy:{
+      b:{name:'Beginner', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Why Passwords Matter']},
+      i:{name:'Intermediate', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Why Passwords Matter']},
+      a:{name:'Advanced', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Why Passwords Matter']}
+    },
+    ds:{
+      b:{name:'Beginner', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Meet Your Data']},
+      i:{name:'Intermediate', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Meet Your Data']},
+      a:{name:'Advanced', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Meet Your Data']}
     }
   };
   var progressLevel='b';
   var progressSubject='py';
-  var users={py:{}, wd:{}, r:{}, ml:{}};
-  var messages={py:{}, wd:{}, r:{}, ml:{}};
-  var feedback={py:{b:{},i:{},a:{}}, wd:{b:{},i:{},a:{}}, r:{b:{},i:{},a:{}}, ml:{b:{},i:{},a:{}}};
-  var passcodes={py:{}, wd:{}, r:{}, ml:{}};
-  var certificates={py:{}, wd:{}, r:{}, ml:{}};
+  var users={py:{}, wd:{}, r:{}, ml:{}, cy:{}, ds:{}};
+  var messages={py:{}, wd:{}, r:{}, ml:{}, cy:{}, ds:{}};
+  var feedback={py:{b:{},i:{},a:{}}, wd:{b:{},i:{},a:{}}, r:{b:{},i:{},a:{}}, ml:{b:{},i:{},a:{}}, cy:{b:{},i:{},a:{}}, ds:{b:{},i:{},a:{}}};
+  var passcodes={py:{}, wd:{}, r:{}, ml:{}, cy:{}, ds:{}};
+  var certificates={py:{}, wd:{}, r:{}, ml:{}, cy:{}, ds:{}};
   var flashSet={};
 
   function subjPrefixFor(subject){ return subject==='py' ? '' : subject+'_'; }

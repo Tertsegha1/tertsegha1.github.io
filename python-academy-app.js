@@ -59,11 +59,12 @@ function currentLevelShort(){ return LEVEL_META[CURRENT_LEVEL].short; }
 function currentLevelSlug(){ return LEVEL_META[CURRENT_LEVEL].slug; }
 
 /* ---------------------------------------------------------------------
-   Multi-subject support (CodeCraft Academy tracks)
+   Multi-subject support (Codify Academy tracks)
    CURRENT_SUBJECT is fixed for the lifetime of a shell file (each subject
    is its own HTML file — python-academy.html, web-design-academy.html,
-   r-academy.html, automl-academy.html — all sharing this one engine file),
-   set once near the top of that file's inline script, before initApp() runs.
+   r-academy.html, automl-academy.html, cybersecurity-academy.html,
+   data-science-academy.html — all sharing this one engine file), set once
+   near the top of that file's inline script, before initApp() runs.
    Unlike CURRENT_LEVEL it never changes mid-session.
 
    Python keeps its original unprefixed keys/paths for back-compat (existing
@@ -71,17 +72,19 @@ function currentLevelSlug(){ return LEVEL_META[CURRENT_LEVEL].slug; }
    and fbBase() both resolve to "no prefix" for 'py' and a real prefix for
    every other subject.
    --------------------------------------------------------------------- */
-const SUBJECTS = ['py','wd','r','ml'];
+const SUBJECTS = ['py','wd','r','ml','cy','ds'];
 const SUBJECT_META = {
   py: {name:'Python',     short:'PY', slug:'python',     icon:'🧑‍💻', runtime:'pyodide',    academyName:'Python Academy'},
-  // wd/r/ml ship with a short placeholder chain (Phase 0) — just enough to
-  // prove the full registration -> grading -> cert -> dashboard pipeline.
+  // wd/r/ml/cy/ds ship with a short placeholder chain (Phase 0) — just enough
+  // to prove the full registration -> grading -> cert -> dashboard pipeline.
   // Each subject's chain gets expanded to the full 12-step
   // week1..week9/mp1/mp2/cert shape (matching Python's) when its real
   // curriculum is authored in its own build phase.
-  wd: {name:'Web Design', short:'WD', slug:'web-design',  icon:'🎨', runtime:'iframe',      academyName:'Web Design Academy', chain:['week1','cert']},
-  r:  {name:'R',          short:'R',  slug:'r',           icon:'📊', runtime:'webr',        academyName:'R Academy',          chain:['week1','cert']},
-  ml: {name:'AutoML',     short:'ML', slug:'automl',      icon:'🤖', runtime:'pyodide-ml',  academyName:'AutoML Academy',     chain:['week1','cert']}
+  wd: {name:'Web Design',    short:'WD', slug:'web-design',    icon:'🎨', runtime:'iframe',      academyName:'Web Design Academy',    chain:['week1','cert']},
+  r:  {name:'R',             short:'R',  slug:'r',             icon:'📊', runtime:'webr',        academyName:'R Academy',              chain:['week1','cert']},
+  ml: {name:'AutoML',        short:'ML', slug:'automl',        icon:'🤖', runtime:'pyodide-ml',  academyName:'AutoML Academy',         chain:['week1','cert']},
+  cy: {name:'Cybersecurity', short:'CY', slug:'cybersecurity', icon:'🛡️', runtime:'pyodide',     academyName:'Cybersecurity Academy',  chain:['week1','cert']},
+  ds: {name:'Data Science',  short:'DS', slug:'data-science',  icon:'📈', runtime:'pyodide-ds',  academyName:'Data Science Academy',   chain:['week1','cert']}
 };
 let CURRENT_SUBJECT = 'py';
 
@@ -709,6 +712,21 @@ async function ensurePyodideML(){
   return py;
 }
 
+// Data Science also reuses the Pyodide/execIsolatedPy path, but only installs
+// pandas — skipping scikit-learn (which Data Science exercises don't need)
+// keeps its first-run load noticeably lighter than AutoML's.
+let _pyodideDSReady = false;
+async function ensurePyodideDS(){
+  const py = await ensurePyodide();
+  if(!_pyodideDSReady){
+    await py.loadPackage('micropip');
+    const micropip = py.pyimport('micropip');
+    await micropip.install(['pandas']);
+    _pyodideDSReady = true;
+  }
+  return py;
+}
+
 async function execIsolatedPy(code){
   const py = _pyodide; // already loaded by RUNTIMES[...].ensure() before this runs
   const ns = py.globals.get('dict')();
@@ -842,6 +860,7 @@ function gradeAllDom(code, tests){
 const RUNTIMES = {
   pyodide:      { ensure: ensurePyodide,   execIsolated: execIsolatedPy,  runAssert: pyRunAssert, cleanup: pyCleanup },
   'pyodide-ml': { ensure: ensurePyodideML, execIsolated: execIsolatedPy,  runAssert: pyRunAssert, cleanup: pyCleanup },
+  'pyodide-ds': { ensure: ensurePyodideDS, execIsolated: execIsolatedPy,  runAssert: pyRunAssert, cleanup: pyCleanup },
   webr:         { ensure: ensureWebR,      execIsolated: execIsolatedR,   runAssert: rRunAssert,  cleanup: null },
   iframe:       { ensure: ensureIframeRuntime, execIsolated: execIsolatedDom, gradeAll: gradeAllDom, cleanup: domCleanup }
 };
@@ -879,7 +898,7 @@ async function gradeCode(code, tests){
 }
 
 /* CodeMirror mounting */
-const SUBJECT_CM_MODE = {py:'python', ml:'python', r:'r', wd:'htmlmixed'};
+const SUBJECT_CM_MODE = {py:'python', ml:'python', ds:'python', cy:'python', r:'r', wd:'htmlmixed'};
 function mountEditorsIn(containerId){
   const container = document.getElementById(containerId);
   if(!container) return;
@@ -1512,7 +1531,7 @@ function maybeDrawCertificate(){
   ctx.fillText(`${subjMeta.icon} ${subjMeta.academyName.toUpperCase()}`, 600, 140);
   ctx.font = '400 12px Segoe UI, sans-serif';
   ctx.fillStyle = '#6b6890';
-  ctx.fillText('A CodeCraft Academy Track', 600, 160);
+  ctx.fillText('A Codify Academy Track', 600, 160);
 
   ctx.font = '800 42px Segoe UI, sans-serif';
   ctx.fillStyle = '#211f3d';
