@@ -193,6 +193,7 @@
   <button class="subject-tab-btn" data-subject="ml" onclick="switchProgressSubject('ml')">🤖 AutoML</button>
   <button class="subject-tab-btn" data-subject="cy" onclick="switchProgressSubject('cy')">🛡️ Cybersecurity</button>
   <button class="subject-tab-btn" data-subject="ds" onclick="switchProgressSubject('ds')">📈 Data Science</button>
+  <button class="subject-tab-btn" data-subject="mlr" onclick="switchProgressSubject('mlr')">🧠 Machine Learning</button>
 </div>
 
 <div id="config-error">
@@ -441,14 +442,14 @@ setInterval(async function(){
 <script>
 (function(){
   var KEYS=['week1','week2','week3','week4','mp1','week5','week6','week7','week8','week9','mp2','cert'];
-  var SUBJECTS=['py','wd','r','ml','cy','ds'];
-  // wd/r/ml/cy/ds ship with a Phase 0 placeholder chain (just week1 + cert)
-  // until each subject's real curriculum is authored — mirrors
+  var SUBJECTS=['py','wd','r','ml','cy','ds','mlr'];
+  // wd/r/ml/cy/ds/mlr ship with a Phase 0 placeholder chain (just week1 +
+  // cert) until each subject's real curriculum is authored — mirrors
   // SUBJECT_META.chain in python-academy-app.js. null means "full 12-step
   // chain" (Python).
-  var SUBJECT_CHAIN={py:null, wd:['week1','cert'], r:['week1','cert'], ml:['week1','cert'], cy:['week1','cert'], ds:['week1','cert']};
-  var SUBJECT_HREF={py:'python-academy.html', wd:'web-design-academy.html', r:'r-academy.html', ml:'automl-academy.html', cy:'cybersecurity-academy.html', ds:'data-science-academy.html'};
-  var SUBJECT_NAME={py:'Python Academy', wd:'Web Design Academy', r:'R Academy', ml:'AutoML Academy', cy:'Cybersecurity Academy', ds:'Data Science Academy'};
+  var SUBJECT_CHAIN={py:null, wd:['week1','cert'], r:['week1','cert'], ml:['week1','cert'], cy:['week1','cert'], ds:['week1','cert'], mlr:['week1','cert']};
+  var SUBJECT_HREF={py:'python-academy.html', wd:'web-design-academy.html', r:'r-academy.html', ml:'automl-academy.html', cy:'cybersecurity-academy.html', ds:'data-science-academy.html', mlr:'machine-learning-academy.html'};
+  var SUBJECT_NAME={py:'Python Academy', wd:'Web Design Academy', r:'R Academy', ml:'AutoML Academy', cy:'Cybersecurity Academy', ds:'Data Science Academy', mlr:'Machine Learning Academy'};
   var LEVEL_TITLES={
     py:{
       b:{name:'Beginner', mp1:'Mini Project 1 — Crack the Locker Code', mp2:'Mini Project 2 — Escape the Computer Lab',
@@ -482,15 +483,20 @@ setInterval(async function(){
       b:{name:'Beginner', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Meet Your Data']},
       i:{name:'Intermediate', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Meet Your Data']},
       a:{name:'Advanced', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Meet Your Data']}
+    },
+    mlr:{
+      b:{name:'Beginner', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['What Is a Model?']},
+      i:{name:'Intermediate', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['What Is a Model?']},
+      a:{name:'Advanced', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['What Is a Model?']}
     }
   };
   var progressLevel='b';
   var progressSubject='py';
-  var users={py:{}, wd:{}, r:{}, ml:{}, cy:{}, ds:{}};
-  var messages={py:{}, wd:{}, r:{}, ml:{}, cy:{}, ds:{}};
-  var feedback={py:{b:{},i:{},a:{}}, wd:{b:{},i:{},a:{}}, r:{b:{},i:{},a:{}}, ml:{b:{},i:{},a:{}}, cy:{b:{},i:{},a:{}}, ds:{b:{},i:{},a:{}}};
-  var passcodes={py:{}, wd:{}, r:{}, ml:{}, cy:{}, ds:{}};
-  var certificates={py:{}, wd:{}, r:{}, ml:{}, cy:{}, ds:{}};
+  var users={py:{}, wd:{}, r:{}, ml:{}, cy:{}, ds:{}, mlr:{}};
+  var messages={py:{}, wd:{}, r:{}, ml:{}, cy:{}, ds:{}, mlr:{}};
+  var feedback={py:{b:{},i:{},a:{}}, wd:{b:{},i:{},a:{}}, r:{b:{},i:{},a:{}}, ml:{b:{},i:{},a:{}}, cy:{b:{},i:{},a:{}}, ds:{b:{},i:{},a:{}}, mlr:{b:{},i:{},a:{}}};
+  var passcodes={py:{}, wd:{}, r:{}, ml:{}, cy:{}, ds:{}, mlr:{}};
+  var certificates={py:{}, wd:{}, r:{}, ml:{}, cy:{}, ds:{}, mlr:{}};
   var flashSet={};
 
   function subjPrefixFor(subject){ return subject==='py' ? '' : subject+'_'; }

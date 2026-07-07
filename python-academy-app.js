@@ -63,28 +63,33 @@ function currentLevelSlug(){ return LEVEL_META[CURRENT_LEVEL].slug; }
    CURRENT_SUBJECT is fixed for the lifetime of a shell file (each subject
    is its own HTML file — python-academy.html, web-design-academy.html,
    r-academy.html, automl-academy.html, cybersecurity-academy.html,
-   data-science-academy.html — all sharing this one engine file), set once
-   near the top of that file's inline script, before initApp() runs.
-   Unlike CURRENT_LEVEL it never changes mid-session.
+   data-science-academy.html, machine-learning-academy.html — all sharing
+   this one engine file), set once near the top of that file's inline
+   script, before initApp() runs. Unlike CURRENT_LEVEL it never changes
+   mid-session.
 
    Python keeps its original unprefixed keys/paths for back-compat (existing
    live students/passcodes/certificates need zero migration) — subjectKeyPrefix()
    and fbBase() both resolve to "no prefix" for 'py' and a real prefix for
    every other subject.
    --------------------------------------------------------------------- */
-const SUBJECTS = ['py','wd','r','ml','cy','ds'];
+const SUBJECTS = ['py','wd','r','ml','cy','ds','mlr'];
 const SUBJECT_META = {
   py: {name:'Python',     short:'PY', slug:'python',     icon:'🧑‍💻', runtime:'pyodide',    academyName:'Python Academy'},
-  // wd/r/ml/cy/ds ship with a short placeholder chain (Phase 0) — just enough
-  // to prove the full registration -> grading -> cert -> dashboard pipeline.
-  // Each subject's chain gets expanded to the full 12-step
+  // wd/r/ml/cy/ds/mlr ship with a short placeholder chain (Phase 0) — just
+  // enough to prove the full registration -> grading -> cert -> dashboard
+  // pipeline. Each subject's chain gets expanded to the full 12-step
   // week1..week9/mp1/mp2/cert shape (matching Python's) when its real
   // curriculum is authored in its own build phase.
-  wd: {name:'Web Design',    short:'WD', slug:'web-design',    icon:'🎨', runtime:'iframe',      academyName:'Web Design Academy',    chain:['week1','cert']},
-  r:  {name:'R',             short:'R',  slug:'r',             icon:'📊', runtime:'webr',        academyName:'R Academy',              chain:['week1','cert']},
-  ml: {name:'AutoML',        short:'ML', slug:'automl',        icon:'🤖', runtime:'pyodide-ml',  academyName:'AutoML Academy',         chain:['week1','cert']},
-  cy: {name:'Cybersecurity', short:'CY', slug:'cybersecurity', icon:'🛡️', runtime:'pyodide',     academyName:'Cybersecurity Academy',  chain:['week1','cert']},
-  ds: {name:'Data Science',  short:'DS', slug:'data-science',  icon:'📈', runtime:'pyodide-ds',  academyName:'Data Science Academy',   chain:['week1','cert']}
+  wd:  {name:'Web Design',       short:'WD',  slug:'web-design',       icon:'🎨', runtime:'iframe',      academyName:'Web Design Academy',       chain:['week1','cert']},
+  r:   {name:'R',                short:'R',   slug:'r',                icon:'📊', runtime:'webr',        academyName:'R Academy',                 chain:['week1','cert']},
+  ml:  {name:'AutoML',           short:'ML',  slug:'automl',           icon:'🤖', runtime:'pyodide-ml',  academyName:'AutoML Academy',            chain:['week1','cert']},
+  cy:  {name:'Cybersecurity',    short:'CY',  slug:'cybersecurity',    icon:'🛡️', runtime:'pyodide',     academyName:'Cybersecurity Academy',     chain:['week1','cert']},
+  ds:  {name:'Data Science',     short:'DS',  slug:'data-science',     icon:'📈', runtime:'pyodide-ds',  academyName:'Data Science Academy',      chain:['week1','cert']},
+  // Deliberately plain Pyodide, zero extra installs — this track teaches
+  // how a model works by building one in pure Python by hand, distinct
+  // from AutoML's "use scikit-learn and automate the search" approach.
+  mlr: {name:'Machine Learning', short:'MLR', slug:'machine-learning', icon:'🧠', runtime:'pyodide',     academyName:'Machine Learning Academy', chain:['week1','cert']}
 };
 let CURRENT_SUBJECT = 'py';
 
@@ -960,7 +965,7 @@ async function gradeCode(code, tests){
 }
 
 /* CodeMirror mounting */
-const SUBJECT_CM_MODE = {py:'python', ml:'python', ds:'python', cy:'python', r:'r', wd:'htmlmixed'};
+const SUBJECT_CM_MODE = {py:'python', ml:'python', ds:'python', cy:'python', mlr:'python', r:'r', wd:'htmlmixed'};
 function mountEditorsIn(containerId){
   const container = document.getElementById(containerId);
   if(!container) return;
