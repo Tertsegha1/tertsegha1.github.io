@@ -76,12 +76,13 @@ function currentLevelSlug(){ return LEVEL_META[CURRENT_LEVEL].slug; }
 const SUBJECTS = ['py','wd','r','ml','cy','ds','mlr'];
 const SUBJECT_META = {
   py: {name:'Python',     short:'PY', slug:'python',     icon:'🧑‍💻', runtime:'pyodide',    academyName:'Python Academy'},
-  // wd/r/ml/cy/ds/mlr ship with a short placeholder chain (Phase 0) — just
+  // r/ml/cy/ds/mlr still ship with a short placeholder chain (Phase 0) — just
   // enough to prove the full registration -> grading -> cert -> dashboard
   // pipeline. Each subject's chain gets expanded to the full 12-step
-  // week1..week9/mp1/mp2/cert shape (matching Python's) when its real
-  // curriculum is authored in its own build phase.
-  wd:  {name:'Web Design',       short:'WD',  slug:'web-design',       icon:'🎨', runtime:'iframe',      academyName:'Web Design Academy',       chain:['week1','cert']},
+  // week1..week9/mp1/mp2/cert shape (matching Python's, no chain key at all —
+  // see currentChain()'s || CHAIN fallback) once its real curriculum is
+  // authored in its own build phase. wd (Web Design) is the first to do this.
+  wd:  {name:'Web Design',       short:'WD',  slug:'web-design',       icon:'🎨', runtime:'iframe',      academyName:'Web Design Academy'},
   r:   {name:'R',                short:'R',   slug:'r',                icon:'📊', runtime:'webr',        academyName:'R Academy',                 chain:['week1','cert']},
   ml:  {name:'AutoML',           short:'ML',  slug:'automl',           icon:'🤖', runtime:'pyodide-ml',  academyName:'AutoML Academy',            chain:['week1','cert']},
   cy:  {name:'Cybersecurity',    short:'CY',  slug:'cybersecurity',    icon:'🛡️', runtime:'pyodide',     academyName:'Cybersecurity Academy',     chain:['week1','cert']},
@@ -888,12 +889,29 @@ function gradeAllDom(code, tests){
   function checkDom(t){ var el=document.querySelector(t.selector); if(!el) return false; return t.contains ? el.textContent.indexOf(t.contains)>=0 : true; }
   function checkDomCount(t){ return document.querySelectorAll(t.selector).length >= (t.min||1); }
   function checkDomAttr(t){ var el=document.querySelector(t.selector); if(!el) return false; var val=el.getAttribute(t.attr); return t.notEmpty ? !!(val && val.replace(/^\\s+|\\s+$/g,'')) : true; }
+  function checkComputedStyle(t){
+    var el=document.querySelector(t.selector);
+    if(!el) return false;
+    var val = getComputedStyle(el)[t.prop];
+    if(t.notEqual !== undefined) return val !== t.notEqual;
+    if(t.equals !== undefined) return val === t.equals;
+    if(t.atLeastPx !== undefined) return parseFloat(val) >= t.atLeastPx;
+    return false;
+  }
+  // Click every button once before grading, so exercises that add a click
+  // handler (Week 9 onward) can be checked against the RESULTING DOM state,
+  // not just the initial static markup. Harmless for every earlier
+  // exercise/subject too — sandbox="allow-scripts" with no allow-forms means
+  // a submit button's click can't actually navigate anywhere, it just runs
+  // any JS handler attached to it.
+  try{ document.querySelectorAll('button').forEach(function(b){ b.click(); }); }catch(e){}
   var tests = ${JSON.stringify(tests)};
   var results = tests.map(function(t){
     var pass = false, msg = '';
     if(t.type==='dom'){ pass = checkDom(t); msg = pass ? 'Passed' : 'Expected element/content was not found'; }
     else if(t.type==='dom-count'){ pass = checkDomCount(t); msg = pass ? 'Passed' : 'Not enough matching elements'; }
     else if(t.type==='dom-attr'){ pass = checkDomAttr(t); msg = pass ? 'Passed' : 'Attribute check failed'; }
+    else if(t.type==='computed-style'){ pass = checkComputedStyle(t); msg = pass ? 'Passed' : 'Style check failed — check the CSS property/value the exercise asked for'; }
     return {label:t.label, pass:pass, msg:msg};
   });
   parent.postMessage({pyacGrade:'${reqId}', results:results}, '*');
@@ -932,6 +950,22 @@ const RUNTIMES = {
   iframe:       { ensure: ensureIframeRuntime, execIsolated: execIsolatedDom, gradeAll: gradeAllDom, cleanup: domCleanup }
 };
 function currentRuntime(){ return RUNTIMES[SUBJECT_META[CURRENT_SUBJECT].runtime]; }
+
+// Visible live-preview panel (Web Design only, gated on runtime not subject so
+// it stays reusable for any future iframe-runtime track). Deliberately a
+// SEPARATE persistent iframe from the one execIsolatedDom()/gradeAllDom()
+// create-and-destroy per grading run — rendering and grading stay two
+// independent code paths, so a broken checker-script injection can never
+// affect what the student visually sees, and vice versa.
+function previewPaneHtml(editorId){
+  if(currentRuntime() !== RUNTIMES.iframe) return '';
+  return `<div class="live-preview-wrap"><div class="lp-label">LIVE PREVIEW</div><iframe class="live-preview-frame" id="preview-${editorId}" sandbox="allow-scripts"></iframe></div>`;
+}
+function renderLivePreview(code, editorId){
+  if(currentRuntime() !== RUNTIMES.iframe) return;
+  const frame = document.getElementById('preview-'+editorId);
+  if(frame) frame.srcdoc = code;
+}
 
 async function gradeCode(code, tests){
   const rt = currentRuntime();
@@ -986,11 +1020,9 @@ function getEditorValue(id){
 }
 
 // NOTE: this text-console output box is the right UX for text-REPL subjects
-// (Python/AutoML/R). Web Design's real sandbox page (built in its own Phase 1
-// content pass) needs a visible rendered-preview panel instead of a text
-// console — execIsolatedDom() below already renders into a real iframe, that
-// iframe just isn't shown on-page here yet; wiring a visible preview panel is
-// part of authoring Web Design's actual week/exercise page templates.
+// (Python/AutoML/R). Web Design additionally gets a visible live-preview
+// iframe (see previewPaneHtml()/renderLivePreview() above) rendered right
+// after the console, since seeing your actual page is the point of the track.
 async function runSandbox(editorId, outId, weekKey){
   const btn = document.getElementById('btn-'+editorId);
   if(btn) btn.disabled = true;
@@ -1000,10 +1032,12 @@ async function runSandbox(editorId, outId, weekKey){
   try{
     const rt = currentRuntime();
     await rt.ensure();
-    const {ns, output, error} = await rt.execIsolated(getEditorValue(editorId));
+    const code = getEditorValue(editorId);
+    const {ns, output, error} = await rt.execIsolated(code);
     const text = (output||'') + (error ? ('\n'+error) : '');
     outEl.textContent = text || '(no output)';
     if(rt.cleanup) rt.cleanup(ns);
+    renderLivePreview(code, editorId);
     if(weekKey){
       localStorage.setItem('pyac_'+subjectKeyPrefix()+CURRENT_LEVEL+'_sandbox_'+weekKey, 'done');
       syncProgress();
@@ -1022,9 +1056,10 @@ async function runAndGrade(editorId, outId, testsId, tests, onDone){
   const testsEl = document.getElementById(testsId);
   outEl.classList.remove('empty');
   outEl.textContent = `Loading ${currentSubjectMeta().name} engine...`;
+  const code = getEditorValue(editorId);
   let graded;
   try{
-    graded = await gradeCode(getEditorValue(editorId), tests);
+    graded = await gradeCode(code, tests);
   }catch(e){
     outEl.textContent = 'Could not run your code: ' + (e.message||e);
     if(btn) btn.disabled = false;
@@ -1034,6 +1069,7 @@ async function runAndGrade(editorId, outId, testsId, tests, onDone){
   testsEl.innerHTML = graded.results.map(r=>
     `<div class="test-row ${r.pass?'pass':'fail'}"><span class="ti">${r.pass?'✓':'✗'}</span> ${escapeHtml(r.label)}${r.pass?'':' — '+escapeHtml(r.msg||'')}</div>`
   ).join('');
+  renderLivePreview(code, editorId);
   const allPass = graded.results.length>0 && graded.results.every(r=>r.pass);
   if(btn) btn.disabled = false;
   onDone(allPass);
@@ -1182,7 +1218,8 @@ function editorBlock(editorId, starter, outId, runCallExpr, label){
         <button class="run-btn" id="btn-${editorId}" onclick="${runCallExpr}">▶ Run</button></div>
       <textarea class="code-editor" id="${editorId}">${escapeHtml(starter)}</textarea>
     </div>
-    <div class="console empty" id="${outId}"></div>`;
+    <div class="console empty" id="${outId}"></div>
+    ${previewPaneHtml(editorId)}`;
 }
 
 function renderExercise(wk, i, ex, displayNum){
@@ -1199,6 +1236,7 @@ function renderExercise(wk, i, ex, displayNum){
       <textarea class="code-editor" id="${editorId}">${escapeHtml(ex.starter)}</textarea>
     </div>
     <div class="console empty" id="${outId}"></div>
+    ${previewPaneHtml(editorId)}
     <div class="test-results" id="${testsId}"></div>
   </div>`;
 }
@@ -1379,6 +1417,7 @@ function renderMP1Page(){
         <textarea class="code-editor" id="${editorId}">${escapeHtml(st.starter)}</textarea>
       </div>
       <div class="console empty" id="${outId}"></div>
+      ${previewPaneHtml(editorId)}
       <div class="test-results" id="${testsId}"></div>
     </div>`;
   });
@@ -1409,6 +1448,7 @@ function renderMP2Page(){
         <textarea class="code-editor" id="${editorId}">${escapeHtml(d.starter)}</textarea>
       </div>
       <div class="console empty" id="${outId}"></div>
+      ${previewPaneHtml(editorId)}
       <div class="test-results" id="${testsId}"></div>
     </div>`;
   });
