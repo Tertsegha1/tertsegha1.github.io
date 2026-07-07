@@ -26,7 +26,28 @@ const R_WEEKS = [
 print(sum(attendance))
 print(mean(attendance))</pre>
     <p><code>stopifnot()</code> checks a condition and stops with an error if it's false — this is how your exercises
-    get checked, similar to <code>assert</code> in other languages.</p>`,
+    get checked, similar to <code>assert</code> in other languages.</p>
+    <h3>Let's break down the starter code, line by line</h3>
+    <pre class="code-block">print("Hello from R!")
+attendance &lt;- c(28, 30, 27, 29, 30)
+print(sum(attendance))</pre>
+    <ul>
+      <li><code>print("Hello from R!")</code> — <code>print()</code> is a <strong>function</strong>: it takes
+        something in brackets (here, the text <code>"Hello from R!"</code>) and displays it. You'll use
+        <code>print()</code> constantly to see what your code is doing.</li>
+      <li><code>attendance &lt;- c(28, 30, 27, 29, 30)</code> — the <code>&lt;-</code> arrow means "store this
+        value in a variable called <code>attendance</code>". Read it right-to-left: "take
+        <code>c(28, 30, 27, 29, 30)</code> and put it into <code>attendance</code>". R programmers use
+        <code>&lt;-</code> instead of <code>=</code> for this, though both work.</li>
+      <li><code>c(28, 30, 27, 29, 30)</code> is the <code>c()</code> function again, combining five separate
+        numbers into one vector — think of it as building a single list out of individual values.</li>
+      <li><code>print(sum(attendance))</code> — functions can go <strong>inside</strong> other functions. R works
+        from the inside out: first <code>sum(attendance)</code> adds up all the numbers in the vector (giving
+        144), then <code>print()</code> displays that result.</li>
+    </ul>
+    <p>The second example follows exactly the same shape, just with <code>mean()</code> (average) and
+    <code>max()</code> (largest value) instead of <code>sum()</code> — once you know the pattern
+    <code>print(some_function(my_vector))</code>, you can swap in almost any built-in function.</p>`,
   sandboxStarter:`print("Hello from R!")
 attendance <- c(28, 30, 27, 29, 30)
 print(sum(attendance))
@@ -38,28 +59,33 @@ print(max(scores))
   exercises:[
     {
       title:'Print a greeting',
-      desc:`Print the exact message "Hello, R Academy!" using print().`,
+      desc:`Print the exact message "Hello, R Academy!" using print(). Just like the concept box: print("your text here").`,
       starter:`# Print your greeting below
 `,
       tests:[{type:'output', contains:['Hello, R Academy!'], label:'Prints the greeting'}]
     },
     {
       title:'Build a vector',
-      desc:`Create a vector called attendance with the values 30, 28, 29, then print its sum. The sum should be 87.`,
+      desc:`Create a vector called attendance with the values 30, 28, 29, then print its sum. The sum should be 87.
+        Follow the two-step pattern from the concept box: first attendance &lt;- c(30, 28, 29) to store the vector,
+        then print(sum(attendance)) to add it up and display the result.`,
       starter:`# Create your vector and print its sum below
 `,
       tests:[{type:'output', contains:['87'], label:'Prints the correct sum (87)'}]
     },
     {
       title:'Find the average',
-      desc:`Create a vector called scores with the values 10, 20, 30 and print its mean using mean(). The mean should be 20.`,
+      desc:`Create a vector called scores with the values 10, 20, 30 and print its mean using mean(). The mean
+        should be 20. Same shape as before, just swap sum() for mean() — print(mean(scores)).`,
       starter:`# Create your vector and print its mean below
 `,
       tests:[{type:'output', contains:['20'], label:'Prints the correct mean (20)'}]
     },
     {
       title:'Check your work with stopifnot',
-      desc:`Create a variable x with the value 5, then use stopifnot() to confirm that x * 2 equals 10.`,
+      desc:`Create a variable x with the value 5, then use stopifnot() to confirm that x * 2 equals 10. Unlike
+        print(), stopifnot() doesn't display anything when the condition is true — it only speaks up (with an
+        error) when something is wrong, which is exactly why it's useful for checking your own work.`,
       starter:`# Create x and check it below
 x <- 5
 `,

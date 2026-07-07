@@ -27,7 +27,34 @@ const WD_WEEKS = [
     <p>The <code>alt</code> text on an image matters — it's what screen readers announce, and what shows if the
     image fails to load.</p>
     <p>You can style any element directly with the <code>style</code> attribute, e.g.
-    <code>&lt;h1 style="color:blue;"&gt;</code>.</p>`,
+    <code>&lt;h1 style="color:blue;"&gt;</code>.</p>
+    <h3>Let's break down the starter code, line by line</h3>
+    <pre class="code-block">&lt;h1&gt;Hello, Web Design Academy!&lt;/h1&gt;
+&lt;p&gt;This is my first page.&lt;/p&gt;</pre>
+    <ul>
+      <li><code>&lt;h1&gt;...&lt;/h1&gt;</code> — an <strong>opening tag</strong> (<code>&lt;h1&gt;</code>) and a
+        <strong>closing tag</strong> (<code>&lt;/h1&gt;</code>, with a forward slash) wrap around the text
+        "Hello, Web Design Academy!". Whatever sits between them is what becomes the heading.</li>
+      <li><code>&lt;p&gt;...&lt;/p&gt;</code> — the same opening/closing pattern, but for a paragraph tag instead.
+        Every HTML element you'll meet follows this same "wrap your content in matching tags" shape.</li>
+      <li>Notice the tags are <strong>stacked</strong>, not nested inside each other here — the heading finishes
+        (with <code>&lt;/h1&gt;</code>) before the paragraph begins. You'll nest tags inside one another later
+        (like putting a link inside a paragraph), but these two are simply next to each other.</li>
+    </ul>
+    <p>Now look at the second example, which adds a style and an image:</p>
+    <pre class="code-block">&lt;h1 style="color:#4338ca;"&gt;Welcome to my page&lt;/h1&gt;
+&lt;p&gt;I'm learning HTML and CSS.&lt;/p&gt;
+&lt;img src="https://via.placeholder.com/120" alt="A placeholder photo of me"&gt;</pre>
+    <ul>
+      <li><code>style="color:#4338ca;"</code> sits inside the opening <code>&lt;h1&gt;</code> tag itself — this is
+        called an <strong>attribute</strong>. Attributes always live inside the opening tag, in the form
+        <code>name="value"</code>, and they add extra information or behaviour to that one element.</li>
+      <li><code>&lt;img ...&gt;</code> has <strong>no separate closing tag</strong> — unlike
+        <code>&lt;h1&gt;</code>/<code>&lt;p&gt;</code>, an image tag is "self-contained" because it has no inner
+        text content to wrap; all of its information (which picture, and its alt text) lives in its attributes.</li>
+      <li><code>src="..."</code> tells the browser which image file to load; <code>alt="..."</code> is the
+        backup text description covered above.</li>
+    </ul>`,
   sandboxStarter:`<h1>Hello, Web Design Academy!</h1>
 <p>This is my first page.</p>
 `,
@@ -38,14 +65,16 @@ const WD_WEEKS = [
   exercises:[
     {
       title:'Add a heading',
-      desc:`Add an &lt;h1&gt; heading that contains the words "My Page".`,
+      desc:`Add an &lt;h1&gt; heading that contains the words "My Page". Remember the pattern from the concept box:
+        an opening tag &lt;h1&gt;, your text, then a matching closing tag &lt;/h1&gt; with a forward slash.`,
       starter:`<!-- Add your heading below -->
 `,
       tests:[{type:'dom', selector:'h1', contains:'My Page', label:'Page has an h1 containing "My Page"'}]
     },
     {
       title:'Add a paragraph',
-      desc:`Add at least one &lt;p&gt; paragraph introducing yourself.`,
+      desc:`Add at least one &lt;p&gt; paragraph introducing yourself. A paragraph works exactly like the heading
+        did — &lt;p&gt;your text here&lt;/p&gt; — just a different tag name for a different kind of content.`,
       starter:`<h1>My Page</h1>
 <!-- Add a paragraph below -->
 `,
@@ -53,7 +82,9 @@ const WD_WEEKS = [
     },
     {
       title:'Add an image with alt text',
-      desc:`Add an &lt;img&gt; tag with a non-empty alt attribute describing the image.`,
+      desc:`Add an &lt;img&gt; tag with a non-empty alt attribute describing the image. Unlike the tags so far,
+        &lt;img&gt; has no closing tag or inner text — everything about it (its picture and its alt description)
+        goes inside the opening tag as attributes, e.g. &lt;img src="..." alt="A description here"&gt;.`,
       starter:`<h1>My Page</h1>
 <p>About me.</p>
 <!-- Add your image below -->
@@ -62,7 +93,9 @@ const WD_WEEKS = [
     },
     {
       title:'Style your heading',
-      desc:`Give your &lt;h1&gt; an inline style attribute that changes its color.`,
+      desc:`Give your &lt;h1&gt; an inline style attribute that changes its color, e.g.
+        &lt;h1 style="color:red;"&gt;. The style attribute goes inside the opening tag, just like alt did on the
+        image — attributes are how you attach extra information to any tag, no matter which one.`,
       starter:`<h1>My Page</h1>
 <p>About me.</p>
 `,

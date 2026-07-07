@@ -264,6 +264,11 @@
       around. Generate one per student (e.g. one for each name on your register) and hand them out individually,
       or generate a batch in one go below. Revoke an unused code any time to stop it working.
     </p>
+    <div id="prereq-reminder" style="display:none;background:#2a2470;border:1px solid #3d3591;border-radius:10px;padding:12px 16px;margin-bottom:16px;max-width:680px;font-size:0.8rem;color:#c7c2f0;line-height:1.5;">
+      💡 This track assumes Python basics. Only issue passcodes here to students who've already completed at least
+      the Python Beginner level — there's no automatic check for this, it's on you to gate it at the point of
+      handing out a code.
+    </div>
     <button class="reset-btn" style="margin-bottom:16px;" onclick="generatePasscode()">➕ Generate Passcode(s)</button>
     <div class="empty" id="empty-passcodes">
       <div class="icon">🔐</div>
@@ -627,6 +632,8 @@ setInterval(async function(){
     progressSubject=subject;
     document.querySelectorAll('.subject-tab-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.subject===subject); });
     document.getElementById('hdr-sub').textContent=SUBJECT_NAME[subject]+' · All levels · live class data';
+    var reminder=document.getElementById('prereq-reminder');
+    if(reminder) reminder.style.display = (subject==='py') ? 'none' : 'block';
     buildProgressTableHeader(progressLevel);
     renderProgress();
     renderUsers();

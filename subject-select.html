@@ -31,6 +31,9 @@ body{font-family:'Segoe UI',system-ui,-apple-system,Roboto,sans-serif;background
 .subject-card .sc-title{font-weight:800;font-size:1.2rem;color:var(--brand);margin-bottom:6px;}
 .subject-card .sc-desc{font-size:0.9rem;color:var(--text-muted);margin-bottom:14px;min-height:58px;}
 .subject-card .sc-cta{font-size:0.82rem;font-weight:700;color:var(--brand);}
+.sc-badge{display:inline-block;font-size:0.68rem;font-weight:700;letter-spacing:0.3px;color:#92400e;background:#fef3c7;border:1px solid #fde68a;border-radius:20px;padding:3px 10px;margin-bottom:10px;}
+.prereq-note{background:linear-gradient(135deg,#eef2ff,#f5f3ff);border:1px solid #ddd6fe;border-radius:14px;padding:18px 22px;margin-bottom:26px;font-size:0.88rem;color:var(--text);}
+.prereq-note strong{color:var(--brand);}
 footer{text-align:center;margin-top:40px;font-size:0.8rem;color:var(--text-muted);}
 </style>
 </head>
@@ -40,44 +43,56 @@ footer{text-align:center;margin-top:40px;font-size:0.8rem;color:var(--text-muted
     <h1>⚡ Codify</h1>
     <div class="meta">Real coding and data skills for school students — running right in the browser, with a certificate at the end of every level. Pick a track to get started.</div>
   </div>
+  <div class="prereq-note">
+    💡 <strong>New to coding?</strong> Start with <strong>Python Academy</strong> first. Web Design, R, AutoML,
+    Cybersecurity, Data Science, and Machine Learning all move faster if you already know the basics of writing
+    and reading code — ask your instructor for a passcode to one of those tracks once you've completed at least
+    the Python Beginner level.
+  </div>
   <div class="subject-grid">
     <a class="subject-card" href="python-academy.html">
       <div class="sc-icon">🧑‍💻</div>
       <div class="sc-title">Python Academy</div>
-      <div class="sc-desc">Learn real Python — variables, loops, functions, and more — through hands-on scenarios and puzzle mini-projects.</div>
+      <div class="sc-desc">Learn real Python — variables, loops, functions, and more — through hands-on scenarios and puzzle mini-projects. Start here if you're new to coding.</div>
       <div class="sc-cta">Start Python Academy →</div>
     </a>
     <a class="subject-card" href="web-design-academy.html">
+      <div class="sc-badge">Recommended after Python Basics</div>
       <div class="sc-icon">🎨</div>
       <div class="sc-title">Web Design Academy</div>
       <div class="sc-desc">Build real web pages with HTML, CSS, and light JavaScript — from structure to styling to responsive layouts.</div>
       <div class="sc-cta">Start Web Design Academy →</div>
     </a>
     <a class="subject-card" href="r-academy.html">
+      <div class="sc-badge">Recommended after Python Basics</div>
       <div class="sc-icon">📊</div>
       <div class="sc-title">R Academy</div>
       <div class="sc-desc">Learn R for working with data — vectors, data frames, and visualizing real datasets, all in the browser.</div>
       <div class="sc-cta">Start R Academy →</div>
     </a>
     <a class="subject-card" href="automl-academy.html">
+      <div class="sc-badge">Recommended after Python Basics</div>
       <div class="sc-icon">🤖</div>
       <div class="sc-title">AutoML Academy</div>
       <div class="sc-desc">Explore machine learning with scikit-learn and pandas — train and evaluate simple models on real data.</div>
       <div class="sc-cta">Start AutoML Academy →</div>
     </a>
     <a class="subject-card" href="cybersecurity-academy.html">
+      <div class="sc-badge">Recommended after Python Basics</div>
       <div class="sc-icon">🛡️</div>
       <div class="sc-title">Cybersecurity Academy</div>
       <div class="sc-desc">Learn to think defensively — password strength, ciphers, hashing, and spotting insecure code, all through real Python.</div>
       <div class="sc-cta">Start Cybersecurity Academy →</div>
     </a>
     <a class="subject-card" href="data-science-academy.html">
+      <div class="sc-badge">Recommended after Python Basics</div>
       <div class="sc-icon">📈</div>
       <div class="sc-title">Data Science Academy</div>
       <div class="sc-desc">Explore real data with pandas — organise, summarise, and analyse datasets right in the browser.</div>
       <div class="sc-cta">Start Data Science Academy →</div>
     </a>
     <a class="subject-card" href="machine-learning-academy.html">
+      <div class="sc-badge">Recommended after Python Basics</div>
       <div class="sc-icon">🧠</div>
       <div class="sc-title">Machine Learning Academy</div>
       <div class="sc-desc">Learn how models really work — build one by hand in plain Python before AutoML automates the search.</div>

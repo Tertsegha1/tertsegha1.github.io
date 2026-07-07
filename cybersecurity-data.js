@@ -31,7 +31,27 @@ print(any(c.isdigit() for c in password))  # contains a digit?</pre>
     that can't be reversed back into the original text. Python's <code>hashlib</code> module can do this:</p>
     <pre class="code-block">import hashlib
 password = "letmein123"
-print(hashlib.sha256(password.encode()).hexdigest())</pre>`,
+print(hashlib.sha256(password.encode()).hexdigest())</pre>
+    <h3>Let's break down the strength check, line by line</h3>
+    <pre class="code-block">password = "sunshine7"
+print(len(password) >= 8)
+print(any(c.isdigit() for c in password))</pre>
+    <ul>
+      <li><code>password = "sunshine7"</code> — stores the text in a variable so we can check it more than once
+        without retyping it.</li>
+      <li><code>len(password) >= 8</code> — <code>len()</code> counts the characters in the password (9 here),
+        and <code>>= 8</code> checks whether that count is 8 or more. The whole expression evaluates to either
+        <code>True</code> or <code>False</code>, which is what gets printed.</li>
+      <li><code>any(c.isdigit() for c in password)</code> — this reads a new piece of syntax: it looks at
+        <code>password</code> one character (<code>c</code>) at a time, checks <code>c.isdigit()</code> (is this
+        one character a digit?) for each, and <code>any(...)</code> returns <code>True</code> the moment it finds
+        even a single digit. It's a compact way of asking "does at least one character pass this test?" without
+        writing a full loop yourself.</li>
+    </ul>
+    <p>The hashing example follows a similar shape: <code>password.encode()</code> turns the text into raw bytes
+    (hashing functions work on bytes, not directly on text), <code>hashlib.sha256(...)</code> runs the actual
+    hashing algorithm on those bytes, and <code>.hexdigest()</code> converts the scrambled result into a readable
+    string of hex characters — which is what actually gets stored/printed.</p>`,
   sandboxStarter:`password = "cat123"
 print(len(password))
 print(any(c.isdigit() for c in password))
@@ -48,7 +68,8 @@ print(has_digit("hello1"))
   exercises:[
     {
       title:'Is it long enough?',
-      desc:`Given password = "sunshine", print True if it has 8 or more characters, otherwise print False.`,
+      desc:`Given password = "sunshine", print True if it has 8 or more characters, otherwise print False. This is
+        the exact len(password) >= 8 check from the concept box, just printed directly.`,
       starter:`password = "sunshine"
 # Print True or False below
 `,
@@ -57,7 +78,8 @@ print(has_digit("hello1"))
     {
       title:'Does it have a number?',
       desc:`Write a function has_digit(text) that returns True if any character in text is a digit. Then print
-        has_digit("sunshine7").`,
+        has_digit("sunshine7"). You can use the any(c.isdigit() for c in text) pattern from the concept box inside
+        your function's return statement.`,
       starter:`def has_digit(text):
     # TODO: return True if any character in text is a digit
     pass
@@ -69,7 +91,8 @@ print(has_digit("sunshine7"))
     {
       title:'Build a strength checker',
       desc:`Write a function is_strong(pw) that returns True only if pw is 8+ characters AND contains at least
-        one digit.`,
+        one digit. Combine the two checks from the last two exercises with Python's and keyword — both conditions
+        have to be True for the whole expression to be True.`,
       starter:`def is_strong(pw):
     # TODO: return True only if pw is long enough AND has a digit
     pass
@@ -82,7 +105,9 @@ print(has_digit("sunshine7"))
     {
       title:'Never store the plain password',
       desc:`The line below prints the password in plain text — real systems never do this. Replace it so it
-        prints the SHA-256 hash of the password instead, using hashlib.`,
+        prints the SHA-256 hash of the password instead, using hashlib. Follow the three-step pattern from the
+        concept box: password.encode() to get bytes, hashlib.sha256(...) to hash those bytes, then .hexdigest()
+        to turn the result into a printable string — all chained together in one line.`,
       starter:`import hashlib
 password = "letmein123"
 # Replace the line below to print the SHA-256 hex digest instead

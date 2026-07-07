@@ -34,7 +34,35 @@ model = LogisticRegression()
 model.fit(hours, passed)
 print(model.predict([[6]]))</pre>
     <p>Every AutoML pipeline follows this same shape: gather data, train a model, then predict — the "auto" part
-    just means the tool tries this automatically across many model types and settings for you.</p>`,
+    just means the tool tries this automatically across many model types and settings for you.</p>
+    <h3>Let's break down the training code, line by line</h3>
+    <pre class="code-block">import pandas as pd
+from sklearn.linear_model import LogisticRegression
+
+hours = [[1],[2],[3],[7],[8],[9]]
+passed = [0,0,0,1,1,1]
+
+model = LogisticRegression()
+model.fit(hours, passed)
+print(model.predict([[6]]))</pre>
+    <ul>
+      <li><code>import pandas as pd</code> / <code>from sklearn.linear_model import LogisticRegression</code> —
+        these load in code that other people have already written, so you don't have to build a whole machine
+        learning algorithm from nothing. <code>as pd</code> just gives pandas a shorter nickname to type.</li>
+      <li><code>hours = [[1],[2],[3],[7],[8],[9]]</code> — six past students' revision hours. Notice each number is
+        wrapped in its own tiny list, like <code>[1]</code> not just <code>1</code> — scikit-learn always expects
+        a "list of lists" for its inputs, one inner list per student, even when there's only one piece of
+        information about them.</li>
+      <li><code>passed = [0,0,0,1,1,1]</code> — whether each of those six students passed (1) or didn't (0), in the
+        same order as <code>hours</code>. This is the "answer key" the model learns from.</li>
+      <li><code>model = LogisticRegression()</code> — creates a brand new, completely untrained model object and
+        stores it in the variable <code>model</code>. At this point it doesn't know anything yet.</li>
+      <li><code>model.fit(hours, passed)</code> — this is the actual "learning" step: it looks at the hours/passed
+        pairs and works out the relationship between them. After this line runs, <code>model</code> is trained.</li>
+      <li><code>print(model.predict([[6]]))</code> — asks the now-trained model to guess whether a new student,
+        who studied for 6 hours (a value it never saw during training), would pass. <code>[[6]]</code> uses the
+        same "list of lists" shape as the training data, just for one new student instead of six.</li>
+    </ul>`,
   sandboxStarter:`import pandas as pd
 from sklearn.linear_model import LogisticRegression
 print("scikit-learn and pandas are ready!")
@@ -49,7 +77,8 @@ print(model.predict([[6]]))
   exercises:[
     {
       title:'Check your tools are ready',
-      desc:`Import pandas as pd and print the exact message "Ready to build models!".`,
+      desc:`Import pandas as pd and print the exact message "Ready to build models!". This just confirms the
+        import line works — import pandas as pd, then a normal print() on its own line underneath.`,
       starter:`# Import pandas and print the message below
 `,
       tests:[{type:'output', contains:['Ready to build models!'], label:'Prints the ready message'}]
@@ -57,7 +86,8 @@ print(model.predict([[6]]))
     {
       title:'Build a small DataFrame',
       desc:`Create a pandas DataFrame called df with one column "hours" containing the values 1, 2, 3, and print
-        len(df). It should print 3.`,
+        len(df). It should print 3. Build it like this: df = pd.DataFrame({"hours": [1, 2, 3]}) — the curly
+        braces {} define a column name and its list of values together.`,
       starter:`import pandas as pd
 # Create df below
 `,
@@ -66,7 +96,9 @@ print(model.predict([[6]]))
     {
       title:'Train a model',
       desc:`Using the training data from the concept box (hours and passed), train a LogisticRegression model
-        called model, then print model.predict([[8]])[0].`,
+        called model, then print model.predict([[8]])[0]. Follow the exact same three steps from the concept
+        walkthrough: create the model with LogisticRegression(), train it with model.fit(hours, passed), then
+        predict. The [0] at the end of predict([[8]])[0] just unwraps the single answer from its list.`,
       starter:`from sklearn.linear_model import LogisticRegression
 hours = [[1],[2],[3],[7],[8],[9]]
 passed = [0,0,0,1,1,1]
@@ -77,7 +109,8 @@ passed = [0,0,0,1,1,1]
     {
       title:'Check the model exists',
       desc:`Keep the training code from before, then confirm your model object has a predict method by asserting
-        hasattr(model, "predict").`,
+        hasattr(model, "predict"). hasattr(object, "name") checks whether something has a particular method or
+        property available on it — a quick way to confirm your model was really built correctly.`,
       starter:`from sklearn.linear_model import LogisticRegression
 hours = [[1],[2],[3],[7],[8],[9]]
 passed = [0,0,0,1,1,1]

@@ -42,7 +42,25 @@ b = mean_y - m*mean_x
 print(m, b)</pre>
     <p>Once you have <code>m</code> and <code>b</code>, predicting is just plugging in a new x value:
     <code>predict(x) = m*x + b</code>. And you can check how good the model is by comparing its predictions to the
-    real values it was trained on — the average difference is called the <strong>error</strong>.</p>`,
+    real values it was trained on — the average difference is called the <strong>error</strong>.</p>
+    <h3>Let's break down the fitting code, line by line</h3>
+    <ul>
+      <li><code>mean_x = sum(hours) / len(hours)</code> — the plain "add them all up, divide by how many there
+        are" average, calculated separately for the hours and for the scores (<code>mean_y</code>).</li>
+      <li><code>numerator = sum((hours[i]-mean_x)*(scores[i]-mean_y) for i in range(len(hours)))</code> — this
+        looks dense, but it's doing one thing repeatedly: for each student (index <code>i</code>), it measures how
+        far their hours were from the average hours, how far their score was from the average score, and
+        multiplies those two differences together. <code>sum(... for i in range(...))</code> then adds up that
+        result across every student in one line — this pattern is called a <strong>generator expression</strong>,
+        and it's a compact way of writing "do this calculation for every item, then combine the results."</li>
+      <li><code>denominator</code> follows the exact same shape, just squaring each hours-difference instead of
+        multiplying two different differences together.</li>
+      <li><code>m = numerator / denominator</code> and <code>b = mean_y - m*mean_x</code> — these are just the
+        least-squares formulas from a moment ago, typed directly as Python. There's no loop needed here since
+        <code>numerator</code>/<code>denominator</code> already did the heavy lifting above.</li>
+    </ul>
+    <p>The second box shows the reverse step — once <code>predict(x, m, b)</code> exists, using the model is just
+    a normal function call, exactly like any other Python function you've written before.</p>`,
   sandboxStarter:`hours = [1, 2, 3, 4, 5]
 scores = [50, 55, 65, 70, 80]
 
@@ -68,7 +86,8 @@ print(predict(10, m, b))
     {
       title:'Find the average',
       desc:`Write a function mean(values) that returns the average of a list of numbers. Print mean([2, 4, 6, 8]) —
-        it should print 5.0.`,
+        it should print 5.0. An average is always sum(values) / len(values) — add everything up, divide by the
+        count.`,
       starter:`def mean(values):
     # TODO: return the average of values
     pass
@@ -80,7 +99,9 @@ print(mean([2, 4, 6, 8]))
     {
       title:'Fit the model',
       desc:`Using hours = [1, 2, 3, 4, 5] and scores = [50, 55, 65, 70, 80], calculate m and b using the
-        least-squares formulas from the concept box, then print them.`,
+        least-squares formulas from the concept box, then print them. Copy the four calculation steps
+        (mean_x, mean_y, numerator, denominator) exactly as shown, then m = numerator/denominator and
+        b = mean_y - m*mean_x.`,
       starter:`hours = [1, 2, 3, 4, 5]
 scores = [50, 55, 65, 70, 80]
 # Calculate m and b below, then print them
@@ -93,7 +114,8 @@ scores = [50, 55, 65, 70, 80]
     {
       title:'Make a prediction',
       desc:`Write a function predict(x, m, b) that returns m*x + b. Using m = 7.5 and b = 41.5, assert that
-        predict(6, m, b) equals 86.5.`,
+        predict(6, m, b) equals 86.5. This is the whole model in one line — multiply the input by the slope, then
+        add the intercept.`,
       starter:`def predict(x, m, b):
     # TODO: return the predicted value
     pass
@@ -106,7 +128,10 @@ b = 41.5
     {
       title:'Measure the error',
       desc:`Given actual = [50, 55, 65, 70, 80] and predicted = [predict(x, 7.5, 41.5) for x in [1,2,3,4,5]],
-        calculate the mean absolute error (the average of the absolute differences) and assert it is less than 5.`,
+        calculate the mean absolute error (the average of the absolute differences) and assert it is less than 5.
+        For each pair, subtract predicted from actual, take abs() of the difference (so a too-high guess and a
+        too-low guess both count as equally wrong), then average all those differences together — the same
+        mean() idea from the first exercise, just applied to errors instead of raw scores.`,
       starter:`def predict(x, m, b):
     return m*x + b
 
