@@ -448,11 +448,12 @@ setInterval(async function(){
 (function(){
   var KEYS=['week1','week2','week3','week4','mp1','week5','week6','week7','week8','week9','mp2','cert'];
   var SUBJECTS=['py','wd','r','ml','cy','ds','mlr'];
-  // r/ml/cy/ds/mlr still ship with a Phase 0 placeholder chain (just week1 +
+  // r/ml/cy/mlr still ship with a Phase 0 placeholder chain (just week1 +
   // cert) until each subject's real curriculum is authored — mirrors
   // SUBJECT_META.chain in python-academy-app.js. null means "full 12-step
-  // chain". wd (Web Design) is the first non-Python subject to reach this.
-  var SUBJECT_CHAIN={py:null, wd:null, r:['week1','cert'], ml:['week1','cert'], cy:['week1','cert'], ds:['week1','cert'], mlr:['week1','cert']};
+  // chain". wd (Web Design) and ds (Data Science) are the first two non-Python
+  // subjects to reach this.
+  var SUBJECT_CHAIN={py:null, wd:null, r:['week1','cert'], ml:['week1','cert'], cy:['week1','cert'], ds:null, mlr:['week1','cert']};
   var SUBJECT_HREF={py:'python-academy.html', wd:'web-design-academy.html', r:'r-academy.html', ml:'automl-academy.html', cy:'cybersecurity-academy.html', ds:'data-science-academy.html', mlr:'machine-learning-academy.html'};
   var SUBJECT_NAME={py:'Python Academy', wd:'Web Design Academy', r:'R Academy', ml:'AutoML Academy', cy:'Cybersecurity Academy', ds:'Data Science Academy', mlr:'Machine Learning Academy'};
   var LEVEL_TITLES={
@@ -488,9 +489,12 @@ setInterval(async function(){
       a:{name:'Advanced', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Why Passwords Matter']}
     },
     ds:{
-      b:{name:'Beginner', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Meet Your Data']},
-      i:{name:'Intermediate', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Meet Your Data']},
-      a:{name:'Advanced', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Meet Your Data']}
+      b:{name:'Beginner', mp1:'Mini Project 1 — Class Exam Report Card', mp2:'Mini Project 2 — Sports Day Results Analyzer',
+         weeks:['Meet Your Data','Picking Out What You Need','Combining Conditions','Sorting and Ranking','Grouping and Aggregating','Creating and Modifying Columns','Handling Missing Data','Merging Two Tables','Summarizing Like a Pro']},
+      i:{name:'Intermediate', mp1:'Mini Project 1 — Class Exam Report Card', mp2:'Mini Project 2 — Sports Day Results Analyzer',
+         weeks:['Meet Your Data','Picking Out What You Need','Combining Conditions','Sorting and Ranking','Grouping and Aggregating','Creating and Modifying Columns','Handling Missing Data','Merging Two Tables','Summarizing Like a Pro']},
+      a:{name:'Advanced', mp1:'Mini Project 1 — Class Exam Report Card', mp2:'Mini Project 2 — Sports Day Results Analyzer',
+         weeks:['Meet Your Data','Picking Out What You Need','Combining Conditions','Sorting and Ranking','Grouping and Aggregating','Creating and Modifying Columns','Handling Missing Data','Merging Two Tables','Summarizing Like a Pro']}
     },
     mlr:{
       b:{name:'Beginner', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['What Is a Model?']},
