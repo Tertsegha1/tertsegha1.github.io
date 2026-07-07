@@ -284,12 +284,14 @@ const DATA = {
       ]
     },
     {
-      "icon": "🧑‍💻",
-      "badge": "EdTech · Secondary Schools",
-      "title": "Python Academy — Code Your World",
-      "desc": "A self-paced, browser-based Python programming pathway for school students (Years 5–10, ages 10–16), built from scratch as an independent project. Students create their own password-protected account (securely hashed, never stored or viewable in plaintext) that restores their exact progress on any device. Three certificate-gated levels — Beginner, Intermediate, Advanced — each unlocked only after finishing the level before it. The Beginner level is fully live: 9 weeks of real-world, age-appropriate mini apps (a school announcement board, digital ID cards, a trip-cost calculator, a theme-park ride checker, a times-table trainer, a class leaderboard, a spy-club cipher, a board-game toolkit, a contact book), each week split into 3 short 45–60 minute sessions. Every week ends with real Python — executed live in the browser via Pyodide, not simulated — auto-graded practice exercises and a quiz. Two puzzle-style mini-projects (\"Crack the Locker Code\" mid-level, \"Escape the Computer Lab\" capstone) bookend the level, and finishing both — plus a short feedback survey — unlocks a downloadable certificate and the next level. New registrations require a passcode the instructor generates and can revoke at any time, enforced server-side in the database rules, not just in the UI. Students can message the instructor directly from a Contact/Help page, including a no-login-needed path for forgotten passwords. A live instructor dashboard shows whole-class progress, previews any week's content unlocked exactly as students see it, manages student accounts, passcodes and password resets, triages incoming messages, and surfaces feedback analytics — all in real time via Firebase.",
+      "icon": "⚡",
+      "badge": "EdTech · Secondary Schools · 6 Tracks",
+      "title": "Codify — Code, Data & Security Skills for Schools",
+      "desc": "A self-paced, browser-based learning platform for school students (Years 5–10, ages 10–16), built from scratch as an independent project — scaled from a single Python course into six subject tracks: Python, Web Design, R, AutoML, Cybersecurity, and Data Science. Students create their own password-protected account (securely hashed, never stored or viewable in plaintext) that restores their exact progress on any device, with three certificate-gated levels — Beginner, Intermediate, Advanced — per track, each unlocked only after finishing the one before it. The Python track is fully live end-to-end: 9 weeks per level of real-world, age-appropriate mini apps, each week split into 3 short 45–60 minute sessions, ending in real Python executed live in the browser via Pyodide (not simulated), auto-graded exercises, a quiz, and — twice per level — a puzzle-style mini-project. Finishing both mini-projects plus a short feedback survey unlocks a downloadable, QR-verifiable certificate and the next level. The five newer tracks are live with their first foundational week each and more being added over time: Web Design grades real rendered HTML/CSS in a sandboxed browser preview, R runs entirely in-browser via WebR, AutoML and Data Science both use Pyodide with scikit-learn/pandas, and Cybersecurity teaches defensive coding — password strength, hashing, and spotting insecure code. New registrations require a passcode the instructor generates per track and can revoke at any time, enforced server-side in the database rules, not just in the UI. Students can message the instructor directly, including a no-login-needed path for forgotten passwords. A live instructor dashboard — with a subject selector across all six tracks — shows whole-class progress, previews any week's content unlocked exactly as students see it, manages accounts, passcodes and password resets, triages incoming messages, and surfaces feedback analytics, all in real time via Firebase.",
       "tech": [
         "Python (Pyodide)",
+        "WebR",
+        "scikit-learn / pandas",
         "Vanilla JS",
         "CodeMirror",
         "Firebase Realtime DB",
@@ -297,7 +299,8 @@ const DATA = {
         "GitHub Pages"
       ],
       "links": [
-        { "label": "🧑‍💻 Launch Python Academy", "url": "python-academy.html" },
+        { "label": "⚡ Launch Codify", "url": "subject-select.html" },
+        { "label": "🧑‍💻 Python Track", "url": "python-academy.html" },
         { "label": "📊 Instructor Dashboard", "url": "python-academy-instructor.html" }
       ]
     },
