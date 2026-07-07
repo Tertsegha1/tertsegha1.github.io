@@ -788,7 +788,7 @@ body.instructor-mode .cohort-section { display: block; }
 
     <div class="welcome-footer" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
       <span>Created and delivered by Dr. Tertsegha Joseph Anande &nbsp;|&nbsp; A UK Trade &amp; Infrastructure Enterprise Limited (AUKTIE)</span>
-      <span id="admin-access-toggle" onclick="showLoginScreen()" style="font-size:0.75rem;color:#94a3b8;cursor:pointer;user-select:none;text-decoration:underline;text-underline-offset:2px;" title="Instructor access">🔐 Instructor Access</span>
+      <span id="admin-access-toggle" onclick="showInstructorLogin()" style="font-size:0.75rem;color:#94a3b8;cursor:pointer;user-select:none;text-decoration:underline;text-underline-offset:2px;" title="Instructor access">🔐 Instructor Access</span>
     </div>
   </div>
 
@@ -796,9 +796,10 @@ body.instructor-mode .cohort-section { display: block; }
   <div id="screen-login" class="login-card" style="display:none;">
     <button class="back-btn" onclick="showWelcomeScreen()">← Back</button>
     <div class="login-logo">AUKTIE · NASSCO &nbsp;|&nbsp; PostgreSQL Training</div>
-    <h2 style="margin:6px 0 4px;font-size:1.2rem;color:#111;">Select your name to sign in</h2>
-    <p style="color:#888;font-size:0.82rem;margin-bottom:18px;">Your participant code is pre-assigned. Click your name to access the platform.</p>
+    <h2 id="login-heading" style="margin:6px 0 4px;font-size:1.2rem;color:#111;">Select your name to sign in</h2>
+    <p id="login-subheading" style="color:#888;font-size:0.82rem;margin-bottom:18px;">Your participant code is pre-assigned. Click your name to access the platform.</p>
 
+    <div id="participant-section">
     <div class="login-section-label">Participants</div>
     <div class="participant-grid name-grid">
       <button class="p-btn" onclick="loginAs('P-01')"><span class="p-name">Dr. Olotu Joan Oluwafunmilola</span><span class="p-code">P-01</span></button>
@@ -818,6 +819,8 @@ body.instructor-mode .cohort-section { display: block; }
       <button class="p-btn spare-btn" onclick="loginAs('P-15')"><span class="p-name" style="color:#bbb;font-style:italic;">Spare Slot</span><span class="p-code">P-15</span></button>
       <button class="p-btn spare-btn" onclick="loginAs('P-16')"><span class="p-name" style="color:#bbb;font-style:italic;">Spare Slot</span><span class="p-code">P-16</span></button>
     </div>
+
+    </div><!-- end participant-section -->
 
     <div class="login-section-label" style="margin-top:22px;">Facilitator</div>
     <button class="inst-btn" onclick="toggleInstPin()">🔐 Instructor / Facilitator Login</button>
@@ -16301,6 +16304,22 @@ function participantByCode(code) {
 function showLoginScreen() {
   document.getElementById('screen-welcome').style.display = 'none';
   document.getElementById('screen-login').style.display = '';
+}
+function showInstructorLogin() {
+  document.getElementById('screen-welcome').style.display = 'none';
+  var loginScreen = document.getElementById('screen-login');
+  loginScreen.style.display = '';
+  // Hide participant section — instructor-only access
+  var ps = document.getElementById('participant-section');
+  if (ps) ps.style.display = 'none';
+  var h = document.getElementById('login-heading');
+  if (h) h.textContent = 'Instructor / Facilitator Login';
+  var sub = document.getElementById('login-subheading');
+  if (sub) sub.style.display = 'none';
+  // Auto-expand the PIN input
+  var pinRow = document.getElementById('inst-pin-row');
+  if (pinRow) pinRow.style.display = 'flex';
+  setTimeout(function(){ var p = document.getElementById('inst-pin'); if(p) p.focus(); }, 50);
 }
 function showWelcomeScreen() {
   document.getElementById('screen-login').style.display = 'none';
