@@ -778,14 +778,17 @@ body.instructor-mode .cohort-section { display: block; }
       <div class="wlb-hint">Bookmark this address on your laptop for easy daily access.</div>
     </div>
 
-    <div class="welcome-actions">
-      <button class="welcome-enter-btn" onclick="showLoginScreen()">
-        Select Your Name to Sign In &nbsp;→
-      </button>
+    <div style="background:#fef9ec;border:1.5px solid #f59e0b;border-radius:10px;padding:18px 22px;margin:18px 0 8px;text-align:center;">
+      <div style="font-size:1.05rem;font-weight:700;color:#92400e;margin-bottom:6px;">⚠️ Training Programme Completed</div>
+      <div style="font-size:0.88rem;color:#78350f;line-height:1.6;">
+        This platform is now closed. The PostgreSQL Database Fundamentals with Performance &amp; Tuning training concluded on <strong>3 July 2026</strong>.<br>
+        Participants may download their certificates from the link provided by your facilitator.
+      </div>
     </div>
 
-    <div class="welcome-footer">
-      Created and delivered by Dr. Tertsegha Joseph Anande &nbsp;|&nbsp; A UK Trade &amp; Infrastructure Enterprise Limited (AUKTIE)
+    <div class="welcome-footer" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+      <span>Created and delivered by Dr. Tertsegha Joseph Anande &nbsp;|&nbsp; A UK Trade &amp; Infrastructure Enterprise Limited (AUKTIE)</span>
+      <span id="admin-access-toggle" onclick="showLoginScreen()" style="font-size:0.7rem;color:#ccc;cursor:pointer;user-select:none;" title="Admin access">Admin</span>
     </div>
   </div>
 
