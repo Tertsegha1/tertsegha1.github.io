@@ -643,7 +643,38 @@ setInterval(async function(){
     if(!chain || chain.indexOf('mp2')>=0) ths.push('<th title="'+esc(titles.mp2)+'">MP2</th>');
     ths.push('<th title="Certificate awarded">🎓</th>');
     ths.push('<th>Score</th>');
+    ths.push('<th title="Length of the most recent login session">Last Session</th>');
+    ths.push('<th title="Total time logged in, summed across every session">Total Time</th>');
     document.getElementById('progress-thead').innerHTML='<tr>'+ths.join('')+'</tr>';
+  }
+
+  /* ── Session-time helpers ──
+     Reads the sessions{} object already nested under each user's Firebase
+     record (see startSessionTracking() in python-academy-app.js) — no
+     separate fetch needed, fullPoll()'s existing /users.json pull already
+     includes it. A session's duration is lastActiveAt - loginAt; the
+     heartbeat keeps lastActiveAt current while a tab is genuinely open, so
+     an in-progress session's duration grows naturally each poll too. */
+  function sessionStats(p){
+    var sessions=(p&&p.sessions)||{};
+    var keys=Object.keys(sessions);
+    var totalMs=0, lastMs=0, lastLoginMs=0;
+    keys.forEach(function(k){
+      var s=sessions[k];
+      if(!s || !s.loginAt || !s.lastActiveAt) return;
+      var loginMs=new Date(s.loginAt).getTime();
+      var dur=new Date(s.lastActiveAt).getTime() - loginMs;
+      if(dur>0) totalMs+=dur;
+      if(loginMs>lastLoginMs){ lastLoginMs=loginMs; lastMs=Math.max(dur,0); }
+    });
+    return {lastMin:Math.round(lastMs/60000), totalMin:Math.round(totalMs/60000)};
+  }
+
+  function formatDuration(mins){
+    if(!mins || mins<=0) return '—';
+    if(mins<60) return mins+'m';
+    var h=Math.floor(mins/60), m=mins%60;
+    return h+'h'+(m ? ' '+m+'m' : '');
   }
 
   function renderProgress(){
@@ -686,6 +717,7 @@ setInterval(async function(){
       var scoreClass = s===KEYS.length ? 'score-full' : s>=8 ? 'score-hi' : s>=4 ? 'score-mid' : s>0 ? 'score-lo' : 'score-0';
       var meta=[p.yearGroup?('Year '+p.yearGroup):'', p.classCode||''].filter(Boolean).join(' · ');
       var ts=p.updated?relTime(p.updated):'—';
+      var sess=sessionStats(p);
 
       return '<tr'+(isNew?' class="p-row-new"':'')+'>'+
         '<td>'+
@@ -695,6 +727,8 @@ setInterval(async function(){
         '</td>'+
         dotCells+
         '<td><span class="score '+scoreClass+'">'+s+'/'+KEYS.length+'</span></td>'+
+        '<td>'+formatDuration(sess.lastMin)+'</td>'+
+        '<td>'+formatDuration(sess.totalMin)+'</td>'+
       '</tr>';
     });
     tbody.innerHTML=rows.join('');

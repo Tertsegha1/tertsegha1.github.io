@@ -258,6 +258,7 @@ function loadRegistration(){
   if(username){
     setAuthOverlayVisible(false);
     document.getElementById('student-chip-name').textContent = localStorage.getItem(sk('name')) || username;
+    startSessionTracking();
   } else {
     // The overlay is already visible by default (see its CSS), but the page
     // hasn't been told to lock background scroll yet until this runs.
@@ -465,6 +466,67 @@ function syncProgress(){
   fetch(fbUrl(fbBase()+'/users/'+encodeURIComponent(username)+'.json'), {
     method:'PATCH', body: JSON.stringify(updates)
   }).catch(()=>{});
+}
+
+/* ---------------------------------------------------------------------
+   Session-time tracking
+   Logs how long each real (non-guest) login lasts, so the instructor
+   dashboard can show "last session" / "total time" per student. A new
+   session record starts once per real page load while logged in
+   (covers both "reopened the page while already logged in" and "just
+   logged in" — both paths call loadRegistration() via initApp()), then
+   heartbeats lastActiveAt every 60s via a plain PUT (small fixed-size
+   record, overwritten in place — this does not grow storage per tick).
+   Students never authenticate via Firebase Auth here, so — same
+   accepted tradeoff as every other student-writable path in this app —
+   these writes aren't instructor-gated; they ride on the existing
+   users/$username write rule, which already cascades down to any
+   nested child path once the account itself exists.
+
+   Most students close the tab rather than clicking "Log out", so a
+   normal fetch() on unload is unreliable (browsers frequently cancel
+   in-flight requests during navigation/close). navigator.sendBeacon()
+   is built for exactly this, but it can only POST — Firebase's REST API
+   documents a "?X-HTTP-Method-Override=PUT" query param specifically
+   for clients that can only send POST, which is what makes a reliable
+   final write possible here.
+   --------------------------------------------------------------------- */
+let _sessionId = null;
+let _sessionLoginAt = null;
+let _sessionHeartbeatTimer = null;
+
+function sessionUrl(username){
+  return fbUrl(fbBase()+'/users/'+encodeURIComponent(username)+'/sessions/'+_sessionId+'.json');
+}
+
+function startSessionTracking(){
+  if(_sessionId) return; // already tracking this page load
+  if(!fbOk()) return;
+  if(localStorage.getItem(sk('is_guest')) === 'true') return; // never log the shared guest account's sessions
+  const username = localStorage.getItem(sk('username'));
+  if(!username) return;
+
+  _sessionId = 's'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+  _sessionLoginAt = new Date().toISOString();
+  writeSessionHeartbeat(username);
+  _sessionHeartbeatTimer = setInterval(()=>writeSessionHeartbeat(username), 60000);
+
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.visibilityState === 'hidden') sendSessionBeacon(username);
+  });
+  window.addEventListener('pagehide', ()=>sendSessionBeacon(username));
+}
+
+function writeSessionHeartbeat(username){
+  const record = {loginAt: _sessionLoginAt, lastActiveAt: new Date().toISOString()};
+  fetch(sessionUrl(username), {method:'PUT', body: JSON.stringify(record)}).catch(()=>{});
+}
+
+function sendSessionBeacon(username){
+  if(!_sessionId || !navigator.sendBeacon) return;
+  const record = {loginAt: _sessionLoginAt, lastActiveAt: new Date().toISOString()};
+  const url = sessionUrl(username) + '?X-HTTP-Method-Override=PUT';
+  try{ navigator.sendBeacon(url, new Blob([JSON.stringify(record)], {type:'application/json'})); }catch(e){}
 }
 
 /* ---------------------------------------------------------------------
