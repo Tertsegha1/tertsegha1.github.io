@@ -42,6 +42,12 @@ print("Today's lunch: Pizza Friday 🍕")
 print("Next assembly: Friday period 1")
 print("Well done Year 8 for 100% attendance this week! 🏆")
 `,
+  sandboxStarter3:`# The office wants a countdown-style set of announcements for Sports Day
+print("5 days until Sports Day!")
+print("Don't forget to bring your PE kit and a water bottle.")
+# Mixing quote styles is fine, as long as each string's quotes match
+print('See the noticeboard for your house colour.')
+`,
   exercises:[
     {
       title:'Fix the broken sign',
@@ -88,8 +94,55 @@ print("Please be quiet")`,
         {type:'output', contains:['Welcome to the library'], label:'Prints the welcome message'},
         {type:'output', contains:['Please be quiet'], label:'Prints the quiet reminder'}
       ]
+    },
+    {
+      title:'Print the canteen menu',
+      desc:`Write three separate print() lines advertising today's canteen menu: one mentioning "Pizza", one
+        mentioning "Salad", and one mentioning "Juice". Add a comment above the first line explaining what the
+        block of code does.`,
+      starter:`# TODO: print three menu lines - one mentioning "Pizza", one "Salad", one "Juice"
+
+`,
+      tests:[
+        {type:'output', contains:['Pizza'], label:'Output mentions "Pizza"'},
+        {type:'output', contains:['Salad'], label:'Output mentions "Salad"'},
+        {type:'output', contains:['Juice'], label:'Output mentions "Juice"'}
+      ]
+    },
+    {
+      title:'Fix the sports hall sign',
+      desc:`The sports hall's booking sign has THREE separate mistakes stopping it from running: a missing closing
+        quote, mismatched quote marks, and a missing closing quote again. Fix all three lines so the sign runs with
+        no errors and shows all three messages.`,
+      starter:`print("Sports hall booked 3-4pm)
+print('Badminton club starts at 4pm")
+print("Please wear indoor trainers)`,
+      tests:[
+        {type:'output', contains:['Sports hall booked 3-4pm'], label:'Prints the booking message'},
+        {type:'output', contains:['Badminton club starts at 4pm'], label:'Prints the badminton message'},
+        {type:'output', contains:['Please wear indoor trainers'], label:'Prints the trainers reminder'}
+      ]
     }
   ],
+  stretchChallenge:{
+    title:'Print a boxed announcement',
+    desc:`Finished early? Try printing a 3-line "boxed" announcement using only print() — a line of asterisks, a
+      message line that includes the words "Sports Day", then another line of asterisks, like:
+      <pre class="code-block">***********************
+* Sports Day is here! *
+***********************</pre>
+      The border doesn't need to line up perfectly — just three print() lines, with asterisks on the first and
+      last, and "Sports Day" somewhere in the middle line.`,
+    starter:`# Print a 3-line boxed announcement below
+# Line 1: a row of asterisks
+# Line 2: a message that includes "Sports Day"
+# Line 3: a row of asterisks
+`,
+    tests:[
+      {type:'output', contains:['***'], label:'Uses a row of asterisks for the border'},
+      {type:'output', contains:['Sports Day'], label:'Message line mentions Sports Day'}
+    ]
+  },
   quiz:[
     {q:'Which symbol tells Python that the rest of a line is a comment (and should be ignored)?',
      options:['//','#','--','<!--'], correct:1,

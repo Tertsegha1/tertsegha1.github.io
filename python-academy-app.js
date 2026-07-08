@@ -1082,7 +1082,7 @@ async function checkExercise(weekKey, exIdx, editorId, outId, testsId){
   await runAndGrade(editorId, outId, testsId, ex.tests, (allPass)=>{
     localStorage.setItem(`pyac_${subjectKeyPrefix()}${CURRENT_LEVEL}_ex_${weekKey}_${exIdx}`, allPass?'pass':'fail');
     syncProgress();
-    refreshDayCompleteState(weekKey, exIdx < 2 ? 2 : 3);
+    refreshDayCompleteState(weekKey, (exIdx===0||exIdx===1||exIdx===4) ? 2 : 3);
   });
 }
 
@@ -1242,6 +1242,44 @@ function renderExercise(wk, i, ex, displayNum){
   </div>`;
 }
 
+// Optional, ungraded-toward-progression bonus exercise for early finishers.
+// Deliberately NOT rendered via renderExercise()/checkExercise() — those are
+// wired to day-routing/gating side effects (refreshDayCompleteState) that the
+// stretch challenge must never trigger. Writes to its own localStorage key
+// that refreshDayCompleteState never reads, so it's non-blocking by
+// construction rather than by a special-cased flag.
+function stretchChallengeHtml(wk, sc){
+  const lvl = CURRENT_LEVEL;
+  const editorId = `cm-${lvl}_${wk}-stretch`;
+  const outId = `out-${lvl}_${wk}-stretch`;
+  const testsId = `tests-${lvl}_${wk}-stretch`;
+  return `<div class="card stretch-card">
+    <h2>⭐ Stretch Challenge <span class="stretch-badge">Optional</span></h2>
+    <p class="stretch-intro">Finished early? This one's for the curious — it's not required and won't block your week.</p>
+    <div class="exercise stretch-exercise">
+      <div class="ex-title">${escapeHtml(sc.title)}</div>
+      <p>${sc.desc}</p>
+      <div class="editor-wrap">
+        <div class="editor-toolbar"><span class="et-label">STRETCH CHALLENGE</span>
+          <button class="run-btn" id="btn-${editorId}" onclick="checkStretchChallenge('${wk}','${editorId}','${outId}','${testsId}')">▶ Run &amp; Check</button></div>
+        <textarea class="code-editor" id="${editorId}">${escapeHtml(sc.starter)}</textarea>
+      </div>
+      <div class="console empty" id="${outId}"></div>
+      ${previewPaneHtml(editorId)}
+      <div class="test-results" id="${testsId}"></div>
+    </div>
+  </div>`;
+}
+
+async function checkStretchChallenge(weekKey, editorId, outId, testsId){
+  const week = currentWeeks().find(w=>w.key===weekKey);
+  const sc = week.stretchChallenge;
+  await runAndGrade(editorId, outId, testsId, sc.tests, (allPass)=>{
+    localStorage.setItem(`pyac_${subjectKeyPrefix()}${CURRENT_LEVEL}_stretch_${weekKey}`, allPass?'pass':'fail');
+    syncProgress();
+  });
+}
+
 function renderWeekPage(week){
   const wk = week.key;
   const lvl = CURRENT_LEVEL;
@@ -1279,6 +1317,12 @@ function dayHtml(week, d){
         <p>Here's the same idea from a slightly different angle. Run it, then try changing a value or two.</p>
         ${editorBlock(`cm-${lvl}_${wk}-sandbox2`, week.sandboxStarter2, `out-${lvl}_${wk}-sandbox2`, `runSandbox('cm-${lvl}_${wk}-sandbox2','out-${lvl}_${wk}-sandbox2','${wk}')`, 'SANDBOX')}
       </div>
+      ${week.sandboxStarter3 ? `
+      <div class="card">
+        <h2>🔎 One more angle</h2>
+        <p>A third look at today's idea. Run it, then tweak it to see what changes.</p>
+        ${editorBlock(`cm-${lvl}_${wk}-sandbox3`, week.sandboxStarter3, `out-${lvl}_${wk}-sandbox3`, `runSandbox('cm-${lvl}_${wk}-sandbox3','out-${lvl}_${wk}-sandbox3','${wk}')`, 'SANDBOX')}
+      </div>` : ''}
       <div class="complete-bar">
         <div>Run the sandbox code at least once, then move on to Day 2:</div>
         <ul class="req-list" id="reqlist-${lvl}_${wk}-day1"></ul>
@@ -1291,9 +1335,10 @@ function dayHtml(week, d){
         <h2>📝 Practice — Exercises</h2>
         ${renderExercise(wk,0,week.exercises[0],1)}
         ${renderExercise(wk,1,week.exercises[1],2)}
+        ${week.exercises[4] ? renderExercise(wk,4,week.exercises[4],3) : ''}
       </div>
       <div class="complete-bar">
-        <div>Pass both exercises above to unlock Day 3:</div>
+        <div>Pass ${week.exercises[4] ? 'all three exercises' : 'both exercises'} above to unlock Day 3:</div>
         <ul class="req-list" id="reqlist-${lvl}_${wk}-day2"></ul>
         <button class="complete-btn" id="complete-btn-${lvl}_${wk}-day2" onclick="markDayComplete('${wk}',2)" disabled>✓ Mark Day 2 Complete — Unlock Day 3</button>
       </div>`;
@@ -1303,12 +1348,14 @@ function dayHtml(week, d){
       <h2>📝 Practice — Exercises</h2>
       ${renderExercise(wk,2,week.exercises[2],1)}
       ${renderExercise(wk,3,week.exercises[3],2)}
+      ${week.exercises[5] ? renderExercise(wk,5,week.exercises[5],3) : ''}
     </div>
     <div class="card">
       <h2>🧠 Quick quiz</h2>
       ${week.quiz.map((q,i)=>`<div class="quiz-card" id="quizq-${lvl}_${wk}-${i}">${quizQuestionHtml(wk,i)}</div>`).join('')}
       <div id="quiz-score-banner-${lvl}_${wk}" style="font-size:0.82rem;font-weight:700;margin-top:6px;"></div>
     </div>
+    ${week.stretchChallenge ? stretchChallengeHtml(wk, week.stretchChallenge) : ''}
     <div class="complete-bar">
       <div>Finish the requirements below to complete Week ${week.num}:</div>
       <ul class="req-list" id="reqlist-${lvl}_${wk}-day3"></ul>
@@ -1361,6 +1408,7 @@ function refreshDayCompleteState(wk, d){
   if(!btn) return;
   const done = dayStatus(wk,d) === 'done';
   const reqList = document.getElementById(`reqlist-${CURRENT_LEVEL}_${wk}-day${d}`);
+  const week = currentWeeks().find(w=>w.key===wk);
   let met;
   if(d === 1){
     met = localStorage.getItem(`pyac_${subjectKeyPrefix()}${CURRENT_LEVEL}_sandbox_${wk}`) === 'done';
@@ -1368,20 +1416,26 @@ function refreshDayCompleteState(wk, d){
   } else if(d === 2){
     const ex0Ok = localStorage.getItem(`pyac_${subjectKeyPrefix()}${CURRENT_LEVEL}_ex_${wk}_0`) === 'pass';
     const ex1Ok = localStorage.getItem(`pyac_${subjectKeyPrefix()}${CURRENT_LEVEL}_ex_${wk}_1`) === 'pass';
-    met = ex0Ok && ex1Ok;
+    const has3rd = week && week.exercises[4];
+    const ex4Ok = !has3rd || localStorage.getItem(`pyac_${subjectKeyPrefix()}${CURRENT_LEVEL}_ex_${wk}_4`) === 'pass';
+    met = ex0Ok && ex1Ok && ex4Ok;
     if(reqList) reqList.innerHTML =
       `<li class="${ex0Ok?'met':''}">Pass Exercise 1</li>` +
-      `<li class="${ex1Ok?'met':''}">Pass Exercise 2</li>`;
+      `<li class="${ex1Ok?'met':''}">Pass Exercise 2</li>` +
+      (has3rd ? `<li class="${ex4Ok?'met':''}">Pass Exercise 3</li>` : '');
   } else {
     const q = quizScore(wk);
     const quizOk = q.correct >= Math.ceil(q.total * 0.75);
     const ex2Ok = localStorage.getItem(`pyac_${subjectKeyPrefix()}${CURRENT_LEVEL}_ex_${wk}_2`) === 'pass';
     const ex3Ok = localStorage.getItem(`pyac_${subjectKeyPrefix()}${CURRENT_LEVEL}_ex_${wk}_3`) === 'pass';
-    met = quizOk && ex2Ok && ex3Ok;
+    const has3rd = week && week.exercises[5];
+    const ex5Ok = !has3rd || localStorage.getItem(`pyac_${subjectKeyPrefix()}${CURRENT_LEVEL}_ex_${wk}_5`) === 'pass';
+    met = quizOk && ex2Ok && ex3Ok && ex5Ok;
     if(reqList) reqList.innerHTML =
       `<li class="${quizOk?'met':''}">Score at least 75% on the quiz</li>` +
       `<li class="${ex2Ok?'met':''}">Pass Exercise 1</li>` +
-      `<li class="${ex3Ok?'met':''}">Pass Exercise 2</li>`;
+      `<li class="${ex3Ok?'met':''}">Pass Exercise 2</li>` +
+      (has3rd ? `<li class="${ex5Ok?'met':''}">Pass Exercise 3</li>` : '');
   }
   btn.disabled = !met || done;
   if(done) btn.textContent = `✓ Day ${d} complete`;
