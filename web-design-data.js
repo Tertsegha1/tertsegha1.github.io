@@ -100,6 +100,25 @@ const WD_WEEKS = [
 <p>About me.</p>
 `,
       tests:[{type:'dom-attr', selector:'h1', attr:'style', notEmpty:true, label:'Heading has an inline style'}]
+    },
+    {
+      title:'Add a subheading',
+      desc:`Add an &lt;h2&gt; subheading containing the words "About Me". &lt;h2&gt; works exactly like &lt;h1&gt;
+        but signals a slightly less important heading — perfect for a section title underneath your main heading.`,
+      starter:`<h1>My Page</h1>
+<p>About me.</p>
+<!-- Add your h2 subheading below -->
+`,
+      tests:[{type:'dom', selector:'h2', contains:'About Me', label:'Page has an h2 containing "About Me"'}]
+    },
+    {
+      title:'Style your paragraph',
+      desc:`Give your &lt;p&gt; an inline style attribute too, e.g. &lt;p style="font-style:italic;"&gt;. Any tag
+        can carry a style attribute, not just headings.`,
+      starter:`<h1>My Page</h1>
+<p>About me.</p>
+`,
+      tests:[{type:'dom-attr', selector:'p', attr:'style', notEmpty:true, label:'Paragraph has an inline style'}]
     }
   ],
   quiz:[
@@ -127,7 +146,25 @@ const WD_WEEKS = [
       correct:1,
       explain:'<body> contains everything the visitor actually sees on the page.'
     }
-  ]
+  ],
+  sandboxStarter3:`<h1 style="color:#4338ca;">Welcome to my page</h1>
+<h2>A bit about me</h2>
+<p style="font-style:italic;">I'm learning HTML and CSS.</p>
+`,
+  stretchChallenge:{
+    title:'Add a second paragraph and image',
+    desc:`Finished early? Add a <strong>second</strong> &lt;p&gt; paragraph and a <strong>second</strong>
+      &lt;img&gt; (with its own alt text) — a real page usually has more than one of each.`,
+    starter:`<h1>My Page</h1>
+<p>About me.</p>
+<img src="https://via.placeholder.com/120" alt="A placeholder photo of me">
+<!-- Add a second paragraph and a second image below -->
+`,
+    tests:[
+      {type:'dom-count', selector:'p', min:2, label:'Page now has at least 2 paragraphs'},
+      {type:'dom-count', selector:'img', min:2, label:'Page now has at least 2 images'}
+    ]
+  }
 },
 {
   key:'week2', num:2, title:'Lists, Links and Structure',
@@ -230,6 +267,24 @@ const WD_WEEKS = [
       starter:`<!-- Add your <div><h1>...</h1></div> below -->
 `,
       tests:[{type:'dom-count', selector:'div > h1', min:1, label:'Page has an h1 nested directly inside a div'}]
+    },
+    {
+      title:'Nest a link inside a list item',
+      desc:`Build a &lt;ul&gt; with at least 2 &lt;li&gt; items, where each &lt;li&gt; contains its own &lt;a&gt;
+        link, like &lt;li&gt;&lt;a href="..."&gt;My friend's page&lt;/a&gt;&lt;/li&gt;. Tags can nest inside each
+        other exactly like the div/h1 you just built — a link can live inside a list item just as easily.`,
+      starter:`<!-- Build a <ul> where each <li> contains its own <a> link -->
+`,
+      tests:[{type:'dom-count', selector:'li a', min:2, label:'Page has at least 2 links nested inside list items'}]
+    },
+    {
+      title:'Group your list in a container',
+      desc:`Wrap a &lt;ul&gt; (with at least 2 items) inside a &lt;div&gt;, like
+        &lt;div&gt;&lt;ul&gt;...&lt;/ul&gt;&lt;/div&gt;. Same nesting idea as grouping a heading, just with a list
+        this time.`,
+      starter:`<!-- Add your <div><ul>...</ul></div> below, with at least 2 <li> items -->
+`,
+      tests:[{type:'dom-count', selector:'div > ul', min:1, label:'Page has a ul nested directly inside a div'}]
     }
   ],
   quiz:[
@@ -257,7 +312,25 @@ const WD_WEEKS = [
       correct:2,
       explain:'<div> is a plain container with no look of its own — its job is to group elements together.'
     }
-  ]
+  ],
+  sandboxStarter3:`<div>
+  <h2>My Favorite Links</h2>
+  <ul>
+    <li><a href="https://example.com">My friend's page</a></li>
+    <li><a href="https://example.org">A cool site</a></li>
+  </ul>
+</div>
+`,
+  stretchChallenge:{
+    title:'Build a fully linked, grouped list',
+    desc:`Combine everything: inside one &lt;div&gt;, add an &lt;h2&gt; and a &lt;ul&gt; where at least 2 &lt;li&gt;
+      items each contain their own &lt;a&gt; link.`,
+    starter:`<!-- Build a <div> containing an <h2> and a <ul> where each <li> has its own <a> link -->
+`,
+    tests:[
+      {type:'dom-count', selector:'div > ul li a', min:2, label:'Page has at least 2 links, each nested in a li inside a ul inside a div'}
+    ]
+  }
 },
 {
   key:'week3', num:3, title:'CSS Basics: Selectors and Color',
@@ -357,6 +430,23 @@ const WD_WEEKS = [
       starter:`<!-- Add a <p> styled with a font-family other than the default -->
 `,
       tests:[{type:'computed-style', selector:'p', prop:'fontFamily', notEqual:'"Times New Roman"', label:'Paragraph uses a non-default font'}]
+    },
+    {
+      title:'Center your heading',
+      desc:`Add a CSS rule setting <code>text-align: center;</code> on your &lt;h1&gt; (inline style, or inside a
+        &lt;style&gt; block). This centers the text horizontally within its box.`,
+      starter:`<!-- Add an <h1> styled with text-align: center; -->
+`,
+      tests:[{type:'computed-style', selector:'h1', prop:'textAlign', equals:'center', label:'Heading is centered'}]
+    },
+    {
+      title:'Add a second class-based rule',
+      desc:`Give a &lt;p&gt; the class="notice" attribute, then add a &lt;style&gt; rule .notice { color: ...; }
+        setting its text color to something other than black — the same class-selector pattern as .highlight,
+        just a new class name and a different property.`,
+      starter:`<!-- Add a <style> block with a .notice rule, then a <p class="notice"> -->
+`,
+      tests:[{type:'computed-style', selector:'.notice', prop:'color', notEqual:'rgb(0, 0, 0)', label:'.notice element has a non-default text color'}]
     }
   ],
   quiz:[
@@ -384,7 +474,25 @@ const WD_WEEKS = [
       correct:2,
       explain:'color sets the text color; background-color sets the color behind the text instead.'
     }
-  ]
+  ],
+  sandboxStarter3:`<style>
+  .card-title { color: #b91c1c; text-align: center; }
+</style>
+<h2 class="card-title">Special Notice</h2>
+<p>Regular text below.</p>
+`,
+  stretchChallenge:{
+    title:'Reuse one class on two different elements',
+    desc:`Give the <strong>same</strong> class="tag" to two elements of different types (e.g. an &lt;h2&gt; and a
+      &lt;p&gt;), then add one &lt;style&gt; rule .tag { background-color: ...; } that styles both at once — this is
+      the whole point of classes: one rule, reused anywhere.`,
+    starter:`<!-- Add a <style> block with a .tag rule (background-color), then TWO different elements sharing class="tag" -->
+`,
+    tests:[
+      {type:'dom-count', selector:'.tag', min:2, label:'At least 2 elements share the .tag class'},
+      {type:'computed-style', selector:'.tag', prop:'backgroundColor', notEqual:'rgba(0, 0, 0, 0)', label:'.tag elements have a background color'}
+    ]
+  }
 },
 {
   key:'week4', num:4, title:'The Box Model',
@@ -488,6 +596,25 @@ const WD_WEEKS = [
       starter:`<!-- Add box-sizing: border-box; to your .card -->
 `,
       tests:[{type:'computed-style', selector:'.card', prop:'boxSizing', equals:'border-box', label:'.card uses box-sizing: border-box'}]
+    },
+    {
+      title:'Add rounded corners',
+      desc:`Give your .card at least 8px of border-radius, e.g. .card { border-radius: 12px; }. Rounding the
+        corners of the box (not a new layer, just a style on the border) is a common finishing touch on cards.`,
+      starter:`<!-- Add a border-radius rule to your .card -->
+`,
+      tests:[{type:'computed-style', selector:'.card', prop:'borderTopLeftRadius', atLeastPx:8, label:'.card has rounded corners (at least 8px)'}]
+    },
+    {
+      title:'Set an exact card width',
+      desc:`Give your .card BOTH box-sizing: border-box; AND width: 250px; together. Because of border-box, the
+        card's rendered width stays exactly 250px even with padding and a border added.`,
+      starter:`<!-- Give your .card box-sizing: border-box AND width: 250px together -->
+`,
+      tests:[
+        {type:'computed-style', selector:'.card', prop:'boxSizing', equals:'border-box', label:'.card uses box-sizing: border-box'},
+        {type:'computed-style', selector:'.card', prop:'width', equals:'250px', label:'.card is exactly 250px wide'}
+      ]
     }
   ],
   quiz:[
@@ -515,7 +642,32 @@ const WD_WEEKS = [
       correct:0,
       explain:'With border-box, the width you set already includes padding and border, so the box stays that size.'
     }
-  ]
+  ],
+  sandboxStarter3:`<style>
+  .rounded-card {
+    padding: 12px 20px;
+    border: 2px solid #16a34a;
+    border-radius: 12px;
+  }
+</style>
+<div class="rounded-card">
+  <p>Rounded corners make a card feel softer.</p>
+</div>
+`,
+  stretchChallenge:{
+    title:'Build a fully-styled profile card',
+    desc:`Give an element with class="profile-card" ALL four finishing touches at once: at least 16px of padding,
+      a visible border, at least 10px of margin, AND at least 8px of border-radius.`,
+    starter:`<!-- Add a <style> block with a .profile-card rule (padding, border, margin, border-radius),
+then a <div class="profile-card"> -->
+`,
+    tests:[
+      {type:'computed-style', selector:'.profile-card', prop:'paddingTop', atLeastPx:16, label:'.profile-card has at least 16px of padding'},
+      {type:'computed-style', selector:'.profile-card', prop:'borderTopWidth', atLeastPx:1, label:'.profile-card has a visible border'},
+      {type:'computed-style', selector:'.profile-card', prop:'marginTop', atLeastPx:10, label:'.profile-card has at least 10px of margin'},
+      {type:'computed-style', selector:'.profile-card', prop:'borderTopLeftRadius', atLeastPx:8, label:'.profile-card has rounded corners'}
+    ]
+  }
 },
 {
   key:'week5', num:5, title:'Flexbox Layout',
@@ -630,6 +782,39 @@ const WD_WEEKS = [
       starter:`<!-- Add a <style> block with a .stack { display: flex; flex-direction: column; } rule, then a <div class="stack"> -->
 `,
       tests:[{type:'computed-style', selector:'.stack', prop:'flexDirection', equals:'column', label:'.stack arranges items in a column'}]
+    },
+    {
+      title:'Add space between cards with gap',
+      desc:`Give your .cards container a gap of at least 8px, e.g. gap: 12px;. Unlike margin, gap only adds space
+        <strong>between</strong> flex items — never on the outside edges of the whole row.`,
+      starter:`<style>
+  .cards { display: flex; }
+</style>
+<div class="cards">
+  <div>HTML</div>
+  <div>CSS</div>
+</div>
+<!-- Add a gap rule to .cards above -->
+`,
+      tests:[{type:'computed-style', selector:'.cards', prop:'columnGap', atLeastPx:8, label:'.cards has at least 8px of gap'}]
+    },
+    {
+      title:'Center everything both ways',
+      desc:`Give your .cards container BOTH justify-content: center; AND align-items: center; together — a very
+        common combination for centering a whole row of items in the middle of its container.`,
+      starter:`<style>
+  .cards { display: flex; }
+</style>
+<div class="cards">
+  <div>HTML</div>
+  <div>CSS</div>
+</div>
+<!-- Add both justify-content: center; and align-items: center; to .cards above -->
+`,
+      tests:[
+        {type:'computed-style', selector:'.cards', prop:'justifyContent', equals:'center', label:'.cards centers items horizontally'},
+        {type:'computed-style', selector:'.cards', prop:'alignItems', equals:'center', label:'.cards centers items vertically'}
+      ]
     }
   ],
   quiz:[
@@ -657,7 +842,36 @@ const WD_WEEKS = [
       correct:1,
       explain:'flex-direction: column flips the main axis from horizontal to vertical.'
     }
-  ]
+  ],
+  sandboxStarter3:`<style>
+  .cards { display: flex; gap: 12px; flex-wrap: wrap; }
+  .card { padding: 12px; border: 2px solid #4338ca; }
+</style>
+<div class="cards">
+  <div class="card">HTML</div>
+  <div class="card">CSS</div>
+  <div class="card">JavaScript</div>
+  <div class="card">Python</div>
+</div>
+`,
+  stretchChallenge:{
+    title:'Let cards wrap onto multiple lines',
+    desc:`Give your .cards container flex-wrap: wrap;, so cards that don't fit on one line wrap onto the next
+      instead of shrinking or overflowing.`,
+    starter:`<style>
+  .cards { display: flex; gap: 8px; }
+</style>
+<div class="cards">
+  <div>HTML</div>
+  <div>CSS</div>
+  <div>JavaScript</div>
+</div>
+<!-- Add flex-wrap: wrap; to .cards above -->
+`,
+    tests:[
+      {type:'computed-style', selector:'.cards', prop:'flexWrap', equals:'wrap', label:'.cards wraps onto multiple lines'}
+    ]
+  }
 },
 {
   key:'week6', num:6, title:'Forms and Inputs',
@@ -767,6 +981,22 @@ const WD_WEEKS = [
       starter:`<!-- Add a <button type="submit"> below -->
 `,
       tests:[{type:'dom-count', selector:'button[type="submit"]', min:1, label:'Form has a submit button'}]
+    },
+    {
+      title:'Add a checkbox',
+      desc:`Add an &lt;input type="checkbox"&gt; (with a paired &lt;label&gt;) so visitors can tick a box, e.g. to
+        subscribe to a newsletter. Same input pattern as text/email, just a different type value.`,
+      starter:`<!-- Add a <label> and an <input type="checkbox"> below -->
+`,
+      tests:[{type:'dom-count', selector:'input[type="checkbox"]', min:1, label:'Form has a checkbox input'}]
+    },
+    {
+      title:'Add a comments textarea',
+      desc:`Add a &lt;textarea&gt; so visitors can leave a longer, multi-line comment — unlike &lt;input&gt;,
+        &lt;textarea&gt; has an opening AND closing tag, since it can hold typed content between them.`,
+      starter:`<!-- Add a <textarea> below -->
+`,
+      tests:[{type:'dom-count', selector:'textarea', min:1, label:'Form has a textarea'}]
     }
   ],
   quiz:[
@@ -794,7 +1024,29 @@ const WD_WEEKS = [
       correct:1,
       explain:'type="submit" is what makes a button actually submit the form it sits inside.'
     }
-  ]
+  ],
+  sandboxStarter3:`<form>
+  <label for="newsletter">Subscribe to newsletter:</label>
+  <input type="checkbox" id="newsletter">
+
+  <label for="message">Message:</label>
+  <textarea id="message" rows="3"></textarea>
+</form>
+`,
+  stretchChallenge:{
+    title:'Make an input required',
+    desc:`Add the <code>required</code> attribute to one of your inputs, e.g.
+      &lt;input type="text" required&gt;. This stops the browser from letting the form submit until that field is
+      filled in.`,
+    starter:`<form>
+  <label for="name">Your name:</label>
+  <!-- Add a required text input below -->
+</form>
+`,
+    tests:[
+      {type:'dom-count', selector:'input[required]', min:1, label:'At least one input is marked required'}
+    ]
+  }
 },
 {
   key:'week7', num:7, title:'More CSS Layout: Grid Basics',
@@ -911,6 +1163,38 @@ const WD_WEEKS = [
       starter:`<!-- Build a full .gallery grid with at least 6 items inside -->
 `,
       tests:[{type:'dom-count', selector:'.gallery > *', min:6, label:'.gallery has at least 6 items'}]
+    },
+    {
+      title:'Add spacing between rows specifically',
+      desc:`Give your .gallery row-gap: 16px; (the individual property, rather than the gap shorthand you already
+        used) so there's at least 10px of space between rows specifically.`,
+      starter:`<style>
+  .gallery { display: grid; grid-template-columns: 1fr 1fr 1fr; }
+</style>
+<div class="gallery">
+  <div>1</div>
+  <div>2</div>
+  <div>3</div>
+</div>
+<!-- Add a row-gap rule to .gallery above -->
+`,
+      tests:[{type:'computed-style', selector:'.gallery', prop:'rowGap', atLeastPx:10, label:'.gallery has at least 10px of row-gap'}]
+    },
+    {
+      title:'Make an item span two columns',
+      desc:`Give one item inside your grid class="featured" and a rule .featured { grid-column: span 2; } so that
+        one item stretches across two columns instead of just one.`,
+      starter:`<style>
+  .gallery { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+</style>
+<div class="gallery">
+  <div class="featured">Featured</div>
+  <div>2</div>
+  <div>3</div>
+</div>
+<!-- Add a .featured { grid-column: span 2; } rule above -->
+`,
+      tests:[{type:'computed-style', selector:'.featured', prop:'gridColumn', notEqual:'auto', label:'.featured spans multiple columns'}]
     }
   ],
   quiz:[
@@ -938,7 +1222,30 @@ const WD_WEEKS = [
       correct:1,
       explain:'6 items across 3 columns wrap automatically into 2 rows of 3.'
     }
-  ]
+  ],
+  sandboxStarter3:`<style>
+  .gallery3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .featured { grid-column: span 2; background: #fca5a5; }
+  .photo { background: #ddd6fe; padding: 20px; text-align: center; }
+</style>
+<div class="gallery3">
+  <div class="photo featured">Featured</div>
+  <div class="photo">2</div>
+  <div class="photo">3</div>
+  <div class="photo">4</div>
+</div>
+`,
+  stretchChallenge:{
+    title:'Build a gallery with one featured item',
+    desc:`Combine everything: a .gallery with display: grid, 3 columns, a gap, at least 6 items, AND one item with
+      class="featured" that spans 2 columns (grid-column: span 2;).`,
+    starter:`<!-- Build a full .gallery grid: 3 columns, a gap, at least 6 items, and one .featured item spanning 2 columns -->
+`,
+    tests:[
+      {type:'dom-count', selector:'.gallery > *', min:6, label:'.gallery has at least 6 items'},
+      {type:'computed-style', selector:'.featured', prop:'gridColumn', notEqual:'auto', label:'.featured spans multiple columns'}
+    ]
+  }
 },
 {
   key:'week8', num:8, title:'Responsive Design: Media Queries',
@@ -1065,6 +1372,36 @@ const WD_WEEKS = [
         {type:'dom', selector:'style', contains:'@media', label:'Page includes a real @media rule'},
         {type:'computed-style', selector:'.box', prop:'paddingTop', atLeastPx:16, label:'.box has extra padding inside the media query'}
       ]
+    },
+    {
+      title:'Hide an element on narrow screens',
+      desc:`Give a &lt;div class="sidebar"&gt; display: block; by default, then inside @media (max-width: 900px)
+        change it to display: none; so it disappears entirely on narrower screens.`,
+      starter:`<style>
+  .sidebar { display: block; }
+  /* Add @media (max-width: 900px) { .sidebar { display: none; } } below */
+</style>
+<div class="sidebar">Extra info</div>
+`,
+      tests:[
+        {type:'dom', selector:'style', contains:'@media', label:'Page includes a real @media rule'},
+        {type:'computed-style', selector:'.sidebar', prop:'display', equals:'none', label:'.sidebar is hidden inside the media query'}
+      ]
+    },
+    {
+      title:'Shrink the heading font on narrow screens',
+      desc:`Give an &lt;h1&gt; font-size: 32px; by default, then inside @media (max-width: 900px) change it to a
+        smaller size like font-size: 20px;.`,
+      starter:`<style>
+  h1 { font-size: 32px; }
+  /* Add @media (max-width: 900px) { h1 { font-size: 20px; } } below */
+</style>
+<h1>My Page</h1>
+`,
+      tests:[
+        {type:'dom', selector:'style', contains:'@media', label:'Page includes a real @media rule'},
+        {type:'computed-style', selector:'h1', prop:'fontSize', notEqual:'32px', label:'h1 shrinks inside the media query'}
+      ]
     }
   ],
   quiz:[
@@ -1092,7 +1429,36 @@ const WD_WEEKS = [
       correct:1,
       explain:'A media query block can group as many separate CSS rules as needed, all sharing the same condition.'
     }
-  ]
+  ],
+  sandboxStarter3:`<style>
+  .sidebar { display: block; background: #ddd6fe; padding: 12px; }
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+  }
+</style>
+<div class="sidebar">Extra info (hidden on narrow screens)</div>
+<p>Main content always shows.</p>
+`,
+  stretchChallenge:{
+    title:'Build a fully responsive header',
+    desc:`Give a &lt;div class="header"&gt; a default background-color: white; and display: flex;, then inside
+      @media (max-width: 900px) change BOTH background-color (to anything else) AND flex-direction: column;
+      together in one block.`,
+    starter:`<style>
+  .header { background-color: white; display: flex; padding: 24px; }
+  /* Add @media (max-width: 900px) { .header { ... } } changing background-color AND flex-direction below */
+</style>
+<div class="header">
+  <div>Logo</div>
+  <div>Nav links</div>
+</div>
+`,
+    tests:[
+      {type:'dom', selector:'style', contains:'@media', label:'Page includes a real @media rule'},
+      {type:'computed-style', selector:'.header', prop:'backgroundColor', notEqual:'rgb(255, 255, 255)', label:'.header changes background color inside the media query'},
+      {type:'computed-style', selector:'.header', prop:'flexDirection', equals:'column', label:'.header stacks in a column inside the media query'}
+    ]
+  }
 },
 {
   key:'week9', num:9, title:'A Touch of JavaScript',
@@ -1210,6 +1576,37 @@ const WD_WEEKS = [
         {type:'dom', selector:'script', contains:'querySelector', label:'Script uses document.querySelector'},
         {type:'dom', selector:'script', contains:'addEventListener', label:'Script uses addEventListener'}
       ]
+    },
+    {
+      title:'Build a click counter',
+      desc:`Add a &lt;button id="counter"&gt;Clicks: 0&lt;/button&gt; and a &lt;script&gt; that keeps a running
+        count in a variable, increases it by 1 on every click, and updates the button's textContent to
+        "Clicks: " plus the new count.`,
+      starter:`<button id="counter">Clicks: 0</button>
+
+<script>
+  // Keep a count variable, increase it by 1 on every click,
+  // and update #counter's textContent to "Clicks: " + count
+</script>
+`,
+      tests:[{type:'dom', selector:'#counter', contains:'Clicks: 1', label:'#counter shows "Clicks: 1" after one click'}]
+    },
+    {
+      title:'Toggle a highlight class',
+      desc:`Add a &lt;div id="box" class=""&gt;A box&lt;/div&gt;, a &lt;button id="toggle"&gt;, a &lt;style&gt;
+        rule .active { background-color: yellow; }, and a &lt;script&gt; that toggles the "active" class on #box
+        when #toggle is clicked, using classList.toggle('active').`,
+      starter:`<style>
+  .active { background-color: yellow; }
+</style>
+<div id="box" class="">A box</div>
+<button id="toggle">Toggle highlight</button>
+
+<script>
+  // Add a click handler on #toggle that toggles the "active" class on #box
+</script>
+`,
+      tests:[{type:'dom-attr', selector:'#box', attr:'class', notEmpty:true, label:'#box gains the "active" class after the button is clicked'}]
     }
   ],
   quiz:[
@@ -1237,7 +1634,35 @@ const WD_WEEKS = [
       correct:1,
       explain:'CSS properties are set via .style.propertyName in JavaScript, using camelCase instead of dashes.'
     }
-  ]
+  ],
+  sandboxStarter3:`<button id="counter">Click count: 0</button>
+<script>
+  let count = 0;
+  document.querySelector('#counter').addEventListener('click', function(){
+    count += 1;
+    document.querySelector('#counter').textContent = 'Click count: ' + count;
+  });
+</script>
+`,
+  stretchChallenge:{
+    title:'Build a toggle-text like button',
+    desc:`Add a &lt;button id="like"&gt;🤍 Like&lt;/button&gt; and a &lt;script&gt; that checks the button's
+      current textContent when clicked: if it still says "Like", change it to "❤️ Liked!"; otherwise change it
+      back to "🤍 Like". This reads the CURRENT state before deciding what to change it to, instead of always
+      setting the same fixed value.`,
+    starter:`<button id="like">🤍 Like</button>
+
+<script>
+  document.querySelector('#like').addEventListener('click', function(){
+    // TODO: if the button's textContent includes "Liked", set it back to "🤍 Like";
+    // otherwise set it to "❤️ Liked!"
+  });
+</script>
+`,
+    tests:[
+      {type:'dom', selector:'#like', contains:'Liked', label:'#like shows "Liked" after being clicked once'}
+    ]
+  }
 }
 ];
 
