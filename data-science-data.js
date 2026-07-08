@@ -100,6 +100,24 @@ print(scores[scores["score"] >= 80])
 # Create df below
 `,
       tests:[{type:'assert', expr:'df["score"].max() == 92', label:'df["score"].max() correctly equals 92'}]
+    },
+    {
+      title:'Find the lowest score',
+      desc:`Create a DataFrame called df with one column "score" containing 70, 80, 90. Print df["score"].min() —
+        it should print 70. .min() works exactly like .max(), just returning the smallest value instead.`,
+      starter:`import pandas as pd
+# Create df below
+`,
+      tests:[{type:'output', contains:['70'], label:'Prints the correct minimum (70)'}]
+    },
+    {
+      title:'Count how many passed',
+      desc:`Create a DataFrame called df with columns "name" (Ada, Ben, Chi, Dee) and "score" (78, 92, 65, 88).
+        Create a variable passed called df[df["score"] >= 70], then print len(passed). It should print 3.`,
+      starter:`import pandas as pd
+# Create df and passed below
+`,
+      tests:[{type:'output', contains:['3'], label:'Filters to the correct number of rows (3)'}]
     }
   ],
   quiz:[
@@ -127,7 +145,28 @@ print(scores[scores["score"] >= 80])
       correct:1,
       explain:'Boolean indexing (df[condition]) is the standard pandas way to filter rows.'
     }
-  ]
+  ],
+  sandboxStarter3:`import pandas as pd
+scores = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee"], "score": [78, 92, 65, 88]})
+
+lowest = scores["score"].min()
+print("Lowest score:", lowest)
+
+passed = scores[scores["score"] >= 70]
+print("Number who passed:", len(passed))
+`,
+  stretchChallenge:{
+    title:'Find the name of the top scorer',
+    desc:`Create a DataFrame df with columns "name" (Ada, Ben, Chi, Dee) and "score" (78, 92, 65, 88). Use
+      <code>df["score"].idxmax()</code> to find the row label of the highest score, then
+      <code>df.loc[..., "name"]</code> to get that student's name, and print it.`,
+    starter:`import pandas as pd
+# Create df, then find and print the name of the student with the highest score
+`,
+    tests:[
+      {type:'output', contains:['Ben'], label:"Prints the top scorer's name (Ben)"}
+    ]
+  }
 },
 {
   key:'week2', num:2, title:'Picking Out What You Need',
@@ -226,6 +265,26 @@ df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee"], "score": [78, 92, 65, 88]}
 # Create result below
 `,
       tests:[{type:'assert', expr:'list(result["name"]) == ["Ben", "Dee"]', label:'result correctly contains Ben and Dee'}]
+    },
+    {
+      title:'Select a range of rows with .iloc',
+      desc:`Using the same df (name: Ada, Ben, Chi, Dee / score: 78, 92, 65, 88), create first_two =
+        df.iloc[0:2] — a position-based slice, just like slicing a list. Assert len(first_two) == 2.`,
+      starter:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee"], "score": [78, 92, 65, 88]})
+# Create first_two below
+`,
+      tests:[{type:'assert', expr:'len(first_two) == 2', label:'first_two has exactly 2 rows'}]
+    },
+    {
+      title:'Select specific rows with .loc',
+      desc:`Using the same df, create selected = df.loc[[0, 2], "name"] — a list of specific row labels
+        (0 and 2), not a range. Assert list(selected) == ["Ada", "Chi"].`,
+      starter:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee"], "score": [78, 92, 65, 88]})
+# Create selected below
+`,
+      tests:[{type:'assert', expr:'list(selected) == ["Ada", "Chi"]', label:'selected correctly contains Ada and Chi'}]
     }
   ],
   quiz:[
@@ -253,7 +312,31 @@ df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee"], "score": [78, 92, 65, 88]}
       correct:1,
       explain:'Everything before the comma in .loc[] selects rows; everything after selects columns.'
     }
-  ]
+  ],
+  sandboxStarter3:`import pandas as pd
+scores = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee"], "score": [78, 92, 65, 88]})
+
+# .iloc[] also accepts ranges, just like list slicing
+first_two = scores.iloc[0:2]
+print(first_two)
+
+# .loc[] can select several specific rows at once using a list of labels
+selected_rows = scores.loc[[0, 2], "name"]
+print(selected_rows)
+`,
+  stretchChallenge:{
+    title:'Find who needs extra practice',
+    desc:`Using df (name: Ada, Ben, Chi, Dee / score: 78, 92, 65, 88), create needs_practice =
+      df.loc[df["score"] &lt; 80, "name"]. Assert list(needs_practice) == ["Ada", "Chi"] — everyone scoring
+      below 80.`,
+    starter:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee"], "score": [78, 92, 65, 88]})
+# Create needs_practice below
+`,
+    tests:[
+      {type:'assert', expr:'list(needs_practice) == ["Ada", "Chi"]', label:'needs_practice correctly contains Ada and Chi'}
+    ]
+  }
 },
 {
   key:'week3', num:3, title:'Combining Conditions',
@@ -354,6 +437,28 @@ df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee"], "maths": [82, 55, 91, 40],
 # Create result below
 `,
       tests:[{type:'assert', expr:'list(result.columns) == ["name", "maths"]', label:'result has exactly the name and maths columns'}]
+    },
+    {
+      title:'Invert a condition with ~',
+      desc:`Using the df from the first exercise (name/maths/science, same values), create not_honours =
+        df[~((df["maths"] >= 70) & (df["science"] >= 70))]. Assert that list(not_honours["name"]) ==
+        ["Ben", "Chi", "Dee"] — everyone EXCEPT Ada, who was the only one to qualify for honours. ~ flips a
+        whole condition, turning every True into False and vice versa.`,
+      starter:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee"], "maths": [82, 55, 91, 40], "science": [75, 60, 45, 35]})
+# Create not_honours below
+`,
+      tests:[{type:'assert', expr:'list(not_honours["name"]) == ["Ben", "Chi", "Dee"]', label:'not_honours correctly excludes Ada'}]
+    },
+    {
+      title:'Combine OR with a column list',
+      desc:`Using the df from the first exercise, create result = df.loc[(df["maths"] &lt; 50) |
+        (df["science"] &lt; 50), ["name", "science"]]. Assert that list(result.columns) == ["name", "science"].`,
+      starter:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee"], "maths": [82, 55, 91, 40], "science": [75, 60, 45, 35]})
+# Create result below
+`,
+      tests:[{type:'assert', expr:'list(result.columns) == ["name", "science"]', label:'result has exactly the name and science columns'}]
     }
   ],
   quiz:[
@@ -381,7 +486,27 @@ df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee"], "maths": [82, 55, 91, 40],
       correct:1,
       explain:'The part after the comma in .loc[] always selects columns, exactly like in Week 2.'
     }
-  ]
+  ],
+  sandboxStarter3:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee"], "maths": [82, 55, 91, 40], "science": [75, 60, 45, 35]})
+
+# ~ inverts a condition - "NOT this"
+not_both = df[~((df["maths"] >= 70) & (df["science"] >= 70))]
+print(not_both)
+`,
+  stretchChallenge:{
+    title:'Find honours students, excluding one by name',
+    desc:`Create a DataFrame df with "name" (Ada, Ben, Chi, Dee, Eve), "maths" (82, 55, 91, 40, 88), and "science"
+      (75, 60, 45, 35, 80). Create qualifying = df[(df["maths"] &gt;= 70) &amp; (df["science"] &gt;= 70) &amp;
+      (df["name"] != "Ada")]. Assert list(qualifying["name"]) == ["Eve"] — both Ada and Eve qualify for honours,
+      but Ada is excluded by name.`,
+    starter:`import pandas as pd
+# Create df and qualifying below
+`,
+    tests:[
+      {type:'assert', expr:'list(qualifying["name"]) == ["Eve"]', label:'qualifying correctly contains only Eve'}
+    ]
+  }
 },
 {
   key:'week4', num:4, title:'Sorting and Ranking',
@@ -476,6 +601,28 @@ df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee"], "score": [78, 92, 65, 88]}
 # Create df and multi_sorted below
 `,
       tests:[{type:'assert', expr:'list(multi_sorted["name"]) == ["Ben", "Ada", "Dee", "Chi"]', label:'multi_sorted is correctly ordered by subject then score'}]
+    },
+    {
+      title:'Get the bottom 2 scorers',
+      desc:`Using the same df (name: Ada, Ben, Chi, Dee / score: 78, 92, 65, 88), create bottom2 =
+        df.sort_values("score").head(2). Assert that list(bottom2["name"]) == ["Chi", "Ada"] — sorting ascending
+        (the default) then taking the first 2 gives the LOWEST scorers.`,
+      starter:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee"], "score": [78, 92, 65, 88]})
+# Create bottom2 below
+`,
+      tests:[{type:'assert', expr:'list(bottom2["name"]) == ["Chi", "Ada"]', label:'bottom2 correctly contains Chi and Ada'}]
+    },
+    {
+      title:'Reset the index after sorting',
+      desc:`Using the same df, create leaderboard = df.sort_values("score", ascending=False).reset_index(drop=True).
+        Assert that list(leaderboard.index) == [0, 1, 2, 3] — sorting keeps the ORIGINAL row labels by default,
+        so reset_index(drop=True) gives the newly-ordered table fresh, sequential labels instead.`,
+      starter:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee"], "score": [78, 92, 65, 88]})
+# Create leaderboard below
+`,
+      tests:[{type:'assert', expr:'list(leaderboard.index) == [0, 1, 2, 3]', label:'leaderboard has a fresh, sequential index'}]
     }
   ],
   quiz:[
@@ -503,7 +650,30 @@ df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee"], "score": [78, 92, 65, 88]}
       correct:1,
       explain:'Passing a list of column names sorts by the first column, then by the next within ties, and so on.'
     }
-  ]
+  ],
+  sandboxStarter3:`import pandas as pd
+scores = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee"], "score": [78, 92, 65, 88]})
+
+bottom_two = scores.sort_values("score").head(2)
+print(bottom_two)
+
+# reset_index gives sorted rows fresh, sequential index labels
+leaderboard = scores.sort_values("score", ascending=False).reset_index(drop=True)
+print(leaderboard)
+`,
+  stretchChallenge:{
+    title:'Build a clean top-3 leaderboard',
+    desc:`Create a DataFrame df with "name" (Ada, Ben, Chi, Dee, Eve) and "score" (78, 92, 65, 88, 95). Create top3 =
+      df.sort_values("score", ascending=False).head(3).reset_index(drop=True). Assert that
+      list(top3["name"]) == ["Eve", "Ben", "Dee"] AND list(top3.index) == [0, 1, 2].`,
+    starter:`import pandas as pd
+# Create df and top3 below
+`,
+    tests:[
+      {type:'assert', expr:'list(top3["name"]) == ["Eve", "Ben", "Dee"]', label:'top3 correctly contains Eve, Ben, Dee in order'},
+      {type:'assert', expr:'list(top3.index) == [0, 1, 2]', label:'top3 has a fresh, sequential index'}
+    ]
+  }
 },
 {
   key:'week5', num:5, title:'Grouping and Aggregating',
@@ -600,6 +770,27 @@ grouped = df.groupby("subject")["score"].mean()
 # Add your assert below
 `,
       tests:[{type:'assert', expr:'grouped.idxmax() == "Math"', label:'grouped.idxmax() correctly identifies Math'}]
+    },
+    {
+      title:'Count students per subject',
+      desc:`Using the same df (name/subject/score, same values), create grouped_count =
+        df.groupby("subject").size(). Assert that grouped_count["Math"] == 2 — .size() counts how many rows
+        fall in each group, without needing to pick a specific column first.`,
+      starter:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee"], "subject": ["Math","Math","Science","Science"], "score": [82, 92, 65, 88]})
+# Create grouped_count below
+`,
+      tests:[{type:'assert', expr:'grouped_count["Math"] == 2', label:"grouped_count['Math'] correctly equals 2"}]
+    },
+    {
+      title:'Find the lowest score per subject',
+      desc:`Using the same df, create grouped_min = df.groupby("subject")["score"].min(). Assert that
+        grouped_min["Science"] == 65 — .min() works per-group exactly like .mean() and .max() do.`,
+      starter:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee"], "subject": ["Math","Math","Science","Science"], "score": [82, 92, 65, 88]})
+# Create grouped_min below
+`,
+      tests:[{type:'assert', expr:'grouped_min["Science"] == 65', label:"grouped_min['Science'] correctly equals 65"}]
     }
   ],
   quiz:[
@@ -627,7 +818,29 @@ grouped = df.groupby("subject")["score"].mean()
       correct:1,
       explain:'.idxmax() answers "which group?" while .max() answers "what is the highest value?"'
     }
-  ]
+  ],
+  sandboxStarter3:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee"], "subject": ["Math","Math","Science","Science"], "score": [82, 92, 65, 88]})
+
+counts = df.groupby("subject").size()
+print(counts)
+
+lowest_per_subject = df.groupby("subject")["score"].min()
+print(lowest_per_subject)
+`,
+  stretchChallenge:{
+    title:'Find the subject with the lowest average',
+    desc:`Using the same df, create grouped = df.groupby("subject")["score"].mean(). Assert that
+      grouped.idxmin() == "Science" — .idxmin() is the mirror image of .idxmax(), returning the group LABEL with
+      the lowest value.`,
+    starter:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee"], "subject": ["Math","Math","Science","Science"], "score": [82, 92, 65, 88]})
+# Create grouped below
+`,
+    tests:[
+      {type:'assert', expr:'grouped.idxmin() == "Science"', label:'grouped.idxmin() correctly identifies Science'}
+    ]
+  }
 },
 {
   key:'week6', num:6, title:'Creating and Modifying Columns',
@@ -730,6 +943,27 @@ df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee"], "maths": [82, 45, 91, 78],
 # Fix Chi's science score using .loc[] below
 `,
       tests:[{type:'assert', expr:'int(df.loc[df["name"] == "Chi", "science"].iloc[0]) == 90', label:"Chi's science score is correctly updated to 90"}]
+    },
+    {
+      title:'Create an average column',
+      desc:`Using the same original df (maths: 82, 45, 91, 78 / science: 75, 40, 40, 80), create df["average"] =
+        (df["maths"] + df["science"]) / 2. Assert that list(df["average"]) == [78.5, 42.5, 65.5, 79.0].`,
+      starter:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee"], "maths": [82, 45, 91, 78], "science": [75, 40, 40, 80]})
+# Create the average column below
+`,
+      tests:[{type:'assert', expr:'list(df["average"]) == [78.5, 42.5, 65.5, 79.0]', label:'df["average"] has the correct values'}]
+    },
+    {
+      title:'Round the average column',
+      desc:`Using the same df (with "average" already added), reassign df["average"] = df["average"].round().
+        Assert that list(df["average"]) == [78.0, 42.0, 66.0, 79.0].`,
+      starter:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee"], "maths": [82, 45, 91, 78], "science": [75, 40, 40, 80]})
+df["average"] = (df["maths"] + df["science"]) / 2
+# Round the average column below
+`,
+      tests:[{type:'assert', expr:'list(df["average"]) == [78.0, 42.0, 66.0, 79.0]', label:'df["average"] is correctly rounded'}]
     }
   ],
   quiz:[
@@ -757,7 +991,29 @@ df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee"], "maths": [82, 45, 91, 78],
       correct:1,
       explain:'Chained indexing creates an intermediate copy, so the assignment may not actually reach the original DataFrame.'
     }
-  ]
+  ],
+  sandboxStarter3:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee"], "maths": [82, 45, 91, 78], "science": [75, 40, 40, 80]})
+
+df["average"] = (df["maths"] + df["science"]) / 2
+df["average"] = df["average"].round(1)
+print(df)
+`,
+  stretchChallenge:{
+    title:'Add a 3-tier status column',
+    desc:`Using df with a "total" column already added (maths + science), use THREE separate .loc[] lines to set
+      df["status"] to "Needs Support" (total &lt; 100), "On Track" (100 &le; total &lt; 150), or "Excellent"
+      (total &gt;= 150). Assert that
+      list(df["status"]) == ["Excellent", "Needs Support", "On Track", "Excellent"].`,
+    starter:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee"], "maths": [82, 45, 91, 78], "science": [75, 40, 40, 80]})
+df["total"] = df["maths"] + df["science"]
+# Set df["status"] using three .loc[] lines below
+`,
+    tests:[
+      {type:'assert', expr:'list(df["status"]) == ["Excellent", "Needs Support", "On Track", "Excellent"]', label:'df["status"] correctly reflects all three tiers'}
+    ]
+  }
 },
 {
   key:'week7', num:7, title:'Handling Missing Data',
@@ -856,6 +1112,27 @@ df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee"], "score": [78, None, 65, 88
 # Add your assert below
 `,
       tests:[{type:'assert', expr:'df["score"].mean() == 77.0', label:'df["score"].mean() correctly equals 77.0'}]
+    },
+    {
+      title:"Fill missing values with the column's mean",
+      desc:`Using the same original df, create filled_mean = df.fillna({"score": df["score"].mean()}). Assert
+        that list(filled_mean["score"]) == [78.0, 77.0, 65.0, 88.0] — instead of a fixed number like 0, Ben's gap
+        is filled with the column's own average (77.0), a common way to fill gaps without skewing the data.`,
+      starter:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee"], "score": [78, None, 65, 88]})
+# Create filled_mean below
+`,
+      tests:[{type:'assert', expr:'list(filled_mean["score"]) == [78.0, 77.0, 65.0, 88.0]', label:"filled_mean correctly fills the gap with the column's mean"}]
+    },
+    {
+      title:'Count how many values are present',
+      desc:`Using the same original df, assert that int(df["score"].notna().sum()) == 3 — .notna() is the
+        opposite of .isna(), True exactly where data IS present.`,
+      starter:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee"], "score": [78, None, 65, 88]})
+# Add your assert below
+`,
+      tests:[{type:'assert', expr:'int(df["score"].notna().sum()) == 3', label:'Correctly counts 3 present values'}]
     }
   ],
   quiz:[
@@ -883,7 +1160,32 @@ df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee"], "score": [78, None, 65, 88
       correct:1,
       explain:'.mean() and most other aggregations automatically ignore missing values without any extra step.'
     }
-  ]
+  ],
+  sandboxStarter3:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee"], "score": [78, None, 65, 88]})
+
+# Fill gaps with the column's own average, instead of a fixed number
+filled_with_mean = df.fillna({"score": df["score"].mean()})
+print(filled_with_mean)
+
+# .notna() is the opposite of .isna() - True where data IS present
+print(df["score"].notna())
+`,
+  stretchChallenge:{
+    title:'Handle gaps in two different columns at once',
+    desc:`Create a DataFrame df with "name" (Ada, Ben, Chi, Dee), "maths" (82, None, 91, 78), and "science"
+      (75, 40, None, 80) — the gaps are in DIFFERENT rows for each column. Create filled =
+      df.fillna({"maths": 0, "science": 0}) — a dictionary lets you fill different columns' gaps in one call.
+      Assert that list(filled["maths"]) == [82.0, 0.0, 91.0, 78.0] AND
+      list(filled["science"]) == [75.0, 40.0, 0.0, 80.0].`,
+    starter:`import pandas as pd
+# Create df and filled below
+`,
+    tests:[
+      {type:'assert', expr:'list(filled["maths"]) == [82.0, 0.0, 91.0, 78.0]', label:"filled['maths'] correctly fills its gap"},
+      {type:'assert', expr:'list(filled["science"]) == [75.0, 40.0, 0.0, 80.0]', label:"filled['science'] correctly fills its gap"}
+    ]
+  }
 },
 {
   key:'week8', num:8, title:'Merging Two Tables',
@@ -983,6 +1285,31 @@ merged = roster.merge(scores, on="student_id")
 # Create top below
 `,
       tests:[{type:'assert', expr:'list(top["name"]) == ["Ada", "Chi"]', label:'top correctly contains Ada and Chi'}]
+    },
+    {
+      title:'Merge tables with differently-named keys',
+      desc:`Create roster = pd.DataFrame({"student_id": [1,2,3,4], "name": ["Ada","Ben","Chi","Dee"]}) and
+        classes = pd.DataFrame({"id": [1,2,3,4], "homeroom": ["9A","9B","9A","9B"]}). Create merged =
+        roster.merge(classes, left_on="student_id", right_on="id") — when the shared column has a different name
+        in each table, left_on/right_on tell pandas which column to match on each side. Assert that
+        list(merged["homeroom"]) == ["9A", "9B", "9A", "9B"].`,
+      starter:`import pandas as pd
+# Create roster, classes and merged below
+`,
+      tests:[{type:'assert', expr:'list(merged["homeroom"]) == ["9A", "9B", "9A", "9B"]', label:'merged correctly includes each homeroom'}]
+    },
+    {
+      title:'Merge, then sort by score',
+      desc:`Using roster and scores from the first exercise, create merged = roster.merge(scores,
+        on="student_id"), then ranked = merged.sort_values("score", ascending=False). Assert that
+        list(ranked["name"]) == ["Chi", "Ada", "Ben"] — everything from Week 4's sorting still works on a merged
+        table.`,
+      starter:`import pandas as pd
+roster = pd.DataFrame({"student_id": [1,2,3,4], "name": ["Ada","Ben","Chi","Dee"]})
+scores = pd.DataFrame({"student_id": [1,2,3], "score": [82, 45, 91]})
+# Create merged and ranked below
+`,
+      tests:[{type:'assert', expr:'list(ranked["name"]) == ["Chi", "Ada", "Ben"]', label:'ranked is correctly ordered by score'}]
     }
   ],
   quiz:[
@@ -1010,7 +1337,31 @@ merged = roster.merge(scores, on="student_id")
       correct:1,
       explain:'A merged DataFrame is a normal DataFrame — every skill from earlier weeks still applies to it.'
     }
-  ]
+  ],
+  sandboxStarter3:`import pandas as pd
+roster = pd.DataFrame({"student_id": [1,2,3,4], "name": ["Ada","Ben","Chi","Dee"]})
+classes = pd.DataFrame({"id": [1,2,3,4], "homeroom": ["9A","9B","9A","9B"]})
+
+# When the shared column has different names in each table, use left_on/right_on
+merged = roster.merge(classes, left_on="student_id", right_on="id")
+print(merged[["name", "homeroom"]])
+`,
+  stretchChallenge:{
+    title:'Merge three tables together',
+    desc:`Create roster (4 students), scores (only 3 of them), and classes = pd.DataFrame({"student_id": [1,2,3,4],
+      "homeroom": ["9A","9B","9A","9B"]}). Chain two merges: full = roster.merge(scores,
+      on="student_id").merge(classes, on="student_id"). Assert that list(full["homeroom"]) == ["9A", "9B", "9A"] —
+      Dee is excluded by the first merge's inner join, so she never reaches the second merge either.`,
+    starter:`import pandas as pd
+roster = pd.DataFrame({"student_id": [1,2,3,4], "name": ["Ada","Ben","Chi","Dee"]})
+scores = pd.DataFrame({"student_id": [1,2,3], "score": [82, 45, 91]})
+classes = pd.DataFrame({"student_id": [1,2,3,4], "homeroom": ["9A","9B","9A","9B"]})
+# Create full below (two chained .merge() calls)
+`,
+    tests:[
+      {type:'assert', expr:'list(full["homeroom"]) == ["9A", "9B", "9A"]', label:'full correctly excludes Dee via both merges'}
+    ]
+  }
 },
 {
   key:'week9', num:9, title:'Summarizing Like a Pro',
@@ -1110,6 +1461,27 @@ df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee","Eli"], "grade": ["A","B","A
 # Create df and summary below
 `,
       tests:[{type:'assert', expr:'int(summary["count"]) == 4', label:"summary['count'] correctly equals 4 (skipping the missing value)"}]
+    },
+    {
+      title:'Get the proportion of each grade',
+      desc:`Using the same df (name/grade/score, same values), create proportions =
+        df["grade"].value_counts(normalize=True). Assert that round(float(proportions["A"]), 2) == 0.4 —
+        normalize=True gives the FRACTION of rows with each value, instead of the raw count (2 out of 5 = 0.4).`,
+      starter:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee","Eli"], "grade": ["A","B","A","C","B"], "score": [82, 70, 91, 55, 68]})
+# Create proportions below
+`,
+      tests:[{type:'assert', expr:'round(float(proportions["A"]), 2) == 0.4', label:"proportions['A'] correctly equals 0.4"}]
+    },
+    {
+      title:'Find the maximum from describe()',
+      desc:`Using the same df, create summary = df["score"].describe(). Assert that int(summary["max"]) == 91 —
+        describe()'s result includes the maximum alongside the mean, exactly like a dictionary of stats.`,
+      starter:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee","Eli"], "grade": ["A","B","A","C","B"], "score": [82, 70, 91, 55, 68]})
+# Create summary below
+`,
+      tests:[{type:'assert', expr:'int(summary["max"]) == 91', label:"summary['max'] correctly equals 91"}]
     }
   ],
   quiz:[
@@ -1137,7 +1509,31 @@ df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee","Eli"], "grade": ["A","B","A
       correct:1,
       explain:'Like most pandas aggregations, describe() automatically skips missing values when counting.'
     }
-  ]
+  ],
+  sandboxStarter3:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee","Eli"], "grade": ["A","B","A","C","B"], "score": [82, 70, 91, 55, 68]})
+
+# normalize=True gives proportions instead of raw counts
+proportions = df["grade"].value_counts(normalize=True)
+print(proportions)
+
+# describe() also works on a whole DataFrame of numeric columns, not just one Series
+print(df[["score"]].describe())
+`,
+  stretchChallenge:{
+    title:'Build a full summary report',
+    desc:`Using the same df, create grade_counts = df["grade"].value_counts() and score_summary =
+      df["score"].describe(). Assert that int(grade_counts.sum()) == 5 (every student is counted exactly once
+      across all grades) AND round(float(score_summary["min"]), 1) == 55.0.`,
+    starter:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada","Ben","Chi","Dee","Eli"], "grade": ["A","B","A","C","B"], "score": [82, 70, 91, 55, 68]})
+# Create grade_counts and score_summary below
+`,
+    tests:[
+      {type:'assert', expr:'int(grade_counts.sum()) == 5', label:'grade_counts sums to the total number of students (5)'},
+      {type:'assert', expr:'round(float(score_summary["min"]), 1) == 55.0', label:"score_summary['min'] correctly equals 55.0"}
+    ]
+  }
 }
 ];
 
