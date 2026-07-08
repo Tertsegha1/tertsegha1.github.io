@@ -202,6 +202,13 @@ is_trip_day = False
 for value in [class_size, average_mark, teacher_name, is_trip_day]:
     print(value, "->", type(value))
 `,
+  sandboxStarter3:`# The school club sign-up sheet needs the same four data types
+club_name = "Chess Club"
+weekly_fee = 2.50
+places_left = 6
+is_full = False
+print(f"{club_name}: £{weekly_fee}/week, {places_left} places left, full: {is_full}")
+`,
   exercises:[
     {
       title:'Build your own ID card',
@@ -256,8 +263,49 @@ print(f"It feels like {feels_like} degrees")`,
       tests:[
         {type:'output', contains:['It feels like 23 degrees'], label:'Correctly prints the adjusted temperature'}
       ]
+    },
+    {
+      title:'Build a library card',
+      desc:`Fill in three variables about a borrowed book — book_title as text, days_overdue as a whole number
+        between 0 and 30, and fine_waived as True or False — then run the code to print the library card line.`,
+      starter:`# TODO: fill these in with real values
+book_title = ""
+days_overdue = 0
+fine_waived = False
+
+print(f"LIBRARY CARD — {book_title}, {days_overdue} days overdue, fine waived: {fine_waived}")`,
+      tests:[
+        {type:'assert', expr:`isinstance(book_title, str) and len(book_title.strip()) > 0`, label:'book_title is a non-empty piece of text'},
+        {type:'assert', expr:`isinstance(days_overdue, int) and 0 <= days_overdue <= 30`, label:'days_overdue is a whole number between 0 and 30'},
+        {type:'assert', expr:`isinstance(fine_waived, bool)`, label:'fine_waived is True or False'}
+      ]
+    },
+    {
+      title:'Fix the attendance bug',
+      desc:`The register stores a student's absences as text by mistake, so adding today's absence crashes the
+        program. Fix the bug so it runs and prints "You have missed 3 sessions total".`,
+      starter:`absences = "2"      # bug: this should be a whole number, not text
+total = absences + 1
+print(f"You have missed {total} sessions total")`,
+      tests:[
+        {type:'output', contains:['You have missed 3 sessions total'], label:'Correctly prints the total absences'}
+      ]
     }
   ],
+  stretchChallenge:{
+    title:'Convert and combine',
+    desc:`The tuck shop stores its price as text (from a spreadsheet import). Convert price_text to a float using
+      float(), multiply it by quantity, and print "Total cost: £29.97" using an f-string — this introduces
+      float(), a function that converts text into a decimal number, similar to how int() converts text into a
+      whole number.`,
+    starter:`price_text = "9.99"
+quantity = 3
+# Convert price_text to a float, then compute and print the total cost
+`,
+    tests:[
+      {type:'output', contains:['Total cost: £29.97'], label:'Correctly prints the total cost'}
+    ]
+  },
   quiz:[
     {q:'Which data type is 3.14?',
      options:['int','float','str','bool'], correct:1,
@@ -315,6 +363,12 @@ discount = 2
 total = group_size * ticket_price - discount
 print(f"Total for the group: £{total}")
 `,
+  sandboxStarter3:`# // and % are useful together whenever you're splitting things into equal groups
+total_students = 47
+seats_per_bus = 12
+buses_needed = total_students // seats_per_bus + (1 if total_students % seats_per_bus else 0)
+print(f"{buses_needed} buses needed for {total_students} students")
+`,
   exercises:[
     {
       title:'Trip cost calculator',
@@ -368,8 +422,51 @@ print(f"Total for the group: £{total}")
         {type:'assert', expr:`pack_supplies(10, 2) == (5, 0)`, label:'pack_supplies(10, 2) == (5, 0)'},
         {type:'assert', expr:`pack_supplies(7, 10) == (0, 7)`, label:'pack_supplies(7, 10) == (0, 7)'}
       ]
+    },
+    {
+      title:'Ticket refund',
+      desc:`Write a function refund_amount(tickets, price_per_ticket, fee) that returns
+        round(tickets * price_per_ticket - fee, 2) — the total refunded once a fixed cancellation fee is
+        subtracted.`,
+      starter:`def refund_amount(tickets, price_per_ticket, fee):
+    # TODO: return round(tickets * price_per_ticket - fee, 2)
+    pass`,
+      tests:[
+        {type:'assert', expr:`refund_amount(3, 8, 2) == 22`, label:'refund_amount(3, 8, 2) == 22'},
+        {type:'assert', expr:`refund_amount(1, 5, 0) == 5`, label:'refund_amount(1, 5, 0) == 5'},
+        {type:'assert', expr:`refund_amount(2, 4.5, 1) == 8`, label:'refund_amount(2, 4.5, 1) == 8'}
+      ]
+    },
+    {
+      title:'Bus seating',
+      desc:`Write a function bus_seating(students, seats_per_bus) that returns a tuple of
+        (full_buses, students_left_over) using // and % — how many completely full buses you can make, and
+        how many students are left without a full bus of their own.`,
+      starter:`def bus_seating(students, seats_per_bus):
+    # TODO: return (students // seats_per_bus, students % seats_per_bus)
+    pass`,
+      tests:[
+        {type:'assert', expr:`bus_seating(47, 12) == (3, 11)`, label:'bus_seating(47, 12) == (3, 11)'},
+        {type:'assert', expr:`bus_seating(24, 12) == (2, 0)`, label:'bus_seating(24, 12) == (2, 0)'},
+        {type:'assert', expr:`bus_seating(5, 10) == (0, 5)`, label:'bus_seating(5, 10) == (0, 5)'}
+      ]
     }
   ],
+  stretchChallenge:{
+    title:'Playground area',
+    desc:`Write a function square_area(side) that returns side ** 2 (using the power operator), then print
+      f"Area: {square_area(6)} square metres" — this introduces ** for exponents/powers, the last of the core
+      arithmetic operators from this week's concept box.`,
+    starter:`def square_area(side):
+    # TODO: return side ** 2
+    pass
+
+print(f"Area: {square_area(6)} square metres")
+`,
+    tests:[
+      {type:'output', contains:['Area: 36 square metres'], label:'Correctly prints the square area'}
+    ]
+  },
   quiz:[
     {q:'What data type does input() always return, no matter what someone types?',
      options:['int','str','float','bool'], correct:1,
@@ -430,6 +527,14 @@ if age >= 12 and has_permission_slip:
 else:
     print("Sorry, you can't join this trip.")
 `,
+  sandboxStarter3:`# not flips a True/False the other way round
+has_excuse = False
+days_overdue = 3
+if days_overdue > 0 and not has_excuse:
+    print("A fine applies.")
+else:
+    print("No fine.")
+`,
   exercises:[
     {
       title:'Ride height checker',
@@ -485,8 +590,50 @@ else:
         {type:'assert', expr:`weather_outfit(20, False) == "T-shirt"`, label:'weather_outfit(20, False) == "T-shirt"'},
         {type:'assert', expr:`weather_outfit(20, True) == "Raincoat"`, label:'weather_outfit(20, True) == "Raincoat"'}
       ]
+    },
+    {
+      title:'Cinema ticket pricing',
+      desc:`Write a function ticket_price(age) that returns 0 for under 5s, 4 for ages 5-15, 8 for ages 16-64,
+        and 5 for 65 and over — chaining several elif blocks together.`,
+      starter:`def ticket_price(age):
+    # TODO: return 0, 4, 8 or 5 depending on age
+    pass`,
+      tests:[
+        {type:'assert', expr:`ticket_price(3) == 0`, label:'ticket_price(3) == 0'},
+        {type:'assert', expr:`ticket_price(10) == 4`, label:'ticket_price(10) == 4'},
+        {type:'assert', expr:`ticket_price(30) == 8`, label:'ticket_price(30) == 8'},
+        {type:'assert', expr:`ticket_price(70) == 5`, label:'ticket_price(70) == 5'}
+      ]
+    },
+    {
+      title:'Sports day final qualifier',
+      desc:`Write a function qualifies_for_final(time_seconds, is_house_captain) that returns True if
+        time_seconds is 15 or under, OR is_house_captain is True (house captains get an automatic place),
+        otherwise False.`,
+      starter:`def qualifies_for_final(time_seconds, is_house_captain):
+    # TODO: return time_seconds <= 15 or is_house_captain
+    pass`,
+      tests:[
+        {type:'assert', expr:`qualifies_for_final(14, False) == True`, label:'qualifies_for_final(14, False) == True'},
+        {type:'assert', expr:`qualifies_for_final(20, True) == True`, label:'qualifies_for_final(20, True) == True'},
+        {type:'assert', expr:`qualifies_for_final(20, False) == False`, label:'qualifies_for_final(20, False) == False'}
+      ]
     }
   ],
+  stretchChallenge:{
+    title:'Library fine checker',
+    desc:`Write a function fine_applies(days_overdue, has_excuse) that returns True only if days_overdue is
+      greater than 0 AND has_excuse is False — using not to flip has_excuse the other way round, combined
+      with and.`,
+    starter:`def fine_applies(days_overdue, has_excuse):
+    # TODO: return days_overdue > 0 and not has_excuse
+    pass`,
+    tests:[
+      {type:'assert', expr:`fine_applies(3, False) == True`, label:'fine_applies(3, False) == True'},
+      {type:'assert', expr:`fine_applies(3, True) == False`, label:'fine_applies(3, True) == False'},
+      {type:'assert', expr:`fine_applies(0, False) == False`, label:'fine_applies(0, False) == False'}
+    ]
+  },
   quiz:[
     {q:'What does Python use instead of curly braces {} to group code inside an if statement?',
      options:['Semicolons','Indentation (spaces)','Brackets ()','Nothing needed'], correct:1,
@@ -547,6 +694,12 @@ for row in range(3):
         line += "🚀"
     print(line)
 `,
+  sandboxStarter3:`# range(start, stop) lets you begin somewhere other than 0
+squares = []
+for i in range(1, 6):
+    squares.append(i * i)
+print(squares)
+`,
   exercises:[
     {
       title:'Countdown list',
@@ -604,8 +757,55 @@ for row in range(3):
         {type:'assert', expr:`sum_up_to(1) == 1`, label:'sum_up_to(1) == 1'},
         {type:'assert', expr:`sum_up_to(10) == 55`, label:'sum_up_to(10) == 55'}
       ]
+    },
+    {
+      title:'Square numbers',
+      desc:`Write a function square_numbers(n) that returns a list of the squares of 1 up to and including n,
+        e.g. square_numbers(3) should return [1, 4, 9].`,
+      starter:`def square_numbers(n):
+    result = []
+    # TODO: use a loop to append i*i for i from 1 to n
+    return result`,
+      tests:[
+        {type:'assert', expr:`square_numbers(5) == [1, 4, 9, 16, 25]`, label:'square_numbers(5) == [1, 4, 9, 16, 25]'},
+        {type:'assert', expr:`square_numbers(1) == [1]`, label:'square_numbers(1) == [1]'},
+        {type:'assert', expr:`square_numbers(3) == [1, 4, 9]`, label:'square_numbers(3) == [1, 4, 9]'}
+      ]
+    },
+    {
+      title:'Countdown by steps',
+      desc:`Write a function countdown_by(start, step) that returns a list counting down from start to (but not
+        below) 1, subtracting step each time, using a while loop, e.g. countdown_by(10, 2) should return
+        [10, 8, 6, 4, 2].`,
+      starter:`def countdown_by(start, step):
+    result = []
+    count = start
+    # TODO: use a while loop to append count, then subtract step, while count > 0
+    return result`,
+      tests:[
+        {type:'assert', expr:`countdown_by(10, 2) == [10, 8, 6, 4, 2]`, label:'countdown_by(10, 2) == [10, 8, 6, 4, 2]'},
+        {type:'assert', expr:`countdown_by(5, 5) == [5]`, label:'countdown_by(5, 5) == [5]'},
+        {type:'assert', expr:`countdown_by(9, 3) == [9, 6, 3]`, label:'countdown_by(9, 3) == [9, 6, 3]'}
+      ]
     }
   ],
+  stretchChallenge:{
+    title:'First multiple over the limit',
+    desc:`Write a function first_multiple_over(n, limit) that uses a while True loop, returning as soon as it
+      finds the first multiple of n greater than limit — e.g. first_multiple_over(7, 50) should return 56
+      (7×8), the first multiple of 7 past 50. Returning immediately exits the loop early, just like break would.`,
+    starter:`def first_multiple_over(n, limit):
+    i = 1
+    while True:
+        candidate = n * i
+        # TODO: if candidate > limit, return it (this is how you'd use break's cousin, an early return)
+        i += 1`,
+    tests:[
+      {type:'assert', expr:`first_multiple_over(7, 50) == 56`, label:'first_multiple_over(7, 50) == 56'},
+      {type:'assert', expr:`first_multiple_over(4, 10) == 12`, label:'first_multiple_over(4, 10) == 12'},
+      {type:'assert', expr:`first_multiple_over(10, 5) == 10`, label:'first_multiple_over(10, 5) == 10'}
+    ]
+  },
   quiz:[
     {q:'What does range(5) produce inside a for loop?',
      options:['1,2,3,4,5','0,1,2,3,4','0,1,2,3,4,5','5 only'], correct:1,
@@ -656,6 +856,10 @@ print("Sorted scores:", sorted(scores, reverse=True))
 scores = [45, 92, 67, 88, 71]
 top_three = sorted(scores, reverse=True)[:3]
 print("Top 3 scores:", top_three)
+`,
+  sandboxStarter3:`# [::-1] is a shorthand slice that reverses a whole list
+order = ["1st", "2nd", "3rd", "4th"]
+print("Reversed:", order[::-1])
 `,
   exercises:[
     {
@@ -712,8 +916,47 @@ print("Top 3 scores:", top_three)
         {type:'assert', expr:`remove_lowest_score([3, 3, 3]) == [3, 3]`, label:'remove_lowest_score([3,3,3]) == [3,3]'},
         {type:'assert', expr:`remove_lowest_score([9]) == []`, label:'remove_lowest_score([9]) == []'}
       ]
+    },
+    {
+      title:'Top N scores',
+      desc:`Write a function top_n_scores(scores, n) that returns the top n scores, highest first, using
+        sorted() and a slice, e.g. top_n_scores([45, 92, 67, 88, 71], 3) should return [92, 88, 71].`,
+      starter:`def top_n_scores(scores, n):
+    # TODO: return sorted(scores, reverse=True)[:n]
+    pass`,
+      tests:[
+        {type:'assert', expr:`top_n_scores([45, 92, 67, 88, 71], 3) == [92, 88, 71]`, label:'top_n_scores([45,92,67,88,71], 3) is correct'},
+        {type:'assert', expr:`top_n_scores([10, 20], 5) == [20, 10]`, label:'top_n_scores([10,20], 5) returns all items when n is larger'},
+        {type:'assert', expr:`top_n_scores([5], 1) == [5]`, label:'top_n_scores([5], 1) == [5]'}
+      ]
+    },
+    {
+      title:'Total points',
+      desc:`Write a function total_points(points) that returns the sum of every value in the list, using the
+        built-in sum() function.`,
+      starter:`def total_points(points):
+    # TODO: return sum(points)
+    pass`,
+      tests:[
+        {type:'assert', expr:`total_points([10, 20, 30]) == 60`, label:'total_points([10,20,30]) == 60'},
+        {type:'assert', expr:`total_points([]) == 0`, label:'total_points([]) == 0'},
+        {type:'assert', expr:`total_points([7]) == 7`, label:'total_points([7]) == 7'}
+      ]
     }
   ],
+  stretchChallenge:{
+    title:'Reverse the leaderboard',
+    desc:`Write a function reverse_list(items) that returns the list reversed, using the [::-1] slicing
+      shorthand from today's concept box — no loop needed at all.`,
+    starter:`def reverse_list(items):
+    # TODO: return items[::-1]
+    pass`,
+    tests:[
+      {type:'assert', expr:`reverse_list([1, 2, 3]) == [3, 2, 1]`, label:'reverse_list([1,2,3]) == [3,2,1]'},
+      {type:'assert', expr:`reverse_list(["a", "b"]) == ["b", "a"]`, label:'reverse_list(["a","b"]) == ["b","a"]'},
+      {type:'assert', expr:`reverse_list([]) == []`, label:'reverse_list([]) == []'}
+    ]
+  },
   quiz:[
     {q:'What is names[0] if names = ["Ada", "Sam", "Lee"]?',
      options:['"Sam"','"Ada"','Error — lists start at 1','"Lee"'], correct:1,
@@ -770,6 +1013,12 @@ raw = "meet,me,at,the,library"
 words = raw.split(",")
 message = " ".join(words)
 print(message)
+`,
+  sandboxStarter3:`# Combine split() and join() with slicing to reverse the order of words
+sentence = "meet me at the library"
+words = sentence.split()
+reversed_sentence = " ".join(words[::-1])
+print(reversed_sentence)
 `,
   exercises:[
     {
@@ -830,8 +1079,58 @@ print(message)
         {type:'assert', expr:`count_vowels("PYTHON") == 1`, label:'count_vowels("PYTHON") == 1'},
         {type:'assert', expr:`count_vowels("bcdfg") == 0`, label:'count_vowels("bcdfg") == 0'}
       ]
+    },
+    {
+      title:'Reverse the words',
+      desc:`Write a function reverse_words(sentence) that returns the sentence with the ORDER of its words
+        reversed (not the letters) — e.g. reverse_words("meet me at the library") should return
+        "library the at me meet". Use .split(), a slice, and " ".join().`,
+      starter:`def reverse_words(sentence):
+    words = sentence.split()
+    # TODO: return " ".join(words[::-1])
+    pass`,
+      tests:[
+        {type:'assert', expr:`reverse_words("meet me at the library") == "library the at me meet"`, label:'reverse_words correctly reverses word order'},
+        {type:'assert', expr:`reverse_words("hello world") == "world hello"`, label:'reverse_words("hello world") == "world hello"'},
+        {type:'assert', expr:`reverse_words("one") == "one"`, label:'reverse_words("one") == "one" (single word unchanged)'}
+      ]
+    },
+    {
+      title:'Caesar decoder',
+      desc:`Write a function caesar_unshift(text, shift) that reverses a Caesar shift — shifting every
+        lowercase letter BACKWARD by shift places (wrapping from 'a' back to 'z'), leaving spaces unchanged.
+        This undoes what caesar_shift did earlier in the week.`,
+      starter:`def caesar_unshift(text, shift):
+    result = ""
+    for ch in text:
+        if ch.isalpha():
+            # TODO: shift ch backward by shift places, wrapping around
+            pass
+        else:
+            result += ch
+    return result`,
+      tests:[
+        {type:'assert', expr:`caesar_unshift("bcd", 1) == "abc"`, label:'caesar_unshift("bcd", 1) == "abc"'},
+        {type:'assert', expr:`caesar_unshift("abc", 3) == "xyz"`, label:'caesar_unshift("abc", 3) == "xyz" (wraps around)'},
+        {type:'assert', expr:`caesar_unshift("jgnnq yqtnf", 2) == "hello world"`, label:'caesar_unshift("jgnnq yqtnf", 2) == "hello world"'}
+      ]
     }
   ],
+  stretchChallenge:{
+    title:'Palindrome checker',
+    desc:`Write a function is_palindrome(text) that returns True if text reads the same forwards and backwards,
+      ignoring case and spaces — e.g. is_palindrome("racecar") and is_palindrome("was it a car or a cat I saw")
+      should both return True. Combine .lower(), .replace(" ", ""), and the [::-1] reversal slice.`,
+    starter:`def is_palindrome(text):
+    cleaned = text.lower().replace(" ", "")
+    # TODO: return True if cleaned reads the same forwards and backwards
+    pass`,
+    tests:[
+      {type:'assert', expr:`is_palindrome("racecar") == True`, label:'is_palindrome("racecar") == True'},
+      {type:'assert', expr:`is_palindrome("was it a car or a cat I saw") == True`, label:'is_palindrome correctly handles spaces and case'},
+      {type:'assert', expr:`is_palindrome("hello") == False`, label:'is_palindrome("hello") == False'}
+    ]
+  },
   quiz:[
     {q:'What does "  hi  ".strip() return?',
      options:['"  hi  "','"hi"','"hi  "','Error'], correct:1,
@@ -896,6 +1195,13 @@ def roll_twice(sides=6):
 
 print("Two dice total:", roll_twice())
 `,
+  sandboxStarter3:`# Default parameter values keep a function flexible without extra arguments every time
+def total_with_handicap(scores, handicap=0):
+    return sum(scores) + handicap
+
+print(total_with_handicap([10, 20, 30]))       # no handicap given, defaults to 0
+print(total_with_handicap([10, 20, 30], 5))    # handicap overridden to 5
+`,
   exercises:[
     {
       title:'Dice roller',
@@ -949,8 +1255,53 @@ def roll_dice(sides=6):
         {type:'assert', expr:`apply_bonus([], 5) == []`, label:'apply_bonus([], 5) == []'},
         {type:'assert', expr:`apply_bonus([0], 10) == [10]`, label:'apply_bonus([0], 10) == [10]'}
       ]
+    },
+    {
+      title:'Total with handicap',
+      desc:`Write a function total_with_handicap(scores, handicap=0) that returns the sum of scores plus
+        handicap, defaulting handicap to 0 if not given.`,
+      starter:`def total_with_handicap(scores, handicap=0):
+    # TODO: return sum(scores) + handicap
+    pass`,
+      tests:[
+        {type:'assert', expr:`total_with_handicap([10, 20, 30]) == 60`, label:'total_with_handicap([10,20,30]) uses the default handicap of 0'},
+        {type:'assert', expr:`total_with_handicap([10, 20, 30], 5) == 65`, label:'total_with_handicap([10,20,30], 5) overrides the default'},
+        {type:'assert', expr:`total_with_handicap([], 100) == 100`, label:'total_with_handicap([], 100) == 100'}
+      ]
+    },
+    {
+      title:'Highest score',
+      desc:`Write a function highest_score(scores) that returns the largest value in the scores list, using
+        the built-in max() function.`,
+      starter:`def highest_score(scores):
+    # TODO: return max(scores)
+    pass`,
+      tests:[
+        {type:'assert', expr:`highest_score([10, 20, 30]) == 30`, label:'highest_score([10,20,30]) == 30'},
+        {type:'assert', expr:`highest_score([5]) == 5`, label:'highest_score([5]) == 5'},
+        {type:'assert', expr:`highest_score([3, 3, 3]) == 3`, label:'highest_score([3,3,3]) == 3'}
+      ]
     }
   ],
+  stretchChallenge:{
+    title:'Score summary',
+    desc:`Write a function score_summary(scores) that returns a tuple of (average, highest) by CALLING your
+      average_score and highest_score functions from earlier this week — functions calling other functions is
+      how real toolkits are built, instead of copy-pasting the same logic twice.`,
+    starter:`def average_score(scores):
+    return round(sum(scores) / len(scores), 1)
+
+def highest_score(scores):
+    return max(scores)
+
+def score_summary(scores):
+    # TODO: return (average_score(scores), highest_score(scores))
+    pass`,
+    tests:[
+      {type:'assert', expr:`score_summary([10, 20, 30]) == (20.0, 30)`, label:'score_summary([10,20,30]) == (20.0, 30)'},
+      {type:'assert', expr:`score_summary([5, 5]) == (5.0, 5)`, label:'score_summary([5,5]) == (5.0, 5)'}
+    ]
+  },
   quiz:[
     {q:'What keyword starts a function definition?',
      options:['func','function','def','define'], correct:2,
@@ -1004,6 +1355,12 @@ print(f"Zoe is in {directory.get('Zoe', 'Not found')}")
 directory = {"Ada": "Year 9", "Sam": "Year 8", "Lee": "Year 10"}
 for name, year in directory.items():
     print(f"{name} is in {year}")
+`,
+  sandboxStarter3:`# Adding or updating a key is as simple as directory[key] = value
+directory = {"Ada": "Year 9"}
+directory["Sam"] = "Year 8"    # adds a new key
+directory["Ada"] = "Year 10"   # updates an existing key
+print(directory)
 `,
   exercises:[
     {
@@ -1060,8 +1417,52 @@ else:
       tests:[
         {type:'output', contains:['Zoe scored no score recorded'], label:'Program runs and prints "Zoe scored no score recorded"'}
       ]
+    },
+    {
+      title:'Update the directory',
+      desc:`Write a function update_year(directory, name, year) that adds name (or updates it if it already
+        exists) to directory with the value year, then returns directory.`,
+      starter:`def update_year(directory, name, year):
+    # TODO: set directory[name] = year, then return directory
+    pass`,
+      tests:[
+        {type:'assert', expr:`update_year({"Ada":"Year 9"}, "Sam", "Year 8") == {"Ada":"Year 9","Sam":"Year 8"}`, label:'Adds a new name correctly'},
+        {type:'assert', expr:`update_year({"Ada":"Year 9"}, "Ada", "Year 10") == {"Ada":"Year 10"}`, label:'Updates an existing name correctly'},
+        {type:'assert', expr:`update_year({}, "Zoe", "Year 7") == {"Zoe":"Year 7"}`, label:'Works starting from an empty directory'}
+      ]
+    },
+    {
+      title:'Bug hunt: the exam pass checker',
+      desc:`This code has TWO bugs — a typo causing a NameError, and mixing text with a number causing a
+        TypeError. Fix both so the program runs with no errors and prints "Pass: 72".`,
+      starter:`score = 72
+pass_mark = 70
+if score >= pass_mark:
+    print("Pass: " + score)
+else:
+    print("Fail: " + scor)`,
+      tests:[
+        {type:'output', contains:['Pass: 72'], label:'Program runs and prints "Pass: 72"'}
+      ]
     }
   ],
+  stretchChallenge:{
+    title:'Most common pet',
+    desc:`Write a function most_common_pet(pets) that returns whichever animal type appears most often in the
+      pets list. Build a counts dictionary the same way count_pets did earlier this week, then use
+      max(counts, key=counts.get) to find the key with the highest count.`,
+    starter:`def most_common_pet(pets):
+    counts = {}
+    for pet in pets:
+        counts[pet] = counts.get(pet, 0) + 1
+    # TODO: return max(counts, key=counts.get)
+    pass`,
+    tests:[
+      {type:'assert', expr:`most_common_pet(["cat","dog","dog"]) == "dog"`, label:'most_common_pet(["cat","dog","dog"]) == "dog" (not just the first item)'},
+      {type:'assert', expr:`most_common_pet(["fish"]) == "fish"`, label:'most_common_pet(["fish"]) == "fish"'},
+      {type:'assert', expr:`most_common_pet(["dog","dog","cat","cat","cat"]) == "cat"`, label:'most_common_pet(["dog","dog","cat","cat","cat"]) == "cat" (not just the first item)'}
+    ]
+  },
   quiz:[
     {q:'How do you create a dictionary linking "Ada" to "Year 9"?',
      options:[`{"Ada", "Year 9"}`, `["Ada", "Year 9"]`, `{"Ada": "Year 9"}`, `("Ada": "Year 9")`], correct:2,
