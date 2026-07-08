@@ -1752,6 +1752,31 @@ print(hours)`,
         {type:'output', contains:["['Maya', 'Sam']"], label:"Prints ['Maya', 'Sam']"},
         {type:'output', contains:["('8am', '5pm')"], label:"Prints the corrected hours tuple ('8am', '5pm')"}
       ]
+    },
+    {
+      title:'Unpack the timetable slot',
+      desc:`A tuple <code>slot</code> holds <code>("Maths", "Room 12", "9:00am")</code>. Unpack it into three
+        variables called <code>subject</code>, <code>room</code>, and <code>time</code>, then print:
+        <code>Maths is in Room 12 at 9:00am</code>`,
+      starter:`slot = ("Maths", "Room 12", "9:00am")
+# TODO: unpack slot into subject, room, time, then print the sentence
+`,
+      tests:[
+        {type:'output', contains:['Maths is in Room 12 at 9:00am'], label:'Prints the unpacked sentence'}
+      ]
+    },
+    {
+      title:'Students in exactly one club',
+      desc:`Two sets: <code>chess = {"Ada","Alan","Grace","Tom"}</code> and
+        <code>book_club = {"Grace","Tom","Priya"}</code>. Print the <strong>sorted list</strong> of students who are
+        in exactly one of the two clubs (not both), using <code>sorted(chess ^ book_club)</code>.`,
+      starter:`chess = {"Ada","Alan","Grace","Tom"}
+book_club = {"Grace","Tom","Priya"}
+# TODO: print sorted(chess ^ book_club)
+`,
+      tests:[
+        {type:'output', contains:["['Ada', 'Alan', 'Priya']"], label:"Prints ['Ada', 'Alan', 'Priya']"}
+      ]
     }
   ],
   quiz:[
@@ -1767,7 +1792,32 @@ print(hours)`,
     {q:'If a = {1,2,3} and b = {2,3,4}, what does a & b give you?',
      options:['{1,2,3,4}','{2,3}','{1,4}','{}'], correct:1,
      explain:'& is the intersection operator — it returns only the values that appear in BOTH sets, here {2,3}.'}
-  ]
+  ],
+  sandboxStarter3:`# The '-' operator finds items in one set but not the other
+all_books = {"Fantasy", "Mystery", "Sci-Fi", "Comedy", "Poetry"}
+borrowed = {"Mystery", "Poetry"}
+still_on_shelf = all_books - borrowed
+print(sorted(still_on_shelf))
+
+# The '^' operator finds items in EITHER set, but not both (symmetric difference)
+chess = {"Ada", "Alan", "Grace"}
+book_club = {"Grace", "Tom"}
+print(sorted(chess ^ book_club))
+`,
+  stretchChallenge:{
+    title:'Find the missing genres',
+    desc:`Students requested these genres: <code>requested = {"Mystery","Romance","Sci-Fi"}</code>. The library
+      currently has: <code>available = {"Fantasy","Mystery","Sci-Fi","Comedy"}</code>. Print the
+      <strong>sorted list</strong> of requested genres that aren't available yet, using
+      <code>sorted(requested - available)</code>.`,
+    starter:`requested = {"Mystery","Romance","Sci-Fi"}
+available = {"Fantasy","Mystery","Sci-Fi","Comedy"}
+# TODO: print sorted(requested - available)
+`,
+    tests:[
+      {type:'output', contains:["['Romance']"], label:"Prints ['Romance']"}
+    ]
+  }
 }
 
 ,
@@ -1878,6 +1928,33 @@ with open("log.txt", "r") as f:
         {type:'output', contains:['First entry'], label:'Log still contains the first entry'},
         {type:'output', contains:['Second entry'], label:'Log contains the second entry'}
       ]
+    },
+    {
+      title:'Save and list the reading corner books',
+      desc:`Write each of these book titles to <code>books.txt</code>, one per line, then loop directly over the
+        open file object (<code>for line in f:</code>) and print each title with a leading <code>"- "</code>,
+        after removing the newline with <code>.strip()</code>.`,
+      starter:`book_titles = ["Charlie and the Chocolate Factory", "Holes", "Wonder"]
+# TODO: write each title to books.txt on its own line, then loop over the file and print each with "- " in front
+`,
+      tests:[
+        {type:'output', contains:['- Charlie and the Chocolate Factory'], label:'Shows the first book with a dash'},
+        {type:'output', contains:['- Holes'], label:'Shows the second book with a dash'},
+        {type:'output', contains:['- Wonder'], label:'Shows the third book with a dash'}
+      ]
+    },
+    {
+      title:'Merge two lesson notes',
+      desc:`Save <code>morning_notes</code> to <code>notes.txt</code> (mode <code>"w"</code>), then append
+        <code>afternoon_notes</code> to the same file (mode <code>"a"</code>). Finally, read the whole file back
+        and print how many lines it now has.`,
+      starter:`morning_notes = ["Bring wellies for the nature walk", "PE kit needed on Tuesday"]
+afternoon_notes = ["Library books due back Friday"]
+# TODO: write morning_notes to notes.txt, append afternoon_notes, then print the total number of lines
+`,
+      tests:[
+        {type:'output', contains:['3'], label:'Prints the correct total number of lines (3)'}
+      ]
     }
   ],
   quiz:[
@@ -1893,7 +1970,27 @@ with open("log.txt", "r") as f:
     {q:'Which mode adds new content to a file without erasing what is already there?',
      options:['"r"','"w"','"a"','"n"'], correct:2,
      explain:'"a" (append) mode adds new content to the end of the file, keeping the existing content intact.'}
-  ]
+  ],
+  sandboxStarter3:`# You can loop directly over a file object, line by line
+with open("notices.txt", "w") as f:
+    f.writelines(["Notice A\\n", "Notice B\\n", "Notice C\\n"])
+
+with open("notices.txt", "r") as f:
+    for line in f:
+        print("->", line.strip())
+`,
+  stretchChallenge:{
+    title:'Print the shopping list backwards',
+    desc:`Write each of these supply items to <code>supplies.txt</code>, one per line, then read all the lines
+      back and print them in <strong>reverse order</strong> (last item first) using slicing (<code>lines[::-1]</code>),
+      with each item's newline removed.`,
+    starter:`items = ["Pencils", "Glue sticks", "Coloured paper"]
+# TODO: write each item to supplies.txt on its own line, then print the lines in reverse order
+`,
+    tests:[
+      {type:'output', contains:['Coloured paper\nGlue sticks\nPencils'], label:'Prints the items in reverse order'}
+    ]
+  }
 },
 
 /* ================= WEEK 3 ================= */
@@ -2012,6 +2109,38 @@ print(total)`,
       tests:[
         {type:'output', contains:['161'], label:'Prints the correct total (161)'}
       ]
+    },
+    {
+      title:'Save and describe the snack orders',
+      desc:`Write these snack orders to <code>snacks.csv</code> with a header row <code>Name,Snack,Price</code>
+        (use <code>writer.writerows(snacks)</code> to write them all at once), then read the file back with
+        <code>csv.DictReader</code> and print, for each row: <code>Ada ordered Crisps for £1.20</code>.`,
+      starter:`import csv
+
+snacks = [("Ada", "Crisps", "1.20"), ("Sam", "Popcorn", "1.50")]
+# TODO: write snacks.csv with a header row then all the snack rows, then read it back with DictReader
+# and print "Name ordered Snack for £Price" for each row
+`,
+      tests:[
+        {type:'output', contains:['Ada ordered Crisps for £1.20'], label:"Prints Ada's snack sentence"},
+        {type:'output', contains:['Sam ordered Popcorn for £1.50'], label:"Prints Sam's snack sentence"}
+      ]
+    },
+    {
+      title:'Find the expensive orders',
+      desc:`The code below creates <code>orders3.csv</code> for you. Use <code>csv.DictReader</code> to collect the
+        name of everyone whose Price (converted to a float) is greater than <code>3.00</code> into a list called
+        <code>expensive</code>, then print <code>sorted(expensive)</code>.`,
+      starter:`import csv
+with open("orders3.csv", "w", newline="") as f:
+    f.write("Name,Meal,Price\\nAda,Pizza,3.50\\nSam,Pasta,2.20\\nTom,Pizza,3.50\\nPriya,Salad,2.80\\n")
+
+expensive = []
+# TODO: fill expensive with the names whose Price is greater than 3.00, then print sorted(expensive)
+`,
+      tests:[
+        {type:'output', contains:["['Ada', 'Tom']"], label:"Prints ['Ada', 'Tom']"}
+      ]
     }
   ],
   quiz:[
@@ -2027,7 +2156,39 @@ print(total)`,
     {q:'Why do you usually need int() or float() when working with numbers from a CSV file?',
      options:['CSV files cannot store numbers','Every value read from a CSV is text, even numbers','It makes the file smaller','It is not actually necessary'], correct:1,
      explain:'Every value read from a CSV file is a string, even if it looks like a number, so you must convert it before doing maths.'}
-  ]
+  ],
+  sandboxStarter3:`import csv
+
+# writerows() writes several rows in one go, instead of one writerow() call each
+drinks = [("Ada", "Juice", "1.00"), ("Sam", "Water", "0.80")]
+
+with open("drinks.csv", "w", newline="") as f:
+    writer = csv.writer(f)
+    writer.writerow(["Name", "Drink", "Price"])
+    writer.writerows(drinks)
+
+with open("drinks.csv", "r", newline="") as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        print(row["Name"], "chose", row["Drink"])
+`,
+  stretchChallenge:{
+    title:'Find the most popular meal',
+    desc:`The code below creates <code>meals.csv</code> for you. Use <code>csv.DictReader</code> and a dictionary to
+      count how many times each meal appears, then print the name of the <strong>most popular</strong> meal using
+      <code>max(counts, key=counts.get)</code>.`,
+    starter:`import csv
+with open("meals.csv", "w", newline="") as f:
+    f.write("Name,Meal\\nAda,Burger\\nSam,Salad\\nTom,Burger\\nPriya,Burger\\n")
+
+counts = {}
+# TODO: use DictReader to count how many times each meal appears in counts,
+# then print the most popular meal
+`,
+    tests:[
+      {type:'output', contains:['Burger'], label:'Prints the most popular meal (Burger)'}
+    ]
+  }
 },
 
 /* ================= WEEK 4 ================= */
@@ -2141,6 +2302,34 @@ print(total)`,
         {type:'output', contains:['Skipping invalid value: oops'], label:'Prints the skip message for "oops"'},
         {type:'output', contains:['70'], label:'Prints the correct total (70)'}
       ]
+    },
+    {
+      title:'Validate the entry fee',
+      desc:`Try converting <code>fee_text</code> to a float. If it fails with a <code>ValueError</code>, print
+        <code>Invalid fee entered</code>. If it succeeds, use an <code>else</code> clause to print
+        <code>Entry fee accepted: £5.50</code> (use an f-string with <code>{fee:.2f}</code>).`,
+      starter:`fee_text = "5.50"
+# TODO: try converting fee_text to float; catch ValueError and print "Invalid fee entered";
+# otherwise print "Entry fee accepted: £{fee:.2f}"
+`,
+      tests:[
+        {type:'output', contains:['Entry fee accepted: £5.50'], label:'Prints the accepted-fee message'}
+      ]
+    },
+    {
+      title:'Validate the team size',
+      desc:`Call <code>validate_team_size(1)</code> inside a try/except block. Since 1 is fewer than the allowed
+        minimum, it will raise a <code>ValueError</code> — catch it and print the error's message.`,
+      starter:`def validate_team_size(n):
+    if n < 2 or n > 6:
+        raise ValueError("Team size must be between 2 and 6")
+    return f"Team of {n} confirmed"
+
+# TODO: call validate_team_size(1) inside a try/except ValueError, printing the error message if it fails
+`,
+      tests:[
+        {type:'output', contains:['Team size must be between 2 and 6'], label:"Prints the validation error's message"}
+      ]
     }
   ],
   quiz:[
@@ -2156,7 +2345,37 @@ print(total)`,
     {q:'How do you deliberately trigger your own error with a custom message?',
      options:['error("message")','except("message")','raise ValueError("message")','stop("message")'], correct:2,
      explain:'raise, followed by an exception type and a message, lets you deliberately signal that something went wrong.'}
-  ]
+  ],
+  sandboxStarter3:`# You can catch several error types in one except clause, using a tuple
+def safe_divide(a, b):
+    try:
+        return a / b
+    except (ZeroDivisionError, TypeError) as e:
+        print("Could not divide:", e)
+        return None
+
+print(safe_divide(10, 2))
+print(safe_divide(10, 0))
+print(safe_divide(10, "two"))
+`,
+  stretchChallenge:{
+    title:'Validate a batch of ticket requests',
+    desc:`For each request in <code>requests</code>, try converting it to a whole number. If it's not a valid
+      number, or if it's greater than <code>10</code> (raise your own <code>ValueError</code> for this case),
+      print <code>Skipping: &lt;request&gt;</code> and move on. Otherwise add it to the <code>valid</code> list.
+      Finally, print <code>sum(valid)</code>.`,
+    starter:`requests = ["5", "12", "oops", "3"]
+valid = []
+# TODO: for each request, try converting to int and check it's not over 10 (raise ValueError if it is);
+# on any ValueError print "Skipping:" and the request; otherwise append to valid.
+# Finally print sum(valid)
+`,
+    tests:[
+      {type:'output', contains:['Skipping: 12'], label:'Skips the too-high request (12)'},
+      {type:'output', contains:['Skipping: oops'], label:'Skips the non-numeric request (oops)'},
+      {type:'output', contains:['8'], label:'Prints the correct total of valid tickets (8)'}
+    ]
+  }
 },
 
 /* ================= WEEK 5 ================= */
@@ -2268,6 +2487,36 @@ print(round(area, 2))`,
       tests:[
         {type:'assert', expr:`round(area,2) == 78.54`, label:'area rounds to 78.54'}
       ]
+    },
+    {
+      title:'Pick two runners-up',
+      desc:`Use <code>random.sample(names, 2)</code> to pick <strong>two distinct</strong> runners-up from
+        <code>names</code>, store the result in a variable called <code>runner_ups</code>, then print it.`,
+      starter:`import random
+
+names = ["Ada", "Sam", "Tom", "Priya", "Grace"]
+# TODO: pick 2 distinct runner-ups using random.sample(names, 2), store as runner_ups, then print it
+`,
+      tests:[
+        {type:'assert', expr:`len(runner_ups) == 2`, label:'runner_ups has exactly 2 names'},
+        {type:'assert', expr:`all(r in names for r in runner_ups)`, label:'both names come from the names list'},
+        {type:'assert', expr:`runner_ups[0] != runner_ups[1]`, label:'the two runner-ups are different people'}
+      ]
+    },
+    {
+      title:'Count down in weeks',
+      desc:`Using <code>from datetime import date</code>, work out how many <strong>whole weeks</strong> there are
+        between <code>date(2026, 3, 1)</code> and the heats night on <code>date(2026, 3, 22)</code>. Store the
+        result in <code>weeks_left</code> (use <code>// 7</code>) and print it.`,
+      starter:`from datetime import date
+
+quiz_night = date(2026, 3, 1)
+heats_night = date(2026, 3, 22)
+# TODO: work out how many whole weeks are between quiz_night and heats_night, store in weeks_left, then print it
+`,
+      tests:[
+        {type:'assert', expr:`weeks_left == 3`, label:'weeks_left == 3'}
+      ]
     }
   ],
   quiz:[
@@ -2283,7 +2532,31 @@ print(round(area, 2))`,
     {q:'Why is it useful to group related functions together into a module or toolkit?',
      options:['It makes your program run faster','Python requires it','It makes code easier to find, test, and reuse','It uses less memory'], correct:2,
      explain:'Grouping related functions together makes them easier to locate, test once, and reuse instead of rewriting logic repeatedly.'}
-  ]
+  ],
+  sandboxStarter3:`import random
+import math
+
+# random.sample picks several DISTINCT items at once, unlike choice which picks just one
+names = ["Ada", "Sam", "Tom", "Priya", "Grace"]
+pair = random.sample(names, 2)
+print("Quiz pair:", pair)
+
+print(math.ceil(7.2))   # rounds up to 8
+print(math.floor(7.8))  # rounds down to 7
+`,
+  stretchChallenge:{
+    title:'Find the average quiz score',
+    desc:`Using <code>import statistics as stats</code>, find the mean of <code>scores</code> and print it rounded
+      to 2 decimal places with <code>round(...)</code>.`,
+    starter:`import statistics as stats
+
+scores = [12, 15, 9, 18, 6]
+# TODO: find the mean of scores using stats.mean(), then print it rounded to 2 decimal places
+`,
+    tests:[
+      {type:'output', contains:['12'], label:'Prints the correct average score (12)'}
+    ]
+  }
 }
 
 ,
@@ -2458,6 +2731,58 @@ print(club.member_count())`,
       tests:[
         {type:'assert', expr:`club.member_count() == 1`, label:'club.member_count() == 1'}
       ]
+    },
+    {
+      title:'Add a remove_member method',
+      desc:`Finish the <code>remove_member(self, student)</code> method so it removes <code>student</code> from
+        the club's members list if they're in it.`,
+      starter:`class Club:
+    def __init__(self, name):
+        self.name = name
+        self.members = []
+
+    def add_member(self, student):
+        self.members.append(student)
+
+    def remove_member(self, student):
+        # TODO: remove student from self.members if they're in it
+        pass
+
+    def member_count(self):
+        return len(self.members)
+
+club = Club("Book Club")
+club.add_member("Priya")
+club.add_member("Grace")
+club.remove_member("Priya")
+print(club.member_count())`,
+      tests:[
+        {type:'output', contains:['1'], label:'Prints the correct member count after removal (1)'}
+      ]
+    },
+    {
+      title:'Add a summary method',
+      desc:`Finish the <code>summary(self)</code> method so it returns
+        <code>"&lt;name&gt; has &lt;count&gt; members"</code>, e.g. <code>Art Club has 2 members</code>.`,
+      starter:`class Club:
+    def __init__(self, name):
+        self.name = name
+        self.members = []
+
+    def add_member(self, student):
+        self.members.append(student)
+
+    def summary(self):
+        # TODO: return f"{self.name} has {len(self.members)} members"
+        pass
+
+club = Club("Art Club")
+club.add_member("Tom")
+club.add_member("Priya")
+print(club.summary())`,
+      tests:[
+        {type:'output', contains:['Art Club has 2 members'], label:'Prints "Art Club has 2 members"'}
+      ]
     }
   ],
   quiz:[
@@ -2473,7 +2798,54 @@ print(club.member_count())`,
     {q:'What is the process of creating an object from a class called?',
      options:['Declaration','Importing','Instantiation','Inheritance'], correct:2,
      explain:'Creating an object from a class blueprint is called instantiation.'}
-  ]
+  ],
+  sandboxStarter3:`class Club:
+    def __init__(self, name):
+        self.name = name
+        self.members = []
+
+    def add_member(self, student):
+        self.members.append(student)
+
+    def remove_member(self, student):
+        if student in self.members:
+            self.members.remove(student)
+
+    def summary(self):
+        return f"{self.name}: {len(self.members)} members"
+
+club = Club("Drama Club")
+club.add_member("Ada")
+club.add_member("Sam")
+club.remove_member("Ada")
+print(club.summary())
+`,
+  stretchChallenge:{
+    title:'Track the youngest member',
+    desc:`Members are now stored as <code>(name, age)</code> tuples. Finish the <code>youngest(self)</code> method
+      so it returns the <strong>name</strong> of the member with the smallest age, using
+      <code>min(self.members, key=lambda m: m[1])[0]</code>.`,
+    starter:`class Club:
+    def __init__(self, name):
+        self.name = name
+        self.members = []
+
+    def add_member(self, name, age):
+        self.members.append((name, age))
+
+    def youngest(self):
+        # TODO: return the name of the member with the smallest age
+        pass
+
+club = Club("Chess Club")
+club.add_member("Ada", 13)
+club.add_member("Sam", 11)
+club.add_member("Tom", 14)
+print(club.youngest())`,
+    tests:[
+      {type:'output', contains:['Sam'], label:'Prints the youngest member (Sam)'}
+    ]
+  }
 }
 
 ,
@@ -2661,6 +3033,58 @@ print(club.member_count())`,
       tests:[
         {type:'assert', expr:`club.member_count() == 1`, label:'club.member_count() == 1'}
       ]
+    },
+    {
+      title:'Create an ArtClub subclass',
+      desc:`Using the given <code>Club</code> and <code>ArtClub</code> classes, create an ArtClub called
+        "Art Club" with medium "painting", then print <code>art.describe()</code>. Notice ArtClub
+        <strong>overrides</strong> describe() with its own version.`,
+      starter:`class Club:
+    def __init__(self, name):
+        self.name = name
+        self.members = []
+    def add_member(self, student):
+        self.members.append(student)
+    def member_count(self):
+        return len(self.members)
+    def describe(self):
+        return f"{self.name} is a club"
+
+class ArtClub(Club):
+    def __init__(self, name, medium):
+        super().__init__(name)
+        self.medium = medium
+    def describe(self):
+        return f"{self.name} focuses on {self.medium}"
+
+# TODO: create an ArtClub called "Art Club" with medium "painting", store it as "art", then print art.describe()
+`,
+      tests:[
+        {type:'output', contains:['Art Club focuses on painting'], label:'Prints "Art Club focuses on painting"'}
+      ]
+    },
+    {
+      title:'Reject a negative deposit',
+      desc:`Finish the <code>deposit(self, amount)</code> method so it only adds <code>amount</code> to
+        <code>_balance</code> when <code>amount</code> is positive — a negative deposit should do nothing.`,
+      starter:`class BankAccount:
+    def __init__(self, balance):
+        self._balance = balance
+
+    def deposit(self, amount):
+        # TODO: only add amount to self._balance if amount > 0
+        pass
+
+    def get_balance(self):
+        return self._balance
+
+account = BankAccount(50)
+account.deposit(-20)  # should be rejected
+account.deposit(10)   # should succeed
+print(account.get_balance())`,
+      tests:[
+        {type:'assert', expr:`account.get_balance() == 60`, label:'account.get_balance() == 60'}
+      ]
     }
   ],
   quiz:[
@@ -2676,7 +3100,58 @@ print(club.member_count())`,
     {q:'If SportsClub inherits from Club, can a SportsClub object use methods defined only in Club?',
      options:['No, only its own methods','Yes, inherited methods work exactly as if SportsClub defined them itself','Only if you copy and paste the code','Only static methods'], correct:1,
      explain:'Inheritance means a subclass automatically gets every method (and attribute) the parent class defines.'}
-  ]
+  ],
+  sandboxStarter3:`class Club:
+    def __init__(self, name):
+        self.name = name
+        self.members = []
+    def add_member(self, student):
+        self.members.append(student)
+    def member_count(self):
+        return len(self.members)
+    def describe(self):
+        return f"{self.name} is a club"
+
+class ArtClub(Club):
+    def __init__(self, name, medium):
+        super().__init__(name)
+        self.medium = medium
+    def describe(self):  # overriding the parent's method with its own version
+        return f"{self.name} focuses on {self.medium}"
+
+art = ArtClub("Art Club", "painting")
+art.add_member("Tom")
+print(art.describe())      # uses ArtClub's own version, not Club's
+print(art.member_count())  # still inherited from Club
+`,
+  stretchChallenge:{
+    title:'Apply interest to a savings account',
+    desc:`<code>SavingsAccount</code> inherits from <code>BankAccount</code> and adds an interest <code>rate</code>.
+      Finish <code>apply_interest(self)</code> so it adds <code>self._balance * self.rate</code> to the balance.`,
+    starter:`class BankAccount:
+    def __init__(self, balance):
+        self._balance = balance
+    def deposit(self, amount):
+        if amount > 0:
+            self._balance += amount
+    def get_balance(self):
+        return self._balance
+
+class SavingsAccount(BankAccount):
+    def __init__(self, balance, rate):
+        super().__init__(balance)
+        self.rate = rate
+    def apply_interest(self):
+        # TODO: add self._balance * self.rate to self._balance
+        pass
+
+account = SavingsAccount(100, 0.05)
+account.apply_interest()
+print(account.get_balance())`,
+    tests:[
+      {type:'assert', expr:`account.get_balance() == 105.0`, label:'account.get_balance() == 105.0'}
+    ]
+  }
 }
 
 ,
@@ -2790,6 +3265,35 @@ print(data_text["name"])  # BUG: data_text is still just a string here, not pars
       tests:[
         {type:'output', contains:['Priya'], label:'Prints Priya'}
       ]
+    },
+    {
+      title:'Save and reload a class register',
+      desc:`Write <code>register</code> to a file called <code>register.json</code> using <code>json.dump()</code>,
+        then read it back with <code>json.load()</code> and print its <code>"students"</code> list.`,
+      starter:`import json
+
+register = {"class": "9A", "students": ["Ada", "Sam", "Tom"]}
+# TODO: write register to register.json, read it back, then print the "students" list
+`,
+      tests:[
+        {type:'output', contains:["['Ada', 'Sam', 'Tom']"], label:"Prints ['Ada', 'Sam', 'Tom']"}
+      ]
+    },
+    {
+      title:'Find everyone in Year 9',
+      desc:`Loop through the <code>people</code> list, collect the names of everyone whose <code>"year"</code> is
+        <code>9</code> into a list called <code>year9</code>, then print <code>sorted(year9)</code>.`,
+      starter:`people = [
+    {"name": "Ada", "year": 9},
+    {"name": "Sam", "year": 8},
+    {"name": "Tom", "year": 9}
+]
+year9 = []
+# TODO: fill year9 with the names of everyone whose "year" is 9, then print sorted(year9)
+`,
+      tests:[
+        {type:'output', contains:["['Ada', 'Tom']"], label:"Prints ['Ada', 'Tom']"}
+      ]
     }
   ],
   quiz:[
@@ -2805,7 +3309,37 @@ print(data_text["name"])  # BUG: data_text is still just a string here, not pars
     {q:'What must you do before you can use dictionary-style access (like data["name"]) on JSON text?',
      options:['Nothing, it works immediately','Parse it first with json.loads()','Convert it to a list','Save it to a file first'], correct:1,
      explain:'Raw JSON text is just a string until you parse it with json.loads() into an actual Python dict or list.'}
-  ]
+  ],
+  sandboxStarter3:`import json
+
+student = {"name": "Ada", "year": 9, "clubs": ["Chess", "Art"]}
+
+# indent= makes the JSON text much easier for a human to read
+pretty = json.dumps(student, indent=2)
+print(pretty)
+
+# You can update a value like any normal dict, then convert back to JSON
+student["year"] = 10
+print(json.dumps(student))
+`,
+  stretchChallenge:{
+    title:'Find the most popular event',
+    desc:`Loop through <code>bookings</code> and use a dictionary to count how many times each event appears,
+      then print the name of the <strong>most popular</strong> event using
+      <code>max(counts, key=counts.get)</code>.`,
+    starter:`bookings = [
+    {"student": "Ada", "event": "Coding"},
+    {"student": "Sam", "event": "Drama"},
+    {"student": "Tom", "event": "Coding"},
+    {"student": "Priya", "event": "Coding"}
+]
+counts = {}
+# TODO: count how many times each event appears in counts, then print the most popular event
+`,
+    tests:[
+      {type:'output', contains:['Coding'], label:'Prints the most popular event (Coding)'}
+    ]
+  }
 }
 
 ,
@@ -2928,6 +3462,37 @@ print(factorial(6))`,
       tests:[
         {type:'assert', expr:`factorial(6) == 720`, label:'factorial(6) == 720'}
       ]
+    },
+    {
+      title:'Write a sum-to-n function',
+      desc:`Write <code>sum_to_n(n)</code> recursively: the base case returns 0 when <code>n &lt;= 0</code>,
+        otherwise it returns <code>n</code> plus <code>sum_to_n(n - 1)</code>. Print <code>sum_to_n(5)</code>.`,
+      starter:`def sum_to_n(n):
+    # TODO: base case - return 0 if n <= 0
+    # TODO: recursive case - return n + sum_to_n(n - 1)
+    pass
+
+print(sum_to_n(5))`,
+      tests:[
+        {type:'assert', expr:`sum_to_n(5) == 15`, label:'sum_to_n(5) == 15'},
+        {type:'assert', expr:`sum_to_n(1) == 1`, label:'sum_to_n(1) == 1'}
+      ]
+    },
+    {
+      title:'Reverse a string recursively',
+      desc:`Write <code>reverse_string(s)</code> recursively: the base case returns <code>s</code> itself when its
+        length is 1 or less, otherwise it returns <code>reverse_string(s[1:]) + s[0]</code>. Print
+        <code>reverse_string("hello")</code>.`,
+      starter:`def reverse_string(s):
+    # TODO: base case - return s if len(s) <= 1
+    # TODO: recursive case - return reverse_string(s[1:]) + s[0]
+    pass
+
+print(reverse_string("hello"))`,
+      tests:[
+        {type:'assert', expr:`reverse_string("hello") == "olleh"`, label:'reverse_string("hello") == "olleh"'},
+        {type:'assert', expr:`reverse_string("a") == "a"`, label:'reverse_string("a") == "a"'}
+      ]
     }
   ],
   quiz:[
@@ -2943,7 +3508,36 @@ print(factorial(6))`,
     {q:'In deep_sum(data), why do you check "if item is a list" before adding it?',
      options:['To skip lists entirely','To recursively add up the numbers inside that nested list instead of trying to add the list itself','Because lists cannot contain numbers','It is not actually necessary'], correct:1,
      explain:'A nested list is not a number itself - you need to recursively sum what is inside it before adding that to the running total.'}
-  ]
+  ],
+  sandboxStarter3:`def sum_to_n(n):
+    if n <= 0:
+        return 0
+    return n + sum_to_n(n - 1)
+
+print(sum_to_n(5))   # 5+4+3+2+1 = 15
+
+def reverse_string(s):
+    if len(s) <= 1:
+        return s
+    return reverse_string(s[1:]) + s[0]
+
+print(reverse_string("hello"))
+`,
+  stretchChallenge:{
+    title:'Write a recursive power function',
+    desc:`Write <code>pow_recursive(base, exp)</code>: the base case returns 1 when <code>exp == 0</code>,
+      otherwise it returns <code>base * pow_recursive(base, exp - 1)</code>. Print
+      <code>pow_recursive(2, 5)</code>.`,
+    starter:`def pow_recursive(base, exp):
+    # TODO: base case - return 1 if exp == 0
+    # TODO: recursive case - return base * pow_recursive(base, exp - 1)
+    pass
+
+print(pow_recursive(2, 5))`,
+    tests:[
+      {type:'assert', expr:`pow_recursive(2, 5) == 32`, label:'pow_recursive(2, 5) == 32'}
+    ]
+  }
 }
 
 ]; // end INTERMEDIATE_WEEKS (all 9 weeks complete)
