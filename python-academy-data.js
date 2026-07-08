@@ -3896,6 +3896,37 @@ print(count_linear_search([10, 20, 30, 40], 40))`,
       tests:[
         {type:'assert', expr:`count_linear_search([10, 20, 30, 40], 40) == 4`, label:'count_linear_search([10,20,30,40], 40) == 4'}
       ]
+    },
+    {
+      title:'Count steps to find a duplicate (the slow way)',
+      desc:`Write <code>has_duplicate_slow(data)</code>: using two nested loops (compare every item to every item
+        that comes after it), return <code>(True, steps)</code> as soon as a duplicate is found, counting one step
+        per comparison. If none is found, return <code>(False, steps)</code>.`,
+      starter:`def has_duplicate_slow(data):
+    # TODO: use two nested loops to find a duplicate, counting one step per comparison;
+    # return (True, steps) as soon as a match is found, otherwise (False, steps)
+    pass
+
+print(has_duplicate_slow([1, 2, 3, 2, 5]))`,
+      tests:[
+        {type:'assert', expr:`has_duplicate_slow([1, 2, 3, 2, 5]) == (True, 6)`, label:'has_duplicate_slow([1,2,3,2,5]) == (True, 6)'}
+      ]
+    },
+    {
+      title:'Count steps with a smarter check',
+      desc:`Write <code>has_duplicate_fast(data)</code>: loop through <code>data</code> once, keeping a
+        <code>set</code> of items already <code>seen</code>. Count one step per item. Return
+        <code>(True, steps)</code> as soon as an item is already in <code>seen</code>, otherwise
+        <code>(False, steps)</code> at the end.`,
+      starter:`def has_duplicate_fast(data):
+    # TODO: loop through data once, tracking seen items in a set, counting one step per item;
+    # return (True, steps) as soon as an item is already in seen, otherwise (False, steps)
+    pass
+
+print(has_duplicate_fast([1, 2, 3, 2, 5]))`,
+      tests:[
+        {type:'assert', expr:`has_duplicate_fast([1, 2, 3, 2, 5]) == (True, 4)`, label:'has_duplicate_fast([1,2,3,2,5]) == (True, 4)'}
+      ]
     }
   ],
   quiz:[
@@ -3911,7 +3942,53 @@ print(count_linear_search([10, 20, 30, 40], 40))`,
     {q:'Why do two nested loops over the same list tend to "not scale" as the list grows?',
      options:['They use more variable names','The number of pairs to check grows much faster than the list size itself','Python runs nested loops slower on purpose','They always crash on large lists'], correct:1,
      explain:'As the list grows, the number of pairs grows roughly with the square of the size, far outpacing the size of the list itself.'}
-  ]
+  ],
+  sandboxStarter3:`def has_duplicate_slow(data):
+    steps = 0
+    for i in range(len(data)):
+        for j in range(i + 1, len(data)):
+            steps += 1
+            if data[i] == data[j]:
+                return True, steps
+    return False, steps
+
+def has_duplicate_fast(data):
+    steps = 0
+    seen = set()
+    for item in data:
+        steps += 1
+        if item in seen:
+            return True, steps
+        seen.add(item)
+    return False, steps
+
+data = [4, 8, 15, 16, 23, 8]
+print(has_duplicate_slow(data))   # nested loops - more steps
+print(has_duplicate_fast(data))   # a set - fewer steps for the same answer
+`,
+  stretchChallenge:{
+    title:'Print the worst-case steps for growing list sizes',
+    desc:`For each size in <code>sizes</code>, build a list <code>data = list(range(size))</code>, use
+      <code>count_linear_search(data, -1)</code> (searching for a value that's never there, forcing the worst
+      case) to find the step count, then print <code>"&lt;size&gt; items -&gt; &lt;steps&gt; steps"</code>.`,
+    starter:`def count_linear_search(data, target):
+    steps = 0
+    for item in data:
+        steps += 1
+        if item == target:
+            return steps
+    return steps
+
+sizes = [10, 20, 50]
+# TODO: for each size, build data = list(range(size)), find the worst-case steps with
+# count_linear_search(data, -1), then print f"{size} items -> {steps} steps"
+`,
+    tests:[
+      {type:'output', contains:['10 items -> 10 steps'], label:'Prints the worst-case count for size 10'},
+      {type:'output', contains:['20 items -> 20 steps'], label:'Prints the worst-case count for size 20'},
+      {type:'output', contains:['50 items -> 50 steps'], label:'Prints the worst-case count for size 50'}
+    ]
+  }
 }
 
 ,
@@ -4055,6 +4132,37 @@ print(binary_search(names, "Sam"))`,
       tests:[
         {type:'assert', expr:`binary_search(names, "Sam") == 3`, label:'binary_search(names, "Sam") == 3'}
       ]
+    },
+    {
+      title:'Binary search a list of numbers',
+      desc:`Write <code>binary_search(data, target)</code> for the already-sorted <code>numbers</code> list of
+        numbers, returning the index of <code>target</code> if found, or <code>-1</code> if not.`,
+      starter:`def binary_search(data, target):
+    # TODO: use low/high/mid to search - return the index if found, -1 if not
+    pass
+
+numbers = [2, 5, 8, 12, 16, 23, 38, 56, 72, 91]
+print(binary_search(numbers, 23))
+print(binary_search(numbers, 100))`,
+      tests:[
+        {type:'assert', expr:`binary_search(numbers, 23) == 5`, label:'binary_search(numbers, 23) == 5'},
+        {type:'assert', expr:`binary_search(numbers, 100) == -1`, label:'binary_search(numbers, 100) == -1 (not found)'}
+      ]
+    },
+    {
+      title:'Selection sort in descending order',
+      desc:`Write <code>selection_sort_desc(data)</code>: like selection sort, but each pass finds the
+        <strong>largest</strong> remaining item instead of the smallest, returning a new list sorted highest to
+        lowest.`,
+      starter:`def selection_sort_desc(data):
+    # TODO: repeatedly find the LARGEST remaining item and swap it into place
+    pass
+
+scores = [88, 95, 72, 60, 100]
+print(selection_sort_desc(scores))`,
+      tests:[
+        {type:'assert', expr:`selection_sort_desc(scores) == [100, 95, 88, 72, 60]`, label:'selection_sort_desc(scores) == [100, 95, 88, 72, 60]'}
+      ]
     }
   ],
   quiz:[
@@ -4070,7 +4178,34 @@ print(binary_search(names, "Sam"))`,
     {q:'What does the key parameter do in sorted(data, key=lambda x: x["score"])?',
      options:['It filters out items missing a score','It tells sorted() what value to compare items by','It reverses the sort order','It converts every item to a string first'], correct:1,
      explain:'The key function tells sorted() which value on each item to actually compare, instead of comparing the whole item directly.'}
-  ]
+  ],
+  sandboxStarter3:`students = [
+    {"name": "Ada", "score": 88},
+    {"name": "Sam", "score": 95},
+    {"name": "Priya", "score": 88}
+]
+
+# Sort by score (highest first), then by name alphabetically as a tie-breaker
+ranked = sorted(students, key=lambda s: (-s["score"], s["name"]))
+for s in ranked:
+    print(s["name"], s["score"])
+`,
+  stretchChallenge:{
+    title:'Sort by score, then break ties by name',
+    desc:`Use <code>sorted(students, key=lambda s: (-s["score"], s["name"]))</code> to rank <code>students</code> by
+      score (highest first), breaking ties alphabetically by name. Build <code>names_in_order</code>: a list of
+      just the names, in that ranked order, then print it.`,
+    starter:`students = [
+    {"name": "Ada", "score": 88},
+    {"name": "Sam", "score": 95},
+    {"name": "Priya", "score": 88}
+]
+# TODO: sort students by (-score, name), build names_in_order (just the names, in ranked order), then print it
+`,
+    tests:[
+      {type:'output', contains:["['Sam', 'Ada', 'Priya']"], label:"Prints ['Sam', 'Ada', 'Priya']"}
+    ]
+  }
 }
 
 ,
@@ -4200,6 +4335,45 @@ print([fibonacci(i) for i in range(6)])`,
         {type:'assert', expr:`fibonacci(0) == 0`, label:'fibonacci(0) == 0'},
         {type:'assert', expr:`fibonacci(5) == 5`, label:'fibonacci(5) == 5'}
       ]
+    },
+    {
+      title:'Write a recursive GCD function',
+      desc:`Write <code>gcd(a, b)</code> recursively using Euclid's algorithm: the base case returns
+        <code>a</code> when <code>b == 0</code>, otherwise it returns <code>gcd(b, a % b)</code>.`,
+      starter:`def gcd(a, b):
+    # TODO: base case - return a if b == 0
+    # TODO: recursive case - return gcd(b, a % b)
+    pass
+
+print(gcd(48, 18))`,
+      tests:[
+        {type:'assert', expr:`gcd(48, 18) == 6`, label:'gcd(48, 18) == 6'},
+        {type:'assert', expr:`gcd(17, 5) == 1`, label:'gcd(17, 5) == 1'}
+      ]
+    },
+    {
+      title:'Find the maximum folder depth',
+      desc:`Write <code>max_depth(node)</code>: if <code>node</code> is a list, return 0 (a list of files has no
+        further depth). If it's an empty folder, return 1. Otherwise return
+        <code>1 + max(max_depth(v) for v in node.values())</code> — one level deeper than its deepest sub-folder.`,
+      starter:`folder = {
+    "Documents": {
+        "Homework": ["essay.docx", "notes.txt"],
+        "Photos": ["holiday.jpg"]
+    },
+    "Downloads": ["song.mp3", "movie.mp4", "app.exe"]
+}
+
+def max_depth(node):
+    # TODO: if node is a list, return 0
+    # TODO: if node is empty, return 1
+    # TODO: otherwise return 1 + max(max_depth(v) for v in node.values())
+    pass
+
+print(max_depth(folder))`,
+      tests:[
+        {type:'assert', expr:`max_depth(folder) == 2`, label:'max_depth(folder) == 2'}
+      ]
     }
   ],
   quiz:[
@@ -4215,7 +4389,39 @@ print([fibonacci(i) for i in range(6)])`,
     {q:'If a recursive function’s base case returns the wrong value, what typically happens?',
      options:['Python automatically corrects it','Nothing - only the recursive case matters','Every value the function ever returns is affected, since they all build on the base case','It only affects the very first call'], correct:2,
      explain:'Every recursive call ultimately builds its answer from the base case, so a wrong base case value throws off every result that depends on it.'}
-  ]
+  ],
+  sandboxStarter3:`def gcd(a, b):
+    if b == 0:
+        return a
+    return gcd(b, a % b)
+
+print(gcd(48, 18))   # 6
+print(gcd(100, 75))  # 25
+`,
+  stretchChallenge:{
+    title:'Flatten a nested folder into one file list',
+    desc:`Write <code>flatten_files(node)</code>: if <code>node</code> is a list, return it directly. Otherwise
+      build up a single list containing <code>flatten_files(value)</code> for every value inside
+      <code>node</code>, combined together with <code>+=</code>.`,
+    starter:`folder = {
+    "Documents": {
+        "Homework": ["essay.docx", "notes.txt"],
+        "Photos": ["holiday.jpg"]
+    },
+    "Downloads": ["song.mp3", "movie.mp4", "app.exe"]
+}
+
+def flatten_files(node):
+    # TODO: if node is a list, return it directly
+    # TODO: otherwise, combine flatten_files(value) for every value into one list and return it
+    pass
+
+print(flatten_files(folder))`,
+    tests:[
+      {type:'assert', expr:`len(flatten_files(folder)) == 6`, label:'flatten_files(folder) has 6 items'},
+      {type:'assert', expr:`"essay.docx" in flatten_files(folder)`, label:'flatten_files(folder) includes "essay.docx"'}
+    ]
+  }
 }
 
 ,
@@ -4344,6 +4550,39 @@ print(round(average, 1))`,
       tests:[
         {type:'assert', expr:`round(average, 1) == 78.8`, label:'average rounds to 78.8'}
       ]
+    },
+    {
+      title:'Find the score range',
+      desc:`Using the given <code>students</code> list, build a list of scores called <code>scores</code>, then
+        calculate <code>score_range</code> (the highest score minus the lowest) and print it.`,
+      starter:`students = [
+    {"name": "Ada", "score": 88},
+    {"name": "Sam", "score": 95},
+    {"name": "Tom", "score": 72},
+    {"name": "Priya", "score": 60}
+]
+# TODO: build scores (a list of just the scores), calculate score_range (max - min), then print it
+`,
+      tests:[
+        {type:'assert', expr:`score_range == 35`, label:'score_range == 35'}
+      ]
+    },
+    {
+      title:'Count how many students passed',
+      desc:`Using <code>sum(1 for s in students if s["score"] &gt;= pass_mark)</code>, count how many students
+        scored at least <code>pass_mark</code> and store it as <code>pass_count</code>, then print it.`,
+      starter:`students = [
+    {"name": "Ada", "score": 88},
+    {"name": "Sam", "score": 95},
+    {"name": "Tom", "score": 72},
+    {"name": "Priya", "score": 60}
+]
+pass_mark = 75
+# TODO: count how many students scored at least pass_mark, store as pass_count, then print it
+`,
+      tests:[
+        {type:'assert', expr:`pass_count == 2`, label:'pass_count == 2'}
+      ]
     }
   ],
   quiz:[
@@ -4359,7 +4598,33 @@ print(round(average, 1))`,
     {q:'Why does // give a different (and often wrong) result from / when calculating an average?',
      options:['// is just a slower version of /','// (floor division) always rounds down to a whole number, discarding the decimal part','// only works with even numbers','There is no real difference'], correct:1,
      explain:'// performs floor division, discarding any decimal remainder - / (true division) is what you want for an accurate average.'}
-  ]
+  ],
+  sandboxStarter3:`students = [
+    {"name": "Ada", "score": 88},
+    {"name": "Sam", "score": 95},
+    {"name": "Tom", "score": 72},
+    {"name": "Priya", "score": 60}
+]
+
+scores = [s["score"] for s in students]
+score_range = max(scores) - min(scores)
+print("Score range:", score_range)
+
+pass_count = sum(1 for s in students if s["score"] >= 75)
+print("Number who passed:", pass_count)
+`,
+  stretchChallenge:{
+    title:'Find the class median score',
+    desc:`Sort <code>scores</code>, then find the <strong>median</strong>: for an even number of scores, it's the
+      average of the two middle values (<code>sorted_scores[n//2 - 1]</code> and <code>sorted_scores[n//2]</code>,
+      where <code>n = len(sorted_scores)</code>). Print the median.`,
+    starter:`scores = [88, 95, 72, 60]
+# TODO: sort scores, find the median (average of the two middle values), store as "median", then print it
+`,
+    tests:[
+      {type:'assert', expr:`median == 80.0`, label:'median == 80.0'}
+    ]
+  }
 }
 
 ,
@@ -4561,6 +4826,63 @@ print(len(library.books))`,
       tests:[
         {type:'assert', expr:`len(library.books) == 2`, label:'library.books has 2 books'}
       ]
+    },
+    {
+      title:'Implement returning a book',
+      desc:`Finish <code>return_book(self, title)</code>: find a book with the matching title that's currently
+        <strong>unavailable</strong>, mark it available again and return <code>True</code>. If no such book
+        exists, return <code>False</code>.`,
+      starter:`class Book:
+    def __init__(self, title, author, available=True):
+        self.title = title
+        self.author = author
+        self.available = available
+
+class Library:
+    def __init__(self):
+        self.books = []
+    def add_book(self, book):
+        self.books.append(book)
+    def return_book(self, title):
+        # TODO: find a matching, unavailable book, mark it available and return True; else return False
+        pass
+
+library = Library()
+library.add_book(Book("The Hobbit", "Tolkien"))
+library.books[0].available = False  # pretend it was already borrowed
+print(library.return_book("The Hobbit"))
+print(library.books[0].available)`,
+      tests:[
+        {type:'output', contains:['True\nTrue'], label:'Returns True, and the book becomes available again'}
+      ]
+    },
+    {
+      title:'Count books by an author',
+      desc:`Finish <code>count_by_author(self, author)</code>: return how many books in the library were written
+        by <code>author</code>.`,
+      starter:`class Book:
+    def __init__(self, title, author, available=True):
+        self.title = title
+        self.author = author
+        self.available = available
+
+class Library:
+    def __init__(self):
+        self.books = []
+    def add_book(self, book):
+        self.books.append(book)
+    def count_by_author(self, author):
+        # TODO: return how many books in self.books were written by author
+        pass
+
+library = Library()
+library.add_book(Book("The Hobbit", "Tolkien"))
+library.add_book(Book("The Silmarillion", "Tolkien"))
+library.add_book(Book("Matilda", "Dahl"))
+print(library.count_by_author("Tolkien"))`,
+      tests:[
+        {type:'assert', expr:`library.count_by_author("Tolkien") == 2`, label:'count_by_author("Tolkien") == 2'}
+      ]
     }
   ],
   quiz:[
@@ -4576,7 +4898,60 @@ print(len(library.books))`,
     {q:'In borrow(self, title), why check "book.available" as well as the title matching?',
      options:['It is not actually necessary','So you never mark an already-borrowed book as borrowed again, or report success when it is unavailable','To make the loop run faster','Because Python requires two conditions in every if statement'], correct:1,
      explain:"Checking availability stops the method from wrongly succeeding on a book that's already been borrowed by someone else."}
-  ]
+  ],
+  sandboxStarter3:`class Book:
+    def __init__(self, title, author, available=True):
+        self.title = title
+        self.author = author
+        self.available = available
+
+class Library:
+    def __init__(self):
+        self.books = []
+    def add_book(self, book):
+        self.books.append(book)
+    def return_book(self, title):
+        for book in self.books:
+            if book.title == title and not book.available:
+                book.available = True
+                return True
+        return False
+
+library = Library()
+library.add_book(Book("The Hobbit", "Tolkien"))
+library.books[0].available = False  # pretend it was already borrowed
+print(library.return_book("The Hobbit"))
+print(library.books[0].available)
+`,
+  stretchChallenge:{
+    title:"Find the library's most-stocked author",
+    desc:`Finish <code>most_stocked_author(self)</code>: use a dictionary to count how many books each author has
+      in the library, then return the author with the most, using <code>max(counts, key=counts.get)</code>.`,
+    starter:`class Book:
+    def __init__(self, title, author, available=True):
+        self.title = title
+        self.author = author
+        self.available = available
+
+class Library:
+    def __init__(self):
+        self.books = []
+    def add_book(self, book):
+        self.books.append(book)
+    def most_stocked_author(self):
+        counts = {}
+        # TODO: count how many books each author has in counts, then return the most-stocked author
+        pass
+
+library = Library()
+library.add_book(Book("The Hobbit", "Tolkien"))
+library.add_book(Book("The Silmarillion", "Tolkien"))
+library.add_book(Book("Matilda", "Dahl"))
+print(library.most_stocked_author())`,
+    tests:[
+      {type:'assert', expr:`library.most_stocked_author() == "Tolkien"`, label:'most_stocked_author() == "Tolkien"'}
+    ]
+  }
 }
 
 ,
@@ -4712,6 +5087,41 @@ print("All tests passed!")`,
       tests:[
         {type:'output', contains:['All tests passed!'], label:'Both assertions pass after your fix'}
       ]
+    },
+    {
+      title:'Write tests for a square function',
+      desc:`Write three assert statements testing <code>square(n)</code>: <code>square(3) == 9</code>,
+        <code>square(-2) == 4</code>, and <code>square(0) == 0</code>. If none of them fail, print
+        <code>All tests passed!</code>`,
+      starter:`def square(n):
+    return n * n
+
+# TODO: write three assert statements testing square(3), square(-2), and square(0)
+# TODO: then print "All tests passed!"
+`,
+      tests:[
+        {type:'output', contains:['All tests passed!'], label:'All three assertions pass'}
+      ]
+    },
+    {
+      title:'Add a defensive check to a divide function',
+      desc:`Add validation to <code>safe_divide(a, b)</code>: raise a <code>ValueError</code> if <code>b</code>
+        is <code>0</code>, before dividing.`,
+      starter:`def safe_divide(a, b):
+    # TODO: raise ValueError if b == 0
+    return a / b
+
+print(safe_divide(10, 2))
+
+try:
+    safe_divide(10, 0)
+    print("Should have raised an error!")
+except ValueError:
+    print("Correctly rejected division by zero")`,
+      tests:[
+        {type:'output', contains:['5.0'], label:'safe_divide(10, 2) still works correctly (5.0)'},
+        {type:'output', contains:['Correctly rejected division by zero'], label:'Rejects division by zero'}
+      ]
     }
   ],
   quiz:[
@@ -4727,7 +5137,41 @@ print("All tests passed!")`,
     {q:'If assert average([10, 20, 30]) == 20 fails, what does that tell you?',
      options:['Nothing useful','Exactly which test case is producing the wrong answer, giving you a concrete starting point to debug','That Python itself has a bug','That the numbers 10, 20, and 30 are invalid'], correct:1,
      explain:'A failing assertion pinpoints exactly which input/output pair is wrong, which is far more useful than guessing where a bug might be.'}
-  ]
+  ],
+  sandboxStarter3:`def square(n):
+    return n * n
+
+def run_test(actual, expected, label):
+    try:
+        assert actual == expected
+        print(f"PASS: {label}")
+    except AssertionError:
+        print(f"FAIL: {label} (got {actual}, expected {expected})")
+
+run_test(square(3), 9, "square(3)")
+run_test(square(-2), 4, "square(-2)")
+run_test(square(0), 1, "square(0)")   # deliberately wrong expectation, to show a FAIL report
+`,
+  stretchChallenge:{
+    title:'Test and defend a stock checker',
+    desc:`Write assert statements checking <code>has_stock(5) == True</code> and <code>has_stock(0) == False</code>.
+      Then, inside a try/except, call <code>has_stock(-1)</code> and print
+      <code>Correctly rejected negative quantity</code> when it raises a <code>ValueError</code>. Finally print
+      <code>All tests passed!</code>`,
+    starter:`def has_stock(quantity):
+    if quantity < 0:
+        raise ValueError("Quantity cannot be negative")
+    return quantity > 0
+
+# TODO: assert has_stock(5) == True and has_stock(0) == False
+# TODO: use try/except to confirm has_stock(-1) raises ValueError, printing "Correctly rejected negative quantity"
+# TODO: then print "All tests passed!"
+`,
+    tests:[
+      {type:'output', contains:['Correctly rejected negative quantity'], label:'Rejects a negative quantity'},
+      {type:'output', contains:['All tests passed!'], label:'All assertions pass'}
+    ]
+  }
 }
 
 ,
@@ -4852,6 +5296,38 @@ print(temp)`,
       tests:[
         {type:'assert', expr:`temp == 14`, label:'temp == 14'}
       ]
+    },
+    {
+      title:'Find the coldest forecast day',
+      desc:`Using <code>min()</code> with a key function, find the day in <code>weather_response["forecast"]</code>
+        with the <strong>lowest</strong> <code>temp_c</code>, and print its <code>"day"</code> value.`,
+      starter:`weather_response = {
+    "location": "Birmingham",
+    "current": {"temp_c": 14, "condition": "Cloudy"},
+    "forecast": [
+        {"day": "Mon", "temp_c": 15},
+        {"day": "Tue", "temp_c": 13},
+        {"day": "Wed", "temp_c": 16}
+    ]
+}
+# TODO: find the coldest day in the forecast using min() with a key function, print its "day"
+`,
+      tests:[
+        {type:'output', contains:['Tue'], label:'Prints Tue (the coldest forecast day)'}
+      ]
+    },
+    {
+      title:'Handle a missing field with a default value',
+      desc:`<code>response["current"]</code> has no <code>"wind_kph"</code> key. Use
+        <code>.get("wind_kph", 0)</code> to fetch it safely with a default of <code>0</code>, store it as
+        <code>wind</code>, then print <code>Wind speed: 0 kph</code>.`,
+      starter:`response = {"location": "Leeds", "current": {"temp_c": 10}}
+# TODO: safely get "wind_kph" from response["current"] with a default of 0, store as wind,
+# then print "Wind speed: " + str(wind) + " kph"
+`,
+      tests:[
+        {type:'output', contains:['Wind speed: 0 kph'], label:'Prints "Wind speed: 0 kph"'}
+      ]
     }
   ],
   quiz:[
@@ -4867,7 +5343,40 @@ print(temp)`,
     {q:'Why does this Advanced week use a pre-loaded sample response instead of a real live API call?',
      options:['Real APIs do not use JSON','Pyodide (in-browser Python) cannot reliably make live network calls in a classroom, so a realistic fixture teaches the same skills reliably','It is impossible to parse real API data in Python','There is no difference either way'], correct:1,
      explain:"In-browser Python cannot depend on live internet access working the same way in every classroom, so a fixture shaped exactly like a real response teaches the same parsing skills reliably."}
-  ]
+  ],
+  sandboxStarter3:`weather_response = {
+    "location": "Birmingham",
+    "current": {"temp_c": 14, "condition": "Cloudy"}
+}
+
+# .get() can supply a default value instead of None
+humidity = weather_response["current"].get("humidity", "unknown")
+print("Humidity:", humidity)
+
+# Combine several pieces of a response into one summary string
+summary = f"{weather_response['location']}: {weather_response['current']['temp_c']}C, {weather_response['current']['condition']}, humidity {humidity}"
+print(summary)
+`,
+  stretchChallenge:{
+    title:'Build a one-line weather summary',
+    desc:`Combine the location, current temperature and condition, and the warmest forecast day into one summary
+      string: <code>"Birmingham: 14C and Cloudy now, warmest day ahead is Wed"</code>. Print it.`,
+    starter:`weather_response = {
+    "location": "Birmingham",
+    "current": {"temp_c": 14, "condition": "Cloudy"},
+    "forecast": [
+        {"day": "Mon", "temp_c": 15},
+        {"day": "Tue", "temp_c": 13},
+        {"day": "Wed", "temp_c": 16}
+    ]
+}
+# TODO: find the warmest forecast day, then print a summary combining location, current temp/condition,
+# and the warmest day: "Birmingham: 14C and Cloudy now, warmest day ahead is Wed"
+`,
+    tests:[
+      {type:'output', contains:['Birmingham: 14C and Cloudy now, warmest day ahead is Wed'], label:'Prints the full weather summary'}
+    ]
+  }
 }
 
 ,
@@ -5074,6 +5583,73 @@ print(student.total_points())`,
       tests:[
         {type:'assert', expr:`student.total_points() == 55`, label:'student.total_points() == 55'}
       ]
+    },
+    {
+      title:"Find a student's top achievement",
+      desc:`Finish <code>top_achievement(self)</code>: use <code>max()</code> with a key function to return the
+        <code>Achievement</code> object with the highest <code>points</code>.`,
+      starter:`class Achievement:
+    def __init__(self, title, points):
+        self.title = title
+        self.points = points
+
+class Student:
+    def __init__(self, name):
+        self.name = name
+        self.achievements = []
+    def add_achievement(self, achievement):
+        self.achievements.append(achievement)
+    def top_achievement(self):
+        # TODO: return the Achievement with the highest points, using max() with a key function
+        pass
+
+ada = Student("Ada")
+ada.add_achievement(Achievement("Science Fair Winner", 50))
+ada.add_achievement(Achievement("Perfect Attendance", 20))
+print(ada.top_achievement().title)`,
+      tests:[
+        {type:'output', contains:['Science Fair Winner'], label:'Prints the top achievement title'}
+      ]
+    },
+    {
+      title:'Save the whole roster to JSON',
+      desc:`Finish <code>save_roster(students, filename)</code>: write a JSON list of every student's
+        <code>to_dict()</code> to <code>filename</code>. Then read it back and print how many entries it has.`,
+      starter:`import json
+
+class Achievement:
+    def __init__(self, title, points):
+        self.title = title
+        self.points = points
+
+class Student:
+    def __init__(self, name):
+        self.name = name
+        self.achievements = []
+    def add_achievement(self, achievement):
+        self.achievements.append(achievement)
+    def total_points(self):
+        return sum(a.points for a in self.achievements)
+    def to_dict(self):
+        return {"name": self.name, "total": self.total_points()}
+
+def save_roster(students, filename):
+    # TODO: write json.dump([s.to_dict() for s in students], f) inside a "with open(filename, 'w')" block
+    pass
+
+ada = Student("Ada")
+ada.add_achievement(Achievement("Science Fair", 50))
+tom = Student("Tom")
+tom.add_achievement(Achievement("Reading Challenge", 80))
+students = [ada, tom]
+
+save_roster(students, "roster.json")
+with open("roster.json", "r") as f:
+    loaded = json.load(f)
+print(len(loaded))`,
+      tests:[
+        {type:'output', contains:['2'], label:'Prints the correct number of roster entries (2)'}
+      ]
     }
   ],
   quiz:[
@@ -5089,7 +5665,57 @@ print(student.total_points())`,
     {q:'What does sorted(students, key=lambda s: s.total_points(), reverse=True) do?',
      options:['Sorts students alphabetically by name','Sorts students by total_points(), highest first','Sorts students by total_points(), lowest first','Removes students with 0 points'], correct:1,
      explain:'The key function ranks by total_points(), and reverse=True puts the highest total first.'}
-  ]
+  ],
+  sandboxStarter3:`class Achievement:
+    def __init__(self, title, points):
+        self.title = title
+        self.points = points
+
+class Student:
+    def __init__(self, name):
+        self.name = name
+        self.achievements = []
+    def add_achievement(self, achievement):
+        self.achievements.append(achievement)
+    def total_points(self):
+        return sum(a.points for a in self.achievements)
+    def top_achievement(self):
+        return max(self.achievements, key=lambda a: a.points)
+
+ada = Student("Ada")
+ada.add_achievement(Achievement("Science Fair Winner", 50))
+ada.add_achievement(Achievement("Perfect Attendance", 20))
+top = ada.top_achievement()
+print(top.title, "-", top.points, "points")
+`,
+  stretchChallenge:{
+    title:'Count achievements above a threshold',
+    desc:`Finish <code>count_achievements_over(self, threshold)</code>: return how many of the student's
+      achievements have more than <code>threshold</code> points.`,
+    starter:`class Achievement:
+    def __init__(self, title, points):
+        self.title = title
+        self.points = points
+
+class Student:
+    def __init__(self, name):
+        self.name = name
+        self.achievements = []
+    def add_achievement(self, achievement):
+        self.achievements.append(achievement)
+    def count_achievements_over(self, threshold):
+        # TODO: return how many achievements have more than threshold points
+        pass
+
+ada = Student("Ada")
+ada.add_achievement(Achievement("Science Fair", 50))
+ada.add_achievement(Achievement("Attendance", 20))
+ada.add_achievement(Achievement("Reading", 30))
+print(ada.count_achievements_over(25))`,
+    tests:[
+      {type:'assert', expr:`ada.count_achievements_over(25) == 2`, label:'count_achievements_over(25) == 2'}
+    ]
+  }
 }
 
 ,
@@ -5252,6 +5878,48 @@ tom.add_achievement(Achievement("Reading Challenge", 80))
       tests:[
         {type:'output', contains:['All tests passed!'], label:'All assertions about the system pass'}
       ]
+    },
+    {
+      title:'Filter the leaderboard to qualifiers',
+      desc:`Build <code>qualifiers</code>: a list of names from <code>students_data</code> whose
+        <code>"total"</code> is at least <code>min_score</code>, then print it.`,
+      starter:`students_data = [
+    {"name": "Ada", "total": 70},
+    {"name": "Sam", "total": 45},
+    {"name": "Tom", "total": 80}
+]
+min_score = 50
+# TODO: build qualifiers - a list of names whose total >= min_score, then print it
+`,
+      tests:[
+        {type:'output', contains:["['Ada', 'Tom']"], label:"Prints ['Ada', 'Tom']"}
+      ]
+    },
+    {
+      title:'Validate the achievement title too',
+      desc:`Update <code>Achievement.__init__</code> to <strong>also</strong> raise a <code>ValueError</code> if
+        <code>title</code> is empty or blank (i.e. <code>not title.strip()</code>), on top of the existing
+        points check.`,
+      starter:`class Achievement:
+    def __init__(self, title, points):
+        if points < 0:
+            raise ValueError("Points cannot be negative")
+        # TODO: also raise ValueError if title is empty/blank (not title.strip())
+        self.title = title
+        self.points = points
+
+try:
+    Achievement("", 10)
+    print("Should have raised an error!")
+except ValueError:
+    print("Correctly rejected an empty title")
+
+good = Achievement("Valid entry", 10)
+print(good.title)`,
+      tests:[
+        {type:'output', contains:['Correctly rejected an empty title'], label:'Rejects an empty title'},
+        {type:'output', contains:['Valid entry'], label:'Still accepts a valid title'}
+      ]
     }
   ],
   quiz:[
@@ -5267,7 +5935,51 @@ tom.add_achievement(Achievement("Reading Challenge", 80))
     {q:'What is the main purpose of a capstone project like this achievement tracker?',
      options:['To learn one single new syntax rule','To combine many separate skills into one real, working system','To avoid using classes','To only practice printing text'], correct:1,
      explain:"A capstone deliberately pulls together skills learned separately - classes, files, JSON, sorting, testing - into one coherent, working system."}
-  ]
+  ],
+  sandboxStarter3:`import json
+
+with open("tracker.json", "w") as f:
+    json.dump([
+        {"name": "Ada", "total": 70},
+        {"name": "Sam", "total": 45},
+        {"name": "Tom", "total": 80}
+    ], f)
+
+with open("tracker.json", "r") as f:
+    students_data = json.load(f)
+
+# Only show students who cleared a minimum score
+qualifiers = [s for s in students_data if s["total"] >= 50]
+print("Qualifiers:", [s["name"] for s in qualifiers])
+
+ranked = sorted(qualifiers, key=lambda s: s["total"], reverse=True)
+for i, s in enumerate(ranked, start=1):
+    print(f"{i}. {s['name']} - {s['total']} points")
+`,
+  stretchChallenge:{
+    title:'Write a full validation test suite',
+    desc:`Using an <code>Achievement</code> class that validates both <code>points</code> and <code>title</code>,
+      assert a valid achievement can be created correctly, then use try/except to confirm both a negative-points
+      achievement AND an empty-title achievement each raise a <code>ValueError</code>. Print
+      <code>All tests passed!</code> if everything holds.`,
+    starter:`class Achievement:
+    def __init__(self, title, points):
+        if points < 0:
+            raise ValueError("Points cannot be negative")
+        if not title.strip():
+            raise ValueError("Title cannot be empty")
+        self.title = title
+        self.points = points
+
+# TODO: create a = Achievement("Reading", 10), assert a.points == 10
+# TODO: use try/except to confirm Achievement("Bad", -5) raises ValueError
+# TODO: use try/except to confirm Achievement("", 5) raises ValueError
+# TODO: then print "All tests passed!"
+`,
+    tests:[
+      {type:'output', contains:['All tests passed!'], label:'All validation tests pass'}
+    ]
+  }
 }
 
 ]; // end ADVANCED_WEEKS (all 9 weeks complete)
