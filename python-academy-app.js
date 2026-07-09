@@ -91,7 +91,7 @@ const SUBJECT_META = {
   // Deliberately plain Pyodide, zero extra installs — this track teaches
   // how a model works by building one in pure Python by hand, distinct
   // from AutoML's "use scikit-learn and automate the search" approach.
-  mlr: {name:'Machine Learning', short:'MLR', slug:'machine-learning', icon:'🧠', runtime:'pyodide',     academyName:'Machine Learning Academy', chain:['week1','cert']}
+  mlr: {name:'Machine Learning', short:'MLR', slug:'machine-learning', icon:'🧠', runtime:'pyodide',     academyName:'Machine Learning Academy'}
 };
 let CURRENT_SUBJECT = 'py';
 

@@ -453,7 +453,7 @@ setInterval(async function(){
   // SUBJECT_META.chain in python-academy-app.js. null means "full 12-step
   // chain". wd (Web Design) and ds (Data Science) are the first two non-Python
   // subjects to reach this.
-  var SUBJECT_CHAIN={py:null, wd:null, r:['week1','cert'], ml:['week1','cert'], cy:['week1','cert'], ds:null, mlr:['week1','cert']};
+  var SUBJECT_CHAIN={py:null, wd:null, r:['week1','cert'], ml:['week1','cert'], cy:['week1','cert'], ds:null, mlr:null};
   var SUBJECT_HREF={py:'python-academy.html', wd:'web-design-academy.html', r:'r-academy.html', ml:'automl-academy.html', cy:'cybersecurity-academy.html', ds:'data-science-academy.html', mlr:'machine-learning-academy.html'};
   var SUBJECT_NAME={py:'Python Academy', wd:'Web Design Academy', r:'R Academy', ml:'AutoML Academy', cy:'Cybersecurity Academy', ds:'Data Science Academy', mlr:'Machine Learning Academy'};
   var LEVEL_TITLES={
@@ -497,9 +497,12 @@ setInterval(async function(){
          weeks:['Meet Your Data','Picking Out What You Need','Combining Conditions','Sorting and Ranking','Grouping and Aggregating','Creating and Modifying Columns','Handling Missing Data','Merging Two Tables','Summarizing Like a Pro']}
     },
     mlr:{
-      b:{name:'Beginner', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['What Is a Model?']},
-      i:{name:'Intermediate', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['What Is a Model?']},
-      a:{name:'Advanced', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['What Is a Model?']}
+      b:{name:'Beginner', mp1:'Mini Project 1 — Build a Pass/Fail Predictor', mp2:'Mini Project 2 — Student Success Predictor — By Hand',
+         weeks:['What Is a Model?','Is It Even a Straight Line?','Splitting Fair: Train and Test','Yes or No: Classifying by Hand','Getting Closer, Step by Step: Gradient Descent','How Wrong, How Confident: Confusion Counts','Finding Your Neighbors: k-NN by Hand','Grouping Without Labels: Simple Clustering','Putting It All Together']},
+      i:{name:'Intermediate', mp1:'Mini Project 1 — Build a Pass/Fail Predictor', mp2:'Mini Project 2 — Student Success Predictor — By Hand',
+         weeks:['What Is a Model?','Is It Even a Straight Line?','Splitting Fair: Train and Test','Yes or No: Classifying by Hand','Getting Closer, Step by Step: Gradient Descent','How Wrong, How Confident: Confusion Counts','Finding Your Neighbors: k-NN by Hand','Grouping Without Labels: Simple Clustering','Putting It All Together']},
+      a:{name:'Advanced', mp1:'Mini Project 1 — Build a Pass/Fail Predictor', mp2:'Mini Project 2 — Student Success Predictor — By Hand',
+         weeks:['What Is a Model?','Is It Even a Straight Line?','Splitting Fair: Train and Test','Yes or No: Classifying by Hand','Getting Closer, Step by Step: Gradient Descent','How Wrong, How Confident: Confusion Counts','Finding Your Neighbors: k-NN by Hand','Grouping Without Labels: Simple Clustering','Putting It All Together']}
     }
   };
   var progressLevel='b';
