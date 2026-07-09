@@ -453,7 +453,7 @@ setInterval(async function(){
   // SUBJECT_META.chain in python-academy-app.js. null means "full 12-step
   // chain". wd (Web Design) and ds (Data Science) are the first two non-Python
   // subjects to reach this.
-  var SUBJECT_CHAIN={py:null, wd:null, r:['week1','cert'], ml:null, cy:['week1','cert'], ds:null, mlr:null};
+  var SUBJECT_CHAIN={py:null, wd:null, r:['week1','cert'], ml:null, cy:null, ds:null, mlr:null};
   var SUBJECT_HREF={py:'python-academy.html', wd:'web-design-academy.html', r:'r-academy.html', ml:'automl-academy.html', cy:'cybersecurity-academy.html', ds:'data-science-academy.html', mlr:'machine-learning-academy.html'};
   var SUBJECT_NAME={py:'Python Academy', wd:'Web Design Academy', r:'R Academy', ml:'AutoML Academy', cy:'Cybersecurity Academy', ds:'Data Science Academy', mlr:'Machine Learning Academy'};
   var LEVEL_TITLES={
@@ -487,9 +487,12 @@ setInterval(async function(){
          weeks:['Meet Your First Model','Splitting Data the Easy Way','Predicting a Number: LinearRegression','A Different Kind of Model: Decision Trees','Teaching From Multiple Clues','Words Into Numbers: Encoding Categories','Neighbors, Automatically: KNeighborsClassifier','Is My Model Actually Good?','Chaining It Together: a Simple Pipeline']}
     },
     cy:{
-      b:{name:'Beginner', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Why Passwords Matter']},
-      i:{name:'Intermediate', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Why Passwords Matter']},
-      a:{name:'Advanced', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Why Passwords Matter']}
+      b:{name:'Beginner', mp1:'Mini Project 1 — Harden the Sign-Up Form', mp2:'Mini Project 2 — Secure the Student Portal',
+         weeks:['Why Passwords Matter','Cleaning Up What Users Type: Input Validation','Spot the Insecure Code','Secrets Hidden in Plain Sight: the Caesar Cipher','Safe vs Unsafe String Handling','Why We Never Store Plain Passwords: Auth Concepts','Don\'t Take the Bait: Phishing Awareness','Reading the Logs: Spotting Suspicious Activity','Did the File Change? Checksums and Integrity']},
+      i:{name:'Intermediate', mp1:'Mini Project 1 — Harden the Sign-Up Form', mp2:'Mini Project 2 — Secure the Student Portal',
+         weeks:['Why Passwords Matter','Cleaning Up What Users Type: Input Validation','Spot the Insecure Code','Secrets Hidden in Plain Sight: the Caesar Cipher','Safe vs Unsafe String Handling','Why We Never Store Plain Passwords: Auth Concepts','Don\'t Take the Bait: Phishing Awareness','Reading the Logs: Spotting Suspicious Activity','Did the File Change? Checksums and Integrity']},
+      a:{name:'Advanced', mp1:'Mini Project 1 — Harden the Sign-Up Form', mp2:'Mini Project 2 — Secure the Student Portal',
+         weeks:['Why Passwords Matter','Cleaning Up What Users Type: Input Validation','Spot the Insecure Code','Secrets Hidden in Plain Sight: the Caesar Cipher','Safe vs Unsafe String Handling','Why We Never Store Plain Passwords: Auth Concepts','Don\'t Take the Bait: Phishing Awareness','Reading the Logs: Spotting Suspicious Activity','Did the File Change? Checksums and Integrity']}
     },
     ds:{
       b:{name:'Beginner', mp1:'Mini Project 1 — Class Exam Report Card', mp2:'Mini Project 2 — Sports Day Results Analyzer',

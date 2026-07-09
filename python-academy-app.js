@@ -86,7 +86,7 @@ const SUBJECT_META = {
   wd:  {name:'Web Design',       short:'WD',  slug:'web-design',       icon:'🎨', runtime:'iframe',      academyName:'Web Design Academy'},
   r:   {name:'R',                short:'R',   slug:'r',                icon:'📊', runtime:'webr',        academyName:'R Academy',                 chain:['week1','cert']},
   ml:  {name:'AutoML',           short:'ML',  slug:'automl',           icon:'🤖', runtime:'pyodide-ml',  academyName:'AutoML Academy'},
-  cy:  {name:'Cybersecurity',    short:'CY',  slug:'cybersecurity',    icon:'🛡️', runtime:'pyodide',     academyName:'Cybersecurity Academy',     chain:['week1','cert']},
+  cy:  {name:'Cybersecurity',    short:'CY',  slug:'cybersecurity',    icon:'🛡️', runtime:'pyodide',     academyName:'Cybersecurity Academy'},
   ds:  {name:'Data Science',     short:'DS',  slug:'data-science',     icon:'📈', runtime:'pyodide-ds',  academyName:'Data Science Academy'},
   // Deliberately plain Pyodide, zero extra installs — this track teaches
   // how a model works by building one in pure Python by hand, distinct
