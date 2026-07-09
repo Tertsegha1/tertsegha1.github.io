@@ -453,7 +453,7 @@ setInterval(async function(){
   // SUBJECT_META.chain in python-academy-app.js. null means "full 12-step
   // chain". wd (Web Design) and ds (Data Science) are the first two non-Python
   // subjects to reach this.
-  var SUBJECT_CHAIN={py:null, wd:null, r:['week1','cert'], ml:['week1','cert'], cy:['week1','cert'], ds:null, mlr:null};
+  var SUBJECT_CHAIN={py:null, wd:null, r:['week1','cert'], ml:null, cy:['week1','cert'], ds:null, mlr:null};
   var SUBJECT_HREF={py:'python-academy.html', wd:'web-design-academy.html', r:'r-academy.html', ml:'automl-academy.html', cy:'cybersecurity-academy.html', ds:'data-science-academy.html', mlr:'machine-learning-academy.html'};
   var SUBJECT_NAME={py:'Python Academy', wd:'Web Design Academy', r:'R Academy', ml:'AutoML Academy', cy:'Cybersecurity Academy', ds:'Data Science Academy', mlr:'Machine Learning Academy'};
   var LEVEL_TITLES={
@@ -479,9 +479,12 @@ setInterval(async function(){
       a:{name:'Advanced', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Getting Started with R']}
     },
     ml:{
-      b:{name:'Beginner', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Meet Your First Model']},
-      i:{name:'Intermediate', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Meet Your First Model']},
-      a:{name:'Advanced', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Meet Your First Model']}
+      b:{name:'Beginner', mp1:'Mini Project 1 — Build a Resit Predictor Pipeline', mp2:'Mini Project 2 — The School AutoML Lab',
+         weeks:['Meet Your First Model','Splitting Data the Easy Way','Predicting a Number: LinearRegression','A Different Kind of Model: Decision Trees','Teaching From Multiple Clues','Words Into Numbers: Encoding Categories','Neighbors, Automatically: KNeighborsClassifier','Is My Model Actually Good?','Chaining It Together: a Simple Pipeline']},
+      i:{name:'Intermediate', mp1:'Mini Project 1 — Build a Resit Predictor Pipeline', mp2:'Mini Project 2 — The School AutoML Lab',
+         weeks:['Meet Your First Model','Splitting Data the Easy Way','Predicting a Number: LinearRegression','A Different Kind of Model: Decision Trees','Teaching From Multiple Clues','Words Into Numbers: Encoding Categories','Neighbors, Automatically: KNeighborsClassifier','Is My Model Actually Good?','Chaining It Together: a Simple Pipeline']},
+      a:{name:'Advanced', mp1:'Mini Project 1 — Build a Resit Predictor Pipeline', mp2:'Mini Project 2 — The School AutoML Lab',
+         weeks:['Meet Your First Model','Splitting Data the Easy Way','Predicting a Number: LinearRegression','A Different Kind of Model: Decision Trees','Teaching From Multiple Clues','Words Into Numbers: Encoding Categories','Neighbors, Automatically: KNeighborsClassifier','Is My Model Actually Good?','Chaining It Together: a Simple Pipeline']}
     },
     cy:{
       b:{name:'Beginner', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Why Passwords Matter']},
