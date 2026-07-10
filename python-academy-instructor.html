@@ -453,7 +453,7 @@ setInterval(async function(){
   // SUBJECT_META.chain in python-academy-app.js. null means "full 12-step
   // chain". wd (Web Design) and ds (Data Science) are the first two non-Python
   // subjects to reach this.
-  var SUBJECT_CHAIN={py:null, wd:null, r:['week1','cert'], ml:null, cy:null, ds:null, mlr:null};
+  var SUBJECT_CHAIN={py:null, wd:null, r:null, ml:null, cy:null, ds:null, mlr:null};
   var SUBJECT_HREF={py:'python-academy.html', wd:'web-design-academy.html', r:'r-academy.html', ml:'automl-academy.html', cy:'cybersecurity-academy.html', ds:'data-science-academy.html', mlr:'machine-learning-academy.html'};
   var SUBJECT_NAME={py:'Python Academy', wd:'Web Design Academy', r:'R Academy', ml:'AutoML Academy', cy:'Cybersecurity Academy', ds:'Data Science Academy', mlr:'Machine Learning Academy'};
   var LEVEL_TITLES={
@@ -474,9 +474,12 @@ setInterval(async function(){
          weeks:['Your First Web Page','Lists, Links and Structure','CSS Basics: Selectors and Color','The Box Model','Flexbox Layout','Forms and Inputs','More CSS Layout: Grid Basics','Responsive Design: Media Queries','A Touch of JavaScript']}
     },
     r:{
-      b:{name:'Beginner', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Getting Started with R']},
-      i:{name:'Intermediate', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Getting Started with R']},
-      a:{name:'Advanced', mp1:'Mini Project 1 (coming soon)', mp2:'Mini Project 2 (coming soon)', weeks:['Getting Started with R']}
+      b:{name:'Beginner', mp1:'Mini Project 1 — Class Attendance Report', mp2:'Mini Project 2 — Class Exam Report in R',
+         weeks:['Getting Started with R','Picking Out One Value: Indexing Vectors','Making Decisions: if/else in R','Doing It Again: for Loops','Writing Your Own Functions','Tables of Data: data.frame Basics','Filtering Rows in a Data Frame','Working with Text','Real Stats: median, sd, and Summarizing']},
+      i:{name:'Intermediate', mp1:'Mini Project 1 — Class Attendance Report', mp2:'Mini Project 2 — Class Exam Report in R',
+         weeks:['Getting Started with R','Picking Out One Value: Indexing Vectors','Making Decisions: if/else in R','Doing It Again: for Loops','Writing Your Own Functions','Tables of Data: data.frame Basics','Filtering Rows in a Data Frame','Working with Text','Real Stats: median, sd, and Summarizing']},
+      a:{name:'Advanced', mp1:'Mini Project 1 — Class Attendance Report', mp2:'Mini Project 2 — Class Exam Report in R',
+         weeks:['Getting Started with R','Picking Out One Value: Indexing Vectors','Making Decisions: if/else in R','Doing It Again: for Loops','Writing Your Own Functions','Tables of Data: data.frame Basics','Filtering Rows in a Data Frame','Working with Text','Real Stats: median, sd, and Summarizing']}
     },
     ml:{
       b:{name:'Beginner', mp1:'Mini Project 1 — Build a Resit Predictor Pipeline', mp2:'Mini Project 2 — The School AutoML Lab',

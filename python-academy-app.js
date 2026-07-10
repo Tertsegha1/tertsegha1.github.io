@@ -84,7 +84,7 @@ const SUBJECT_META = {
   // authored in its own build phase. wd (Web Design) and ds (Data Science)
   // are the first two to do this.
   wd:  {name:'Web Design',       short:'WD',  slug:'web-design',       icon:'🎨', runtime:'iframe',      academyName:'Web Design Academy'},
-  r:   {name:'R',                short:'R',   slug:'r',                icon:'📊', runtime:'webr',        academyName:'R Academy',                 chain:['week1','cert']},
+  r:   {name:'R',                short:'R',   slug:'r',                icon:'📊', runtime:'webr',        academyName:'R Academy'},
   ml:  {name:'AutoML',           short:'ML',  slug:'automl',           icon:'🤖', runtime:'pyodide-ml',  academyName:'AutoML Academy'},
   cy:  {name:'Cybersecurity',    short:'CY',  slug:'cybersecurity',    icon:'🛡️', runtime:'pyodide',     academyName:'Cybersecurity Academy'},
   ds:  {name:'Data Science',     short:'DS',  slug:'data-science',     icon:'📈', runtime:'pyodide-ds',  academyName:'Data Science Academy'},
@@ -835,6 +835,12 @@ async function execIsolatedR(code){
   let error = null;
   const shelter = await new _webR.Shelter();
   try{
+    // WebR runs everything in one persistent global R session — without this,
+    // a variable set by a PREVIOUS exercise/run (same name, e.g. `total` or
+    // `scores`) would still be sitting in .GlobalEnv and could make an empty
+    // or wrong submission pass by accident. Clear it before every run so each
+    // call starts from the same blank slate Python's fresh namespace gives.
+    await shelter.captureR('rm(list=ls(envir=.GlobalEnv, all.names=TRUE), envir=.GlobalEnv)', {captureStreams:false, captureConditions:false});
     const result = await shelter.captureR(code, {withAutoprint:true, captureStreams:true, captureConditions:false});
     output = result.output.map(o=>o.data).join('\n');
   }catch(e){
