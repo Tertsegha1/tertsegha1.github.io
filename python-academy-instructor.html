@@ -108,7 +108,8 @@
     .msg-meta{font-size:0.68rem;color:#8b85c4;margin-top:2px;}
     .msg-body{font-size:0.83rem;color:#c7c2f0;line-height:1.6;white-space:pre-wrap;margin:8px 0;}
     .status-badge{font-size:0.65rem;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap;}
-    .status-badge.open{background:#78350f;color:#fbbf24;}
+    .status-badge.pending{background:#78350f;color:#fbbf24;}
+    .status-badge.read{background:#1e3a5f;color:#7dd3fc;}
     .status-badge.resolved{background:#14532d;color:#4ade80;}
     .toggle-btn{background:none;border:1px solid #3730a3;color:#a5b4fc;font-size:0.7rem;padding:4px 10px;border-radius:6px;cursor:pointer;}
     .msg-reply{background:#0f0c3a;border:1px solid #2c2470;border-radius:8px;padding:8px 12px;margin:8px 0;}
@@ -898,6 +899,9 @@ setInterval(async function(){
     body.innerHTML=keys.map(function(k){
       var m=subjectMessages[k];
       var resolved=m.status==='resolved';
+      var hasReply=!!m.reply;
+      var badgeClass = resolved ? 'resolved' : (hasReply ? 'read' : 'pending');
+      var badgeText = resolved ? 'Resolved' : (hasReply ? 'Read' : 'Pending');
       var isReset=m.type==='password_reset';
       var meta=[m.displayName||'Unknown student', m.username?('· @'+m.username):'', m.classCode?('· '+m.classCode):'', m.createdAt?('· '+relTime(m.createdAt)):''].filter(Boolean).join(' ');
       var resetBtn=(isReset && !resolved && m.username && subjectUsers[m.username]) ?
@@ -910,8 +914,8 @@ setInterval(async function(){
           '<div><div class="msg-subject">'+esc(m.subject||'(no subject)')+'</div><div class="msg-meta">'+esc(meta)+'</div></div>'+
           '<div style="display:flex;align-items:center;gap:8px;">'+
             resetBtn+
-            '<span class="status-badge '+(resolved?'resolved':'open')+'">'+(resolved?'Resolved':'Open')+'</span>'+
-            '<button class="toggle-btn" onclick="toggleMessage(\''+kEsc+'\',\''+(resolved?'open':'resolved')+'\')">Mark '+(resolved?'open':'resolved')+'</button>'+
+            '<span class="status-badge '+badgeClass+'">'+badgeText+'</span>'+
+            '<button class="toggle-btn" onclick="toggleMessage(\''+kEsc+'\',\''+(resolved?'open':'resolved')+'\')">Mark '+(resolved?'pending':'resolved')+'</button>'+
           '</div>'+
         '</div>'+
         '<div class="msg-body">'+esc(m.message||'')+'</div>'+
