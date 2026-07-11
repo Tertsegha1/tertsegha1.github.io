@@ -56,6 +56,7 @@
 
     .p-name{font-weight:600;color:#e2e8f0;}
     .p-meta{font-size:0.64rem;color:#8b85c4;margin-top:2px;}
+    .sess-ts{font-size:0.62rem;color:#8b85c4;margin-top:1px;white-space:nowrap;}
     .p-row-new{animation:flash 1.5s ease;}
     @keyframes flash{0%{background:#1e3a2a;}100%{background:transparent;}}
 
@@ -705,16 +706,16 @@ setInterval(async function(){
   function sessionStats(p){
     var sessions=(p&&p.sessions)||{};
     var keys=Object.keys(sessions);
-    var totalMs=0, lastMs=0, lastLoginMs=0;
+    var totalMs=0, lastMs=0, lastLoginMs=0, lastLoginIso=null, lastActiveIso=null;
     keys.forEach(function(k){
       var s=sessions[k];
       if(!s || !s.loginAt || !s.lastActiveAt) return;
       var loginMs=new Date(s.loginAt).getTime();
       var dur=new Date(s.lastActiveAt).getTime() - loginMs;
       if(dur>0) totalMs+=dur;
-      if(loginMs>lastLoginMs){ lastLoginMs=loginMs; lastMs=Math.max(dur,0); }
+      if(loginMs>lastLoginMs){ lastLoginMs=loginMs; lastMs=Math.max(dur,0); lastLoginIso=s.loginAt; lastActiveIso=s.lastActiveAt; }
     });
-    return {lastMin:Math.round(lastMs/60000), totalMin:Math.round(totalMs/60000)};
+    return {lastMin:Math.round(lastMs/60000), totalMin:Math.round(totalMs/60000), lastLoginIso:lastLoginIso, lastActiveIso:lastActiveIso};
   }
 
   function formatDuration(mins){
@@ -722,6 +723,16 @@ setInterval(async function(){
     if(mins<60) return mins+'m';
     var h=Math.floor(mins/60), m=mins%60;
     return h+'h'+(m ? ' '+m+'m' : '');
+  }
+
+  // "Jul 11, 3:42 PM" — a compact absolute timestamp so the instructor can
+  // see exactly when the last session happened (and its last heartbeat, in
+  // the tooltip) rather than trusting a relative duration alone.
+  function formatDateTime(iso){
+    if(!iso) return '';
+    try{
+      return new Date(iso).toLocaleString(undefined, {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'});
+    }catch(e){ return ''; }
   }
 
   function renderProgress(){
@@ -765,6 +776,10 @@ setInterval(async function(){
       var meta=[p.yearGroup?('Year '+p.yearGroup):'', p.classCode||''].filter(Boolean).join(' · ');
       var ts=p.updated?relTime(p.updated):'—';
       var sess=sessionStats(p);
+      var sessTitle = sess.lastLoginIso ? 'Logged in '+new Date(sess.lastLoginIso).toLocaleString()+(sess.lastActiveIso?' · last seen '+new Date(sess.lastActiveIso).toLocaleString():'') : 'No session data yet';
+      var lastSessionCell = sess.lastLoginIso
+        ? formatDuration(sess.lastMin)+'<div class="sess-ts">'+formatDateTime(sess.lastLoginIso)+'</div>'
+        : '—';
 
       return '<tr'+(isNew?' class="p-row-new"':'')+'>'+
         '<td>'+
@@ -774,7 +789,7 @@ setInterval(async function(){
         '</td>'+
         dotCells+
         '<td><span class="score '+scoreClass+'">'+s+'/'+KEYS.length+'</span></td>'+
-        '<td>'+formatDuration(sess.lastMin)+'</td>'+
+        '<td title="'+esc(sessTitle)+'">'+lastSessionCell+'</td>'+
         '<td>'+formatDuration(sess.totalMin)+'</td>'+
       '</tr>';
     });
