@@ -194,6 +194,7 @@
   <button class="subject-tab-btn" data-subject="cy" onclick="switchProgressSubject('cy')">🛡️ Cybersecurity</button>
   <button class="subject-tab-btn" data-subject="ds" onclick="switchProgressSubject('ds')">📈 Data Science</button>
   <button class="subject-tab-btn" data-subject="mlr" onclick="switchProgressSubject('mlr')">🧠 Machine Learning</button>
+  <button class="subject-tab-btn" data-subject="sq" onclick="switchProgressSubject('sq')">🗄️ SQL</button>
 </div>
 
 <div id="config-error">
@@ -447,15 +448,14 @@ setInterval(async function(){
 <script>
 (function(){
   var KEYS=['week1','week2','week3','week4','mp1','week5','week6','week7','week8','week9','mp2','cert'];
-  var SUBJECTS=['py','wd','r','ml','cy','ds','mlr'];
-  // r/ml/cy/mlr still ship with a Phase 0 placeholder chain (just week1 +
-  // cert) until each subject's real curriculum is authored — mirrors
-  // SUBJECT_META.chain in python-academy-app.js. null means "full 12-step
-  // chain". wd (Web Design) and ds (Data Science) are the first two non-Python
-  // subjects to reach this.
-  var SUBJECT_CHAIN={py:null, wd:null, r:null, ml:null, cy:null, ds:null, mlr:null};
-  var SUBJECT_HREF={py:'python-academy.html', wd:'web-design-academy.html', r:'r-academy.html', ml:'automl-academy.html', cy:'cybersecurity-academy.html', ds:'data-science-academy.html', mlr:'machine-learning-academy.html'};
-  var SUBJECT_NAME={py:'Python Academy', wd:'Web Design Academy', r:'R Academy', ml:'AutoML Academy', cy:'Cybersecurity Academy', ds:'Data Science Academy', mlr:'Machine Learning Academy'};
+  var SUBJECTS=['py','wd','r','ml','cy','ds','mlr','sq'];
+  // All 7 non-Python subjects now ship the full 12-step chain (null means
+  // "full chain", mirroring SUBJECT_META.chain in python-academy-app.js).
+  // sq (SQL) is the first subject to skip the old Phase-0-placeholder step
+  // entirely — content is authored straight to full parity.
+  var SUBJECT_CHAIN={py:null, wd:null, r:null, ml:null, cy:null, ds:null, mlr:null, sq:null};
+  var SUBJECT_HREF={py:'python-academy.html', wd:'web-design-academy.html', r:'r-academy.html', ml:'automl-academy.html', cy:'cybersecurity-academy.html', ds:'data-science-academy.html', mlr:'machine-learning-academy.html', sq:'sql-academy.html'};
+  var SUBJECT_NAME={py:'Python Academy', wd:'Web Design Academy', r:'R Academy', ml:'AutoML Academy', cy:'Cybersecurity Academy', ds:'Data Science Academy', mlr:'Machine Learning Academy', sq:'SQL Academy'};
   var LEVEL_TITLES={
     py:{
       b:{name:'Beginner', mp1:'Mini Project 1 — Crack the Locker Code', mp2:'Mini Project 2 — Escape the Computer Lab',
@@ -512,15 +512,23 @@ setInterval(async function(){
          weeks:['What Is a Model?','Is It Even a Straight Line?','Splitting Fair: Train and Test','Yes or No: Classifying by Hand','Getting Closer, Step by Step: Gradient Descent','How Wrong, How Confident: Confusion Counts','Finding Your Neighbors: k-NN by Hand','Grouping Without Labels: Simple Clustering','Putting It All Together']},
       a:{name:'Advanced', mp1:'Mini Project 1 — Build a Pass/Fail Predictor', mp2:'Mini Project 2 — Student Success Predictor — By Hand',
          weeks:['What Is a Model?','Is It Even a Straight Line?','Splitting Fair: Train and Test','Yes or No: Classifying by Hand','Getting Closer, Step by Step: Gradient Descent','How Wrong, How Confident: Confusion Counts','Finding Your Neighbors: k-NN by Hand','Grouping Without Labels: Simple Clustering','Putting It All Together']}
+    },
+    sq:{
+      b:{name:'Beginner', mp1:'Mini Project 1 — Class Register Database', mp2:'Mini Project 2 — School Database System',
+         weeks:['Getting Started with SQL','Sorting and Limiting: ORDER BY and LIMIT','Filtering with AND, OR, BETWEEN, and LIKE','Aggregate Functions: COUNT, SUM, AVG, MIN, MAX, and GROUP BY','Changing Data: INSERT, UPDATE, and DELETE','Designing Tables: Data Types and Constraints','Relationships: Linking Tables with JOIN','Filtering Groups: HAVING','Subqueries: Putting It All Together']},
+      i:{name:'Intermediate', mp1:'Mini Project 1 — Class Register Database', mp2:'Mini Project 2 — School Database System',
+         weeks:['Getting Started with SQL','Sorting and Limiting: ORDER BY and LIMIT','Filtering with AND, OR, BETWEEN, and LIKE','Aggregate Functions: COUNT, SUM, AVG, MIN, MAX, and GROUP BY','Changing Data: INSERT, UPDATE, and DELETE','Designing Tables: Data Types and Constraints','Relationships: Linking Tables with JOIN','Filtering Groups: HAVING','Subqueries: Putting It All Together']},
+      a:{name:'Advanced', mp1:'Mini Project 1 — Class Register Database', mp2:'Mini Project 2 — School Database System',
+         weeks:['Getting Started with SQL','Sorting and Limiting: ORDER BY and LIMIT','Filtering with AND, OR, BETWEEN, and LIKE','Aggregate Functions: COUNT, SUM, AVG, MIN, MAX, and GROUP BY','Changing Data: INSERT, UPDATE, and DELETE','Designing Tables: Data Types and Constraints','Relationships: Linking Tables with JOIN','Filtering Groups: HAVING','Subqueries: Putting It All Together']}
     }
   };
   var progressLevel='b';
   var progressSubject='py';
-  var users={py:{}, wd:{}, r:{}, ml:{}, cy:{}, ds:{}, mlr:{}};
-  var messages={py:{}, wd:{}, r:{}, ml:{}, cy:{}, ds:{}, mlr:{}};
-  var feedback={py:{b:{},i:{},a:{}}, wd:{b:{},i:{},a:{}}, r:{b:{},i:{},a:{}}, ml:{b:{},i:{},a:{}}, cy:{b:{},i:{},a:{}}, ds:{b:{},i:{},a:{}}, mlr:{b:{},i:{},a:{}}};
-  var passcodes={py:{}, wd:{}, r:{}, ml:{}, cy:{}, ds:{}, mlr:{}};
-  var certificates={py:{}, wd:{}, r:{}, ml:{}, cy:{}, ds:{}, mlr:{}};
+  var users={py:{}, wd:{}, r:{}, ml:{}, cy:{}, ds:{}, mlr:{}, sq:{}};
+  var messages={py:{}, wd:{}, r:{}, ml:{}, cy:{}, ds:{}, mlr:{}, sq:{}};
+  var feedback={py:{b:{},i:{},a:{}}, wd:{b:{},i:{},a:{}}, r:{b:{},i:{},a:{}}, ml:{b:{},i:{},a:{}}, cy:{b:{},i:{},a:{}}, ds:{b:{},i:{},a:{}}, mlr:{b:{},i:{},a:{}}, sq:{b:{},i:{},a:{}}};
+  var passcodes={py:{}, wd:{}, r:{}, ml:{}, cy:{}, ds:{}, mlr:{}, sq:{}};
+  var certificates={py:{}, wd:{}, r:{}, ml:{}, cy:{}, ds:{}, mlr:{}, sq:{}};
   var flashSet={};
 
   function subjPrefixFor(subject){ return subject==='py' ? '' : subject+'_'; }

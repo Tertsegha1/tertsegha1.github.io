@@ -1,0 +1,283 @@
+{
+  "rules": {
+    "pyacademy": {
+      "passcodes": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        "$code": {
+          ".read": true,
+          "usedCount": { ".write": true },
+          "usedBy": { ".write": true },
+          "active": { ".write": "auth != null || newData.val() === false" }
+        }
+      },
+      "messages": {
+        ".read": "auth != null",
+        ".write": true
+      },
+      "feedback": {
+        ".read": "auth != null",
+        ".write": true
+      },
+      "users": {
+        ".read": "auth != null",
+        "$username": {
+          ".read": true,
+          ".write": "data.exists() || auth != null || (newData.child('passcodeUsed').exists() && root.child('pyacademy').child('passcodes').child(newData.child('passcodeUsed').val()).child('active').val() === true)"
+        }
+      },
+      "certificates": {
+        ".read": "auth != null",
+        "$certId": {
+          ".read": true,
+          ".write": "!data.exists() && newData.child('username').val() != null && root.child('pyacademy').child('users').child(newData.child('username').val()).exists()"
+        }
+      },
+
+      "wd": {
+        "passcodes": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          "$code": {
+            ".read": true,
+            "usedCount": { ".write": true },
+            "usedBy": { ".write": true },
+            "active": { ".write": "auth != null || newData.val() === false" }
+          }
+        },
+        "messages": {
+          ".read": "auth != null",
+          ".write": true
+        },
+        "feedback": {
+          ".read": "auth != null",
+          ".write": true
+        },
+        "users": {
+          ".read": "auth != null",
+          "$username": {
+            ".read": true,
+            ".write": "data.exists() || auth != null || (newData.child('passcodeUsed').exists() && root.child('pyacademy').child('wd').child('passcodes').child(newData.child('passcodeUsed').val()).child('active').val() === true)"
+          }
+        },
+        "certificates": {
+          ".read": "auth != null",
+          "$certId": {
+            ".read": true,
+            ".write": "!data.exists() && newData.child('username').val() != null && root.child('pyacademy').child('wd').child('users').child(newData.child('username').val()).exists()"
+          }
+        }
+      },
+
+      "r": {
+        "passcodes": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          "$code": {
+            ".read": true,
+            "usedCount": { ".write": true },
+            "usedBy": { ".write": true },
+            "active": { ".write": "auth != null || newData.val() === false" }
+          }
+        },
+        "messages": {
+          ".read": "auth != null",
+          ".write": true
+        },
+        "feedback": {
+          ".read": "auth != null",
+          ".write": true
+        },
+        "users": {
+          ".read": "auth != null",
+          "$username": {
+            ".read": true,
+            ".write": "data.exists() || auth != null || (newData.child('passcodeUsed').exists() && root.child('pyacademy').child('r').child('passcodes').child(newData.child('passcodeUsed').val()).child('active').val() === true)"
+          }
+        },
+        "certificates": {
+          ".read": "auth != null",
+          "$certId": {
+            ".read": true,
+            ".write": "!data.exists() && newData.child('username').val() != null && root.child('pyacademy').child('r').child('users').child(newData.child('username').val()).exists()"
+          }
+        }
+      },
+
+      "ml": {
+        "passcodes": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          "$code": {
+            ".read": true,
+            "usedCount": { ".write": true },
+            "usedBy": { ".write": true },
+            "active": { ".write": "auth != null || newData.val() === false" }
+          }
+        },
+        "messages": {
+          ".read": "auth != null",
+          ".write": true
+        },
+        "feedback": {
+          ".read": "auth != null",
+          ".write": true
+        },
+        "users": {
+          ".read": "auth != null",
+          "$username": {
+            ".read": true,
+            ".write": "data.exists() || auth != null || (newData.child('passcodeUsed').exists() && root.child('pyacademy').child('ml').child('passcodes').child(newData.child('passcodeUsed').val()).child('active').val() === true)"
+          }
+        },
+        "certificates": {
+          ".read": "auth != null",
+          "$certId": {
+            ".read": true,
+            ".write": "!data.exists() && newData.child('username').val() != null && root.child('pyacademy').child('ml').child('users').child(newData.child('username').val()).exists()"
+          }
+        }
+      },
+
+      "cy": {
+        "passcodes": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          "$code": {
+            ".read": true,
+            "usedCount": { ".write": true },
+            "usedBy": { ".write": true },
+            "active": { ".write": "auth != null || newData.val() === false" }
+          }
+        },
+        "messages": {
+          ".read": "auth != null",
+          ".write": true
+        },
+        "feedback": {
+          ".read": "auth != null",
+          ".write": true
+        },
+        "users": {
+          ".read": "auth != null",
+          "$username": {
+            ".read": true,
+            ".write": "data.exists() || auth != null || (newData.child('passcodeUsed').exists() && root.child('pyacademy').child('cy').child('passcodes').child(newData.child('passcodeUsed').val()).child('active').val() === true)"
+          }
+        },
+        "certificates": {
+          ".read": "auth != null",
+          "$certId": {
+            ".read": true,
+            ".write": "!data.exists() && newData.child('username').val() != null && root.child('pyacademy').child('cy').child('users').child(newData.child('username').val()).exists()"
+          }
+        }
+      },
+
+      "ds": {
+        "passcodes": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          "$code": {
+            ".read": true,
+            "usedCount": { ".write": true },
+            "usedBy": { ".write": true },
+            "active": { ".write": "auth != null || newData.val() === false" }
+          }
+        },
+        "messages": {
+          ".read": "auth != null",
+          ".write": true
+        },
+        "feedback": {
+          ".read": "auth != null",
+          ".write": true
+        },
+        "users": {
+          ".read": "auth != null",
+          "$username": {
+            ".read": true,
+            ".write": "data.exists() || auth != null || (newData.child('passcodeUsed').exists() && root.child('pyacademy').child('ds').child('passcodes').child(newData.child('passcodeUsed').val()).child('active').val() === true)"
+          }
+        },
+        "certificates": {
+          ".read": "auth != null",
+          "$certId": {
+            ".read": true,
+            ".write": "!data.exists() && newData.child('username').val() != null && root.child('pyacademy').child('ds').child('users').child(newData.child('username').val()).exists()"
+          }
+        }
+      },
+
+      "mlr": {
+        "passcodes": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          "$code": {
+            ".read": true,
+            "usedCount": { ".write": true },
+            "usedBy": { ".write": true },
+            "active": { ".write": "auth != null || newData.val() === false" }
+          }
+        },
+        "messages": {
+          ".read": "auth != null",
+          ".write": true
+        },
+        "feedback": {
+          ".read": "auth != null",
+          ".write": true
+        },
+        "users": {
+          ".read": "auth != null",
+          "$username": {
+            ".read": true,
+            ".write": "data.exists() || auth != null || (newData.child('passcodeUsed').exists() && root.child('pyacademy').child('mlr').child('passcodes').child(newData.child('passcodeUsed').val()).child('active').val() === true)"
+          }
+        },
+        "certificates": {
+          ".read": "auth != null",
+          "$certId": {
+            ".read": true,
+            ".write": "!data.exists() && newData.child('username').val() != null && root.child('pyacademy').child('mlr').child('users').child(newData.child('username').val()).exists()"
+          }
+        }
+      },
+
+      "sq": {
+        "passcodes": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          "$code": {
+            ".read": true,
+            "usedCount": { ".write": true },
+            "usedBy": { ".write": true },
+            "active": { ".write": "auth != null || newData.val() === false" }
+          }
+        },
+        "messages": {
+          ".read": "auth != null",
+          ".write": true
+        },
+        "feedback": {
+          ".read": "auth != null",
+          ".write": true
+        },
+        "users": {
+          ".read": "auth != null",
+          "$username": {
+            ".read": true,
+            ".write": "data.exists() || auth != null || (newData.child('passcodeUsed').exists() && root.child('pyacademy').child('sq').child('passcodes').child(newData.child('passcodeUsed').val()).child('active').val() === true)"
+          }
+        },
+        "certificates": {
+          ".read": "auth != null",
+          "$certId": {
+            ".read": true,
+            ".write": "!data.exists() && newData.child('username').val() != null && root.child('pyacademy').child('sq').child('users').child(newData.child('username').val()).exists()"
+          }
+        }
+      }
+    }
+  }
+}

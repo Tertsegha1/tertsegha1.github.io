@@ -71,7 +71,7 @@ a.home-link:hover{text-decoration:underline;}
   // PYAC-{levelShort}-{random} (3 parts); every other subject is
   // PYAC-{subjectShort}-{levelShort}-{random} (4 parts) — see getCertId()
   // in python-academy-app.js. Use that to look up the right Firebase subtree.
-  var SHORT_TO_SUBJECT = {WD:'wd', R:'r', ML:'ml', CY:'cy', DS:'ds', MLR:'mlr'};
+  var SHORT_TO_SUBJECT = {WD:'wd', R:'r', ML:'ml', CY:'cy', DS:'ds', MLR:'mlr', SQL:'sq'};
   function fbBaseForCertId(id){
     var parts = String(id||'').split('-');
     if(parts.length >= 4 && SHORT_TO_SUBJECT[parts[1]]) return '/pyacademy/' + SHORT_TO_SUBJECT[parts[1]];

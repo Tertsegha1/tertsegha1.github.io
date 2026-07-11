@@ -73,7 +73,7 @@ function currentLevelSlug(){ return LEVEL_META[CURRENT_LEVEL].slug; }
    and fbBase() both resolve to "no prefix" for 'py' and a real prefix for
    every other subject.
    --------------------------------------------------------------------- */
-const SUBJECTS = ['py','wd','r','ml','cy','ds','mlr'];
+const SUBJECTS = ['py','wd','r','ml','cy','ds','mlr','sq'];
 const SUBJECT_META = {
   py: {name:'Python',     short:'PY', slug:'python',     icon:'🧑‍💻', runtime:'pyodide',    academyName:'Python Academy'},
   // r/ml/cy/mlr still ship with a short placeholder chain (Phase 0) — just
@@ -91,7 +91,12 @@ const SUBJECT_META = {
   // Deliberately plain Pyodide, zero extra installs — this track teaches
   // how a model works by building one in pure Python by hand, distinct
   // from AutoML's "use scikit-learn and automate the search" approach.
-  mlr: {name:'Machine Learning', short:'MLR', slug:'machine-learning', icon:'🧠', runtime:'pyodide',     academyName:'Machine Learning Academy'}
+  mlr: {name:'Machine Learning', short:'MLR', slug:'machine-learning', icon:'🧠', runtime:'pyodide',     academyName:'Machine Learning Academy'},
+  // No chain override — ships straight at full 12-step parity from day one,
+  // unlike every earlier track (which started with a 2-step Phase-0
+  // placeholder chain and expanded later). currentChain()'s || CHAIN
+  // fallback already handles "no chain key" correctly.
+  sq:  {name:'SQL & Databases',  short:'SQL', slug:'sql',              icon:'🗄️', runtime:'sqljs',       academyName:'SQL Academy'}
 };
 let CURRENT_SUBJECT = 'py';
 
@@ -856,6 +861,66 @@ async function rRunAssert(ns, expr){
   await _webR.evalR(`stopifnot(${expr})`);
 }
 
+/* sql.js (SQLite compiled to WASM) runner. Unlike WebR, a fresh in-memory
+   database is created for every single execIsolated() call and closed again
+   in cleanup() — real, structural per-run isolation from the start, not a
+   later fix (see the WebR statelessness bug documented in the R track). */
+let _SQL = null;
+let _sqlLoadPromise = null;
+function ensureSQLJS(){
+  if(_SQL) return Promise.resolve(_SQL);
+  if(_sqlLoadPromise) return _sqlLoadPromise;
+  _sqlLoadPromise = (async ()=>{
+    const SQL = await initSqlJs({
+      locateFile: f => `https://cdn.jsdelivr.net/npm/sql.js@1.14.1/dist/${f}`
+    });
+    _SQL = SQL;
+    return SQL;
+  })();
+  return _sqlLoadPromise;
+}
+function formatSqlResults(results){
+  if(!results || !results.length) return '';
+  return results.map(r=>{
+    const header = r.columns.join(' | ');
+    const sep = r.columns.map(()=>'---').join(' | ');
+    const rows = r.values.map(row=>row.map(v=> v===null ? 'NULL' : String(v)).join(' | '));
+    // The explicit row count matters for grading, not just display: a plain
+    // SELECT leaves nothing behind to assert() on afterward (unlike a Python/R
+    // variable), so an 'output' test's only way to catch "printed extra
+    // unfiltered rows" is a substring check — and any correctly-filtered
+    // result is always a SUBSET of the unfiltered one, so presence-only
+    // checks can never fail an over-inclusive answer. Printing the count
+    // gives exercises something exact to match against (e.g. "(2 rows)"),
+    // closing that gap without needing a new test type.
+    const count = r.values.length === 1 ? '(1 row)' : `(${r.values.length} rows)`;
+    return [header, sep, ...rows, '', count].join('\n');
+  }).join('\n\n');
+}
+async function execIsolatedSQL(code){
+  let output = '';
+  let error = null;
+  const db = new _SQL.Database();
+  try{
+    const results = db.exec(code);
+    output = formatSqlResults(results);
+  }catch(e){
+    error = (e && e.message) ? e.message : String(e);
+  }
+  return {ns:db, output, error};
+}
+async function sqlRunAssert(ns, expr){
+  // SQLite has no boolean type — a comparison/expression evaluates to 1 or 0.
+  // Run it as a one-row check query against the SAME db the student's code
+  // just ran against, so the assertion sees whatever tables/rows it created.
+  const results = ns.exec(`SELECT (${expr}) AS ok`);
+  const ok = results && results[0] && results[0].values && results[0].values[0] && results[0].values[0][0];
+  if(!ok){
+    throw new Error(`Assertion failed: ${expr}`);
+  }
+}
+function sqlCleanup(ns){ try{ ns.close(); }catch(e){} }
+
 /* Sandboxed iframe/DOM runner — Web Design has no console/stdout concept;
    grading works by rendering the student's HTML into a fresh sandboxed
    iframe and inspecting its rendered DOM. */
@@ -954,6 +1019,7 @@ const RUNTIMES = {
   'pyodide-ml': { ensure: ensurePyodideML, execIsolated: execIsolatedPy,  runAssert: pyRunAssert, cleanup: pyCleanup },
   'pyodide-ds': { ensure: ensurePyodideDS, execIsolated: execIsolatedPy,  runAssert: pyRunAssert, cleanup: pyCleanup },
   webr:         { ensure: ensureWebR,      execIsolated: execIsolatedR,   runAssert: rRunAssert,  cleanup: null },
+  sqljs:        { ensure: ensureSQLJS,     execIsolated: execIsolatedSQL, runAssert: sqlRunAssert, cleanup: sqlCleanup },
   iframe:       { ensure: ensureIframeRuntime, execIsolated: execIsolatedDom, gradeAll: gradeAllDom, cleanup: domCleanup }
 };
 function currentRuntime(){ return RUNTIMES[SUBJECT_META[CURRENT_SUBJECT].runtime]; }
@@ -1006,7 +1072,7 @@ async function gradeCode(code, tests){
 }
 
 /* CodeMirror mounting */
-const SUBJECT_CM_MODE = {py:'python', ml:'python', ds:'python', cy:'python', mlr:'python', r:'r', wd:'htmlmixed'};
+const SUBJECT_CM_MODE = {py:'python', ml:'python', ds:'python', cy:'python', mlr:'python', r:'r', wd:'htmlmixed', sq:'text/x-sqlite'};
 function mountEditorsIn(containerId){
   const container = document.getElementById(containerId);
   if(!container) return;
