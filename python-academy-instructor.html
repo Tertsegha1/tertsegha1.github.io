@@ -113,9 +113,12 @@
     .status-badge.read{background:#1e3a5f;color:#7dd3fc;}
     .status-badge.resolved{background:#14532d;color:#4ade80;}
     .toggle-btn{background:none;border:1px solid #3730a3;color:#a5b4fc;font-size:0.7rem;padding:4px 10px;border-radius:6px;cursor:pointer;}
-    .msg-reply{background:#0f0c3a;border:1px solid #2c2470;border-radius:8px;padding:8px 12px;margin:8px 0;}
-    .msg-reply-lbl{font-size:0.65rem;font-weight:700;color:#7dd3fc;margin-bottom:3px;}
-    .msg-reply-text{font-size:0.82rem;color:#e2e8f0;line-height:1.5;white-space:pre-wrap;}
+    .msg-thread{display:flex;flex-direction:column;gap:6px;margin:8px 0;}
+    .msg-bubble{max-width:80%;padding:7px 12px;border-radius:10px;}
+    .msg-bubble.instructor{align-self:flex-end;background:#1e3a5f;}
+    .msg-bubble.student{align-self:flex-start;background:#241d5c;}
+    .msg-bubble-meta{font-size:0.62rem;font-weight:700;color:#8b85c4;margin-bottom:2px;}
+    .msg-bubble-text{font-size:0.82rem;color:#e2e8f0;line-height:1.5;white-space:pre-wrap;}
     .msg-reply-form{display:flex;gap:8px;align-items:flex-end;margin-top:8px;}
     .msg-reply-form textarea{flex:1;background:#0f0c3a;border:1px solid #2c2470;border-radius:6px;color:#e2e8f0;font-family:inherit;font-size:0.8rem;padding:6px 10px;resize:vertical;}
     .msg-reply-form .toggle-btn{white-space:nowrap;align-self:flex-end;padding:7px 12px;}
@@ -891,7 +894,43 @@ setInterval(async function(){
     }
   };
 
-  /* ── Messages tab ── */
+  /* ── Messages tab ──
+     Each message now carries a `thread` — a push-keyed list of back-and-forth
+     entries ({from:'instructor'|'student', text, at}), so a conversation can
+     go back and forth any number of times (not just one reply). The original
+     `reply`/`repliedAt` single-field shape from before this is kept readable
+     for backward compatibility: if present with no thread yet, it's shown as
+     the thread's first entry. */
+  function threadEntries(m){
+    var entries=[];
+    if(m.reply) entries.push({from:'instructor', text:m.reply, at:m.repliedAt||m.createdAt});
+    var thread=m.thread||{};
+    Object.keys(thread).forEach(function(tk){
+      var t=thread[tk];
+      if(t && t.text) entries.push({from:t.from||'instructor', text:t.text, at:t.at});
+    });
+    entries.sort(function(a,b){ return new Date(a.at||0) - new Date(b.at||0); });
+    return entries;
+  }
+
+  // Rebuilding the whole message list wipes out any reply box currently
+  // being typed into (loses focus, cursor position and unsent text) — this
+  // captures that state before the rebuild and restores it after, so a poll
+  // landing mid-keystroke never interrupts typing.
+  function captureReplyDraft(){
+    var el=document.activeElement;
+    if(!el || el.tagName!=='TEXTAREA' || el.id.indexOf('reply-input-')!==0) return null;
+    return {key: el.id.slice('reply-input-'.length), value: el.value, selStart: el.selectionStart, selEnd: el.selectionEnd};
+  }
+  function restoreReplyDraft(draft){
+    if(!draft) return;
+    var el=document.getElementById('reply-input-'+draft.key);
+    if(!el) return;
+    el.value = draft.value;
+    el.focus();
+    try{ el.setSelectionRange(draft.selStart, draft.selEnd); }catch(e){}
+  }
+
   function renderMessages(){
     var subjectMessages=messages[progressSubject]||{};
     var subjectUsers=users[progressSubject]||{};
@@ -911,18 +950,26 @@ setInterval(async function(){
     if(!keys.length){ empty.style.display='block'; body.innerHTML=''; return; }
     empty.style.display='none';
 
+    var draft=captureReplyDraft();
+
     body.innerHTML=keys.map(function(k){
       var m=subjectMessages[k];
       var resolved=m.status==='resolved';
-      var hasReply=!!m.reply;
+      var entries=threadEntries(m);
+      var hasReply=entries.some(function(e){ return e.from==='instructor'; });
       var badgeClass = resolved ? 'resolved' : (hasReply ? 'read' : 'pending');
       var badgeText = resolved ? 'Resolved' : (hasReply ? 'Read' : 'Pending');
       var isReset=m.type==='password_reset';
       var meta=[m.displayName||'Unknown student', m.username?('· @'+m.username):'', m.classCode?('· '+m.classCode):'', m.createdAt?('· '+relTime(m.createdAt)):''].filter(Boolean).join(' ');
       var resetBtn=(isReset && !resolved && m.username && subjectUsers[m.username]) ?
         '<button class="reset-btn" onclick="resetPassword(\''+m.username.replace(/'/g,"\\'")+'\')">🔑 Reset Password</button>' : '';
-      var replyBlock = m.reply ?
-        '<div class="msg-reply"><div class="msg-reply-lbl">Your reply'+(m.repliedAt?(' · '+relTime(m.repliedAt)):'')+':</div><div class="msg-reply-text">'+esc(m.reply)+'</div></div>' : '';
+      var threadHtml = entries.map(function(e){
+        var who = e.from==='student' ? esc(m.displayName||'Student') : 'You';
+        return '<div class="msg-bubble '+(e.from==='student'?'student':'instructor')+'">'+
+          '<div class="msg-bubble-meta">'+who+(e.at?(' · '+relTime(e.at)):'')+'</div>'+
+          '<div class="msg-bubble-text">'+esc(e.text)+'</div>'+
+        '</div>';
+      }).join('');
       var kEsc = k.replace(/'/g,"\\'");
       return '<div class="msg-card'+(resolved?' resolved':'')+(isReset?' reset-request':'')+'">'+
         '<div class="msg-top">'+
@@ -934,13 +981,15 @@ setInterval(async function(){
           '</div>'+
         '</div>'+
         '<div class="msg-body">'+esc(m.message||'')+'</div>'+
-        replyBlock+
+        (threadHtml ? '<div class="msg-thread">'+threadHtml+'</div>' : '')+
         '<div class="msg-reply-form">'+
-          '<textarea id="reply-input-'+esc(k)+'" rows="2" placeholder="Write a reply the student will see...">'+esc(m.reply||'')+'</textarea>'+
-          '<button class="toggle-btn" onclick="sendReply(\''+kEsc+'\')">'+(m.reply?'Update Reply':'Send Reply')+'</button>'+
+          '<textarea id="reply-input-'+esc(k)+'" rows="2" placeholder="Write a reply the student will see..."></textarea>'+
+          '<button class="toggle-btn" onclick="sendReply(\''+kEsc+'\')">Send</button>'+
         '</div>'+
       '</div>';
     }).join('');
+
+    restoreReplyDraft(draft);
   }
 
   window.toggleMessage = function(key, newStatus){
@@ -952,8 +1001,11 @@ setInterval(async function(){
     var ta = document.getElementById('reply-input-'+key);
     var text = ta ? ta.value.trim() : '';
     if(!text) return;
-    fetch(DB+fbBaseFor(progressSubject)+'/messages/'+key+'.json'+window.authUrlSuffix(), {method:'PATCH', body:JSON.stringify({reply:text, repliedAt:new Date().toISOString()})})
-      .then(function(){ fullPoll(); }).catch(function(){});
+    ta.disabled = true;
+    fetch(DB+fbBaseFor(progressSubject)+'/messages/'+key+'/thread.json'+window.authUrlSuffix(), {
+      method:'POST', body:JSON.stringify({from:'instructor', text:text, at:new Date().toISOString()})
+    }).then(function(){ if(ta){ ta.value=''; ta.disabled=false; } fullPoll(); })
+      .catch(function(){ if(ta) ta.disabled=false; });
   };
 
   /* ── Feedback tab ── */

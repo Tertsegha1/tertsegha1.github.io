@@ -588,6 +588,41 @@ function saveMyMessageKey(key){
   if(keys.indexOf(key) === -1){ keys.push(key); localStorage.setItem(sk('msg_keys'), JSON.stringify(keys)); }
 }
 
+// Same shape/logic as the instructor dashboard's threadEntries() — a
+// message's `thread` is a push-keyed list of {from:'instructor'|'student',
+// text, at} entries, plus a legacy `reply`/`repliedAt` pair (from before
+// multi-turn threads existed) folded in as the thread's first entry.
+function threadEntriesFor(m){
+  const entries = [];
+  if(m.reply) entries.push({from:'instructor', text:m.reply, at:m.repliedAt||m.createdAt});
+  const thread = m.thread || {};
+  Object.keys(thread).forEach(tk=>{
+    const t = thread[tk];
+    if(t && t.text) entries.push({from:t.from||'instructor', text:t.text, at:t.at});
+  });
+  entries.sort((a,b)=> new Date(a.at||0) - new Date(b.at||0));
+  return entries;
+}
+
+// Rebuilding the message list on every refresh would otherwise wipe out
+// whatever a student is mid-typing into their own reply box — same fix as
+// the instructor dashboard's captureReplyDraft()/restoreReplyDraft().
+function captureMyReplyDraft(){
+  const el = document.activeElement;
+  if(!el || el.tagName !== 'TEXTAREA' || el.id.indexOf('my-reply-input-') !== 0) return null;
+  return {key: el.id.slice('my-reply-input-'.length), value: el.value, selStart: el.selectionStart, selEnd: el.selectionEnd};
+}
+function restoreMyReplyDraft(draft){
+  if(!draft) return;
+  const el = document.getElementById('my-reply-input-'+draft.key);
+  if(!el) return;
+  el.value = draft.value;
+  el.focus();
+  try{ el.setSelectionRange(draft.selStart, draft.selEnd); }catch(e){}
+}
+
+let _myMessagesPollTimer = null;
+
 async function renderMyMessages(){
   const page = document.getElementById('page-contact');
   if(!page) return;
@@ -611,23 +646,66 @@ async function renderMyMessages(){
     ));
     const rows = recs.filter(r => r.m);
     if(!rows.length){ list.innerHTML = '<div style="padding:8px 0;">No messages yet.</div>'; return; }
-    list.innerHTML = rows.map(({m}) => {
+    const draft = captureMyReplyDraft();
+    list.innerHTML = rows.map(({k, m}) => {
       const resolved = m.status === 'resolved';
-      const replyHtml = m.reply
-        ? '<div style="margin-top:8px;padding:8px 12px;background:var(--bg-alt,#f4f4fb);border-radius:8px;"><div style="font-weight:700;font-size:0.75rem;color:var(--brand,#4338CA);margin-bottom:2px;">Instructor reply:</div><div style="white-space:pre-wrap;">'+escapeHtml(m.reply)+'</div></div>'
-        : '<div style="margin-top:6px;font-style:italic;color:var(--text-muted);">Waiting for a reply...</div>';
+      const entries = threadEntriesFor(m);
+      const threadHtml = entries.map(e=>{
+        const mine = e.from === 'student';
+        return '<div style="max-width:85%;margin:'+(mine?'6px 0 6px auto':'6px auto 6px 0')+';padding:7px 12px;border-radius:10px;background:'+(mine?'var(--brand,#4338CA)':'var(--bg-alt,#f4f4fb)')+';color:'+(mine?'#fff':'inherit')+';">'+
+          '<div style="font-size:0.68rem;font-weight:700;opacity:0.75;margin-bottom:2px;">'+(mine?'You':'Instructor')+(e.at?(' · '+relTimeStudent(e.at)):'')+'</div>'+
+          '<div style="white-space:pre-wrap;font-size:0.85rem;">'+escapeHtml(e.text)+'</div>'+
+        '</div>';
+      }).join('');
       return '<div style="border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:10px;">'+
         '<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;">'+
           '<div style="font-weight:700;">'+escapeHtml(m.subject||'(no subject)')+'</div>'+
           '<span style="font-size:0.7rem;font-weight:700;padding:2px 9px;border-radius:999px;'+(resolved?'background:#dcfce7;color:#166534;':'background:#fef3c7;color:#92400e;')+'">'+(resolved?'Resolved':'Open')+'</span>'+
         '</div>'+
         '<div style="white-space:pre-wrap;margin-top:6px;color:var(--text-muted);">'+escapeHtml(m.message||'')+'</div>'+
-        replyHtml+
+        (threadHtml ? '<div style="margin-top:4px;">'+threadHtml+'</div>' : '')+
+        '<div style="display:flex;gap:8px;align-items:flex-end;margin-top:8px;">'+
+          '<textarea id="my-reply-input-'+k+'" rows="2" placeholder="Reply..." style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.85rem;resize:vertical;"></textarea>'+
+          '<button class="run-btn" style="padding:7px 14px;font-size:0.8rem;white-space:nowrap;" onclick="sendStudentReply(\''+k+'\')">Send</button>'+
+        '</div>'+
       '</div>';
     }).join('');
+    restoreMyReplyDraft(draft);
   }catch(e){
     list.textContent = 'Could not load your messages — please try again.';
   }
+  if(!_myMessagesPollTimer) _myMessagesPollTimer = setInterval(renderMyMessages, 15000);
+}
+
+function stopMyMessagesPolling(){
+  if(_myMessagesPollTimer){ clearInterval(_myMessagesPollTimer); _myMessagesPollTimer = null; }
+}
+
+async function sendStudentReply(key){
+  const ta = document.getElementById('my-reply-input-'+key);
+  const text = ta ? ta.value.trim() : '';
+  if(!text) return;
+  ta.disabled = true;
+  try{
+    await fetch(fbUrl(fbBase()+'/messages/'+key+'/thread.json'), {
+      method:'POST', body: JSON.stringify({from:'student', text, at:new Date().toISOString()})
+    });
+    if(ta){ ta.value=''; ta.disabled=false; }
+    renderMyMessages();
+  }catch(e){
+    if(ta) ta.disabled = false;
+  }
+}
+
+function relTimeStudent(iso){
+  try{
+    const diff = Math.floor((Date.now()-new Date(iso).getTime())/1000);
+    if(diff<10) return 'just now';
+    if(diff<60) return diff+'s ago';
+    if(diff<3600) return Math.floor(diff/60)+'m ago';
+    if(diff<86400) return Math.floor(diff/3600)+'h ago';
+    return Math.floor(diff/86400)+'d ago';
+  }catch(e){ return ''; }
 }
 
 /* ---------------------------------------------------------------------
@@ -644,7 +722,7 @@ function showPage(id){
   if(navEl) navEl.classList.add('active');
   window.scrollTo(0,0);
   if(window.innerWidth <= 900) document.getElementById('sidebar').classList.remove('open');
-  if(pageId === 'page-contact') renderMyMessages();
+  if(pageId === 'page-contact'){ renderMyMessages(); } else { stopMyMessagesPolling(); }
 }
 
 function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('open'); }
