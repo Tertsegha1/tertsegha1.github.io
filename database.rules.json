@@ -13,7 +13,10 @@
       },
       "messages": {
         ".read": "auth != null",
-        ".write": true
+        ".write": true,
+        "$key": {
+          ".read": true
+        }
       },
       "feedback": {
         ".read": "auth != null",
@@ -47,7 +50,10 @@
         },
         "messages": {
           ".read": "auth != null",
-          ".write": true
+          ".write": true,
+          "$key": {
+            ".read": true
+          }
         },
         "feedback": {
           ".read": "auth != null",
@@ -82,7 +88,10 @@
         },
         "messages": {
           ".read": "auth != null",
-          ".write": true
+          ".write": true,
+          "$key": {
+            ".read": true
+          }
         },
         "feedback": {
           ".read": "auth != null",
@@ -117,7 +126,10 @@
         },
         "messages": {
           ".read": "auth != null",
-          ".write": true
+          ".write": true,
+          "$key": {
+            ".read": true
+          }
         },
         "feedback": {
           ".read": "auth != null",
@@ -152,7 +164,10 @@
         },
         "messages": {
           ".read": "auth != null",
-          ".write": true
+          ".write": true,
+          "$key": {
+            ".read": true
+          }
         },
         "feedback": {
           ".read": "auth != null",
@@ -187,7 +202,10 @@
         },
         "messages": {
           ".read": "auth != null",
-          ".write": true
+          ".write": true,
+          "$key": {
+            ".read": true
+          }
         },
         "feedback": {
           ".read": "auth != null",
@@ -222,7 +240,10 @@
         },
         "messages": {
           ".read": "auth != null",
-          ".write": true
+          ".write": true,
+          "$key": {
+            ".read": true
+          }
         },
         "feedback": {
           ".read": "auth != null",
@@ -257,7 +278,10 @@
         },
         "messages": {
           ".read": "auth != null",
-          ".write": true
+          ".write": true,
+          "$key": {
+            ".read": true
+          }
         },
         "feedback": {
           ".read": "auth != null",

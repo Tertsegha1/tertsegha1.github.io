@@ -563,13 +563,70 @@ async function submitContactMessage(){
   try{
     const res = await fetch(fbUrl(fbBase()+'/messages.json'), {method:'POST', body: JSON.stringify(payload)});
     if(!res.ok) throw new Error('failed');
+    const data = await res.json();
+    if(data && data.name) saveMyMessageKey(data.name);
     statusEl.style.color = 'var(--success)';
     statusEl.textContent = '✅ Message sent — your instructor will get back to you.';
     document.getElementById('contact-subject').value = '';
     document.getElementById('contact-message').value = '';
+    renderMyMessages();
   }catch(e){
     statusEl.style.color = 'var(--danger)';
     statusEl.textContent = 'Could not send your message — please try again.';
+  }
+}
+
+// Tracks which /messages keys belong to this student (on this browser), so
+// they can look up their own message's status/reply via the per-record-open
+// Firebase read rule (mirrors the users/certificates precedent) without
+// needing list-level read access or a new indexed-query pattern.
+function myMessageKeys(){
+  try{ return JSON.parse(localStorage.getItem(sk('msg_keys')) || '[]'); }catch(e){ return []; }
+}
+function saveMyMessageKey(key){
+  const keys = myMessageKeys();
+  if(keys.indexOf(key) === -1){ keys.push(key); localStorage.setItem(sk('msg_keys'), JSON.stringify(keys)); }
+}
+
+async function renderMyMessages(){
+  const page = document.getElementById('page-contact');
+  if(!page) return;
+  let wrap = document.getElementById('my-messages-wrap');
+  if(!wrap){
+    wrap = document.createElement('div');
+    wrap.id = 'my-messages-wrap';
+    wrap.className = 'card';
+    wrap.style.marginTop = '16px';
+    wrap.innerHTML = '<h2>My Messages</h2><div id="my-messages-list" style="font-size:0.85rem;color:var(--text-muted);">Loading...</div>';
+    page.appendChild(wrap);
+  }
+  const list = document.getElementById('my-messages-list');
+  const keys = myMessageKeys();
+  if(!keys.length){ wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  if(!fbOk()){ list.textContent = 'Cannot load messages right now — no connection to the server.'; return; }
+  try{
+    const recs = await Promise.all(keys.slice().reverse().map(k =>
+      fetch(fbUrl(fbBase()+'/messages/'+k+'.json')).then(r => r.ok ? r.json() : null).then(m => ({k, m}))
+    ));
+    const rows = recs.filter(r => r.m);
+    if(!rows.length){ list.innerHTML = '<div style="padding:8px 0;">No messages yet.</div>'; return; }
+    list.innerHTML = rows.map(({m}) => {
+      const resolved = m.status === 'resolved';
+      const replyHtml = m.reply
+        ? '<div style="margin-top:8px;padding:8px 12px;background:var(--bg-alt,#f4f4fb);border-radius:8px;"><div style="font-weight:700;font-size:0.75rem;color:var(--brand,#4338CA);margin-bottom:2px;">Instructor reply:</div><div style="white-space:pre-wrap;">'+escapeHtml(m.reply)+'</div></div>'
+        : '<div style="margin-top:6px;font-style:italic;color:var(--text-muted);">Waiting for a reply...</div>';
+      return '<div style="border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:10px;">'+
+        '<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;">'+
+          '<div style="font-weight:700;">'+escapeHtml(m.subject||'(no subject)')+'</div>'+
+          '<span style="font-size:0.7rem;font-weight:700;padding:2px 9px;border-radius:999px;'+(resolved?'background:#dcfce7;color:#166534;':'background:#fef3c7;color:#92400e;')+'">'+(resolved?'Resolved':'Open')+'</span>'+
+        '</div>'+
+        '<div style="white-space:pre-wrap;margin-top:6px;color:var(--text-muted);">'+escapeHtml(m.message||'')+'</div>'+
+        replyHtml+
+      '</div>';
+    }).join('');
+  }catch(e){
+    list.textContent = 'Could not load your messages — please try again.';
   }
 }
 
@@ -587,6 +644,7 @@ function showPage(id){
   if(navEl) navEl.classList.add('active');
   window.scrollTo(0,0);
   if(window.innerWidth <= 900) document.getElementById('sidebar').classList.remove('open');
+  if(pageId === 'page-contact') renderMyMessages();
 }
 
 function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('open'); }
