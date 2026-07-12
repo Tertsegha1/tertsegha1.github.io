@@ -4138,6 +4138,169 @@ print(len(clean_pipeline_threshold(df, 0)))
       {type:'assert', expr:'round(float(result), 1) == 70.0', label:'The pipeline correctly returns a cleaned average (70.0)'}
     ]
   }
+},
+{
+  key:'week6', num:6, title:'Chained Transformations',
+  scenarioTag:'Real world: five separate reassignment lines is five chances for a typo',
+  scenario:`Week 5's pipeline function reassigned df over and over: df = df.dropna(); df = df[...]; df = df.sort...
+    That works, but pandas methods can be chained directly, one after another, in a single fluent expression —
+    often clearer to read as "do this, then this, then this."`,
+  objectives:[
+    'Chain .dropna() and .sort_values() in one expression',
+    'Chain .reset_index(drop=True) to renumber rows after sorting',
+    'Filter inside a chain with .query()',
+    'Add a computed column inside a chain with .assign()'
+  ],
+  conceptHtml:`
+    <p>Instead of reassigning df at every step, pandas methods can be called one after another directly, since
+    each one returns a new DataFrame the next method can act on immediately:</p>
+    <pre class="code-block">import pandas as pd
+df = pd.DataFrame({"name": ["Ada", "Ben", "Chi", "Dee"], "score": [85.0, None, 55.0, 95.0]})
+result = df.dropna().sort_values("score", ascending=False)
+print(result["name"].tolist())   # ['Dee', 'Ada', 'Chi']</pre>
+    <p>Bracket-style filtering (<code>df[df["score"] >= 50]</code>) needs to repeat the DataFrame's name, which
+    breaks a clean chain. <code>.query()</code> takes a filter condition as TEXT instead, fitting neatly into a
+    chain:</p>
+    <pre class="code-block">result = df.dropna().query("score >= 50")</pre>
+    <p><code>.assign()</code> does the same for adding a computed column — no repeated <code>df["passed"] = ...</code>
+    needed, it just returns a new DataFrame with the extra column already added:</p>
+    <pre class="code-block">result = df.dropna().assign(passed=lambda d: d["score"] >= 50)</pre>
+    <h3>Let's break down a longer chain, line by line</h3>
+    <pre class="code-block">result = (df.dropna()
+            .query("score >= 50")
+            .sort_values("score", ascending=False)
+            .reset_index(drop=True))</pre>
+    <ul>
+      <li>Wrapping the whole expression in <code>(...)</code> lets you spread it across multiple lines, one method
+        per line — much easier to read than one giant single-line chain.</li>
+      <li>Each line's method runs on the RESULT of the line above it — drop missing, THEN filter, THEN sort, THEN
+        renumber.</li>
+      <li><code>.reset_index(drop=True)</code> at the end renumbers rows 0, 1, 2... after sorting/filtering has
+        left gaps in the original row numbers.</li>
+    </ul>`,
+  sandboxStarter:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada", "Ben", "Chi", "Dee"], "score": [85.0, None, 55.0, 95.0]})
+result = df.dropna().sort_values("score", ascending=False)
+print(result["name"].tolist())
+`,
+  sandboxStarter2:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada", "Ben", "Chi", "Dee"], "score": [85.0, None, 35.0, 95.0]})
+result = (df.dropna()
+            .query("score >= 50")
+            .sort_values("score", ascending=False)
+            .reset_index(drop=True))
+print(result["name"].tolist())
+`,
+  exercises:[
+    {
+      title:'Chain dropna and sort_values',
+      desc:`Create df with columns "name" (Ada, Ben, Chi, Dee) and "score" (85.0, None, 55.0, 95.0). Create
+        result = df.dropna().sort_values("score", ascending=False). Assert that result["name"].tolist() ==
+        ["Dee", "Ada", "Chi"].`,
+      starter:`import pandas as pd
+# Create df and result below
+`,
+      tests:[{type:'assert', expr:'result["name"].tolist() == ["Dee", "Ada", "Chi"]', label:'The chained dropna+sort correctly orders the names'}]
+    },
+    {
+      title:'Renumber rows after sorting',
+      desc:`Using the same df, create result = df.dropna().sort_values("score", ascending=False).reset_index(drop=True).
+        Assert that result["name"].iloc[0] == "Dee" — reset_index doesn't change the ORDER, just renumbers rows
+        0, 1, 2 after sorting.`,
+      starter:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada", "Ben", "Chi", "Dee"], "score": [85.0, None, 55.0, 95.0]})
+# Create result below
+`,
+      tests:[{type:'assert', expr:'result["name"].iloc[0] == "Dee"', label:'reset_index correctly preserves the sorted order'}]
+    },
+    {
+      title:'Filter inside a chain with .query()',
+      desc:`Create df with columns "name" (Ada, Ben, Chi, Dee) and "score" (85.0, None, 35.0, 95.0). Create
+        result = df.dropna().query("score >= 50"). Assert that result["name"].tolist() == ["Ada", "Dee"] — Chi's
+        35 is filtered out.`,
+      starter:`import pandas as pd
+# Create df and result below
+`,
+      tests:[{type:'assert', expr:'result["name"].tolist() == ["Ada", "Dee"]', label:'.query() correctly filters within the chain'}]
+    },
+    {
+      title:'Check who\'s first after a full chain',
+      desc:`Using df with "name" (Ada, Ben, Chi, Dee) and "score" (85.0, None, 55.0, 95.0), create
+        result = df.dropna().sort_values("score", ascending=False).reset_index(drop=True). Assert that
+        result["name"].iloc[0] == "Dee".`,
+      starter:`import pandas as pd
+# Create df and result below
+`,
+      tests:[{type:'assert', expr:'result["name"].iloc[0] == "Dee"', label:'The chain correctly identifies Dee as the top scorer'}]
+    },
+    {
+      title:'Add a computed column with .assign()',
+      desc:`Create df with columns "name" (Ada, Ben, Chi, Dee) and "score" (85.0, None, 35.0, 95.0). Create
+        result = df.dropna().assign(passed=lambda d: d["score"] >= 50). Assert that result["passed"].tolist() ==
+        [True, False, True] — Chi's 35 correctly comes out False.`,
+      starter:`import pandas as pd
+# Create df and result below
+`,
+      tests:[{type:'assert', expr:'result["passed"].tolist() == [True, False, True]', label:'.assign() correctly computes the passed column within the chain'}]
+    },
+    {
+      title:'Put it all together',
+      desc:`Create df with "name" (Ada, Ben, Chi, Dee) and "score" (85.0, None, 35.0, 95.0). Create
+        result = df.dropna().query("score >= 50").sort_values("score", ascending=False).reset_index(drop=True).
+        Assert that result["name"].tolist() == ["Dee", "Ada"] — cleaned, filtered, sorted, and renumbered in one
+        expression.`,
+      starter:`import pandas as pd
+# Create df and result below
+`,
+      tests:[{type:'assert', expr:'result["name"].tolist() == ["Dee", "Ada"]', label:'The full chain correctly produces the final filtered, sorted list'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why chain pandas methods instead of reassigning df at every step?',
+      options:['Chaining is required by pandas','It\'s often more readable — "do this, then this, then this" — without repeating df\'s name each time','Chaining runs code faster','Reassignment is not allowed in pandas'],
+      correct:1,
+      explain:'Chaining is a readability choice — each method\'s result flows directly into the next, without needing df = df... on every line.'
+    },
+    {
+      q:'Why use .query("score >= 50") instead of df[df["score"] >= 50] inside a chain?',
+      options:['.query() is the only way to filter in pandas','Bracket filtering needs to repeat the DataFrame\'s name, which breaks a clean chain; .query() fits directly into one','.query() is faster','They do completely different things'],
+      correct:1,
+      explain:'.query() takes the condition as text, so it can be called directly on the previous chain step\'s result without repeating a variable name.'
+    },
+    {
+      q:'What does .reset_index(drop=True) do at the end of a chain?',
+      options:['Deletes all rows','Renumbers rows 0, 1, 2... after sorting/filtering has left gaps in the original numbering','Sorts the DataFrame','Removes the index column entirely, leaving no index at all'],
+      correct:1,
+      explain:'.reset_index(drop=True) gives a fresh, sequential row numbering after previous steps have reordered or removed rows.'
+    },
+    {
+      q:'What does .assign(passed=lambda d: d["score"] >= 50) do?',
+      options:['Deletes the score column','Adds a new "passed" column computed from the CURRENT chain step\'s data, without repeating df[...] =','Filters out failing rows','Only works outside of a chain'],
+      correct:1,
+      explain:'.assign() returns a new DataFrame with an added column, fitting into a chain the same way .query() and .sort_values() do.'
+    }
+  ],
+  sandboxStarter3:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada", "Ben", "Chi", "Dee"], "score": [85.0, None, 35.0, 95.0]})
+result = (df.dropna()
+            .assign(passed=lambda d: d["score"] >= 50)
+            .sort_values("score", ascending=False)
+            .reset_index(drop=True))
+print(result)
+`,
+  stretchChallenge:{
+    title:'A top-2 leaderboard in one chain',
+    desc:`Create df with "name" (Ada, Ben, Chi, Dee) and "score" (85.0, None, 35.0, 95.0). Create
+      result = df.dropna().sort_values("score", ascending=False).head(2).reset_index(drop=True). Assert that
+      result["name"].tolist() == ["Dee", "Ada"].`,
+    starter:`import pandas as pd
+# Create df and result below
+`,
+    tests:[
+      {type:'assert', expr:'result["name"].tolist() == ["Dee", "Ada"]', label:'The chain correctly produces the top-2 leaderboard'}
+    ]
+  }
 }
 ];
 
