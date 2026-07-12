@@ -6990,9 +6990,142 @@ const WD_ADVANCED_MP1 = {
   ]
 };
 
+const WD_ADVANCED_MP2 = {
+  key:'mp2',
+  title:'Mini Project 2 — Build an Interactive Quiz App',
+  intro:`A real quiz app, built with everything from all 9 Advanced weeks: an array-of-objects question bank
+    (Week 1), a single-question-at-a-time step flow (Week 3's routing, Week 4's multi-step pattern), score
+    tracking remembered in a variable (Week 6's remembered-state pattern), and a dark-mode theme toggle
+    (Week 7) once the quiz finishes.`,
+  fixtureNote:`All three doors build on this same page skeleton — a quiz section showing one question at a time,
+    a hidden results section, and a dark-mode toggle:`,
+  fixtureCode:`<div id="quizSection">
+  <p id="questionText"></p>
+  <ul id="optionsList"></ul>
+  <button id="submitBtn" type="button">Submit Answer</button>
+</div>
+<div id="resultsSection" style="display:none;">
+  <p id="resultText"></p>
+</div>
+<button id="themeBtn" type="button">Toggle Dark Mode</button>`,
+  doors:[
+    {
+      key:'a', title:'Door 1 — Render the quiz data',
+      desc:`Build the const questions array of 3 objects (each with q, options, and answer), then on "Start Quiz"
+        show questions[0].q in #questionText and render each of questions[0].options as an &lt;li&gt; inside
+        #optionsList — the array-of-objects rendering pattern from Week 1.`,
+      starter:`<h1>Quiz</h1>
+<p id="questionText"></p>
+<ul id="optionsList"></ul>
+<button id="startBtn" type="button">Start Quiz</button>
+
+<script>
+  document.querySelector('#startBtn').addEventListener('click', function(){
+    const questions = [
+      {q:'Capital of France?', options:['Paris','London','Rome'], answer:'Paris'},
+      {q:'2 + 2 = ?', options:['3','4','5'], answer:'4'},
+      {q:'Color of the sky?', options:['Blue','Green','Red'], answer:'Blue'}
+    ];
+    // Show questions[0].q in #questionText, and render each of questions[0].options as an <li> in #optionsList
+  });
+</script>
+`,
+      tests:[
+        {type:'dom', selector:'#questionText', contains:'Capital of France?', label:'#questionText shows the first question'},
+        {type:'dom-count', selector:'#optionsList li', min:3, label:'#optionsList shows all 3 options'},
+        {type:'dom', selector:'#optionsList', contains:'ParisLondonRome', label:'All 3 options render, in order'}
+      ]
+    },
+    {
+      key:'b', title:'Door 2 — Answer a question, track score, and step forward',
+      desc:`#answerSelect is pre-set to the correct answer for the current question. On #submitBtn click: if
+        #answerSelect's value matches questions[currentIndex].answer, increment score; then increment
+        currentIndex and update #questionText to the new current question; finally update #score to
+        "Score: " + score. Since grading only auto-clicks each button once, both the score update and the
+        step-forward must happen from this single click.`,
+      starter:`<p id="questionText">Capital of France?</p>
+<select id="answerSelect">
+  <option value="Paris" selected>Paris</option>
+  <option value="London">London</option>
+  <option value="Rome">Rome</option>
+</select>
+<button id="submitBtn" type="button">Submit Answer</button>
+<p id="score">Score: 0</p>
+
+<script>
+  const questions = [
+    {q:'Capital of France?', options:['Paris','London','Rome'], answer:'Paris'},
+    {q:'2 + 2 = ?', options:['3','4','5'], answer:'4'},
+    {q:'Color of the sky?', options:['Blue','Green','Red'], answer:'Blue'}
+  ];
+  let currentIndex = 0;
+  let score = 0;
+  // Add a click handler on #submitBtn: if #answerSelect's value matches questions[currentIndex].answer,
+  // increment score; then increment currentIndex, set #questionText to questions[currentIndex].q, and set
+  // #score to "Score: " + score
+</script>
+`,
+      tests:[
+        {type:'dom', selector:'#score', contains:'Score: 1', label:'#score becomes "Score: 1" after a correct answer'},
+        {type:'dom', selector:'#questionText', contains:'2 + 2 = ?', label:'#questionText advances to the second question'}
+      ]
+    },
+    {
+      key:'c', title:'Door 3 — Finish the quiz and add dark mode',
+      desc:`Now at the LAST question (currentIndex is questions.length - 1), pre-set to the correct answer. On
+        #submitBtn click: score the last answer, then — since there's no next question — hide #quizSection,
+        show #resultsSection, and set #resultText to "You scored " + score + " out of " + questions.length.
+        Separately, #themeBtn toggles a "dark" class on &lt;body&gt;; theme #resultsSection with a CSS
+        variable (Week 7's pattern) so it's dark-mode ready.`,
+      starter:`<style>
+  :root { --bg:#ffffff; --text:#111111; }
+  body.dark { --bg:#111111; --text:#ffffff; }
+  #resultsSection { color:var(--text); }
+</style>
+<div id="quizSection">
+  <p id="questionText">Color of the sky?</p>
+  <select id="answerSelect">
+    <option value="Blue" selected>Blue</option>
+    <option value="Green">Green</option>
+    <option value="Red">Red</option>
+  </select>
+  <button id="submitBtn" type="button">Submit Answer</button>
+</div>
+<div id="resultsSection" style="display:none;">
+  <p id="resultText"></p>
+</div>
+<button id="themeBtn" type="button">Toggle Dark Mode</button>
+
+<script>
+  const questions = [
+    {q:'Capital of France?', options:['Paris','London','Rome'], answer:'Paris'},
+    {q:'2 + 2 = ?', options:['3','4','5'], answer:'4'},
+    {q:'Color of the sky?', options:['Blue','Green','Red'], answer:'Blue'}
+  ];
+  let currentIndex = 2;
+  let score = 2;
+  document.querySelector('#submitBtn').addEventListener('click', function(){
+    // If #answerSelect's value matches questions[currentIndex].answer, increment score.
+    // This is the LAST question, so instead of moving to a next question: hide #quizSection, show
+    // #resultsSection, and set #resultText to "You scored " + score + " out of " + questions.length
+  });
+  document.querySelector('#themeBtn').addEventListener('click', function(){
+    document.body.classList.toggle('dark');
+  });
+</script>
+`,
+      tests:[
+        {type:'dom', selector:'#resultText', contains:'You scored 3 out of 3', label:'#resultText shows the final score after the last question'},
+        {type:'computed-style', selector:'#quizSection', prop:'display', equals:'none', label:'#quizSection is hidden after finishing'},
+        {type:'dom', selector:'style', contains:'var(', label:'Uses a CSS variable to theme the results (dark-mode ready)'}
+      ]
+    }
+  ]
+};
+
 window.SUBJECT_DATA = window.SUBJECT_DATA || {};
 window.SUBJECT_DATA.wd = {
   b: {weeks: WD_WEEKS, mp1: WD_MP1, mp2: WD_MP2},
   i: {weeks: WD_INTERMEDIATE_WEEKS, mp1: WD_INTERMEDIATE_MP1, mp2: WD_INTERMEDIATE_MP2},
-  a: {weeks: WD_WEEKS, mp1: WD_MP1, mp2: WD_MP2}
+  a: {weeks: WD_ADVANCED_WEEKS, mp1: WD_ADVANCED_MP1, mp2: WD_ADVANCED_MP2}
 };
