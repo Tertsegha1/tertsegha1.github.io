@@ -3603,8 +3603,401 @@ print(list(countsA), list(countsB))
       {type:'assert', expr:'busiest_index == 2', label:'The busiest bin is correctly identified automatically (index 2)'}
     ]
   }
+},
+{
+  key:'week3', num:3, title:'Correlation Between Columns',
+  scenarioTag:'Real world: does more study time actually mean higher scores?',
+  scenario:`It sounds obvious that studying more leads to better scores — but "sounds obvious" isn't the same as
+    "the data actually shows it." .corr() gives a real number, from -1 to 1, measuring how strongly two columns
+    move together.`,
+  objectives:[
+    'Compute correlation between two columns with .corr()',
+    'Interpret positive vs negative correlation',
+    'Compute a full correlation matrix with df.corr()',
+    'Visualise a relationship with a scatter plot alongside the number'
+  ],
+  conceptHtml:`
+    <p><code>.corr()</code> measures how strongly two columns move together, as a number from -1 to 1:</p>
+    <pre class="code-block">import pandas as pd
+df = pd.DataFrame({"hours": [1, 2, 3, 4, 5], "score": [50, 55, 65, 75, 90]})
+corr_val = df["hours"].corr(df["score"])
+print(round(corr_val, 2))   # 0.99 — strongly positive</pre>
+    <ul>
+      <li><strong>Close to +1</strong> — as one column goes up, the other reliably goes up too (positive
+        correlation, like hours studied and score).</li>
+      <li><strong>Close to -1</strong> — as one goes up, the other reliably goes DOWN (negative correlation, like
+        hours of TV and score, in some datasets).</li>
+      <li><strong>Close to 0</strong> — no reliable relationship at all (like shoe size and exam score).</li>
+    </ul>
+    <p>Calling <code>.corr()</code> on a whole DataFrame (not just one column) gives a full correlation MATRIX —
+    every column's correlation with every other column, all at once:</p>
+    <pre class="code-block">matrix = df.corr()
+print(matrix.loc["hours", "score"])   # same 0.99 value, read from the matrix</pre>
+    <p>A number tells you HOW STRONG a relationship is; a <strong>scatter plot</strong> (<code>ax.scatter()</code>)
+    shows you the actual SHAPE — points climbing steadily up-and-right for a positive correlation, scattered with
+    no pattern for none.</p>`,
+  sandboxStarter:`import pandas as pd
+df = pd.DataFrame({"hours": [1, 2, 3, 4, 5], "score": [50, 55, 65, 75, 90]})
+corr_val = df["hours"].corr(df["score"])
+print(round(corr_val, 2))
+`,
+  sandboxStarter2:`import matplotlib.pyplot as plt
+import pandas as pd
+df = pd.DataFrame({"hours": [1, 2, 3, 4, 5], "score": [50, 55, 65, 75, 90]})
+fig, ax = plt.subplots()
+ax.scatter(df["hours"], df["score"])
+ax.set_xlabel("Hours Studied")
+ax.set_ylabel("Score")
+print(round(df["hours"].corr(df["score"]), 2))
+`,
+  exercises:[
+    {
+      title:'Compute a positive correlation',
+      desc:`Create df with columns "hours" (1, 2, 3, 4, 5) and "score" (50, 55, 65, 75, 90). Create
+        corr_val = df["hours"].corr(df["score"]). Assert that round(float(corr_val), 2) == 0.99.`,
+      starter:`import pandas as pd
+# Create df and corr_val below
+`,
+      tests:[{type:'assert', expr:'round(float(corr_val), 2) == 0.99', label:'Correlation is correctly computed (0.99)'}]
+    },
+    {
+      title:'Compute a negative correlation',
+      desc:`Create df with columns "tv_hours" (1, 2, 3, 4, 5) and "score" (90, 80, 70, 60, 50) — more TV, lower
+        score. Create corr_val = df["tv_hours"].corr(df["score"]). Assert that round(float(corr_val), 2) == -1.0.`,
+      starter:`import pandas as pd
+# Create df and corr_val below
+`,
+      tests:[{type:'assert', expr:'round(float(corr_val), 2) == -1.0', label:'Negative correlation is correctly computed (-1.0)'}]
+    },
+    {
+      title:'Build a full correlation matrix',
+      desc:`Create df with columns "hours" (1, 2, 3, 4, 5) and "score" (50, 55, 65, 75, 90). Create
+        matrix = df.corr(). Assert that round(float(matrix.loc["hours", "score"]), 2) == 0.99.`,
+      starter:`import pandas as pd
+# Create df and matrix below
+`,
+      tests:[{type:'assert', expr:'round(float(matrix.loc["hours", "score"]), 2) == 0.99', label:'The correlation matrix contains the correct value'}]
+    },
+    {
+      title:'Describe the strength of a correlation',
+      desc:`Write a function describe_correlation(value) that returns "Strong positive" if value &gt; 0.7,
+        "Strong negative" if value &lt; -0.7, otherwise "Weak or none". Create df with "hours" (1, 2, 3, 4, 5) and
+        "score" (50, 55, 65, 75, 90). Create corr_val = df["hours"].corr(df["score"]) and
+        result = describe_correlation(corr_val). Assert that result == "Strong positive".`,
+      starter:`import pandas as pd
+# Define describe_correlation below, then create df, corr_val and result
+`,
+      tests:[{type:'assert', expr:'result == "Strong positive"', label:'The correlation is correctly described as "Strong positive"'}]
+    },
+    {
+      title:'Spot a weak correlation',
+      desc:`Create df with columns "shoe_size" (6, 7, 8, 9, 10) and "score" (70, 60, 80, 55, 90) — no real
+        relationship. Create corr_val = df["shoe_size"].corr(df["score"]). Assert that abs(float(corr_val)) < 0.5
+        — a weak correlation, far from either +1 or -1.`,
+      starter:`import pandas as pd
+# Create df and corr_val below
+`,
+      tests:[{type:'assert', expr:'abs(float(corr_val)) < 0.5', label:'Shoe size and score correctly show only a weak correlation'}]
+    },
+    {
+      title:'Combine a scatter plot with the correlation value',
+      desc:`Create df with columns "hours" (1, 2, 3, 4, 5) and "score" (50, 55, 65, 75, 90). Create
+        fig, ax = plt.subplots() and ax.scatter(df["hours"], df["score"]). Create
+        num_points = len(ax.collections[0].get_offsets()) and corr_val = df["hours"].corr(df["score"]). Assert
+        that num_points == 5 and round(float(corr_val), 2) == 0.99.`,
+      starter:`import matplotlib.pyplot as plt
+import pandas as pd
+# Create df, fig, ax, num_points and corr_val below
+`,
+      tests:[{type:'assert', expr:'num_points == 5 and round(float(corr_val), 2) == 0.99', label:'Scatter plot and correlation value both correctly match the data'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What range of values does .corr() return?',
+      options:['0 to 100','-1 to 1','Any whole number','Only 0 or 1'],
+      correct:1,
+      explain:'.corr() returns a value between -1 (perfect negative) and +1 (perfect positive), with 0 meaning no relationship.'
+    },
+    {
+      q:'What does a correlation close to -1 mean?',
+      options:['The columns have no relationship','As one column goes up, the other reliably goes DOWN','There\'s a calculation error','The columns are identical'],
+      correct:1,
+      explain:'A negative correlation means the two columns move in opposite directions.'
+    },
+    {
+      q:'What does df.corr() (called on the whole DataFrame) return?',
+      options:['A single number','A correlation MATRIX — every column\'s correlation with every other column','An error, since .corr() only works on one column','The mean of all columns'],
+      correct:1,
+      explain:'Calling .corr() on a DataFrame computes every pairwise correlation at once, returned as a matrix.'
+    },
+    {
+      q:'Why use a scatter plot alongside a correlation number?',
+      options:['You never need both','The number tells you HOW STRONG a relationship is; the scatter plot shows you the actual SHAPE of it','Scatter plots replace the need for .corr()','They always show the same information redundantly'],
+      correct:1,
+      explain:'The number and the chart complement each other — strength (number) and visual pattern/shape (chart).'
+    }
+  ],
+  sandboxStarter3:`import matplotlib.pyplot as plt
+import pandas as pd
+
+def describe_correlation(value):
+    if value > 0.7:
+        return "Strong positive"
+    elif value < -0.7:
+        return "Strong negative"
+    else:
+        return "Weak or none"
+
+df = pd.DataFrame({"shoe_size": [6, 7, 8, 9, 10], "score": [70, 60, 80, 55, 90]})
+corr_val = df["shoe_size"].corr(df["score"])
+print(round(corr_val, 2), describe_correlation(corr_val))
+`,
+  stretchChallenge:{
+    title:'A fully labelled scatter plot with interpretation',
+    desc:`Write describe_correlation(value) as before. Create df with "hours" (1, 2, 3, 4, 5) and "score" (50, 55,
+      65, 75, 90). Create fig, ax = plt.subplots(), ax.scatter(df["hours"], df["score"]),
+      ax.set_xlabel("Hours Studied"), and ax.set_ylabel("Score"). Create corr_val = df["hours"].corr(df["score"])
+      and result = describe_correlation(corr_val). Assert that ax.get_xlabel() == "Hours Studied" and
+      result == "Strong positive".`,
+    starter:`import matplotlib.pyplot as plt
+import pandas as pd
+# Define describe_correlation, then create df, fig, ax, corr_val and result below
+`,
+    tests:[
+      {type:'assert', expr:'ax.get_xlabel() == "Hours Studied" and result == "Strong positive"', label:'Chart is labelled and the correlation is correctly interpreted'}
+    ]
+  }
+},
+{
+  key:'week4', num:4, title:'Grouped Comparisons, Visually',
+  scenarioTag:'Real world: which house actually performed best this term?',
+  scenario:`A .groupby() result is a table of numbers — accurate, but still just numbers. Turning it straight into
+    a bar chart makes "which house did best" obvious at a glance, without anyone having to read a table.`,
+  objectives:[
+    'Build a bar chart directly from a .groupby() result',
+    'Read group names back out of the grouped index',
+    'Sort a grouped result before charting it, biggest first',
+    'Combine grouping, sorting, and labelling into one finished chart'
+  ],
+  conceptHtml:`
+    <p>A <code>.groupby()</code> result's index already holds the group names — pass it straight into
+    <code>ax.bar()</code> alongside the values:</p>
+    <pre class="code-block">import matplotlib.pyplot as plt
+import pandas as pd
+df = pd.DataFrame({"house": ["Red","Red","Blue","Blue","Blue"], "score": [80,90,60,70,65]})
+avg = df.groupby("house")["score"].mean()
+fig, ax = plt.subplots()
+bars = ax.bar(avg.index, avg.values)
+print([b.get_height() for b in bars])   # [65.0, 85.0] — Blue's average, then Red's</pre>
+    <p>By default, groupby sorts group names ALPHABETICALLY (Blue before Red) — not by which group scored
+    highest. To show the best-performing group FIRST, sort the grouped result before charting it:</p>
+    <pre class="code-block">sorted_avg = avg.sort_values(ascending=False)
+bars = ax.bar(sorted_avg.index, sorted_avg.values)   # Red (85) now comes first</pre>
+    <h3>Let's break down the pipeline, line by line</h3>
+    <ul>
+      <li><code>avg = df.groupby("house")["score"].mean()</code> — a Series where the INDEX is the group names
+        (house), and the VALUES are each group's average score.</li>
+      <li><code>avg.index</code> — the group names themselves, usable directly as chart categories.</li>
+      <li><code>avg.values</code> — just the numbers, in the same order as the index.</li>
+      <li><code>.sort_values(ascending=False)</code> — reorders BOTH the index and values together, so the chart
+        categories and their bars stay correctly matched up after sorting.</li>
+    </ul>`,
+  sandboxStarter:`import matplotlib.pyplot as plt
+import pandas as pd
+df = pd.DataFrame({"house": ["Red","Red","Blue","Blue","Blue"], "score": [80,90,60,70,65]})
+avg = df.groupby("house")["score"].mean()
+fig, ax = plt.subplots()
+bars = ax.bar(avg.index, avg.values)
+print([b.get_height() for b in bars])
+`,
+  sandboxStarter2:`import matplotlib.pyplot as plt
+import pandas as pd
+df = pd.DataFrame({"house": ["Red","Red","Blue","Blue","Blue"], "score": [80,90,60,70,65]})
+avg = df.groupby("house")["score"].mean()
+sorted_avg = avg.sort_values(ascending=False)
+fig, ax = plt.subplots()
+bars = ax.bar(sorted_avg.index, sorted_avg.values)
+ax.set_title("Houses Ranked by Average Score")
+print(list(sorted_avg.index))
+`,
+  exercises:[
+    {
+      title:'Bar chart from a grouped average',
+      desc:`Create df with columns "house" (Red, Red, Blue, Blue, Blue) and "score" (80, 90, 60, 70, 65). Create
+        avg = df.groupby("house")["score"].mean(). Create fig, ax = plt.subplots() and
+        bars = ax.bar(avg.index, avg.values). Create heights = [b.get_height() for b in bars]. Assert that
+        heights == [65.0, 85.0] — Blue's average, then Red's (alphabetical order).`,
+      starter:`import matplotlib.pyplot as plt
+import pandas as pd
+# Create df, avg, fig, ax, bars and heights below
+`,
+      tests:[{type:'assert', expr:'heights == [65.0, 85.0]', label:"Bar heights correctly match each house's average score"}]
+    },
+    {
+      title:'Read the group categories',
+      desc:`Using the same df and avg from the first exercise, create categories = list(avg.index). Assert that
+        categories == ['Blue', 'Red'].`,
+      starter:`import pandas as pd
+df = pd.DataFrame({"house": ["Red","Red","Blue","Blue","Blue"], "score": [80,90,60,70,65]})
+avg = df.groupby("house")["score"].mean()
+# Create categories below
+`,
+      tests:[{type:'assert', expr:"categories == ['Blue', 'Red']", label:'Group categories are correctly listed in groupby order'}]
+    },
+    {
+      title:'Sort to find the top house',
+      desc:`Using the same df and avg, create sorted_avg = avg.sort_values(ascending=False). Create
+        top_house = sorted_avg.index[0]. Assert that top_house == "Red".`,
+      starter:`import pandas as pd
+df = pd.DataFrame({"house": ["Red","Red","Blue","Blue","Blue"], "score": [80,90,60,70,65]})
+avg = df.groupby("house")["score"].mean()
+# Create sorted_avg and top_house below
+`,
+      tests:[{type:'assert', expr:'top_house == "Red"', label:'Red is correctly identified as the top-scoring house'}]
+    },
+    {
+      title:'Title and label the chart',
+      desc:`Using the same df and avg, create fig, ax = plt.subplots() and bars = ax.bar(avg.index, avg.values).
+        Call ax.set_title("Average Score by House") and ax.set_ylabel("Average Score"). Assert that
+        ax.get_title() == "Average Score by House" and ax.get_ylabel() == "Average Score".`,
+      starter:`import matplotlib.pyplot as plt
+import pandas as pd
+df = pd.DataFrame({"house": ["Red","Red","Blue","Blue","Blue"], "score": [80,90,60,70,65]})
+avg = df.groupby("house")["score"].mean()
+# Create fig, ax and bars, then set the title and y-label below
+`,
+      tests:[{type:'assert', expr:'ax.get_title() == "Average Score by House" and ax.get_ylabel() == "Average Score"', label:'Chart title and y-axis label are correctly set'}]
+    },
+    {
+      title:'Chart a count instead of an average',
+      desc:`Using the same df, create counts = df.groupby("house")["score"].count(). Create
+        fig, ax = plt.subplots() and bars = ax.bar(counts.index, counts.values). Create
+        heights = [b.get_height() for b in bars]. Assert that heights == [3.0, 2.0] — Blue has 3 students, Red
+        has 2.`,
+      starter:`import matplotlib.pyplot as plt
+import pandas as pd
+df = pd.DataFrame({"house": ["Red","Red","Blue","Blue","Blue"], "score": [80,90,60,70,65]})
+# Create counts, fig, ax, bars and heights below
+`,
+      tests:[{type:'assert', expr:'heights == [3.0, 2.0]', label:'Bar heights correctly show the number of students per house'}]
+    },
+    {
+      title:'Sort the chart itself, not just the data',
+      desc:`Using the same df and avg, create sorted_avg = avg.sort_values(ascending=False). Create
+        fig, ax = plt.subplots() and bars = ax.bar(sorted_avg.index, sorted_avg.values). Create
+        first_bar_height = bars[0].get_height(). Assert that first_bar_height == 85.0 — the chart's FIRST bar is
+        now the highest-scoring house, not just alphabetically first.`,
+      starter:`import matplotlib.pyplot as plt
+import pandas as pd
+df = pd.DataFrame({"house": ["Red","Red","Blue","Blue","Blue"], "score": [80,90,60,70,65]})
+avg = df.groupby("house")["score"].mean()
+# Create sorted_avg, fig, ax, bars and first_bar_height below
+`,
+      tests:[{type:'assert', expr:'first_bar_height == 85.0', label:"The chart's first bar correctly shows the highest-scoring house"}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does avg.index hold after avg = df.groupby("house")["score"].mean()?',
+      options:['The row numbers 0, 1, 2...','The group names (e.g. house names)','The average scores','Nothing, it\'s empty'],
+      correct:1,
+      explain:'A groupby result\'s index holds the group names, ready to use directly as chart categories.'
+    },
+    {
+      q:'What order does groupby put groups in by default?',
+      options:['By value, highest first','Alphabetically/numerically by group name','Random order','In the order they first appear in the data'],
+      correct:1,
+      explain:'groupby sorts by group name (alphabetically for text, numerically for numbers) by default — not by value.'
+    },
+    {
+      q:'Why sort a grouped result before charting it?',
+      options:['You never need to','So the highest (or lowest) group appears first in the chart, not just alphabetically first','Sorting is required or the chart won\'t render','It only matters for numeric group names'],
+      correct:1,
+      explain:'Sorting by value (not by name) before charting makes the visually most important comparison — who\'s highest — obvious at a glance.'
+    },
+    {
+      q:'What does .sort_values(ascending=False) do to a groupby result\'s index?',
+      options:['Nothing, only the values move','Reorders the index (group names) together with the values, so they stay correctly matched','Deletes the index','Sorts the index alphabetically, ignoring the values'],
+      correct:1,
+      explain:'Sorting a Series reorders index and values TOGETHER, so each group name still lines up with its own value after sorting.'
+    }
+  ],
+  sandboxStarter3:`import matplotlib.pyplot as plt
+import pandas as pd
+df = pd.DataFrame({"house": ["Red","Red","Blue","Blue","Blue"], "score": [80,90,60,70,65]})
+counts = df.groupby("house")["score"].count()
+fig, ax = plt.subplots()
+bars = ax.bar(counts.index, counts.values)
+ax.set_title("Students per House")
+print([b.get_height() for b in bars])
+`,
+  stretchChallenge:{
+    title:'A fully sorted, titled comparison chart',
+    desc:`Create df with "house" (Red, Red, Blue, Blue, Blue) and "score" (80, 90, 60, 70, 65). Create
+      avg = df.groupby("house")["score"].mean() and sorted_avg = avg.sort_values(ascending=False). Create
+      fig, ax = plt.subplots() and bars = ax.bar(sorted_avg.index, sorted_avg.values). Call
+      ax.set_title("Houses Ranked by Average Score") and ax.set_ylabel("Average Score"). Create
+      top_height = bars[0].get_height(). Assert that ax.get_title() == "Houses Ranked by Average Score" and
+      top_height == 85.0.`,
+    starter:`import matplotlib.pyplot as plt
+import pandas as pd
+# Create df, avg, sorted_avg, fig, ax, bars, title/label calls and top_height below
+`,
+    tests:[
+      {type:'assert', expr:'ax.get_title() == "Houses Ranked by Average Score" and top_height == 85.0', label:'Chart is correctly titled and shows the top house first'}
+    ]
+  }
 }
 ];
+
+const DS_ADVANCED_MP1 = {
+  key:'mp1',
+  title:'Mini Project 1 — Visualize the Exam Results',
+  intro:`One dataset, three different charts — because different questions need different visuals. Three stages,
+    combining everything from Weeks 1-4: a bar chart per student, a histogram of the whole class's spread, and a
+    scatter plot with correlation to check whether study time actually predicts the score.`,
+  newTrick:`Choosing the RIGHT chart for the question being asked — bar charts compare individuals, histograms
+    reveal spread, scatter plots + correlation test a relationship. The same dataset, viewed three different ways.`,
+  stages:[
+    {
+      key:'a', title:'Stage A — Bar chart per student',
+      desc:`Create df with columns "name" (Ada, Ben, Chi, Dee, Eli), "hours_studied" (5, 3, 4, 2, 6), and "score"
+        (85, 65, 75, 55, 95). Create fig, ax = plt.subplots() and bars = ax.bar(df["name"], df["score"]). Create
+        chi_height = bars[2].get_height(). Assert that chi_height == 75.`,
+      starter:`import matplotlib.pyplot as plt
+import pandas as pd
+# Create df, fig, ax, bars and chi_height below
+`,
+      tests:[{type:'assert', expr:'chi_height == 75', label:"Chi's bar correctly shows a score of 75"}]
+    },
+    {
+      key:'b', title:'Stage B — Histogram of the whole class',
+      desc:`Using the same df, create fig, ax = plt.subplots() and
+        counts, bins, patches = ax.hist(df["score"], bins=3). Create total = float(sum(counts)). Assert that
+        total == 5.0 — every student's score is counted.`,
+      starter:`import matplotlib.pyplot as plt
+import pandas as pd
+df = pd.DataFrame({"name": ["Ada", "Ben", "Chi", "Dee", "Eli"], "hours_studied": [5, 3, 4, 2, 6], "score": [85, 65, 75, 55, 95]})
+# Create fig, ax, counts and total below
+`,
+      tests:[{type:'assert', expr:'total == 5.0', label:'Histogram correctly counts all 5 scores'}]
+    },
+    {
+      key:'c', title:'Stage C — Does study time predict the score?',
+      desc:`Using the same df, create corr_val = df["hours_studied"].corr(df["score"]). Create
+        fig, ax = plt.subplots() and ax.scatter(df["hours_studied"], df["score"]). Create
+        num_points = len(ax.collections[0].get_offsets()). Assert that round(float(corr_val), 2) == 1.0 and
+        num_points == 5.`,
+      starter:`import matplotlib.pyplot as plt
+import pandas as pd
+df = pd.DataFrame({"name": ["Ada", "Ben", "Chi", "Dee", "Eli"], "hours_studied": [5, 3, 4, 2, 6], "score": [85, 65, 75, 55, 95]})
+# Create corr_val, fig, ax and num_points below
+`,
+      tests:[{type:'assert', expr:'round(float(corr_val), 2) == 1.0 and num_points == 5', label:'Correlation and scatter plot both correctly reflect the study-hours/score relationship'}]
+    }
+  ]
+};
 
 window.SUBJECT_DATA = window.SUBJECT_DATA || {};
 window.SUBJECT_DATA.ds = {
