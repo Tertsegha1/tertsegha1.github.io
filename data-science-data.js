@@ -2975,6 +2975,164 @@ print(df)
       {type:'assert', expr:'round(float(clean_mean), 2) == 75.0', label:'clean_mean correctly excludes the outlier (75.0)'}
     ]
   }
+},
+{
+  key:'week9', num:9, title:'Reshaping Back: melt',
+  scenarioTag:'Real world: the wide gradebook needs to go back to "long" for analysis',
+  scenario:`Week 3 reshaped "long" data into a wide gradebook (one column per subject). But some analysis —
+    like averaging across ALL subjects, or feeding into .groupby() — actually needs the LONG shape back.
+    pd.melt() is pivot_table's inverse: it turns wide columns back into rows.`,
+  objectives:[
+    'Reshape wide columns back into rows with pd.melt()',
+    'Name the resulting columns with var_name and value_name',
+    'Melt with multiple id_vars at once',
+    'Combine melt with groupby() to analyse across former columns'
+  ],
+  conceptHtml:`
+    <p><strong>pd.melt()</strong> is the reverse of pivot_table — it takes several columns and stacks them back
+    into rows:</p>
+    <pre class="code-block">import pandas as pd
+wide = pd.DataFrame({"name": ["Ada", "Ben"], "Maths": [80, 60], "Science": [70, 90]})
+long = pd.melt(wide, id_vars="name", var_name="subject", value_name="score")
+print(long)
+#   name  subject  score
+# 0  Ada    Maths     80
+# 1  Ben    Maths     60
+# 2  Ada  Science     70
+# 3  Ben  Science     90</pre>
+    <h3>Let's break down the melt call, line by line</h3>
+    <ul>
+      <li><code>id_vars="name"</code> — the column(s) that identify each row and should STAY as their own column
+        (not get folded into rows). Pass a list, like <code>["name", "house"]</code>, for more than one.</li>
+      <li>Every OTHER column ("Maths", "Science") gets folded down — their COLUMN NAMES become values in a new
+        column, and their cell VALUES become values in another new column.</li>
+      <li><code>var_name="subject"</code> — names the new column that holds the old column names (Maths, Science).
+        Without it, pandas defaults to calling this column "variable".</li>
+      <li><code>value_name="score"</code> — names the new column that holds the actual numbers. Defaults to
+        "value" if omitted.</li>
+    </ul>
+    <p>Once melted back to long format, you can .groupby() by the new "subject" column — something you couldn't do
+    directly on the wide table, since "Maths" and "Science" were separate COLUMNS, not values to group by.</p>`,
+  sandboxStarter:`import pandas as pd
+wide = pd.DataFrame({"name": ["Ada", "Ben"], "Maths": [80, 60], "Science": [70, 90]})
+long = pd.melt(wide, id_vars="name", var_name="subject", value_name="score")
+print(long)
+`,
+  sandboxStarter2:`import pandas as pd
+wide = pd.DataFrame({"name": ["Ada", "Ben"], "Maths": [80, 60], "Science": [70, 90]})
+long = pd.melt(wide, id_vars="name", var_name="subject", value_name="score")
+avg_per_subject = long.groupby("subject")["score"].mean()
+print(avg_per_subject)
+`,
+  exercises:[
+    {
+      title:'Melt a wide gradebook',
+      desc:`Create wide with columns "name" (Ada, Ben), "Maths" (80, 60), and "Science" (70, 90). Create
+        long = pd.melt(wide, id_vars="name", var_name="subject", value_name="score"), then print(len(long)). It
+        should print 4 — 2 students × 2 subjects.`,
+      starter:`import pandas as pd
+# Create wide and long below
+`,
+      tests:[{type:'output', contains:['4'], label:'Melts into the correct number of rows (4)'}]
+    },
+    {
+      title:'Check a specific melted value',
+      desc:`Using the same wide and long from the first exercise, assert that
+        long.loc[(long["name"] == "Ada") & (long["subject"] == "Maths"), "score"].iloc[0] == 80.`,
+      starter:`import pandas as pd
+wide = pd.DataFrame({"name": ["Ada", "Ben"], "Maths": [80, 60], "Science": [70, 90]})
+# Create long below
+`,
+      tests:[{type:'assert', expr:'long.loc[(long["name"] == "Ada") & (long["subject"] == "Maths"), "score"].iloc[0] == 80', label:"Ada's Maths score is correctly preserved after melting"}]
+    },
+    {
+      title:'Average across subjects using melt + groupby',
+      desc:`Using the same wide and long, create avg = long.groupby("subject")["score"].mean(). Assert that
+        avg["Maths"] == 70.0. Melting first is what makes this groupby possible — "Maths" and "Science" were
+        separate columns, not values, before melting.`,
+      starter:`import pandas as pd
+wide = pd.DataFrame({"name": ["Ada", "Ben"], "Maths": [80, 60], "Science": [70, 90]})
+long = pd.melt(wide, id_vars="name", var_name="subject", value_name="score")
+# Create avg below
+`,
+      tests:[{type:'assert', expr:'avg["Maths"] == 70.0', label:"Maths' average is correctly computed (70.0)"}]
+    },
+    {
+      title:'Check the other subject average',
+      desc:`Using the same avg from the previous exercise, assert that avg["Science"] == 80.0.`,
+      starter:`import pandas as pd
+wide = pd.DataFrame({"name": ["Ada", "Ben"], "Maths": [80, 60], "Science": [70, 90]})
+long = pd.melt(wide, id_vars="name", var_name="subject", value_name="score")
+# Create avg below
+`,
+      tests:[{type:'assert', expr:'avg["Science"] == 80.0', label:"Science's average is correctly computed (80.0)"}]
+    },
+    {
+      title:'Melt with more than one id column',
+      desc:`Create wide with columns "name" (Ada, Ben), "house" (Red, Blue), "Maths" (80, 60), and "Science" (70,
+        90). Create long = pd.melt(wide, id_vars=["name", "house"], var_name="subject", value_name="score").
+        Assert that list(long.columns) == ["name", "house", "subject", "score"] — both id columns are kept
+        alongside the new subject/score columns.`,
+      starter:`import pandas as pd
+# Create wide and long below
+`,
+      tests:[{type:'assert', expr:'list(long.columns) == ["name", "house", "subject", "score"]', label:'long has both id columns plus subject and score'}]
+    },
+    {
+      title:'Filter the melted data for one subject',
+      desc:`Using wide with "name" (Ada, Ben), "Maths" (80, 60), "Science" (70, 90), create
+        long = pd.melt(wide, id_vars="name", var_name="subject", value_name="score"). Create
+        maths_only = long[long["subject"] == "Maths"]. Assert that len(maths_only) == 2.`,
+      starter:`import pandas as pd
+# Create wide, long and maths_only below
+`,
+      tests:[{type:'assert', expr:'len(maths_only) == 2', label:'maths_only correctly contains only the 2 Maths rows'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does pd.melt() do?',
+      options:['Deletes rows with missing data','Reshapes several columns back into rows — the reverse of pivot_table','Sorts the DataFrame','Merges two tables'],
+      correct:1,
+      explain:'melt is pivot_table\'s inverse — it turns wide columns back into a long, row-per-value shape.'
+    },
+    {
+      q:'What does id_vars specify in pd.melt()?',
+      options:['The columns to delete','The column(s) that identify each row and should stay as their own column(s)','The new column name for values','A filter condition'],
+      correct:1,
+      explain:'id_vars lists the columns that should NOT be folded into rows — everything else gets melted.'
+    },
+    {
+      q:'What do var_name and value_name control?',
+      options:['They control sorting order','The names of the two new columns melt creates (for former column names and their values)','They filter which rows appear','They\'re required and can\'t be changed'],
+      correct:1,
+      explain:'var_name names the column holding the old column names; value_name names the column holding the actual values.'
+    },
+    {
+      q:'Why might you need to melt a wide table before using .groupby()?',
+      options:['You never need to','.groupby() can only group by a column of VALUES — column names like "Maths"/"Science" aren\'t values until melted into rows','groupby() only works on melted data by definition, with no other reason','Melting is required before any pandas operation'],
+      correct:1,
+      explain:'Before melting, "Maths" and "Science" are separate columns, not values in a column — melting turns them into groupable values.'
+    }
+  ],
+  sandboxStarter3:`import pandas as pd
+wide = pd.DataFrame({"name": ["Ada", "Ben"], "house": ["Red", "Blue"], "Maths": [80, 60], "Science": [70, 90]})
+long = pd.melt(wide, id_vars=["name", "house"], var_name="subject", value_name="score")
+print(long)
+`,
+  stretchChallenge:{
+    title:'Melt, then pivot straight back',
+    desc:`Create wide with columns "name" (Ada, Ben), "Maths" (80, 60), and "Science" (70, 90). Create
+      long = pd.melt(wide, id_vars="name", var_name="subject", value_name="score"), then
+      back_to_wide = long.pivot(index="name", columns="subject", values="score").reset_index() — a full round
+      trip. Assert that back_to_wide.loc[back_to_wide["name"] == "Ben", "Science"].iloc[0] == 90.`,
+    starter:`import pandas as pd
+# Create wide, long and back_to_wide below
+`,
+    tests:[
+      {type:'assert', expr:'back_to_wide.loc[back_to_wide["name"] == "Ben", "Science"].iloc[0] == 90', label:'The round trip correctly preserves the original data'}
+    ]
+  }
 }
 ];
 
@@ -3040,9 +3198,80 @@ pivot = pd.pivot_table(df, index="name", columns="month", values="present", aggf
   ]
 };
 
+const DS_INTERMEDIATE_MP2 = {
+  key:'mp2',
+  title:'Mini Project 2 — Term Attendance Dashboard',
+  intro:`A full term's attendance data, messy and split across two sources: a raw sign-in log with inconsistent
+    names and text dates, and a separate house roster. Three doors combine everything from Weeks 1-9: clean and
+    parse the log, join it with the roster and reshape into house totals, then apply a custom rule to flag houses
+    needing follow-up.`,
+  fixtureNote:`All three doors build toward this same attendance picture — a sign-in log (2 dates × 4 students)
+    and a separate house roster:`,
+  fixtureCode:`log = pd.DataFrame({
+    "name": [" ada ", "BEN", " chi ", "dee", "Ada", "Ben", "Chi", "Dee"],
+    "date": ["2026-01-05"]*4 + ["2026-01-12"]*4,
+    "present": [1, 0, 0, 1, 1, 1, 0, 1]
+})
+roster = pd.DataFrame({"name": ["Ada", "Ben", "Chi", "Dee"], "house": ["Red", "Red", "Blue", "Blue"]})`,
+  doors:[
+    {
+      key:'a', title:'Door 1 — Clean the log and parse the dates',
+      desc:`Create log with columns "name" (" ada ", "BEN", " chi ", "dee", "Ada", "Ben", "Chi", "Dee"), "date"
+        ("2026-01-05" × 4, then "2026-01-12" × 4, in that row order), and "present" (1, 0, 0, 1, 1, 1, 0, 1).
+        Reassign log["name"] to log["name"].str.strip().str.title(), and log["date"] to
+        pd.to_datetime(log["date"]). Assert that log["name"].tolist() == ["Ada", "Ben", "Chi", "Dee", "Ada", "Ben",
+        "Chi", "Dee"].`,
+      starter:`import pandas as pd
+# Create log below
+`,
+      tests:[{type:'assert', expr:'log["name"].tolist() == ["Ada", "Ben", "Chi", "Dee", "Ada", "Ben", "Chi", "Dee"]', label:'log["name"] is correctly cleaned to title case'}]
+    },
+    {
+      key:'b', title:'Door 2 — Join with the roster and total by house',
+      desc:`Using the cleaned log from Door 1, create roster with columns "name" (Ada, Ben, Chi, Dee) and "house"
+        (Red, Red, Blue, Blue). Create merged = log.merge(roster, on="name", how="left") to bring in each
+        student's house. Create pivot = pd.pivot_table(merged, index="house", values="present", aggfunc="sum",
+        fill_value=0) — total present days per house (not averaged). Assert that pivot.loc["Red", "present"] == 3.`,
+      starter:`import pandas as pd
+log = pd.DataFrame({
+    "name": [" ada ", "BEN", " chi ", "dee", "Ada", "Ben", "Chi", "Dee"],
+    "date": ["2026-01-05", "2026-01-05", "2026-01-05", "2026-01-05", "2026-01-12", "2026-01-12", "2026-01-12", "2026-01-12"],
+    "present": [1, 0, 0, 1, 1, 1, 0, 1]
+})
+log["name"] = log["name"].str.strip().str.title()
+log["date"] = pd.to_datetime(log["date"])
+# Create roster, merged and pivot below
+`,
+      tests:[{type:'assert', expr:'pivot.loc["Red", "present"] == 3', label:"Red house's total present days is correctly summed (3)"}]
+    },
+    {
+      key:'c', title:'Door 3 — Flag houses needing follow-up',
+      desc:`Using pivot from Door 2, create summary = pivot.reset_index() (turns the pivot back into a normal
+        DataFrame with a "house" column). Write a function flag_house(total) that returns "Needs Support" if total
+        &lt; 3, otherwise "On Track". Create summary["flag"] = summary["present"].apply(flag_house). Assert that
+        summary.loc[summary["house"] == "Blue", "flag"].iloc[0] == "Needs Support" — Blue's total of 2 falls below
+        the threshold, while Red's 3 does not.`,
+      starter:`import pandas as pd
+log = pd.DataFrame({
+    "name": [" ada ", "BEN", " chi ", "dee", "Ada", "Ben", "Chi", "Dee"],
+    "date": ["2026-01-05", "2026-01-05", "2026-01-05", "2026-01-05", "2026-01-12", "2026-01-12", "2026-01-12", "2026-01-12"],
+    "present": [1, 0, 0, 1, 1, 1, 0, 1]
+})
+log["name"] = log["name"].str.strip().str.title()
+log["date"] = pd.to_datetime(log["date"])
+roster = pd.DataFrame({"name": ["Ada", "Ben", "Chi", "Dee"], "house": ["Red", "Red", "Blue", "Blue"]})
+merged = log.merge(roster, on="name", how="left")
+pivot = pd.pivot_table(merged, index="house", values="present", aggfunc="sum", fill_value=0)
+# Define flag_house below, then create summary and summary["flag"]
+`,
+      tests:[{type:'assert', expr:'summary.loc[summary["house"] == "Blue", "flag"].iloc[0] == "Needs Support"', label:"Blue house is correctly flagged as needing support"}]
+    }
+  ]
+};
+
 window.SUBJECT_DATA = window.SUBJECT_DATA || {};
 window.SUBJECT_DATA.ds = {
   b: {weeks: DS_WEEKS, mp1: DS_MP1, mp2: DS_MP2},
-  i: {weeks: DS_WEEKS, mp1: DS_MP1, mp2: DS_MP2},
+  i: {weeks: DS_INTERMEDIATE_WEEKS, mp1: DS_INTERMEDIATE_MP1, mp2: DS_INTERMEDIATE_MP2},
   a: {weeks: DS_WEEKS, mp1: DS_MP1, mp2: DS_MP2}
 };
