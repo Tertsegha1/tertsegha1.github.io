@@ -4134,9 +4134,109 @@ const WD_INTERMEDIATE_MP1 = {
   ]
 };
 
+const WD_INTERMEDIATE_MP2 = {
+  key:'mp2',
+  title:'Mini Project 2 — Build a Class To-Do List App',
+  intro:`Time to build a genuinely interactive app: a class to-do list. Across three doors you'll structure it
+    accessibly, wire up adding tasks with remembered state and live rendering, then finish with a remove feature
+    and keyboard-friendly focus styling — every skill from Weeks 1-9, combined into one small real app.`,
+  fixtureNote:`All three doors build on this same page skeleton — a semantic layout with an empty task list, an
+    input for new tasks, and an Add button:`,
+  fixtureCode:`<main>
+  <h1>Class To-Do List</h1>
+  <ul id="list"><li>Bring permission slip</li></ul>
+  <p id="count"></p>
+  <input id="taskInput" type="text" placeholder="New task">
+  <button id="addBtn" type="button">Add Task</button>
+</main>`,
+  doors:[
+    {
+      key:'a', title:'Door 1 — Structure the app accessibly',
+      desc:`Build the fixture structure above: a &lt;main&gt; wrapping an &lt;h1&gt;, a &lt;ul id="list"&gt; with
+        the one starting task, a &lt;p id="count"&gt;, an &lt;input id="taskInput"&gt;, and a real &lt;button
+        type="button" id="addBtn"&gt; — using semantic structure and a real button from Week 8, not a styled
+        &lt;div&gt;.`,
+      starter:`<!-- Build: <main> wrapping <h1>, <ul id="list"> with 1 starting task, <p id="count">, <input id="taskInput">, and a real <button type="button" id="addBtn"> -->
+`,
+      tests:[
+        {type:'dom-count', selector:'main ul#list li', min:1, label:'#list (inside <main>) has the starting task'},
+        {type:'dom-count', selector:'main input#taskInput', min:1, label:'#taskInput is inside <main>'},
+        {type:'dom', selector:'main button', contains:'Add', label:'A real <button> for adding tasks is inside <main>'}
+      ]
+    },
+    {
+      key:'b', title:'Door 2 — Remember tasks and render them',
+      desc:`Declare let tasks = ['Bring permission slip']; outside a click handler. When #addBtn is clicked, push
+        the CURRENT value of #taskInput onto tasks, clear #list and re-render it from tasks, and set #count to
+        tasks.length + " tasks" — the remembered-array-plus-render pattern from Weeks 6-7.`,
+      starter:`<main>
+  <h1>Class To-Do List</h1>
+  <ul id="list"><li>Bring permission slip</li></ul>
+  <p id="count"></p>
+  <input id="taskInput" type="text" value="Return library book">
+  <button id="addBtn" type="button">Add Task</button>
+</main>
+<script>
+  let tasks = ['Bring permission slip'];
+  // Add a click handler on #addBtn: push #taskInput's value onto tasks, clear+re-render #list, update #count
+</script>
+`,
+      tests:[
+        {type:'dom-count', selector:'#list li', min:2, label:'#list shows both tasks after adding'},
+        {type:'dom', selector:'#list', contains:'Return library book', label:'The newly added task appears'},
+        {type:'dom', selector:'#count', contains:'2 tasks', label:'#count shows "2 tasks"'}
+      ]
+    },
+    {
+      key:'c', title:'Door 3 — Add removal and focus styling',
+      desc:`Add a second button, &lt;button type="button" id="removeBtn"&gt;Remove Last&lt;/button&gt;, that pops
+        the last task and re-renders (updating #count too). Also add a button:focus rule with a visible outline
+        (Week 8's accessibility habit) so keyboard users can see which button is selected. Both buttons are
+        auto-clicked once each, in DOM order (add first, then remove) — starting from 1 task, adding one (2
+        total) then removing one should leave exactly 1 task again (a removeBtn that doesn't actually remove
+        anything would incorrectly leave the count at 2).`,
+      starter:`<style>
+  button:focus { }
+</style>
+<main>
+  <h1>Class To-Do List</h1>
+  <ul id="list"><li>Bring permission slip</li></ul>
+  <p id="count"></p>
+  <input id="taskInput" type="text" value="Return library book">
+  <button id="addBtn" type="button">Add Task</button>
+  <button id="removeBtn" type="button">Remove Last</button>
+</main>
+<script>
+  let tasks = ['Bring permission slip'];
+  function renderTasks(){
+    const list = document.querySelector('#list');
+    list.innerHTML = '';
+    tasks.forEach(function(t){
+      const li = document.createElement('li');
+      li.textContent = t;
+      list.appendChild(li);
+    });
+    document.querySelector('#count').textContent = tasks.length + ' tasks';
+  }
+  document.querySelector('#addBtn').addEventListener('click', function(){
+    tasks.push(document.querySelector('#taskInput').value);
+    renderTasks();
+  });
+  // Add a click handler on #removeBtn: pop the last task, then call renderTasks()
+  // Also give button:focus a visible outline in the <style> block above
+</script>
+`,
+      tests:[
+        {type:'dom', selector:'#count', contains:'1 tasks', label:'#count shows exactly "1 tasks" after adding then removing one (a no-op removeBtn would incorrectly leave it at 2)'},
+        {type:'dom', selector:'style', contains:':focus', label:'Includes a button:focus rule for keyboard visibility'}
+      ]
+    }
+  ]
+};
+
 window.SUBJECT_DATA = window.SUBJECT_DATA || {};
 window.SUBJECT_DATA.wd = {
   b: {weeks: WD_WEEKS, mp1: WD_MP1, mp2: WD_MP2},
-  i: {weeks: WD_WEEKS, mp1: WD_MP1, mp2: WD_MP2},
+  i: {weeks: WD_INTERMEDIATE_WEEKS, mp1: WD_INTERMEDIATE_MP1, mp2: WD_INTERMEDIATE_MP2},
   a: {weeks: WD_WEEKS, mp1: WD_MP1, mp2: WD_MP2}
 };
