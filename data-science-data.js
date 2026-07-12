@@ -4475,6 +4475,612 @@ import pandas as pd
       {type:'assert', expr:'report == "Average: 75.0. Top scorer: Dee with 95.0." and ax.get_title() == "Class Average: 75.0"', label:'The function correctly returns both the report text and a matching chart'}
     ]
   }
+},
+{
+  key:'week8', num:8, title:'Capstone — Investigate and Build',
+  scenarioTag:'Real world: a new dataset, a new question, your own pipeline',
+  scenario:`A new dataset has landed: hours studied, attendance, and exam score for a class — with the usual mess
+    (a missing entry, an impossible negative value). This week's capstone combines everything from Weeks 1-7 into
+    a real investigation: clean it, group it, chain it, and check whether attendance and study time actually
+    predict success.`,
+  objectives:[
+    'Write a pipeline function to clean a brand-new, messier dataset',
+    'Group cleaned data by a derived category and compare averages',
+    'Chain filtering, sorting, and re-indexing into a leaderboard',
+    'Compute a correlation to test a real hypothesis about the data'
+  ],
+  conceptHtml:`
+    <p>This week's dataset: hours studied, attendance percentage, and exam score for 8 students — two of whom have
+    bad data (a missing hours value, an impossible negative one):</p>
+    <pre class="code-block">import pandas as pd
+df = pd.DataFrame({
+    "name": ["Ada","Ben","Chi","Dee","Eli","Fay","Gus","Hana"],
+    "hours_studied": [5, 2, 4, 6, 1, 7, None, -1],
+    "attendance_pct": [95, 60, 85, 90, 50, 98, 80, 70],
+    "score": [85, 50, 75, 90, 40, 95, 70, 60]
+})
+
+def clean_students(df):
+    df = df.dropna()
+    df = df[df["hours_studied"] >= 0]
+    return df
+
+cleaned = clean_students(df)   # Gus (missing) and Hana (negative) are both dropped</pre>
+    <p>From there, this week combines skills from every earlier week: <code>.apply()</code> to derive a category
+    (attendance "band"), <code>.groupby()</code> to compare that category, chained
+    <code>.sort_values().reset_index()</code> for a leaderboard, and <code>.corr()</code> to test whether study
+    time and attendance actually predict the score — not just assume they do.</p>`,
+  sandboxStarter:`import pandas as pd
+df = pd.DataFrame({
+    "name": ["Ada","Ben","Chi","Dee","Eli","Fay","Gus","Hana"],
+    "hours_studied": [5, 2, 4, 6, 1, 7, None, -1],
+    "attendance_pct": [95, 60, 85, 90, 50, 98, 80, 70],
+    "score": [85, 50, 75, 90, 40, 95, 70, 60]
+})
+
+def clean_students(df):
+    df = df.dropna()
+    df = df[df["hours_studied"] >= 0]
+    return df
+
+cleaned = clean_students(df)
+print(len(cleaned))
+`,
+  sandboxStarter2:`import pandas as pd
+
+def clean_students(df):
+    df = df.dropna()
+    df = df[df["hours_studied"] >= 0]
+    return df
+
+def band(pct):
+    return "High" if pct >= 80 else "Low"
+
+df = pd.DataFrame({
+    "name": ["Ada","Ben","Chi","Dee","Eli","Fay","Gus","Hana"],
+    "hours_studied": [5, 2, 4, 6, 1, 7, None, -1],
+    "attendance_pct": [95, 60, 85, 90, 50, 98, 80, 70],
+    "score": [85, 50, 75, 90, 40, 95, 70, 60]
+})
+cleaned = clean_students(df)
+cleaned = cleaned.copy()
+cleaned["band"] = cleaned["attendance_pct"].apply(band)
+avg = cleaned.groupby("band")["score"].mean()
+print(avg)
+`,
+  exercises:[
+    {
+      title:'Clean the new dataset',
+      desc:`Write a function clean_students(df) that: reassigns df to df.dropna(), then to
+        df[df["hours_studied"] >= 0], then returns df. Create df with the 8-row dataset shown in the concept box
+        (name, hours_studied, attendance_pct, score — Gus has hours_studied=None, Hana has hours_studied=-1).
+        Create cleaned = clean_students(df). Assert that len(cleaned) == 6.`,
+      starter:`import pandas as pd
+# Define clean_students below, then create df and cleaned
+`,
+      tests:[{type:'assert', expr:'len(cleaned) == 6', label:'The pipeline correctly drops both bad rows (Gus and Hana)'}]
+    },
+    {
+      title:'Group by attendance band',
+      desc:`Using clean_students and the same df, write a function band(pct) that returns "High" if pct &gt;= 80,
+        otherwise "Low". Create cleaned = clean_students(df), then cleaned = cleaned.copy() and
+        cleaned["band"] = cleaned["attendance_pct"].apply(band). Create
+        avg = cleaned.groupby("band")["score"].mean(). Assert that round(float(avg["High"]), 2) == 86.25.`,
+      starter:`import pandas as pd
+
+def clean_students(df):
+    df = df.dropna()
+    df = df[df["hours_studied"] >= 0]
+    return df
+
+df = pd.DataFrame({
+    "name": ["Ada","Ben","Chi","Dee","Eli","Fay","Gus","Hana"],
+    "hours_studied": [5, 2, 4, 6, 1, 7, None, -1],
+    "attendance_pct": [95, 60, 85, 90, 50, 98, 80, 70],
+    "score": [85, 50, 75, 90, 40, 95, 70, 60]
+})
+# Define band, then create cleaned, cleaned["band"] and avg below
+`,
+      tests:[{type:'assert', expr:'round(float(avg["High"]), 2) == 86.25', label:"High-attendance students' average score is correctly computed (86.25)"}]
+    },
+    {
+      title:'Chain a leaderboard',
+      desc:`Using clean_students and the same df, create cleaned = clean_students(df), then
+        leaderboard = cleaned.sort_values("score", ascending=False).reset_index(drop=True). Assert that
+        leaderboard["name"].iloc[0] == "Fay".`,
+      starter:`import pandas as pd
+
+def clean_students(df):
+    df = df.dropna()
+    df = df[df["hours_studied"] >= 0]
+    return df
+
+df = pd.DataFrame({
+    "name": ["Ada","Ben","Chi","Dee","Eli","Fay","Gus","Hana"],
+    "hours_studied": [5, 2, 4, 6, 1, 7, None, -1],
+    "attendance_pct": [95, 60, 85, 90, 50, 98, 80, 70],
+    "score": [85, 50, 75, 90, 40, 95, 70, 60]
+})
+# Create cleaned and leaderboard below
+`,
+      tests:[{type:'assert', expr:'leaderboard["name"].iloc[0] == "Fay"', label:'The chained leaderboard correctly puts Fay first'}]
+    },
+    {
+      title:'Test the hypothesis: does study time predict the score?',
+      desc:`Using clean_students and the same df, create cleaned = clean_students(df), then
+        corr_val = cleaned["hours_studied"].corr(cleaned["score"]). Assert that round(float(corr_val), 2) == 0.99.`,
+      starter:`import pandas as pd
+
+def clean_students(df):
+    df = df.dropna()
+    df = df[df["hours_studied"] >= 0]
+    return df
+
+df = pd.DataFrame({
+    "name": ["Ada","Ben","Chi","Dee","Eli","Fay","Gus","Hana"],
+    "hours_studied": [5, 2, 4, 6, 1, 7, None, -1],
+    "attendance_pct": [95, 60, 85, 90, 50, 98, 80, 70],
+    "score": [85, 50, 75, 90, 40, 95, 70, 60]
+})
+# Create cleaned and corr_val below
+`,
+      tests:[{type:'assert', expr:'round(float(corr_val), 2) == 0.99', label:'The correlation correctly confirms study time strongly predicts the score'}]
+    },
+    {
+      title:'Chart the band comparison',
+      desc:`Using the band()/groupby setup from earlier, create fig, ax = plt.subplots() and
+        bars = ax.bar(avg.index, avg.values). Create heights = [b.get_height() for b in bars]. Assert that
+        round(heights[0], 2) == 86.25 — "High" sorts before "Low" alphabetically, so it's the first bar.`,
+      starter:`import matplotlib.pyplot as plt
+import pandas as pd
+
+def clean_students(df):
+    df = df.dropna()
+    df = df[df["hours_studied"] >= 0]
+    return df
+
+def band(pct):
+    return "High" if pct >= 80 else "Low"
+
+df = pd.DataFrame({
+    "name": ["Ada","Ben","Chi","Dee","Eli","Fay","Gus","Hana"],
+    "hours_studied": [5, 2, 4, 6, 1, 7, None, -1],
+    "attendance_pct": [95, 60, 85, 90, 50, 98, 80, 70],
+    "score": [85, 50, 75, 90, 40, 95, 70, 60]
+})
+cleaned = clean_students(df)
+cleaned = cleaned.copy()
+cleaned["band"] = cleaned["attendance_pct"].apply(band)
+avg = cleaned.groupby("band")["score"].mean()
+# Create fig, ax, bars and heights below
+`,
+      tests:[{type:'assert', expr:'round(heights[0], 2) == 86.25', label:"The chart's first bar correctly shows the High band's average (86.25)"}]
+    },
+    {
+      title:'Report the pass rate',
+      desc:`Using clean_students and the same df, create cleaned = clean_students(df), then
+        passed = cleaned[cleaned["score"] >= 60] and pass_rate = len(passed) / len(cleaned) * 100. Create
+        report = f"{pass_rate:.0f}% of students passed.". Assert that report == "67% of students passed.".`,
+      starter:`import pandas as pd
+
+def clean_students(df):
+    df = df.dropna()
+    df = df[df["hours_studied"] >= 0]
+    return df
+
+df = pd.DataFrame({
+    "name": ["Ada","Ben","Chi","Dee","Eli","Fay","Gus","Hana"],
+    "hours_studied": [5, 2, 4, 6, 1, 7, None, -1],
+    "attendance_pct": [95, 60, 85, 90, 50, 98, 80, 70],
+    "score": [85, 50, 75, 90, 40, 95, 70, 60]
+})
+# Create cleaned, passed, pass_rate and report below
+`,
+      tests:[{type:'assert', expr:'report == "67% of students passed."', label:'The pass-rate report is correctly computed (67%)'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why write clean_students(df) as a function rather than cleaning inline each time?',
+      options:['Functions are required for real datasets','It bundles the exact same cleaning logic so it can be reused and re-checked easily, matching Week 5\'s pipeline pattern','It makes pandas run faster','There is no real reason'],
+      correct:1,
+      explain:'This is the exact same reusable-pipeline pattern from Week 5, now applied to a real capstone dataset.'
+    },
+    {
+      q:'What does .apply(band) do to derive the attendance category?',
+      options:['Deletes the attendance_pct column','Runs the band() function once per row, turning a raw percentage into a "High"/"Low" label','Sorts the DataFrame by attendance','Only works on whole DataFrames, not single values'],
+      correct:1,
+      explain:'.apply() runs the custom band() function on every value in the column, exactly like Week 4\'s pattern.'
+    },
+    {
+      q:'Why compute a correlation instead of just assuming study time predicts the score?',
+      options:['Assumptions are always correct','A correlation gives real, checkable evidence for or against the hypothesis, rather than guessing','Correlation is required by pandas','It\'s purely decorative'],
+      correct:1,
+      explain:'This is the core of "investigating," not just describing — testing whether the data actually supports the claim.'
+    },
+    {
+      q:'What does this week combine that no single earlier week did alone?',
+      options:['Nothing new, it repeats Week 1 exactly','Pipeline functions, grouping, chaining, correlation, and reporting on one brand-new, messier dataset','Only charting','Only correlation'],
+      correct:1,
+      explain:'The capstone weeks deliberately combine multiple skills from across the whole level on a single real investigation.'
+    }
+  ],
+  sandboxStarter3:`import pandas as pd
+
+def clean_students(df):
+    df = df.dropna()
+    df = df[df["hours_studied"] >= 0]
+    return df
+
+df = pd.DataFrame({
+    "name": ["Ada","Ben","Chi","Dee","Eli","Fay","Gus","Hana"],
+    "hours_studied": [5, 2, 4, 6, 1, 7, None, -1],
+    "attendance_pct": [95, 60, 85, 90, 50, 98, 80, 70],
+    "score": [85, 50, 75, 90, 40, 95, 70, 60]
+})
+cleaned = clean_students(df)
+leaderboard = cleaned.sort_values("score", ascending=False).reset_index(drop=True)
+print(leaderboard["name"].tolist())
+corr_val = cleaned["hours_studied"].corr(cleaned["score"])
+print(round(corr_val, 2))
+`,
+  stretchChallenge:{
+    title:'Confirm attendance also predicts the score',
+    desc:`Using clean_students and the same df, create cleaned = clean_students(df), then
+      attendance_corr = cleaned["attendance_pct"].corr(cleaned["score"]). Assert that
+      round(float(attendance_corr), 2) == 0.99 — attendance is also strongly correlated with score in this
+      dataset.`,
+    starter:`import pandas as pd
+
+def clean_students(df):
+    df = df.dropna()
+    df = df[df["hours_studied"] >= 0]
+    return df
+
+df = pd.DataFrame({
+    "name": ["Ada","Ben","Chi","Dee","Eli","Fay","Gus","Hana"],
+    "hours_studied": [5, 2, 4, 6, 1, 7, None, -1],
+    "attendance_pct": [95, 60, 85, 90, 50, 98, 80, 70],
+    "score": [85, 50, 75, 90, 40, 95, 70, 60]
+})
+# Create cleaned and attendance_corr below
+`,
+    tests:[
+      {type:'assert', expr:'round(float(attendance_corr), 2) == 0.99', label:'Attendance is confirmed to also strongly predict the score'}
+    ]
+  }
+},
+{
+  key:'week9', num:9, title:'Capstone — Chart and Report',
+  scenarioTag:'Real world: an investigation isn\'t finished until it\'s presented',
+  scenario:`Last week built the analysis — cleaning, grouping, and correlating. This week finishes the job: fully
+    labelled charts (title, both axes), and a complete written report combining every computed stat into one
+    readable summary. This is the "polish" pass that turns a working analysis into something you'd actually show
+    someone.`,
+  objectives:[
+    'Fully label a chart with a title and both axis labels',
+    'Match a scatter plot\'s title to a computed correlation value',
+    'Combine several computed stats into one final report string',
+    'Write a complete report-building function returning both text and a chart'
+  ],
+  conceptHtml:`
+    <p>Finishing an investigation means every chart is clearly labelled, and every number has a sentence
+    explaining what it means. Using the same cleaned dataset and stats from last week:</p>
+    <pre class="code-block">import matplotlib.pyplot as plt
+avg = cleaned["score"].mean()
+top = cleaned.sort_values("score", ascending=False).iloc[0]
+passed = cleaned[cleaned["score"] >= 60]
+pass_rate = len(passed) / len(cleaned) * 100
+corr_val = cleaned["hours_studied"].corr(cleaned["score"])
+
+report = (f"Class average: {avg:.1f}. Top performer: {top['name']} ({top['score']}). "
+          f"Pass rate: {pass_rate:.0f}%. Study-score correlation: {corr_val:.2f}.")
+print(report)</pre>
+    <p>A chart's title can summarise the SAME finding the report describes, keeping them consistent:</p>
+    <pre class="code-block">fig, ax = plt.subplots()
+ax.scatter(cleaned["hours_studied"], cleaned["score"])
+ax.set_title(f"Study Time vs Score (r={corr_val:.2f})")
+ax.set_xlabel("Hours Studied")
+ax.set_ylabel("Score")</pre>
+    <h3>The final polish, line by line</h3>
+    <ul>
+      <li>Wrapping an f-string in <code>(...)</code> across two lines (as in the report example) lets a long
+        sentence be built without one unreadably long line of code.</li>
+      <li><code>r={corr_val:.2f}</code> — a common convention (borrowed from statistics) of labelling a
+        correlation value as "r" in a chart title.</li>
+      <li>A finished "investigation function" returns BOTH the report text and the chart's axes — one call, one
+        consistent result, ready to hand to someone else.</li>
+    </ul>`,
+  sandboxStarter:`import matplotlib.pyplot as plt
+import pandas as pd
+
+def clean_students(df):
+    df = df.dropna()
+    df = df[df["hours_studied"] >= 0]
+    return df
+
+def band(pct):
+    return "High" if pct >= 80 else "Low"
+
+df = pd.DataFrame({
+    "name": ["Ada","Ben","Chi","Dee","Eli","Fay","Gus","Hana"],
+    "hours_studied": [5, 2, 4, 6, 1, 7, None, -1],
+    "attendance_pct": [95, 60, 85, 90, 50, 98, 80, 70],
+    "score": [85, 50, 75, 90, 40, 95, 70, 60]
+})
+cleaned = clean_students(df)
+cleaned = cleaned.copy()
+cleaned["band"] = cleaned["attendance_pct"].apply(band)
+avg = cleaned.groupby("band")["score"].mean()
+fig, ax = plt.subplots()
+bars = ax.bar(avg.index, avg.values)
+ax.set_title("Average Score by Attendance Band")
+ax.set_xlabel("Attendance Band")
+ax.set_ylabel("Average Score")
+print(ax.get_title())
+`,
+  sandboxStarter2:`import matplotlib.pyplot as plt
+import pandas as pd
+
+def clean_students(df):
+    df = df.dropna()
+    df = df[df["hours_studied"] >= 0]
+    return df
+
+df = pd.DataFrame({
+    "name": ["Ada","Ben","Chi","Dee","Eli","Fay","Gus","Hana"],
+    "hours_studied": [5, 2, 4, 6, 1, 7, None, -1],
+    "attendance_pct": [95, 60, 85, 90, 50, 98, 80, 70],
+    "score": [85, 50, 75, 90, 40, 95, 70, 60]
+})
+cleaned = clean_students(df)
+corr_val = cleaned["hours_studied"].corr(cleaned["score"])
+fig, ax = plt.subplots()
+ax.scatter(cleaned["hours_studied"], cleaned["score"])
+ax.set_xlabel("Hours Studied")
+ax.set_ylabel("Score")
+ax.set_title(f"Study Time vs Score (r={corr_val:.2f})")
+print(ax.get_title())
+`,
+  exercises:[
+    {
+      title:'Fully label the band comparison chart',
+      desc:`Using clean_students, band(), and the same 8-row df from Week 8, create cleaned = clean_students(df),
+        add the "band" column, and create avg = cleaned.groupby("band")["score"].mean(). Create
+        fig, ax = plt.subplots() and bars = ax.bar(avg.index, avg.values). Call
+        ax.set_title("Average Score by Attendance Band"), ax.set_xlabel("Attendance Band"), and
+        ax.set_ylabel("Average Score"). Assert that all three are set correctly.`,
+      starter:`import matplotlib.pyplot as plt
+import pandas as pd
+
+def clean_students(df):
+    df = df.dropna()
+    df = df[df["hours_studied"] >= 0]
+    return df
+
+def band(pct):
+    return "High" if pct >= 80 else "Low"
+
+df = pd.DataFrame({
+    "name": ["Ada","Ben","Chi","Dee","Eli","Fay","Gus","Hana"],
+    "hours_studied": [5, 2, 4, 6, 1, 7, None, -1],
+    "attendance_pct": [95, 60, 85, 90, 50, 98, 80, 70],
+    "score": [85, 50, 75, 90, 40, 95, 70, 60]
+})
+# Create cleaned, band column, avg, fig, ax and bars, then set all three labels below
+`,
+      tests:[{type:'assert', expr:'ax.get_title() == "Average Score by Attendance Band" and ax.get_xlabel() == "Attendance Band" and ax.get_ylabel() == "Average Score"', label:'The chart is fully labelled with title, x-axis, and y-axis'}]
+    },
+    {
+      title:'Match a scatter title to the correlation',
+      desc:`Using clean_students and the same df, create cleaned = clean_students(df) and
+        corr_val = cleaned["hours_studied"].corr(cleaned["score"]). Create fig, ax = plt.subplots() and
+        ax.scatter(cleaned["hours_studied"], cleaned["score"]). Call
+        ax.set_title(f"Study Time vs Score (r={corr_val:.2f})"). Assert that ax.get_title() ==
+        "Study Time vs Score (r=0.99)".`,
+      starter:`import matplotlib.pyplot as plt
+import pandas as pd
+
+def clean_students(df):
+    df = df.dropna()
+    df = df[df["hours_studied"] >= 0]
+    return df
+
+df = pd.DataFrame({
+    "name": ["Ada","Ben","Chi","Dee","Eli","Fay","Gus","Hana"],
+    "hours_studied": [5, 2, 4, 6, 1, 7, None, -1],
+    "attendance_pct": [95, 60, 85, 90, 50, 98, 80, 70],
+    "score": [85, 50, 75, 90, 40, 95, 70, 60]
+})
+# Create cleaned, corr_val, fig, ax and the scatter plot, then set the title below
+`,
+      tests:[{type:'assert', expr:'ax.get_title() == "Study Time vs Score (r=0.99)"', label:'The scatter plot title correctly includes the computed correlation'}]
+    },
+    {
+      title:'Name the top performer',
+      desc:`Using clean_students and the same df, create cleaned = clean_students(df) and
+        top = cleaned.sort_values("score", ascending=False).iloc[0]. Create
+        report = f"Top performer: {top['name']} with a score of {top['score']}.". Assert that report ==
+        "Top performer: Fay with a score of 95.".`,
+      starter:`import pandas as pd
+
+def clean_students(df):
+    df = df.dropna()
+    df = df[df["hours_studied"] >= 0]
+    return df
+
+df = pd.DataFrame({
+    "name": ["Ada","Ben","Chi","Dee","Eli","Fay","Gus","Hana"],
+    "hours_studied": [5, 2, 4, 6, 1, 7, None, -1],
+    "attendance_pct": [95, 60, 85, 90, 50, 98, 80, 70],
+    "score": [85, 50, 75, 90, 40, 95, 70, 60]
+})
+# Create cleaned, top and report below
+`,
+      tests:[{type:'assert', expr:'report == "Top performer: Fay with a score of 95."', label:'The narrative correctly names Fay as the top performer'}]
+    },
+    {
+      title:'Combine two stats into a summary',
+      desc:`Using clean_students and the same df, create cleaned = clean_students(df). Create
+        passed = cleaned[cleaned["score"] >= 60] and pass_rate = len(passed) / len(cleaned) * 100. Create
+        corr_val = cleaned["hours_studied"].corr(cleaned["score"]). Create
+        summary = {"pass_rate": round(pass_rate), "correlation": round(corr_val, 2)}. Assert that summary ==
+        {"pass_rate": 67, "correlation": 0.99}.`,
+      starter:`import pandas as pd
+
+def clean_students(df):
+    df = df.dropna()
+    df = df[df["hours_studied"] >= 0]
+    return df
+
+df = pd.DataFrame({
+    "name": ["Ada","Ben","Chi","Dee","Eli","Fay","Gus","Hana"],
+    "hours_studied": [5, 2, 4, 6, 1, 7, None, -1],
+    "attendance_pct": [95, 60, 85, 90, 50, 98, 80, 70],
+    "score": [85, 50, 75, 90, 40, 95, 70, 60]
+})
+# Create cleaned, passed, pass_rate, corr_val and summary below
+`,
+      tests:[{type:'assert', expr:'summary == {"pass_rate": 67, "correlation": 0.99}', label:'The summary dict correctly combines the pass rate and correlation'}]
+    },
+    {
+      title:'Write the complete final report',
+      desc:`Using clean_students and the same df, create cleaned = clean_students(df), avg = cleaned["score"].mean(),
+        top = cleaned.sort_values("score", ascending=False).iloc[0], passed = cleaned[cleaned["score"] >= 60],
+        pass_rate = len(passed) / len(cleaned) * 100, and
+        corr_val = cleaned["hours_studied"].corr(cleaned["score"]). Create
+        report = f"Class average: {avg:.1f}. Top performer: {top['name']} ({top['score']}). Pass rate:
+        {pass_rate:.0f}%. Study-score correlation: {corr_val:.2f}.". Assert that report ==
+        "Class average: 72.5. Top performer: Fay (95). Pass rate: 67%. Study-score correlation: 0.99.".`,
+      starter:`import pandas as pd
+
+def clean_students(df):
+    df = df.dropna()
+    df = df[df["hours_studied"] >= 0]
+    return df
+
+df = pd.DataFrame({
+    "name": ["Ada","Ben","Chi","Dee","Eli","Fay","Gus","Hana"],
+    "hours_studied": [5, 2, 4, 6, 1, 7, None, -1],
+    "attendance_pct": [95, 60, 85, 90, 50, 98, 80, 70],
+    "score": [85, 50, 75, 90, 40, 95, 70, 60]
+})
+# Create cleaned, avg, top, passed, pass_rate, corr_val and report below
+`,
+      tests:[{type:'assert', expr:'report == "Class average: 72.5. Top performer: Fay (95). Pass rate: 67%. Study-score correlation: 0.99."', label:'The final report correctly combines all four computed stats'}]
+    },
+    {
+      title:'Build a function returning report and chart together',
+      desc:`Write a function build_final_report(df) that: calls cleaned = clean_students(df), computes
+        avg = cleaned["score"].mean() and top = cleaned.sort_values("score", ascending=False).iloc[0]; creates
+        fig, ax = plt.subplots(), ax.bar(cleaned["name"], cleaned["score"]), and
+        ax.set_title(f"Class Average: {avg:.1f}"); builds
+        report = f"Class average: {avg:.1f}. Top performer: {top['name']} ({top['score']}).";
+        and returns report, fig, ax. Create report, fig, ax = build_final_report(df) using the same 8-row df.
+        Assert that report == "Class average: 72.5. Top performer: Fay (95)." and ax.get_title() ==
+        "Class Average: 72.5".`,
+      starter:`import matplotlib.pyplot as plt
+import pandas as pd
+
+def clean_students(df):
+    df = df.dropna()
+    df = df[df["hours_studied"] >= 0]
+    return df
+
+df = pd.DataFrame({
+    "name": ["Ada","Ben","Chi","Dee","Eli","Fay","Gus","Hana"],
+    "hours_studied": [5, 2, 4, 6, 1, 7, None, -1],
+    "attendance_pct": [95, 60, 85, 90, 50, 98, 80, 70],
+    "score": [85, 50, 75, 90, 40, 95, 70, 60]
+})
+# Define build_final_report below, then create report, fig and ax
+`,
+      tests:[{type:'assert', expr:'report == "Class average: 72.5. Top performer: Fay (95)." and ax.get_title() == "Class Average: 72.5"', label:'The report-building function correctly returns text matching the chart'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why label every part of a chart (title, both axes) in a "finished" analysis?',
+      options:['Labels are purely decorative','Without labels, a reader has no idea what the numbers or categories on the chart actually mean','matplotlib requires all three or the chart won\'t render','Only the title is ever necessary'],
+      correct:1,
+      explain:'A chart without axis labels or a title communicates nothing to someone who wasn\'t there when it was built.'
+    },
+    {
+      q:'What does "r=0.99" typically mean in a chart title?',
+      options:['A random chart ID number','The correlation coefficient (r) between the two plotted variables','The number of rows plotted','A rounding error indicator'],
+      correct:1,
+      explain:'"r" is a common statistics convention for the correlation coefficient — reusing that convention in a title is a professional touch.'
+    },
+    {
+      q:'Why should a report-building function return the chart\'s axes AND the report text together?',
+      options:['It\'s required by matplotlib','So a single function call hands back everything needed to both read and show the finding, kept consistent with each other','Functions can only return one thing otherwise','Returning both is slower'],
+      correct:1,
+      explain:'Bundling both outputs from one function call guarantees they describe the exact same underlying computation.'
+    },
+    {
+      q:'What makes an investigation "finished," as this week frames it?',
+      options:['Just running .corr() once','Fully labelled charts plus a complete written report combining every computed stat into a readable summary','Printing a raw DataFrame','Nothing — investigations are never finished'],
+      correct:1,
+      explain:'The capstone\'s "finish and polish" step is specifically about presentation — clear charts and a readable narrative, not just raw computation.'
+    }
+  ],
+  sandboxStarter3:`import matplotlib.pyplot as plt
+import pandas as pd
+
+def clean_students(df):
+    df = df.dropna()
+    df = df[df["hours_studied"] >= 0]
+    return df
+
+def build_final_report(df):
+    cleaned = clean_students(df)
+    avg = cleaned["score"].mean()
+    top = cleaned.sort_values("score", ascending=False).iloc[0]
+    fig, ax = plt.subplots()
+    ax.bar(cleaned["name"], cleaned["score"])
+    ax.set_title(f"Class Average: {avg:.1f}")
+    report = f"Class average: {avg:.1f}. Top performer: {top['name']} ({top['score']})."
+    return report, fig, ax
+
+df = pd.DataFrame({
+    "name": ["Ada","Ben","Chi","Dee","Eli","Fay","Gus","Hana"],
+    "hours_studied": [5, 2, 4, 6, 1, 7, None, -1],
+    "attendance_pct": [95, 60, 85, 90, 50, 98, 80, 70],
+    "score": [85, 50, 75, 90, 40, 95, 70, 60]
+})
+report, fig, ax = build_final_report(df)
+print(report)
+`,
+  stretchChallenge:{
+    title:'A complete, single-call investigation function',
+    desc:`Write a function full_investigation(df) that: calls cleaned = clean_students(df), computes
+      corr_val = cleaned["hours_studied"].corr(cleaned["score"]), passed = cleaned[cleaned["score"] >= 60], and
+      pass_rate = len(passed) / len(cleaned) * 100; creates fig, ax = plt.subplots(),
+      ax.scatter(cleaned["hours_studied"], cleaned["score"]), and
+      ax.set_title(f"Study Time vs Score (r={corr_val:.2f})"); builds
+      report = f"Pass rate: {pass_rate:.0f}%. Correlation: {corr_val:.2f}."; and returns report, ax. Create
+      report, ax = full_investigation(df) using the same 8-row df. Assert that report ==
+      "Pass rate: 67%. Correlation: 0.99." and ax.get_title() == "Study Time vs Score (r=0.99)".`,
+    starter:`import matplotlib.pyplot as plt
+import pandas as pd
+
+def clean_students(df):
+    df = df.dropna()
+    df = df[df["hours_studied"] >= 0]
+    return df
+
+df = pd.DataFrame({
+    "name": ["Ada","Ben","Chi","Dee","Eli","Fay","Gus","Hana"],
+    "hours_studied": [5, 2, 4, 6, 1, 7, None, -1],
+    "attendance_pct": [95, 60, 85, 90, 50, 98, 80, 70],
+    "score": [85, 50, 75, 90, 40, 95, 70, 60]
+})
+# Define full_investigation below, then create report and ax
+`,
+    tests:[
+      {type:'assert', expr:'report == "Pass rate: 67%. Correlation: 0.99." and ax.get_title() == "Study Time vs Score (r=0.99)"', label:'The full investigation function correctly returns both the report and a matching chart'}
+    ]
+  }
 }
 ];
 
