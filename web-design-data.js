@@ -6106,6 +6106,261 @@ document.addEventListener('itemLiked', function(e){
     ]
   }
 },
+{
+  key:'week7', num:7, title:'Theming: Dark Mode Toggle',
+  scenarioTag:'Real world: letting visitors choose their own theme',
+  scenario:`Dark mode is everywhere now — and it's built from two ideas already known: CSS custom properties
+    (Intermediate Week 1) that change value depending on a class, and toggling that class with JavaScript
+    (Intermediate Week 9's classList.toggle). Combined, one button click can re-theme an entire page at once.`,
+  objectives:[
+    'Toggle a class on <body> with classList.toggle',
+    'Define the same CSS variable differently depending on that class',
+    'Apply theme variables consistently across multiple elements',
+    'Update a label to reflect the current theme'
+  ],
+  conceptHtml:`
+    <p>The dark mode pattern: define a CSS variable one way normally, and differently when a <code>.dark</code>
+    class is present on <code>&lt;body&gt;</code> — then toggle that ONE class to re-theme everything using the
+    variable at once.</p>
+    <pre class="code-block">&lt;style&gt;
+  :root { --bg: white; --text: black; }
+  body.dark { --bg: #111; --text: white; }
+  body { background-color: var(--bg); color: var(--text); }
+&lt;/style&gt;
+
+document.querySelector('#toggleBtn').addEventListener('click', function(){
+  document.body.classList.toggle('dark');
+});</pre>
+    <ul>
+      <li><code>:root { --bg: white; }</code> — the DEFAULT value, used whenever <code>.dark</code> isn't
+        present.</li>
+      <li><code>body.dark { --bg: #111; }</code> — OVERRIDES <code>--bg</code> specifically when
+        <code>&lt;body&gt;</code> has the <code>dark</code> class — the same variable-overriding pattern from
+        Intermediate Week 1.</li>
+      <li><code>document.body.classList.toggle('dark')</code> — adds the class if it's missing, removes it if
+        present — one line flips the whole theme.</li>
+    </ul>
+    <p>Now look at the second example, applying the same variables to more than one element:</p>
+    <pre class="code-block">&lt;style&gt;
+  :root { --bg: white; --text: black; }
+  body.dark { --bg: #111; --text: white; }
+  .card { background-color: var(--bg); color: var(--text); }
+&lt;/style&gt;</pre>
+    <ul>
+      <li>Any element using <code>var(--bg)</code>/<code>var(--text)</code> updates together the instant the
+        class toggles — there's no need to touch each element individually.</li>
+    </ul>`,
+  sandboxStarter:`<style>
+  :root { --bg: white; --text: black; }
+  body.dark { --bg: #111111; --text: white; }
+  #box { background-color: var(--bg); color: var(--text); padding: 12px; }
+</style>
+<div id="box">Themed box</div>
+<button id="toggleBtn" type="button">Toggle theme</button>
+
+<script>
+  document.querySelector('#toggleBtn').addEventListener('click', function(){
+    document.body.classList.toggle('dark');
+  });
+</script>
+`,
+  sandboxStarter2:`<style>
+  :root { --bg: white; --text: black; }
+  body.dark { --bg: #111111; --text: white; }
+  .card { background-color: var(--bg); color: var(--text); padding: 12px; }
+</style>
+<div class="card">Card 1</div>
+<div class="card">Card 2</div>
+<button id="toggleBtn" type="button">Toggle theme</button>
+
+<script>
+  document.querySelector('#toggleBtn').addEventListener('click', function(){
+    document.body.classList.toggle('dark');
+  });
+</script>
+`,
+  exercises:[
+    {
+      title:'Toggle the dark class',
+      desc:`On &lt;button type="button" id="toggleBtn"&gt; click, toggle a class called "dark" on
+        document.body using classList.toggle.`,
+      starter:`<button id="toggleBtn" type="button">Toggle theme</button>
+
+<script>
+  document.querySelector('#toggleBtn').addEventListener('click', function(){
+    // Toggle the "dark" class on document.body
+  });
+</script>
+`,
+      tests:[{type:'dom-attr', selector:'body', attr:'class', notEmpty:true, label:'body gains the "dark" class after clicking'}]
+    },
+    {
+      title:'Change a background via a theme variable',
+      desc:`Add :root { --bg: white; } and body.dark { --bg: #111111; } in a &lt;style&gt; block, and apply
+        background-color: var(--bg); to &lt;div id="box"&gt;. Clicking &lt;button type="button"
+        id="toggleBtn"&gt; should toggle "dark" on body, changing #box's background.`,
+      starter:`<div id="box">Themed box</div>
+<button id="toggleBtn" type="button">Toggle theme</button>
+<!-- Add a <style> block: :root sets --bg: white, body.dark overrides --bg: #111111, #box uses background-color: var(--bg) -->
+
+<script>
+  document.querySelector('#toggleBtn').addEventListener('click', function(){
+    document.body.classList.toggle('dark');
+  });
+</script>
+`,
+      tests:[{type:'computed-style', selector:'#box', prop:'backgroundColor', notEqual:'rgba(0, 0, 0, 0)', label:'#box has a background color from the theme variable'}]
+    },
+    {
+      title:'Theme two elements at once',
+      desc:`Add :root { --bg: white; } and body.dark { --bg: #111111; }, and apply background-color: var(--bg);
+        to BOTH &lt;div class="card"&gt; elements (using a shared .card selector, not two separate rules).
+        Toggling should change both cards' backgrounds together.`,
+      starter:`<div class="card">Card 1</div>
+<div class="card">Card 2</div>
+<button id="toggleBtn" type="button">Toggle theme</button>
+<!-- Add a <style> block: :root sets --bg, body.dark overrides it, .card uses background-color: var(--bg) -->
+
+<script>
+  document.querySelector('#toggleBtn').addEventListener('click', function(){
+    document.body.classList.toggle('dark');
+  });
+</script>
+`,
+      tests:[
+        {type:'dom-count', selector:'.card', min:2, label:'Both cards exist'},
+        {type:'dom', selector:'style', contains:'var(', label:'Uses var() rather than hardcoded values'},
+        {type:'computed-style', selector:'.card', prop:'backgroundColor', notEqual:'rgba(0, 0, 0, 0)', label:'Cards have a background color from the shared theme variable'}
+      ]
+    },
+    {
+      title:'Show which mode is active in the button text',
+      desc:`On &lt;button type="button" id="toggleBtn"&gt;🌙 Dark Mode&lt;/button&gt; click, toggle "dark" on
+        body, AND update the button's OWN textContent to "☀️ Light Mode" (since clicking it once turns dark mode
+        ON, so the button should now offer to switch back to light).`,
+      starter:`<button id="toggleBtn" type="button">🌙 Dark Mode</button>
+
+<script>
+  document.querySelector('#toggleBtn').addEventListener('click', function(){
+    document.body.classList.toggle('dark');
+    // Also update #toggleBtn's textContent to "☀️ Light Mode"
+  });
+</script>
+`,
+      tests:[{type:'dom', selector:'#toggleBtn', contains:'Light Mode', label:'#toggleBtn now offers to switch to light mode'}]
+    },
+    {
+      title:'Theme both background AND text color',
+      desc:`Add :root { --bg: white; --text: black; } and body.dark { --bg: #111111; --text: white; }, applying
+        BOTH background-color: var(--bg); and color: var(--text); to &lt;div id="box"&gt;.`,
+      starter:`<div id="box">Themed box</div>
+<button id="toggleBtn" type="button">Toggle theme</button>
+<!-- Add a <style> block with --bg and --text, both overridden in body.dark, both applied to #box -->
+
+<script>
+  document.querySelector('#toggleBtn').addEventListener('click', function(){
+    document.body.classList.toggle('dark');
+  });
+</script>
+`,
+      tests:[
+        {type:'computed-style', selector:'#box', prop:'backgroundColor', notEqual:'rgba(0, 0, 0, 0)', label:'#box has a themed background'},
+        {type:'computed-style', selector:'#box', prop:'color', notEqual:'rgb(0, 0, 0)', label:'#box has a themed text color too'}
+      ]
+    },
+    {
+      title:'Build the complete theme toggle',
+      desc:`Combine everything: :root/body.dark variables for --bg and --text, applied to TWO &lt;div
+        class="card"&gt; elements, PLUS a &lt;p id="modeLabel"&gt; that gets updated to "Dark Mode" when the
+        toggle button is clicked (since one click turns dark mode on).`,
+      starter:`<div class="card">Card 1</div>
+<div class="card">Card 2</div>
+<p id="modeLabel">Light Mode</p>
+<button id="toggleBtn" type="button">Toggle theme</button>
+<!-- Add a <style> block with --bg/--text theme variables applied to .card -->
+
+<script>
+  document.querySelector('#toggleBtn').addEventListener('click', function(){
+    document.body.classList.toggle('dark');
+    // Also update #modeLabel's textContent to "Dark Mode"
+  });
+</script>
+`,
+      tests:[
+        {type:'computed-style', selector:'.card', prop:'backgroundColor', notEqual:'rgba(0, 0, 0, 0)', label:'Cards are themed'},
+        {type:'dom', selector:'#modeLabel', contains:'Dark Mode', label:'#modeLabel correctly shows "Dark Mode"'}
+      ]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does document.body.classList.toggle(\'dark\') do?',
+      options:['Always adds the "dark" class','Adds the "dark" class if missing, removes it if present','Deletes the body element','Changes the button text'],
+      correct:1,
+      explain:'toggle() flips the class on or off depending on whether it\'s currently there.'
+    },
+    {
+      q:'Why define --bg in :root AND override it in body.dark, rather than writing two separate full stylesheets?',
+      options:['It\'s required by CSS','One class toggle re-themes every element using var(--bg) at once, instead of needing to change many individual rules','It\'s not possible any other way','It makes the page load slower'],
+      correct:1,
+      explain:'Centralizing the theme in variables means the JS only ever needs to toggle ONE class, and every themed element updates together.'
+    },
+    {
+      q:'If two different elements both use background-color: var(--bg);, what happens when the theme toggles?',
+      options:['Only one updates','Both update together, since they both reference the same variable','Neither updates','An error occurs'],
+      correct:1,
+      explain:'Any number of elements can share the same variable — they all update together the instant its value changes.'
+    },
+    {
+      q:'Why might a dark mode toggle button also update its own text (e.g. to "☀️ Light Mode")?',
+      options:['It\'s required by CSS','So the button always describes what clicking it will do NEXT, matching the current state','It has no real purpose','To make the button bigger'],
+      correct:1,
+      explain:'Showing "what will happen if I click this" (rather than "what mode is currently on") is a common, helpful UI pattern.'
+    }
+  ],
+  sandboxStarter3:`<style>
+  :root { --bg: white; --text: black; }
+  body.dark { --bg: #111111; --text: white; }
+  .card { background-color: var(--bg); color: var(--text); padding: 12px; transition: background-color 0.3s, color 0.3s; }
+</style>
+<div class="card">Card 1</div>
+<div class="card">Card 2</div>
+<p id="modeLabel">Light Mode</p>
+<button id="toggleBtn" type="button">🌙 Toggle theme</button>
+
+<script>
+  document.querySelector('#toggleBtn').addEventListener('click', function(){
+    document.body.classList.toggle('dark');
+    document.querySelector('#modeLabel').textContent = 'Dark Mode';
+  });
+</script>
+`,
+  stretchChallenge:{
+    title:'Add a themed border too',
+    desc:`Finished early? Add a third theme variable, --border, defined differently in :root (e.g. a light gray)
+      vs body.dark (e.g. a lighter gray that\'s visible on a dark background), and apply border: 2px solid
+      var(--border); to &lt;div id="box"&gt; alongside its existing background/text theming.`,
+    starter:`<style>
+  :root { --bg: white; --text: black; --border: #cccccc; }
+  body.dark { --bg: #111111; --text: white; }
+  /* Add --border: <something lighter> to body.dark too */
+  #box { background-color: var(--bg); color: var(--text); padding: 12px; }
+  /* Apply border: 2px solid var(--border); to #box */
+</style>
+<div id="box">Themed box</div>
+<button id="toggleBtn" type="button">Toggle theme</button>
+
+<script>
+  document.querySelector('#toggleBtn').addEventListener('click', function(){
+    document.body.classList.toggle('dark');
+  });
+</script>
+`,
+    tests:[
+      {type:'computed-style', selector:'#box', prop:'borderTopWidth', atLeastPx:1, label:'#box has a visible border from the --border variable'}
+    ]
+  }
+},
 ];
 
 const WD_ADVANCED_MP1 = {
