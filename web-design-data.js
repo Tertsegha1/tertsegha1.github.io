@@ -6361,6 +6361,560 @@ document.querySelector('#toggleBtn').addEventListener('click', function(){
     ]
   }
 },
+{
+  key:'week8', num:8, title:'Capstone — Design and Build',
+  scenarioTag:'Real world: building something real from a plan',
+  scenario:`Time to combine everything into a real mini app: a Product Catalog. This week builds the core —
+    rendering products from data, filtering them, and clicking one to see its details — combining Weeks 1-3.
+    Next week finishes it with accessibility, theming, and a polish pass.`,
+  objectives:[
+    'Render a data-driven catalog from an array of objects',
+    'Filter the catalog by a category',
+    'Click an item to show its details in a separate section',
+    'Combine rendering, filtering, and routing into one small app'
+  ],
+  conceptHtml:`
+    <p>This week's capstone combines three skills you already have: rendering an array of objects (Week 1),
+    filtering it (Week 2), and switching between a "list view" and a "details view" (Week 3's routing pattern) —
+    just applied to a genuinely useful mini app instead of separate practice exercises.</p>
+    <pre class="code-block">const products = [
+  { name: 'Pen', category: 'stationery' },
+  { name: 'Football', category: 'sports' }
+];
+
+function renderCatalog(items){
+  const list = document.querySelector('#catalog');
+  list.innerHTML = '';
+  items.forEach(function(p){
+    const li = document.createElement('li');
+    li.textContent = p.name;
+    list.appendChild(li);
+  });
+}
+
+document.querySelector('#filterBtn').addEventListener('click', function(){
+  const stationeryOnly = products.filter(function(p){ return p.category === 'stationery'; });
+  renderCatalog(stationeryOnly);
+});</pre>
+    <ul>
+      <li><code>renderCatalog(items)</code> — a reusable render function (Intermediate Week 9's pattern), called
+        with whatever subset of products should currently be shown.</li>
+      <li>Filtering happens BEFORE rendering — the render function itself doesn't know or care whether it's
+        showing everything or a filtered subset.</li>
+    </ul>`,
+  sandboxStarter:`<ul id="catalog"></ul>
+<button id="showAllBtn" type="button">Show all products</button>
+
+<script>
+  const products = [
+    { name: 'Pen', category: 'stationery' },
+    { name: 'Football', category: 'sports' },
+    { name: 'Notebook', category: 'stationery' }
+  ];
+
+  function renderCatalog(items){
+    const list = document.querySelector('#catalog');
+    list.innerHTML = '';
+    items.forEach(function(p){
+      const li = document.createElement('li');
+      li.textContent = p.name;
+      list.appendChild(li);
+    });
+  }
+
+  document.querySelector('#showAllBtn').addEventListener('click', function(){
+    renderCatalog(products);
+  });
+</script>
+`,
+  sandboxStarter2:`<ul id="catalog"></ul>
+<button id="filterBtn" type="button">Show stationery only</button>
+
+<script>
+  const products = [
+    { name: 'Pen', category: 'stationery' },
+    { name: 'Football', category: 'sports' },
+    { name: 'Notebook', category: 'stationery' }
+  ];
+
+  function renderCatalog(items){
+    const list = document.querySelector('#catalog');
+    list.innerHTML = '';
+    items.forEach(function(p){
+      const li = document.createElement('li');
+      li.textContent = p.name;
+      list.appendChild(li);
+    });
+  }
+
+  document.querySelector('#filterBtn').addEventListener('click', function(){
+    const stationeryOnly = products.filter(function(p){ return p.category === 'stationery'; });
+    renderCatalog(stationeryOnly);
+  });
+</script>
+`,
+  exercises:[
+    {
+      title:'Render the full catalog',
+      desc:`Loop over const products = [{name:'Pen'}, {name:'Football'}, {name:'Notebook'}]; and render each as
+        an &lt;li&gt; inside &lt;ul id="catalog"&gt; when &lt;button type="button" id="showAllBtn"&gt; is
+        clicked.`,
+      starter:`<ul id="catalog"></ul>
+<button id="showAllBtn" type="button">Show all products</button>
+
+<script>
+  document.querySelector('#showAllBtn').addEventListener('click', function(){
+    const products = [{name:'Pen'}, {name:'Football'}, {name:'Notebook'}];
+    // Render each product's name as an <li> inside #catalog
+  });
+</script>
+`,
+      tests:[{type:'dom-count', selector:'#catalog li', min:3, label:'#catalog shows all 3 products'}]
+    },
+    {
+      title:'Filter the catalog by category',
+      desc:`Loop over const products = [{name:'Pen', category:'stationery'}, {name:'Football',
+        category:'sports'}, {name:'Notebook', category:'stationery'}];. On &lt;button type="button"
+        id="filterBtn"&gt; click, filter to category:'stationery' only, then render just those.`,
+      starter:`<ul id="catalog"></ul>
+<button id="filterBtn" type="button">Show stationery only</button>
+
+<script>
+  document.querySelector('#filterBtn').addEventListener('click', function(){
+    const products = [{name:'Pen', category:'stationery'}, {name:'Football', category:'sports'}, {name:'Notebook', category:'stationery'}];
+    // Filter to category:'stationery', then render each remaining item's name
+  });
+</script>
+`,
+      tests:[
+        {type:'dom-count', selector:'#catalog li', min:2, label:'#catalog shows the 2 stationery items'},
+        {type:'dom', selector:'#catalog', contains:'PenNotebook', label:'Only Pen and Notebook appear, adjacent (Football filtered out)'}
+      ]
+    },
+    {
+      title:'Show product details in a separate section',
+      desc:`&lt;div id="details" style="display:none;"&gt; should become visible with text "Pen: $2" when
+        &lt;button type="button" id="viewBtn"&gt; is clicked, using const product = {name:'Pen', price:2};.`,
+      starter:`<button id="viewBtn" type="button">View Pen</button>
+<div id="details" style="display:none;"></div>
+
+<script>
+  document.querySelector('#viewBtn').addEventListener('click', function(){
+    const product = {name:'Pen', price:2};
+    // Set #details' textContent to product.name + ": $" + product.price, and make it visible
+  });
+</script>
+`,
+      tests:[
+        {type:'computed-style', selector:'#details', prop:'display', notEqual:'none', label:'#details becomes visible'},
+        {type:'dom', selector:'#details', contains:'Pen: $2', label:'#details shows "Pen: $2"'}
+      ]
+    },
+    {
+      title:'Combine filtering with a details view',
+      desc:`With const products = [{name:'Pen', category:'stationery', price:2}, {name:'Football',
+        category:'sports', price:10}];, filter to category:'stationery' and render the matching names into
+        &lt;ul id="catalog"&gt;, AND separately show &lt;div id="details"&gt; with "1 stationery item found"
+        (the count AFTER filtering).`,
+      starter:`<ul id="catalog"></ul>
+<div id="details"></div>
+<button id="filterBtn" type="button">Show stationery</button>
+
+<script>
+  document.querySelector('#filterBtn').addEventListener('click', function(){
+    const products = [{name:'Pen', category:'stationery', price:2}, {name:'Football', category:'sports', price:10}];
+    // Filter to stationery, render names into #catalog, and set #details to the count + " stationery item found"
+  });
+</script>
+`,
+      tests:[
+        {type:'dom', selector:'#catalog', contains:'Pen', label:'#catalog shows the stationery item'},
+        {type:'dom', selector:'#details', contains:'1 stationery item found', label:'#details reports the correct filtered count'}
+      ]
+    },
+    {
+      title:'Render a catalog with prices',
+      desc:`Loop over const products = [{name:'Pen', price:2}, {name:'Notebook', price:5}]; rendering each as
+        "name: $price" inside &lt;ul id="catalog"&gt; when &lt;button type="button" id="showAllBtn"&gt; is
+        clicked.`,
+      starter:`<ul id="catalog"></ul>
+<button id="showAllBtn" type="button">Show all products</button>
+
+<script>
+  document.querySelector('#showAllBtn').addEventListener('click', function(){
+    const products = [{name:'Pen', price:2}, {name:'Notebook', price:5}];
+    // Render each as "name: $price" inside #catalog
+  });
+</script>
+`,
+      tests:[{type:'dom', selector:'#catalog', contains:'Notebook: $5', label:'#catalog includes "Notebook: $5"'}]
+    },
+    {
+      title:'Build the core catalog app',
+      desc:`Combine everything: render const products = [{name:'Pen', category:'stationery', price:2},
+        {name:'Football', category:'sports', price:10}, {name:'Notebook', category:'stationery', price:5}]; into
+        &lt;ul id="catalog"&gt; when #showAllBtn is clicked, filter to stationery-only when #filterBtn is
+        clicked, and show "Pen: $2" in &lt;div id="details"&gt; when #viewBtn is clicked. All 3 buttons get
+        auto-clicked (in DOM order: showAll, filter, view) — the FINAL state should reflect #viewBtn's action
+        (details visible with Pen's info) since it's clicked last, while #catalog should show only the 2
+        stationery items from the filter click before it.`,
+      starter:`<ul id="catalog"></ul>
+<div id="details" style="display:none;"></div>
+<button id="showAllBtn" type="button">Show all</button>
+<button id="filterBtn" type="button">Filter stationery</button>
+<button id="viewBtn" type="button">View Pen</button>
+
+<script>
+  const products = [{name:'Pen', category:'stationery', price:2}, {name:'Football', category:'sports', price:10}, {name:'Notebook', category:'stationery', price:5}];
+
+  function renderCatalog(items){
+    const list = document.querySelector('#catalog');
+    list.innerHTML = '';
+    items.forEach(function(p){
+      const li = document.createElement('li');
+      li.textContent = p.name;
+      list.appendChild(li);
+    });
+  }
+
+  document.querySelector('#showAllBtn').addEventListener('click', function(){
+    renderCatalog(products);
+  });
+  document.querySelector('#filterBtn').addEventListener('click', function(){
+    // Filter products to category:'stationery' and call renderCatalog with the result
+  });
+  document.querySelector('#viewBtn').addEventListener('click', function(){
+    // Show #details with "Pen: $2"
+  });
+</script>
+`,
+      tests:[
+        {type:'dom', selector:'#catalog', contains:'PenNotebook', label:'#catalog shows only the stationery items, adjacent'},
+        {type:'computed-style', selector:'#details', prop:'display', notEqual:'none', label:'#details is visible (from the last-clicked #viewBtn)'},
+        {type:'dom', selector:'#details', contains:'Pen: $2', label:'#details shows "Pen: $2"'}
+      ]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why write a reusable renderCatalog(items) function instead of repeating the render loop in every button handler?',
+      options:['It\'s required by JavaScript','So filtering, showing all, or any future subset can all reuse the same render logic by calling it with different data','It\'s slower this way','No real reason'],
+      correct:1,
+      explain:'A shared render function means "how to display a list of products" is written once and reused for any filtered or unfiltered subset.'
+    },
+    {
+      q:'In this capstone, what does filtering happen to BEFORE rendering?',
+      options:['Nothing changes','The array is narrowed down to the matching subset first, and THAT subset is what gets rendered','Rendering happens first','Filtering has no effect'],
+      correct:1,
+      explain:'.filter() produces the exact array that should be shown, and rendering just displays whatever it\'s given.'
+    },
+    {
+      q:'Why show product details in a SEPARATE section rather than replacing the whole catalog list?',
+      options:['It\'s not possible any other way','So the visitor can see item details without losing the list they were browsing','It makes the code longer','There\'s no real reason'],
+      correct:1,
+      explain:'Keeping the catalog and details as separate sections (Week 3\'s show/hide pattern) lets both coexist in the UI as needed.'
+    },
+    {
+      q:'What does this capstone combine from Weeks 1-3?',
+      options:['Nothing new','Array-of-objects rendering (W1), filtering (W2), and show/hide sections (W3), applied together in one small app','Only CSS','Only forms'],
+      correct:1,
+      explain:'This week is specifically about applying earlier skills TOGETHER on a realistic small app, not learning something brand new.'
+    }
+  ],
+  sandboxStarter3:`<ul id="catalog"></ul>
+<div id="details" style="display:none;"></div>
+<button id="showAllBtn" type="button">Show all</button>
+<button id="filterBtn" type="button">Filter stationery</button>
+
+<script>
+  const products = [
+    { name: 'Pen', category: 'stationery', price: 2 },
+    { name: 'Football', category: 'sports', price: 10 },
+    { name: 'Notebook', category: 'stationery', price: 5 }
+  ];
+
+  function renderCatalog(items){
+    const list = document.querySelector('#catalog');
+    list.innerHTML = '';
+    items.forEach(function(p){
+      const li = document.createElement('li');
+      li.textContent = p.name + ': $' + p.price;
+      list.appendChild(li);
+    });
+  }
+
+  document.querySelector('#showAllBtn').addEventListener('click', function(){
+    renderCatalog(products);
+  });
+
+  document.querySelector('#filterBtn').addEventListener('click', function(){
+    const stationeryOnly = products.filter(function(p){ return p.category === 'stationery'; });
+    renderCatalog(stationeryOnly);
+  });
+</script>
+`,
+  stretchChallenge:{
+    title:'Sort the filtered catalog by price',
+    desc:`Finished early? On #filterBtn click, filter const products = [{name:'Pen', category:'stationery',
+      price:5}, {name:'Football', category:'sports', price:10}, {name:'Ruler', category:'stationery', price:1}];
+      to category:'stationery', THEN sort what's left by price ascending before rendering — the catalog should
+      read Ruler, then Pen.`,
+    starter:`<ul id="catalog"></ul>
+<button id="filterBtn" type="button">Show stationery, cheapest first</button>
+
+<script>
+  document.querySelector('#filterBtn').addEventListener('click', function(){
+    const products = [{name:'Pen', category:'stationery', price:5}, {name:'Football', category:'sports', price:10}, {name:'Ruler', category:'stationery', price:1}];
+    // Filter to stationery, sort by price ascending, then render
+  });
+</script>
+`,
+    tests:[
+      {type:'dom', selector:'#catalog', contains:'RulerPen', label:'Catalog shows Ruler then Pen (cheapest stationery first)'}
+    ]
+  }
+},
+{
+  key:'week9', num:9, title:'Capstone — Finish and Polish',
+  scenarioTag:'Real world: the last 20% that makes something feel finished',
+  scenario:`A working app isn't the same as a POLISHED one. This week finishes the Product Catalog with theming
+    (Week 7), accessible structure (semantic tags and real buttons from Intermediate Week 8), and a debugging
+    pass (Week 5) — the details that separate "it works" from "it's actually good."`,
+  objectives:[
+    'Add dark mode theming to the catalog app',
+    'Structure the app with accessible, semantic HTML',
+    'Fix bugs found during a final review pass',
+    'Combine every skill from this level into one finished mini app'
+  ],
+  conceptHtml:`
+    <p>Polishing means applying everything you already know to something that already works: theme variables
+    (Week 7) so the catalog looks good in light AND dark mode, semantic structure (&lt;main&gt;, real
+    &lt;button&gt;s) so it's usable by keyboard and screen reader, and a careful re-read for the bug patterns from
+    Week 5 (off-by-one, = vs ===, wrong variable names).</p>
+    <pre class="code-block">&lt;style&gt;
+  :root { --bg: white; --text: black; }
+  body.dark { --bg: #111111; --text: white; }
+  #catalog li { background-color: var(--bg); color: var(--text); }
+&lt;/style&gt;
+
+&lt;main&gt;
+  &lt;ul id="catalog"&gt;&lt;/ul&gt;
+  &lt;button type="button" id="themeBtn"&gt;Toggle theme&lt;/button&gt;
+&lt;/main&gt;</pre>
+    <ul>
+      <li>The SAME rendering/filtering logic from last week still works unchanged — polish adds structure and
+        theming AROUND it, without needing to rewrite the core logic.</li>
+    </ul>`,
+  sandboxStarter:`<style>
+  :root { --bg: white; --text: black; }
+  body.dark { --bg: #111111; --text: white; }
+  #catalog li { background-color: var(--bg); color: var(--text); }
+</style>
+<main>
+  <ul id="catalog">
+    <li>Pen</li>
+    <li>Notebook</li>
+  </ul>
+  <button type="button" id="themeBtn">Toggle theme</button>
+</main>
+
+<script>
+  document.querySelector('#themeBtn').addEventListener('click', function(){
+    document.body.classList.toggle('dark');
+  });
+</script>
+`,
+  sandboxStarter2:`<main>
+  <ul id="catalog"></ul>
+  <button type="button" id="showAllBtn">Show all products</button>
+</main>
+
+<script>
+  const products = [{name:'Pen'}, {name:'Notebook'}];
+  document.querySelector('#showAllBtn').addEventListener('click', function(){
+    const list = document.querySelector('#catalog');
+    for (let i = 0; i < products.length; i++) {
+      const li = document.createElement('li');
+      li.textContent = products[i].name;
+      list.appendChild(li);
+    }
+  });
+</script>
+`,
+  exercises:[
+    {
+      title:'Wrap the catalog in <main>',
+      desc:`Wrap &lt;ul id="catalog"&gt; and &lt;button type="button" id="showAllBtn"&gt; inside a &lt;main&gt;
+        element, instead of leaving them loose at the top level.`,
+      starter:`<!-- Wrap a <ul id="catalog"> and a real <button type="button" id="showAllBtn"> inside <main> -->
+`,
+      tests:[
+        {type:'dom-count', selector:'main ul#catalog', min:1, label:'#catalog is inside <main>'},
+        {type:'dom-count', selector:'main button', min:1, label:'The button is inside <main> too'}
+      ]
+    },
+    {
+      title:'Theme the catalog items',
+      desc:`Add :root { --bg: white; --text: black; } and body.dark { --bg: #111111; --text: white; }, applying
+        both background-color: var(--bg); and color: var(--text); to #catalog li. Clicking &lt;button
+        type="button" id="themeBtn"&gt; should toggle "dark" on body.`,
+      starter:`<ul id="catalog"><li>Pen</li></ul>
+<button id="themeBtn" type="button">Toggle theme</button>
+<!-- Add a <style> block theming #catalog li with --bg/--text variables -->
+
+<script>
+  document.querySelector('#themeBtn').addEventListener('click', function(){
+    document.body.classList.toggle('dark');
+  });
+</script>
+`,
+      tests:[
+        {type:'computed-style', selector:'#catalog li', prop:'backgroundColor', notEqual:'rgba(0, 0, 0, 0)', label:'Catalog items have a themed background'}
+      ]
+    },
+    {
+      title:'Fix an off-by-one bug in the render loop',
+      desc:`This render loop has an off-by-one bug: for (let i = 0; i &lt;= products.length; i++). Fix it so
+        exactly 2 products render (Pen, Notebook), with #count showing "2 items" (not "3 items").`,
+      starter:`<ul id="catalog"></ul>
+<p id="count"></p>
+<button id="showAllBtn" type="button">Show all</button>
+
+<script>
+  document.querySelector('#showAllBtn').addEventListener('click', function(){
+    const products = [{name:'Pen'}, {name:'Notebook'}];
+    const list = document.querySelector('#catalog');
+    for (let i = 0; i <= products.length; i++) {
+      const li = document.createElement('li');
+      li.textContent = products[i].name;
+      list.appendChild(li);
+    }
+    document.querySelector('#count').textContent = list.children.length + ' items';
+  });
+</script>
+`,
+      tests:[{type:'dom', selector:'#count', contains:'2 items', label:'#count correctly shows "2 items" once the off-by-one bug is fixed'}]
+    },
+    {
+      title:'Add an accessible focus style',
+      desc:`Add a button:focus rule with a visible outline to the theme toggle button, so keyboard users can see
+        it's selected.`,
+      starter:`<button id="themeBtn" type="button">Toggle theme</button>
+<!-- Add a <style> block: button:focus gets a visible outline -->
+`,
+      tests:[{type:'dom', selector:'style', contains:':focus', label:'Includes a :focus rule for keyboard visibility'}]
+    },
+    {
+      title:'Theme the details section too',
+      desc:`Add the SAME --bg/--text theme variables to &lt;div id="details"&gt;, so it matches the rest of the
+        app in both light and dark mode — reusing the exact variables, not defining new ones.`,
+      starter:`<style>
+  :root { --bg: white; --text: black; }
+  body.dark { --bg: #111111; --text: white; }
+</style>
+<div id="details">Pen: $2</div>
+<button id="themeBtn" type="button">Toggle theme</button>
+<!-- Apply background-color: var(--bg); and color: var(--text); to #details -->
+
+<script>
+  document.querySelector('#themeBtn').addEventListener('click', function(){
+    document.body.classList.toggle('dark');
+  });
+</script>
+`,
+      tests:[
+        {type:'computed-style', selector:'#details', prop:'backgroundColor', notEqual:'rgba(0, 0, 0, 0)', label:'#details is themed too, using the shared variables'}
+      ]
+    },
+    {
+      title:'Ship the finished, polished catalog',
+      desc:`Combine everything: a &lt;main&gt; wrapping a themed &lt;ul id="catalog"&gt; (rendering const
+        products = [{name:'Pen'}, {name:'Notebook'}]; when #showAllBtn is clicked, with NO off-by-one bug), a
+        real &lt;button type="button" id="themeBtn"&gt; with a :focus style that toggles dark mode, and #count
+        correctly showing "2 items".`,
+      starter:`<!-- Build the finished catalog: <main> wrapping a themed #catalog list, a real #showAllBtn, a real #themeBtn with :focus styling, and a correct #count -->
+`,
+      tests:[
+        {type:'dom-count', selector:'main ul#catalog', min:1, label:'#catalog is inside <main>'},
+        {type:'dom', selector:'style', contains:':focus', label:'Includes a :focus rule'},
+        {type:'dom-count', selector:'main button', min:2, label:'Both buttons are inside <main>'}
+      ]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why wrap the finished catalog in a semantic <main> instead of leaving it loose?',
+      options:['It has no effect','It signals to screen readers and other tools exactly where the main content is','It makes the app faster','It\'s required by CSS'],
+      correct:1,
+      explain:'Semantic structure (from Intermediate Week 8) is part of "polish" — it costs little and helps every visitor, including those using assistive technology.'
+    },
+    {
+      q:'Why reuse the SAME --bg/--text variables for both the catalog and the details section, rather than defining separate ones?',
+      options:['It\'s not possible to reuse variables','One shared set of variables keeps every themed element consistent, and toggling dark mode updates all of them together','It has no benefit','Separate variables are required'],
+      correct:1,
+      explain:'Sharing variables across elements is exactly what makes a single class toggle able to re-theme an entire app at once.'
+    },
+    {
+      q:'When polishing a working app, why re-check for bugs like off-by-one loops?',
+      options:['Working code never has these bugs','A feature can "work" in the sense of not crashing while still quietly producing a wrong result, like showing one extra "undefined" item','It\'s not necessary','This only matters for CSS'],
+      correct:1,
+      explain:'Off-by-one and similar bugs (Week 5) don\'t always crash — a careful review pass is how they get caught before shipping.'
+    },
+    {
+      q:'What does this final week combine from earlier in the Advanced level?',
+      options:['Nothing new','Theming (W7), accessibility (Intermediate W8), and debugging (W5), applied to the catalog app built in Week 8','Only new content','Only quiz questions'],
+      correct:1,
+      explain:'"Polish" is specifically about applying already-learned skills to something that already works, not learning new syntax.'
+    }
+  ],
+  sandboxStarter3:`<style>
+  :root { --bg: white; --text: black; }
+  body.dark { --bg: #111111; --text: white; }
+  #catalog li, #details { background-color: var(--bg); color: var(--text); }
+  button:focus { outline: 3px solid #4338ca; }
+</style>
+<main>
+  <ul id="catalog">
+    <li>Pen</li>
+    <li>Notebook</li>
+  </ul>
+  <div id="details">Pen: $2</div>
+  <button type="button" id="themeBtn">Toggle theme</button>
+</main>
+
+<script>
+  document.querySelector('#themeBtn').addEventListener('click', function(){
+    document.body.classList.toggle('dark');
+  });
+</script>
+`,
+  stretchChallenge:{
+    title:'Add a live item count that updates with theme',
+    desc:`Finished early? Add &lt;p id="count"&gt; showing "2 items" (from const products = [{name:'Pen'},
+      {name:'Notebook'}];.length), themed with the SAME --bg/--text variables as the rest of the app, so it
+      visually matches whichever mode is active.`,
+    starter:`<style>
+  :root { --bg: white; --text: black; }
+  body.dark { --bg: #111111; --text: white; }
+</style>
+<p id="count"></p>
+<button id="themeBtn" type="button">Toggle theme</button>
+
+<script>
+  const products = [{name:'Pen'}, {name:'Notebook'}];
+  document.querySelector('#count').textContent = products.length + ' items';
+  // Apply background-color: var(--bg); and color: var(--text); to #count
+  document.querySelector('#themeBtn').addEventListener('click', function(){
+    document.body.classList.toggle('dark');
+  });
+</script>
+`,
+    tests:[
+      {type:'dom', selector:'#count', contains:'2 items', label:'#count shows "2 items"'},
+      {type:'dom', selector:'style', contains:'var(', label:'Uses var() to theme #count, not a hardcoded value'}
+    ]
+  }
+},
 ];
 
 const WD_ADVANCED_MP1 = {
