@@ -3269,6 +3269,343 @@ pivot = pd.pivot_table(merged, index="house", values="present", aggfunc="sum", f
   ]
 };
 
+/* =========================================================================
+   Data Science Academy — Advanced level
+   Focus: real matplotlib charts (bar/line/histogram), correlation, grouped
+   visual comparisons, reusable pipeline functions, method chaining, written
+   summary reports, and a 2-week capstone.
+   Charting note: ensurePyodideDS() installs matplotlib (Agg backend) only
+   when CURRENT_LEVEL==='a' — see python-academy-app.js. Charts are graded
+   by inspecting object properties directly (bar.get_height(),
+   line.get_ydata(), ax.get_xlabel(), etc.) via ordinary assert-type tests,
+   never by comparing rendered pixels.
+   ========================================================================= */
+
+const DS_ADVANCED_WEEKS = [
+{
+  key:'week1', num:1, title:'Your First Chart: Bar and Line',
+  scenarioTag:'Real world: numbers on their own don\'t convince anyone',
+  scenario:`A table of exam scores is accurate, but it doesn't grab attention in a school assembly or a parents'
+    evening. matplotlib turns your pandas data into real bar and line charts — the same charts you'd see in a
+    news article or a school report.`,
+  objectives:[
+    'Create a bar chart with ax.bar()',
+    'Create a line chart with ax.plot()',
+    'Label chart axes with set_xlabel()/set_ylabel()',
+    'Add a chart title with set_title()'
+  ],
+  conceptHtml:`
+    <p>matplotlib's <code>pyplot</code> module builds charts from a <strong>figure</strong> (the whole canvas) and
+    one or more <strong>axes</strong> (the actual plot area). <code>plt.subplots()</code> creates both at once:</p>
+    <pre class="code-block">import matplotlib.pyplot as plt
+fig, ax = plt.subplots()
+bars = ax.bar(["Ada", "Ben", "Chi"], [80, 60, 90])
+ax.set_xlabel("Student")
+ax.set_ylabel("Score")
+ax.set_title("Exam Results")</pre>
+    <p>A line chart uses <code>ax.plot()</code> instead of <code>ax.bar()</code> — same idea, connected with a
+    line rather than bars, which suits data that changes over time (like attendance week by week):</p>
+    <pre class="code-block">line, = ax.plot(["Week 1", "Week 2", "Week 3"], [90, 85, 95])</pre>
+    <h3>Let's break down the bar chart, line by line</h3>
+    <ul>
+      <li><code>fig, ax = plt.subplots()</code> — creates a blank figure and a single set of axes to draw on;
+        <code>ax</code> is what you call every drawing method on.</li>
+      <li><code>bars = ax.bar(names, values)</code> — draws one bar per (name, value) pair, and returns the actual
+        bar objects, which you can inspect afterwards — <code>bars[0].get_height()</code> reads back the height
+        of the first bar.</li>
+      <li><code>ax.set_xlabel()</code>/<code>set_ylabel()</code>/<code>set_title()</code> — add text labelling
+        what the chart shows; always label your axes so a reader knows what they're looking at.</li>
+      <li>For a line chart, <code>line, = ax.plot(...)</code> — note the comma: <code>.plot()</code> returns a LIST
+        of line objects (even for one line), so the comma unpacks the single item out of that list.</li>
+    </ul>`,
+  sandboxStarter:`import matplotlib.pyplot as plt
+fig, ax = plt.subplots()
+bars = ax.bar(["Ada", "Ben", "Chi"], [80, 60, 90])
+ax.set_xlabel("Student")
+ax.set_ylabel("Score")
+heights = [b.get_height() for b in bars]
+print(heights)
+`,
+  sandboxStarter2:`import matplotlib.pyplot as plt
+fig, ax = plt.subplots()
+line, = ax.plot(["Week 1", "Week 2", "Week 3"], [90, 85, 95])
+ax.set_title("Attendance Over Time")
+print(list(line.get_ydata()))
+`,
+  exercises:[
+    {
+      title:'Draw your first bar chart',
+      desc:`Create fig, ax = plt.subplots(). Create bars = ax.bar(["Ada", "Ben", "Chi"], [80, 60, 90]). Create
+        heights = [b.get_height() for b in bars]. Assert that heights == [80.0, 60.0, 90.0].`,
+      starter:`import matplotlib.pyplot as plt
+# Create fig, ax, bars and heights below
+`,
+      tests:[{type:'assert', expr:'heights == [80.0, 60.0, 90.0]', label:'Bar heights correctly match the data'}]
+    },
+    {
+      title:'Label the axes',
+      desc:`Create fig, ax = plt.subplots(). Create ax.bar(["Ada", "Ben", "Chi"], [80, 60, 90]). Call
+        ax.set_xlabel("Student") and ax.set_ylabel("Score"). Assert that ax.get_xlabel() == "Student" and
+        ax.get_ylabel() == "Score".`,
+      starter:`import matplotlib.pyplot as plt
+# Create fig, ax and the bar chart, then set the axis labels below
+`,
+      tests:[{type:'assert', expr:'ax.get_xlabel() == "Student" and ax.get_ylabel() == "Score"', label:'Axis labels are correctly set'}]
+    },
+    {
+      title:'Draw a line chart',
+      desc:`Create fig, ax = plt.subplots(). Create line, = ax.plot(["Week 1", "Week 2", "Week 3"], [90, 85, 95]).
+        Create ydata = list(line.get_ydata()). Assert that ydata == [90, 85, 95].`,
+      starter:`import matplotlib.pyplot as plt
+# Create fig, ax, line and ydata below
+`,
+      tests:[{type:'assert', expr:'ydata == [90, 85, 95]', label:'Line chart data correctly matches'}]
+    },
+    {
+      title:'Check a single bar directly',
+      desc:`Create fig, ax = plt.subplots(). Create bars = ax.bar(["Ada", "Ben", "Chi"], [80, 60, 90]). Create
+        chi_height = bars[2].get_height() (the third bar, Chi's). Assert that chi_height == 90.0.`,
+      starter:`import matplotlib.pyplot as plt
+# Create fig, ax, bars and chi_height below
+`,
+      tests:[{type:'assert', expr:'chi_height == 90.0', label:"Chi's bar height is correctly read (90.0)"}]
+    },
+    {
+      title:'Add a chart title',
+      desc:`Create fig, ax = plt.subplots(). Create line, = ax.plot(["Week 1", "Week 2", "Week 3"], [90, 85, 95]).
+        Call ax.set_title("Attendance Over Time") and ax.set_xlabel("Week"). Assert that
+        ax.get_title() == "Attendance Over Time" and ax.get_xlabel() == "Week".`,
+      starter:`import matplotlib.pyplot as plt
+# Create fig, ax and line, then set the title and x-label below
+`,
+      tests:[{type:'assert', expr:'ax.get_title() == "Attendance Over Time" and ax.get_xlabel() == "Week"', label:'Chart title and x-axis label are correctly set'}]
+    },
+    {
+      title:'Two charts, side by side',
+      desc:`Create fig, (ax1, ax2) = plt.subplots(1, 2) — this makes TWO sets of axes in one figure. Create
+        bars = ax1.bar(["Ada", "Ben", "Chi"], [80, 60, 90]) with ax1.set_title("Scores"). Create
+        line, = ax2.plot(["Week 1", "Week 2", "Week 3"], [90, 85, 95]) with ax2.set_title("Attendance"). Create
+        bar_heights = [b.get_height() for b in bars] and line_data = list(line.get_ydata()). Assert that
+        bar_heights == [80.0, 60.0, 90.0] and line_data == [90, 85, 95].`,
+      starter:`import matplotlib.pyplot as plt
+# Create fig, (ax1, ax2), bars, line, bar_heights and line_data below
+`,
+      tests:[{type:'assert', expr:'bar_heights == [80.0, 60.0, 90.0] and line_data == [90, 85, 95]', label:'Both charts\' data are correctly drawn'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does plt.subplots() return?',
+      options:['Just a single number','A figure and one or more axes to draw on','A DataFrame','A chart title'],
+      correct:1,
+      explain:'plt.subplots() returns (fig, ax) — the figure (canvas) and axes (plot area) you draw on.'
+    },
+    {
+      q:'What does ax.bar(names, values) return?',
+      options:['Nothing','The actual bar objects, which can be inspected afterwards (e.g. .get_height())','A DataFrame','A new figure'],
+      correct:1,
+      explain:'ax.bar() returns the drawn bar objects, letting you read back properties like their height.'
+    },
+    {
+      q:'Why is there a comma in line, = ax.plot(...)?',
+      options:['It\'s a typo and does nothing','.plot() returns a LIST of line objects (even for one line), so the comma unpacks the single item','It separates x and y values','Commas are required by all matplotlib calls'],
+      correct:1,
+      explain:'ax.plot() always returns a list, even for a single line — the trailing comma unpacks that one-item list.'
+    },
+    {
+      q:'Why should you always label chart axes?',
+      options:['matplotlib requires it or it crashes','So a reader knows what the numbers on the chart actually represent','Labels make charts render faster','Only line charts need labels'],
+      correct:1,
+      explain:'Axis labels give meaning to the numbers — a bare chart of "80, 60, 90" with no labels tells a reader nothing.'
+    }
+  ],
+  sandboxStarter3:`import matplotlib.pyplot as plt
+fig, (ax1, ax2) = plt.subplots(1, 2)
+bars = ax1.bar(["Ada", "Ben", "Chi"], [80, 60, 90])
+ax1.set_title("Scores")
+line, = ax2.plot(["Week 1", "Week 2", "Week 3"], [90, 85, 95])
+ax2.set_title("Attendance")
+print([b.get_height() for b in bars])
+print(list(line.get_ydata()))
+`,
+  stretchChallenge:{
+    title:'A fully labelled chart',
+    desc:`Create fig, ax = plt.subplots(). Create bars = ax.bar(["Ada", "Ben", "Chi"], [80, 60, 90]). Set
+      ax.set_xlabel("Student"), ax.set_ylabel("Score"), and ax.set_title("Term 1 Results"). Assert that
+      ax.get_xlabel() == "Student" and ax.get_ylabel() == "Score" and ax.get_title() == "Term 1 Results".`,
+    starter:`import matplotlib.pyplot as plt
+# Create fig, ax and bars, then set all three labels below
+`,
+    tests:[
+      {type:'assert', expr:'ax.get_xlabel() == "Student" and ax.get_ylabel() == "Score" and ax.get_title() == "Term 1 Results"', label:'All three chart labels are correctly set'}
+    ]
+  }
+},
+{
+  key:'week2', num:2, title:'Distributions: Histograms',
+  scenarioTag:'Real world: "what\'s the average?" isn\'t the whole story',
+  scenario:`Knowing the average exam score tells you one number — it doesn't tell you whether most students scored
+    close together, or whether scores were spread wildly apart. A histogram groups values into ranges ("bins") and
+    shows how many fall into each one, revealing the actual SHAPE of the data.`,
+  objectives:[
+    'Create a histogram with ax.hist()',
+    'Read counts per bin from the returned array',
+    'Choose the number of bins with the bins parameter',
+    'Label a histogram\'s axes like any other chart'
+  ],
+  conceptHtml:`
+    <p><code>ax.hist()</code> sorts values into equal-width ranges ("bins") and counts how many fall in each one:</p>
+    <pre class="code-block">import matplotlib.pyplot as plt
+scores = [55, 60, 62, 70, 71, 72, 73, 80, 85, 90]
+fig, ax = plt.subplots()
+counts, bins, patches = ax.hist(scores, bins=5)
+print(list(counts))   # [2.0, 1.0, 4.0, 1.0, 2.0] — how many scores fall in each of the 5 ranges</pre>
+    <p>Notice most students (4 of them) landed in the middle bin — the histogram reveals that clustering, which a
+    single average number would completely hide.</p>
+    <h3>Let's break down the .hist() call, line by line</h3>
+    <ul>
+      <li><code>ax.hist(scores, bins=5)</code> — splits the range from the lowest to highest score into 5 equal
+        chunks, then counts how many scores land in each chunk.</li>
+      <li>It returns THREE things: <code>counts</code> (how many values per bin), <code>bins</code> (the bin edge
+        boundaries), and <code>patches</code> (the drawn bar shapes) — usually you only need <code>counts</code>.</li>
+      <li>More bins = finer detail (each range is narrower); fewer bins = a coarser, more general shape.</li>
+      <li>Just like any other chart, <code>ax.set_xlabel()</code>/<code>set_ylabel()</code> still apply — always
+        label what the bins represent and what's being counted.</li>
+    </ul>`,
+  sandboxStarter:`import matplotlib.pyplot as plt
+scores = [55, 60, 62, 70, 71, 72, 73, 80, 85, 90]
+fig, ax = plt.subplots()
+counts, bins, patches = ax.hist(scores, bins=5)
+print(list(counts))
+`,
+  sandboxStarter2:`import matplotlib.pyplot as plt
+scores = [55, 60, 62, 70, 71, 72, 73, 80, 85, 90]
+fig, ax = plt.subplots()
+counts, bins, patches = ax.hist(scores, bins=5)
+ax.set_xlabel("Score")
+ax.set_ylabel("Number of Students")
+print(ax.get_xlabel(), ax.get_ylabel())
+`,
+  exercises:[
+    {
+      title:'Choose the number of bins',
+      desc:`Create scores = [55, 60, 62, 70, 71, 72, 73, 80, 85, 90]. Create fig, ax = plt.subplots(). Create
+        counts, bins, patches = ax.hist(scores, bins=5). Create num_bins = len(counts). Assert that num_bins == 5.`,
+      starter:`import matplotlib.pyplot as plt
+# Create scores, fig, ax, counts and num_bins below
+`,
+      tests:[{type:'assert', expr:'num_bins == 5', label:'Histogram has exactly 5 bins as requested'}]
+    },
+    {
+      title:'Check every value is counted',
+      desc:`Using the same scores (10 values) as the first exercise, create fig, ax = plt.subplots() and
+        counts, bins, patches = ax.hist(scores, bins=5). Create total = float(sum(counts)). Assert that
+        total == 10.0 — every score should land in exactly one bin.`,
+      starter:`import matplotlib.pyplot as plt
+scores = [55, 60, 62, 70, 71, 72, 73, 80, 85, 90]
+# Create fig, ax, counts and total below
+`,
+      tests:[{type:'assert', expr:'total == 10.0', label:'Every score is correctly counted (total of 10)'}]
+    },
+    {
+      title:'Find the busiest bin\'s count',
+      desc:`Using the same scores, fig, ax, and counts from the previous exercises, create
+        middle_bin_count = counts[2] (the third bin, index 2). Assert that middle_bin_count == 4.0 — the busiest
+        range, where most scores clustered.`,
+      starter:`import matplotlib.pyplot as plt
+scores = [55, 60, 62, 70, 71, 72, 73, 80, 85, 90]
+fig, ax = plt.subplots()
+counts, bins, patches = ax.hist(scores, bins=5)
+# Create middle_bin_count below
+`,
+      tests:[{type:'assert', expr:'middle_bin_count == 4.0', label:'The busiest bin correctly has 4 scores'}]
+    },
+    {
+      title:'Try a coarser view',
+      desc:`Using the same scores, create fig, ax = plt.subplots() and
+        counts, bins, patches = ax.hist(scores, bins=2) — a coarser view with only 2 wide bins. Assert that
+        len(counts) == 2.`,
+      starter:`import matplotlib.pyplot as plt
+scores = [55, 60, 62, 70, 71, 72, 73, 80, 85, 90]
+# Create fig, ax and counts below
+`,
+      tests:[{type:'assert', expr:'len(counts) == 2', label:'Histogram correctly uses 2 bins'}]
+    },
+    {
+      title:'Label a histogram',
+      desc:`Using the same scores, create fig, ax = plt.subplots() and
+        counts, bins, patches = ax.hist(scores, bins=5). Call ax.set_xlabel("Score") and
+        ax.set_ylabel("Number of Students"). Assert that ax.get_xlabel() == "Score" and
+        ax.get_ylabel() == "Number of Students".`,
+      starter:`import matplotlib.pyplot as plt
+scores = [55, 60, 62, 70, 71, 72, 73, 80, 85, 90]
+# Create fig, ax and counts, then set the labels below
+`,
+      tests:[{type:'assert', expr:'ax.get_xlabel() == "Score" and ax.get_ylabel() == "Number of Students"', label:'Histogram axes are correctly labelled'}]
+    },
+    {
+      title:'Compare two groups side by side',
+      desc:`Create groupA = [60, 65, 62, 68, 61] and groupB = [80, 85, 90, 88, 92]. Create
+        fig, (ax1, ax2) = plt.subplots(1, 2). Create countsA, binsA, patchesA = ax1.hist(groupA, bins=3) and
+        countsB, binsB, patchesB = ax2.hist(groupB, bins=3). Create sumA = float(sum(countsA)) and
+        sumB = float(sum(countsB)). Assert that sumA == 5.0 and sumB == 5.0.`,
+      starter:`import matplotlib.pyplot as plt
+# Create groupA, groupB, fig, (ax1, ax2), countsA, countsB, sumA and sumB below
+`,
+      tests:[{type:'assert', expr:'sumA == 5.0 and sumB == 5.0', label:"Both groups' histograms account for all 5 students each"}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does a histogram show that a single average can\'t?',
+      options:['Nothing, they show the same thing','The overall SHAPE of the data — how values are spread or clustered','The exact list of every value','Only the highest value'],
+      correct:1,
+      explain:'A histogram reveals distribution shape — clustering, spread, outliers — that one average number hides.'
+    },
+    {
+      q:'What does ax.hist(scores, bins=5) return?',
+      options:['Just a single number','Three things: counts per bin, bin edges, and the drawn bar shapes','A DataFrame','Nothing, it only draws the chart'],
+      correct:1,
+      explain:'.hist() returns (counts, bins, patches) — usually you only need counts, the number of values per bin.'
+    },
+    {
+      q:'What happens if you increase the number of bins?',
+      options:['Nothing changes','Each bin becomes narrower, showing finer detail in the distribution','It deletes some data','It always makes the chart wrong'],
+      correct:1,
+      explain:'More bins means each range is narrower, revealing more detail (but also more noise) in the distribution shape.'
+    },
+    {
+      q:'Why does sum(counts) always equal the number of data points?',
+      options:['It doesn\'t, that\'s a coincidence','Every value lands in exactly one bin, so the counts across all bins must add up to the total','Only if bins=10','It only works for whole numbers'],
+      correct:1,
+      explain:'Since every data point is placed into exactly one bin, adding up every bin\'s count recovers the total count of data points.'
+    }
+  ],
+  sandboxStarter3:`import matplotlib.pyplot as plt
+groupA = [60, 65, 62, 68, 61]
+groupB = [80, 85, 90, 88, 92]
+fig, (ax1, ax2) = plt.subplots(1, 2)
+countsA, binsA, patchesA = ax1.hist(groupA, bins=3)
+countsB, binsB, patchesB = ax2.hist(groupB, bins=3)
+ax1.set_title("Group A")
+ax2.set_title("Group B")
+print(list(countsA), list(countsB))
+`,
+  stretchChallenge:{
+    title:'Find the busiest bin automatically',
+    desc:`Create scores = [55, 60, 62, 70, 71, 72, 73, 80, 85, 90]. Create fig, ax = plt.subplots() and
+      counts, bins, patches = ax.hist(scores, bins=5). Create busiest_index = list(counts).index(max(counts)) —
+      finds WHICH bin has the highest count, without hardcoding the index. Assert that busiest_index == 2.`,
+    starter:`import matplotlib.pyplot as plt
+# Create scores, fig, ax, counts and busiest_index below
+`,
+    tests:[
+      {type:'assert', expr:'busiest_index == 2', label:'The busiest bin is correctly identified automatically (index 2)'}
+    ]
+  }
+}
+];
+
 window.SUBJECT_DATA = window.SUBJECT_DATA || {};
 window.SUBJECT_DATA.ds = {
   b: {weeks: DS_WEEKS, mp1: DS_MP1, mp2: DS_MP2},
