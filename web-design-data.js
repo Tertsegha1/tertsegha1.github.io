@@ -5521,6 +5521,312 @@ document.querySelector('#nextBtn').addEventListener('click', function(){
     ]
   }
 },
+{
+  key:'week5', num:5, title:'Debugging JavaScript',
+  scenarioTag:'Real world: the code runs, but the result is wrong',
+  scenario:`Every developer spends real time hunting bugs — not crashes, but code that runs without error and
+    still produces the WRONG result. Learning to recognize a few common bug patterns (off-by-one loops, a wrong
+    comparison, referencing the wrong variable) turns "why is this broken?!" into a quick, confident fix.`,
+  objectives:[
+    'Recognize an off-by-one bug in a loop\'s bounds',
+    'Recognize = (assignment) mistakenly used where === (comparison) was needed',
+    'Recognize a wrong variable name referenced inside a loop or function',
+    'Fix each bug type by comparing broken code against what it should do'
+  ],
+  conceptHtml:`
+    <p>Some of the most common bugs don't crash anything — they just quietly produce the wrong result:</p>
+    <ul>
+      <li><strong>Off-by-one</strong>: a loop bound that's one too many or too few, e.g. <code>i &lt;=
+        items.length</code> instead of <code>i &lt; items.length</code> — this runs one extra time, reading a
+        position that doesn't exist (<code>undefined</code>).</li>
+      <li><strong>= instead of ===</strong>: <code>if (status = 'done')</code> ASSIGNS 'done' to status (and is
+        always treated as true) instead of COMPARING — a single missing <code>=</code> silently breaks the
+        condition.</li>
+      <li><strong>Wrong variable referenced</strong>: inside a loop over <code>products</code>, accidentally
+        writing <code>item.name</code> instead of <code>product.name</code> — if <code>item</code> happens to
+        exist from elsewhere in the code, this fails silently with the wrong value instead of crashing.</li>
+    </ul>
+    <pre class="code-block">// Broken: off-by-one
+const items = ['A', 'B', 'C'];
+for (let i = 0; i <= items.length; i++) {
+  console.log(items[i]); // prints A, B, C, undefined
+}
+
+// Fixed
+for (let i = 0; i < items.length; i++) {
+  console.log(items[i]); // prints A, B, C
+}</pre>
+    <ul>
+      <li><code>i &lt;= items.length</code> — with a 3-item array, this allows <code>i</code> to reach 3, but
+        valid indexes only go up to 2 (arrays are 0-indexed) — <code>items[3]</code> doesn't exist.</li>
+      <li><code>i &lt; items.length</code> — the fix: stop BEFORE reaching the length, so the last valid index
+        (2) is the final one used.</li>
+    </ul>
+    <p><strong>A note on console.log</strong>: in a real editor, <code>console.log(value)</code> printed at
+    different points in your code is the #1 debugging tool — it lets you see exactly what a variable holds right
+    before things go wrong. This practice area's automated checker can't capture console output (the same
+    limitation covered in earlier weeks), so these exercises focus directly on spotting and fixing the bug in the
+    code itself.</p>`,
+  sandboxStarter:`<ul id="list"></ul>
+<button id="renderBtn" type="button">Show items (fixed)</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const items = ['A', 'B', 'C'];
+    const list = document.querySelector('#list');
+    for (let i = 0; i < items.length; i++) {
+      const li = document.createElement('li');
+      li.textContent = items[i];
+      list.appendChild(li);
+    }
+  });
+</script>
+`,
+  sandboxStarter2:`<p id="status"></p>
+<button id="checkBtn" type="button">Check status (fixed)</button>
+
+<script>
+  document.querySelector('#checkBtn').addEventListener('click', function(){
+    const status = 'pending';
+    if (status === 'done') {
+      document.querySelector('#status').textContent = 'Finished!';
+    } else {
+      document.querySelector('#status').textContent = 'Still working...';
+    }
+  });
+</script>
+`,
+  exercises:[
+    {
+      title:'Fix the off-by-one loop',
+      desc:`This loop has an off-by-one bug: for (let i = 0; i &lt;= items.length; i++) reads one position past
+        the end of const items = ['Pen', 'Book', 'Ruler'];, rendering an extra "undefined" &lt;li&gt;. Fix the
+        loop bound so EXACTLY 3 items render (set #count to list.children.length + " items" afterward to prove
+        it — a still-buggy loop would report "4 items").`,
+      starter:`<ul id="list"></ul>
+<p id="count"></p>
+<button id="renderBtn" type="button">Show items</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const items = ['Pen', 'Book', 'Ruler'];
+    const list = document.querySelector('#list');
+    for (let i = 0; i <= items.length; i++) {
+      const li = document.createElement('li');
+      li.textContent = items[i];
+      list.appendChild(li);
+    }
+    document.querySelector('#count').textContent = list.children.length + ' items';
+  });
+</script>
+`,
+      tests:[
+        {type:'dom', selector:'#count', contains:'3 items', label:'#count shows exactly "3 items" — the off-by-one bug is truly fixed, not just masked'},
+        {type:'dom', selector:'#list', contains:'PenBookRuler', label:'All 3 real items render, adjacent'}
+      ]
+    },
+    {
+      title:'Fix the = vs === bug',
+      desc:`This condition has a bug: if (status = 'done') ASSIGNS 'done' to status instead of comparing, so it's
+        always treated as true. Fix it to use === so &lt;p id="result"&gt; correctly shows "Still working..."
+        when const status = 'pending';.`,
+      starter:`<p id="result"></p>
+<button id="checkBtn" type="button">Check status</button>
+
+<script>
+  document.querySelector('#checkBtn').addEventListener('click', function(){
+    const status = 'pending';
+    if (status = 'done') {
+      document.querySelector('#result').textContent = 'Finished!';
+    } else {
+      document.querySelector('#result').textContent = 'Still working...';
+    }
+  });
+</script>
+`,
+      tests:[{type:'dom', selector:'#result', contains:'Still working', label:'#result correctly shows "Still working..." once === replaces ='}]
+    },
+    {
+      title:'Fix a wrong variable name',
+      desc:`Inside this loop over const products = [{name:'Pen'}, {name:'Book'}];, the code accidentally
+        references item.name instead of the loop variable product.name, which throws an error. Fix the variable
+        name so both product names render correctly.`,
+      starter:`<ul id="list"></ul>
+<button id="renderBtn" type="button">Show products</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const products = [{name:'Pen'}, {name:'Book'}];
+    const list = document.querySelector('#list');
+    products.forEach(function(product){
+      const li = document.createElement('li');
+      li.textContent = item.name;
+      list.appendChild(li);
+    });
+  });
+</script>
+`,
+      tests:[{type:'dom', selector:'#list', contains:'PenBook', label:'#list shows "Pen" and "Book" (fixed variable name, no error)'}]
+    },
+    {
+      title:'Fix a combined = and off-by-one bug',
+      desc:`This snippet has TWO bugs: for (let i = 0; i &lt;= scores.length; i++) is off-by-one, AND if (grade =
+        90) uses assignment instead of comparison — since assignment ALWAYS evaluates truthy no matter what
+        grade actually is, this incorrectly reports "Found a 90!" even though const scores = [95, 60, 85]; never
+        actually contains 90. Fix BOTH bugs: the loop should render exactly 3 scores (set #count to
+        list.children.length + " items" to prove it), and #result should correctly STAY "No 90 found" (its
+        starting text) since 90 genuinely never appears.`,
+      starter:`<ul id="list"></ul>
+<p id="count"></p>
+<p id="result">No 90 found</p>
+<button id="renderBtn" type="button">Show scores</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const scores = [95, 60, 85];
+    const list = document.querySelector('#list');
+    for (let i = 0; i <= scores.length; i++) {
+      const grade = scores[i];
+      const li = document.createElement('li');
+      li.textContent = grade;
+      list.appendChild(li);
+      if (grade = 90) {
+        document.querySelector('#result').textContent = 'Found a 90!';
+      }
+    }
+    document.querySelector('#count').textContent = list.children.length + ' items';
+  });
+</script>
+`,
+      tests:[
+        {type:'dom', selector:'#count', contains:'3 items', label:'#count shows exactly "3 items" — the off-by-one bug is fixed'},
+        {type:'dom', selector:'#result', contains:'No 90 found', label:'#result correctly stays "No 90 found" — a leftover = bug would wrongly report finding a 90 that was never there'}
+      ]
+    },
+    {
+      title:'Fix a wrong property name',
+      desc:`This code references product.title instead of the object's actual property, product.name. Fix the
+        property name so const products = [{name:'Pen', price:2}]; renders "Pen: $2" instead of "undefined: $2".`,
+      starter:`<ul id="list"></ul>
+<button id="renderBtn" type="button">Show products</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const products = [{name:'Pen', price:2}];
+    const list = document.querySelector('#list');
+    products.forEach(function(product){
+      const li = document.createElement('li');
+      li.textContent = product.title + ': $' + product.price;
+      list.appendChild(li);
+    });
+  });
+</script>
+`,
+      tests:[{type:'dom', selector:'#list', contains:'Pen: $2', label:'#list shows "Pen: $2" (fixed property name)'}]
+    },
+    {
+      title:'Fix two bugs in one snippet',
+      desc:`This snippet has TWO bugs together: an off-by-one loop bound (i &lt;= products.length), AND
+        item.name instead of the loop's real variable, product.name — referencing the undeclared item throws an
+        error partway through, so #list ends up completely empty until BOTH bugs are fixed. With const products
+        = [{name:'Pen'}, {name:'Book'}];, fix both so #count correctly reports "2 items".`,
+      starter:`<ul id="list"></ul>
+<p id="count"></p>
+<button id="renderBtn" type="button">Show products</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const products = [{name:'Pen'}, {name:'Book'}];
+    const list = document.querySelector('#list');
+    for (let i = 0; i <= products.length; i++) {
+      const product = products[i];
+      const li = document.createElement('li');
+      li.textContent = item.name;
+      list.appendChild(li);
+    }
+    document.querySelector('#count').textContent = list.children.length + ' items';
+  });
+</script>
+`,
+      tests:[
+        {type:'dom', selector:'#count', contains:'2 items', label:'#count shows exactly "2 items" — both the off-by-one and wrong-variable bugs are genuinely fixed'},
+        {type:'dom', selector:'#list', contains:'PenBook', label:'#list shows "Pen" and "Book"'}
+      ]
+    }
+  ],
+  quiz:[
+    {
+      q:'What is an "off-by-one" bug in a loop?',
+      options:['A syntax error','The loop runs one time too many or too few, often from using <= instead of < against .length','A missing semicolon','A CSS bug'],
+      correct:1,
+      explain:'Since arrays are 0-indexed, i <= array.length allows one index past the last valid one, causing undefined.'
+    },
+    {
+      q:'What does if (status = \'done\') do, compared to if (status === \'done\')?',
+      options:['They\'re identical','= ASSIGNS \'done\' to status (always truthy) instead of comparing; === actually checks equality','= is faster','= only works with numbers'],
+      correct:1,
+      explain:'A single = is assignment, not comparison — this is one of the most common accidental-typo bugs in JavaScript.'
+    },
+    {
+      q:'Why might referencing the wrong variable name (e.g. item instead of product) not throw an error every time?',
+      options:['JavaScript always catches this','If a variable with that name happens to exist elsewhere (even accidentally), the code runs without crashing — just with the wrong value','It always throws an error','Variable names don\'t matter in JavaScript'],
+      correct:1,
+      explain:'This is what makes wrong-variable bugs sneaky — if that name resolves to SOMETHING, the code keeps running, just incorrectly.'
+    },
+    {
+      q:'Why can\'t this practice area\'s checker capture real console.log output?',
+      options:['console.log doesn\'t exist','The grading checker only reads the resulting DOM state, not anything printed to the console — same limitation as the async-grading constraint from earlier weeks','It\'s too slow','No real reason'],
+      correct:1,
+      explain:'The automated checks only inspect what ends up on the page, not console output — so these exercises check the RESULT of a fix, not the debugging process itself.'
+    }
+  ],
+  sandboxStarter3:`<ul id="list"></ul>
+<p id="result"></p>
+<button id="renderBtn" type="button">Show scores (fixed)</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const scores = [95, 60, 90];
+    const list = document.querySelector('#list');
+    let foundTop = false;
+    for (let i = 0; i < scores.length; i++) {
+      const score = scores[i];
+      const li = document.createElement('li');
+      li.textContent = score;
+      list.appendChild(li);
+      if (score === 90) {
+        foundTop = true;
+      }
+    }
+    if (foundTop === true) {
+      document.querySelector('#result').textContent = 'Found the top score!';
+    }
+  });
+</script>
+`,
+  stretchChallenge:{
+    title:'Fix a bug with no visible error',
+    desc:`Finished early? This code computes an average but divides by scores.length + 1 (an off-by-one in the
+      DIVISION, not a loop) — with const scores = [80, 90, 100]; (which should average to 90), it instead
+      computes 67.5. Fix the divisor so #average correctly shows "Average: 90".`,
+    starter:`<p id="average"></p>
+<button id="calcBtn" type="button">Calculate average</button>
+
+<script>
+  document.querySelector('#calcBtn').addEventListener('click', function(){
+    const scores = [80, 90, 100];
+    let total = 0;
+    scores.forEach(function(s){ total += s; });
+    const avg = total / (scores.length + 1);
+    document.querySelector('#average').textContent = 'Average: ' + avg;
+  });
+</script>
+`,
+    tests:[
+      {type:'dom', selector:'#average', contains:'Average: 90', label:'#average correctly shows "Average: 90" once the divisor is fixed'}
+    ]
+  }
+},
 ];
 
 const WD_ADVANCED_MP1 = {
