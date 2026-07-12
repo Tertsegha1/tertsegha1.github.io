@@ -3100,6 +3100,476 @@ const WD_INTERMEDIATE_WEEKS = [
     ]
   }
 },
+{
+  key:'week6', num:6, title:'Remembering Things: Keeping State Between Clicks',
+  scenarioTag:'Real world: a page that remembers what\'s already happened',
+  scenario:`Every click handler so far has worked with whatever's on the page right now — it doesn't know
+    anything about what happened on EARLIER clicks. A variable declared outside a click handler works
+    differently: it keeps its value between clicks, so the page can build on what it already "remembers".`,
+  objectives:[
+    'Understand that a variable declared outside a function keeps its value between calls',
+    'Build up an array across multiple interactions',
+    'Use a remembered value to decide what to show next',
+    'Know that real sites use localStorage for remembering things across a page RELOAD (a level beyond what this practice area can check)'
+  ],
+  conceptHtml:`
+    <p>A variable declared <strong>inside</strong> a click handler is recreated fresh every single click — it
+    can't remember anything from before. A variable declared <strong>outside</strong> the handler, in contrast, is
+    created once when the page loads, and every click can read AND change that same variable — so its value
+    carries over from click to click.</p>
+    <pre class="code-block">let visits = 4; // created once, remembers its value between clicks
+
+document.querySelector('#checkBtn').addEventListener('click', function(){
+  visits = visits + 1;
+  document.querySelector('#count').textContent = 'Visits: ' + visits;
+});</pre>
+    <ul>
+      <li><code>let visits = 4;</code> sits OUTSIDE the click handler — it already "remembers" a starting value
+        of 4, as if the visitor had already been here 4 times before.</li>
+      <li>Inside the handler, <code>visits = visits + 1;</code> reads the remembered value and updates it — after
+        one click, <code>visits</code> becomes 5, and it would STAY 5 for any later code that reads it.</li>
+    </ul>
+    <p>The same pattern works for arrays — a list can grow across clicks instead of resetting each time:</p>
+    <pre class="code-block">let favorites = ['Reading']; // remembers one item already
+
+document.querySelector('#addBtn').addEventListener('click', function(){
+  favorites.push('Gaming');
+  document.querySelector('#list').textContent = favorites.join(', ');
+});</pre>
+    <ul>
+      <li><code>let favorites = ['Reading'];</code> — an array that already remembers one item.</li>
+      <li><code>favorites.push('Gaming');</code> adds a new item to the END of the remembered array, without
+        losing what was already there — after this runs, <code>favorites</code> is
+        <code>['Reading', 'Gaming']</code>.</li>
+    </ul>
+    <p><strong>A note on real persistence</strong>: everything above is remembered only while the page stays
+    open — reloading the page resets it. Real sites use <code>localStorage.setItem(...)</code> /
+    <code>localStorage.getItem(...)</code> to remember things across a page reload or a return visit. This
+    practice area's sandbox intentionally can't check that (for the same safety reasons it can't submit real
+    forms), so this week focuses on the "remembering between clicks" half of the idea — the genuinely new part.</p>`,
+  sandboxStarter:`<p id="count">Visits: 4</p>
+<button id="checkBtn" type="button">I'm back!</button>
+
+<script>
+  let visits = 4;
+  document.querySelector('#checkBtn').addEventListener('click', function(){
+    visits = visits + 1;
+    document.querySelector('#count').textContent = 'Visits: ' + visits;
+  });
+</script>
+`,
+  sandboxStarter2:`<p id="list">Reading</p>
+<button id="addBtn" type="button">Add Gaming</button>
+
+<script>
+  let favorites = ['Reading'];
+  document.querySelector('#addBtn').addEventListener('click', function(){
+    favorites.push('Gaming');
+    document.querySelector('#list').textContent = favorites.join(', ');
+  });
+</script>
+`,
+  exercises:[
+    {
+      title:'Remember and increase a count',
+      desc:`Declare let visits = 4; OUTSIDE a click handler on &lt;button type="button" id="checkBtn"&gt;. When
+        clicked, increase visits by 1 and update a &lt;p id="count"&gt;'s textContent to "Visits: 5".`,
+      starter:`<p id="count">Visits: 4</p>
+<button id="checkBtn" type="button">I'm back!</button>
+
+<script>
+  let visits = 4;
+  // Add a click handler: increase visits by 1, update #count to "Visits: " + visits
+</script>
+`,
+      tests:[{type:'dom', selector:'#count', contains:'Visits: 5', label:'#count shows "Visits: 5" after one click'}]
+    },
+    {
+      title:'Add to a remembered list',
+      desc:`Declare let favorites = ['Reading']; OUTSIDE a click handler on &lt;button type="button"
+        id="addBtn"&gt;. When clicked, push('Gaming') onto favorites and update a &lt;p id="list"&gt;'s
+        textContent to favorites.join(', ') — so it becomes "Reading, Gaming".`,
+      starter:`<p id="list">Reading</p>
+<button id="addBtn" type="button">Add Gaming</button>
+
+<script>
+  let favorites = ['Reading'];
+  // Add a click handler: push('Gaming'), then update #list to favorites.join(', ')
+</script>
+`,
+      tests:[{type:'dom', selector:'#list', contains:'Reading, Gaming', label:'#list shows "Reading, Gaming" after one click'}]
+    },
+    {
+      title:'Remember a running score and react to it',
+      desc:`Declare let score = 8; OUTSIDE a click handler on &lt;button type="button" id="addBtn"&gt;. When
+        clicked, add 2 to score. If the NEW score is 10 or more, set a &lt;p id="msg"&gt;'s textContent to "You
+        reached 10!".`,
+      starter:`<p id="msg"></p>
+<button id="addBtn" type="button">Add 2 points</button>
+
+<script>
+  let score = 8;
+  // Add a click handler: score += 2, then if score >= 10, set #msg's textContent to "You reached 10!"
+</script>
+`,
+      tests:[{type:'dom', selector:'#msg', contains:'You reached 10', label:'#msg shows the message after one click pushes score to 10'}]
+    },
+    {
+      title:'Remember a cart and show its size',
+      desc:`Declare let cart = ['Pen', 'Book']; OUTSIDE a click handler on &lt;button type="button"
+        id="addBtn"&gt;. When clicked, push('Eraser') onto cart, then update a &lt;p id="count"&gt;'s textContent
+        to cart.length + " items in cart" (should read "3 items in cart").`,
+      starter:`<p id="count"></p>
+<button id="addBtn" type="button">Add Eraser</button>
+
+<script>
+  let cart = ['Pen', 'Book'];
+  // Add a click handler: push('Eraser'), then set #count to cart.length + " items in cart"
+</script>
+`,
+      tests:[{type:'dom', selector:'#count', contains:'3 items in cart', label:'#count shows "3 items in cart" after one click'}]
+    },
+    {
+      title:'Remember whether something is toggled on',
+      desc:`Declare let isOn = true; OUTSIDE a click handler on &lt;button type="button" id="toggleBtn"&gt;. When
+        clicked, flip isOn to its opposite (isOn = !isOn;), then set a &lt;p id="status"&gt;'s textContent to
+        "OFF" if isOn is now false, or "ON" if isOn is still true.`,
+      starter:`<p id="status">ON</p>
+<button id="toggleBtn" type="button">Toggle</button>
+
+<script>
+  let isOn = true;
+  // Add a click handler: flip isOn, then set #status's textContent to "ON" or "OFF" based on the NEW value
+</script>
+`,
+      tests:[{type:'dom', selector:'#status', contains:'OFF', label:'#status shows "OFF" after one click flips isOn from true to false'}]
+    },
+    {
+      title:'Remember a like and change the button itself',
+      desc:`Declare let liked = false; OUTSIDE a click handler on &lt;button type="button" id="likeBtn"&gt;🤍
+        Like&lt;/button&gt;. When clicked, flip liked to true, and set the BUTTON's own textContent to "❤️ Liked"
+        — reading the remembered state to decide what the button should say now.`,
+      starter:`<button type="button" id="likeBtn">🤍 Like</button>
+
+<script>
+  let liked = false;
+  // Add a click handler: flip liked to true, then set #likeBtn's textContent to "❤️ Liked"
+</script>
+`,
+      tests:[{type:'dom', selector:'#likeBtn', contains:'Liked', label:'#likeBtn shows "Liked" after one click'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why does a variable declared OUTSIDE a click handler "remember" its value between clicks, but one declared inside does not?',
+      options:['It doesn\'t make a difference','A variable outside is created once when the page loads; one inside is recreated fresh every click','Outside variables are faster','There\'s no such thing as "inside" a function'],
+      correct:1,
+      explain:'Code inside the handler runs fresh each click, recreating any variables declared there — but a variable from outside already existed and keeps whatever value it was left with.'
+    },
+    {
+      q:'What does favorites.push(\'Gaming\') do to an existing array?',
+      options:['Replaces the whole array with just "Gaming"','Adds "Gaming" to the end, keeping everything already there','Removes "Gaming" if it exists','Deletes the array'],
+      correct:1,
+      explain:'.push() adds a new item onto the end of an array without removing what was already in it.'
+    },
+    {
+      q:'What does localStorage let a real site do that this week\'s in-page variables cannot?',
+      options:['Nothing extra','Remember values even after the page is reloaded or the visitor comes back later','Make the page load faster','Change CSS colors'],
+      correct:1,
+      explain:'In-page variables reset on every reload; localStorage specifically persists data across reloads and return visits.'
+    },
+    {
+      q:'If let score = 8; is declared once outside a handler, and score += 2; runs once inside it, what is score afterward?',
+      options:['8','2','10','Undefined'],
+      correct:2,
+      explain:'The handler reads the remembered value (8), adds 2, and that new value (10) becomes the new remembered value.'
+    }
+  ],
+  sandboxStarter3:`<p id="status">You have 2 badges</p>
+<button id="earnBtn" type="button">Earn a badge</button>
+
+<script>
+  let badges = ['Reader', 'Helper'];
+  document.querySelector('#earnBtn').addEventListener('click', function(){
+    badges.push('Speedster');
+    document.querySelector('#status').textContent = 'You have ' + badges.length + ' badges: ' + badges.join(', ');
+  });
+</script>
+`,
+  stretchChallenge:{
+    title:'Remember a total across two different buttons',
+    desc:`Finished early? Declare let total = 0; OUTSIDE any handler. Add two buttons, #add5 and #add10 — clicking
+      #add5 adds 5 to total, clicking #add10 adds 10. Both buttons share and update the SAME remembered total, and
+      both update a &lt;p id="result"&gt; to show the current total afterward.`,
+    starter:`<p id="result">Total: 0</p>
+<button id="add5" type="button">+5</button>
+<button id="add10" type="button">+10</button>
+
+<script>
+  let total = 0;
+  // Add click handlers on #add5 and #add10 that both add to the SAME total and update #result
+</script>
+`,
+    tests:[
+      {type:'dom', selector:'#result', contains:'Total: 15', label:'#result shows "Total: 15" after both buttons are clicked once each (5 + 10)'}
+    ]
+  }
+},
+{
+  key:'week7', num:7, title:'Rendering Lists with JavaScript',
+  scenarioTag:'Real world: a list built from data, not typed by hand',
+  scenario:`Every list so far has been typed directly into the HTML. Real sites often build a list FROM a JS
+    array instead — a page showing search results, a shopping list, a set of comments — none of that is typed by
+    hand, it's rendered by looping over an array and creating an element for each item.`,
+  objectives:[
+    'Create a new element with document.createElement',
+    'Set its content and add it to the page with appendChild',
+    'Loop over an array to render one element per item',
+    'Build up rendered content conditionally, based on each item\'s value'
+  ],
+  conceptHtml:`
+    <p><code>document.createElement('li')</code> makes a brand new, empty &lt;li&gt; element — it doesn't exist
+    on the page yet, it only exists in JavaScript until you attach it somewhere. Give it content with
+    <code>.textContent = '...'</code>, then attach it to a real parent element with
+    <code>parent.appendChild(newElement)</code>.</p>
+    <p>Combine this with a loop over an array, and you can build an entire list from data instead of typing each
+    item by hand:</p>
+    <pre class="code-block">const fruits = ['Apple', 'Banana', 'Cherry'];
+const list = document.querySelector('#list');
+
+fruits.forEach(function(fruit){
+  const li = document.createElement('li');
+  li.textContent = fruit;
+  list.appendChild(li);
+});</pre>
+    <ul>
+      <li><code>fruits.forEach(function(fruit){ ... })</code> — runs the function once for EACH item in the
+        array, with <code>fruit</code> holding that item's value each time.</li>
+      <li>Inside the loop, a brand new &lt;li&gt; is created, filled with that fruit's name, and appended — after
+        the loop finishes, the &lt;ul&gt; contains exactly 3 &lt;li&gt; elements, one per array item.</li>
+    </ul>
+    <p>Now look at the second example, which builds each item's text FROM its position and value together:</p>
+    <pre class="code-block">const scores = [85, 60, 92];
+const list2 = document.querySelector('#list2');
+
+scores.forEach(function(score, index){
+  const li = document.createElement('li');
+  li.textContent = 'Question ' + (index + 1) + ': ' + score;
+  list2.appendChild(li);
+});</pre>
+    <ul>
+      <li><code>forEach(function(score, index){ ... })</code> — forEach's callback receives the CURRENT item AND
+        its position (starting at 0), letting you build text that combines both, like "Question 1: 85".</li>
+    </ul>`,
+  sandboxStarter:`<ul id="list"></ul>
+<button id="renderBtn" type="button">Show fruits</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const fruits = ['Apple', 'Banana', 'Cherry'];
+    const list = document.querySelector('#list');
+    fruits.forEach(function(fruit){
+      const li = document.createElement('li');
+      li.textContent = fruit;
+      list.appendChild(li);
+    });
+  });
+</script>
+`,
+  sandboxStarter2:`<ul id="list2"></ul>
+<button id="renderBtn2" type="button">Show scores</button>
+
+<script>
+  document.querySelector('#renderBtn2').addEventListener('click', function(){
+    const scores = [85, 60, 92];
+    const list2 = document.querySelector('#list2');
+    scores.forEach(function(score, index){
+      const li = document.createElement('li');
+      li.textContent = 'Question ' + (index + 1) + ': ' + score;
+      list2.appendChild(li);
+    });
+  });
+</script>
+`,
+  exercises:[
+    {
+      title:'Render a list from an array',
+      desc:`Add an empty &lt;ul id="list"&gt; and &lt;button type="button" id="renderBtn"&gt;. When clicked, loop
+        over const items = ['Pen', 'Book', 'Ruler']; and append a new &lt;li&gt; for each one, so the list ends up
+        with 3 items.`,
+      starter:`<ul id="list"></ul>
+<button id="renderBtn" type="button">Show items</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const items = ['Pen', 'Book', 'Ruler'];
+    // Loop over items, creating and appending an <li> for each one
+  });
+</script>
+`,
+      tests:[{type:'dom-count', selector:'#list li', min:3, label:'#list has 3 rendered items after clicking'}]
+    },
+    {
+      title:'Render each item\'s actual text',
+      desc:`Same pattern as above, but this time check that the rendered text is correct: the list should
+        contain an &lt;li&gt; with the text "Ruler" specifically (not just any 3 items).`,
+      starter:`<ul id="list"></ul>
+<button id="renderBtn" type="button">Show items</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const items = ['Pen', 'Book', 'Ruler'];
+    // Loop over items, creating and appending an <li> for each one
+  });
+</script>
+`,
+      tests:[{type:'dom', selector:'#list', contains:'Ruler', label:'#list includes the text "Ruler" after clicking'}]
+    },
+    {
+      title:'Highlight items that meet a condition',
+      desc:`Loop over const words = ['cat', 'elephant', 'dog', 'giraffe'];. For each word, create an &lt;li&gt;
+        with that word as its text — but if the word's length is greater than 5, ALSO give that &lt;li&gt;
+        class="long" (li.className = 'long';).`,
+      starter:`<ul id="list"></ul>
+<button id="renderBtn" type="button">Show words</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const words = ['cat', 'elephant', 'dog', 'giraffe'];
+    // For each word, create an <li>; if word.length > 5, also set li.className = 'long'
+  });
+</script>
+`,
+      tests:[
+        {type:'dom-count', selector:'#list li', min:4, label:'#list has all 4 rendered items'},
+        {type:'dom-count', selector:'#list li.long', min:2, label:'Exactly the 2 long words ("elephant", "giraffe") get the .long class'}
+      ]
+    },
+    {
+      title:'Render text built from index and value',
+      desc:`Loop over const prices = [10, 25, 8]; using forEach(function(price, index){...}). For each one,
+        create an &lt;li&gt; with text "Item " + (index + 1) + ": $" + price — so the rendered list reads "Item
+        1: $10", "Item 2: $25", "Item 3: $8".`,
+      starter:`<ul id="list"></ul>
+<button id="renderBtn" type="button">Show prices</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const prices = [10, 25, 8];
+    // Loop with forEach(function(price, index){...}), rendering "Item " + (index+1) + ": $" + price
+  });
+</script>
+`,
+      tests:[{type:'dom', selector:'#list', contains:'Item 2: $25', label:'#list includes "Item 2: $25" after clicking'}]
+    },
+    {
+      title:'Render a count alongside the list',
+      desc:`Loop over const items = ['Pen', 'Book', 'Ruler', 'Eraser']; rendering each as an &lt;li&gt;, AND set a
+        &lt;p id="count"&gt;'s textContent to items.length + " items" (should read "4 items").`,
+      starter:`<ul id="list"></ul>
+<p id="count"></p>
+<button id="renderBtn" type="button">Show items</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const items = ['Pen', 'Book', 'Ruler', 'Eraser'];
+    // Render each item as an <li>, and set #count's textContent to items.length + " items"
+  });
+</script>
+`,
+      tests:[
+        {type:'dom-count', selector:'#list li', min:4, label:'#list has all 4 rendered items'},
+        {type:'dom', selector:'#count', contains:'4 items', label:'#count shows "4 items"'}
+      ]
+    },
+    {
+      title:'Append rendered items onto an existing list',
+      desc:`&lt;ul id="list"&gt; already contains one &lt;li&gt;Existing item&lt;/li&gt;. When the button is
+        clicked, loop over const items = ['New A', 'New B']; and APPEND (not replace) an &lt;li&gt; for each —
+        the list should end up with 3 items total: the original one plus the 2 new ones.`,
+      starter:`<ul id="list"><li>Existing item</li></ul>
+<button id="renderBtn" type="button">Add more</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const items = ['New A', 'New B'];
+    // Append an <li> for each item WITHOUT removing the existing one
+  });
+</script>
+`,
+      tests:[
+        {type:'dom-count', selector:'#list li', min:3, label:'#list has 3 items total (1 existing + 2 new)'},
+        {type:'dom', selector:'#list', contains:'Existing item', label:'The original item is still there, not replaced'}
+      ]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does document.createElement(\'li\') do?',
+      options:['Finds an existing <li> on the page','Creates a brand new, empty <li> that doesn\'t exist on the page yet','Deletes all <li> elements','Changes an <li>\'s CSS'],
+      correct:1,
+      explain:'createElement makes a new element in memory — it has no effect on the page until you append it somewhere.'
+    },
+    {
+      q:'What does parent.appendChild(newElement) do?',
+      options:['Deletes newElement','Attaches newElement as the last child of parent, making it visible on the page','Renames parent','Copies parent'],
+      correct:1,
+      explain:'appendChild is what actually attaches a created element to the visible page, inside the given parent.'
+    },
+    {
+      q:'In fruits.forEach(function(fruit, index){...}), what does index represent?',
+      options:['The fruit\'s name','The fruit\'s position in the array, starting at 0','A random number','The total array length'],
+      correct:1,
+      explain:'forEach\'s callback receives both the current item and its position (index), starting from 0.'
+    },
+    {
+      q:'If <ul id="list"> already has 1 <li>, and you loop and appendChild 2 more without clearing it first, how many <li>s end up in the list?',
+      options:['1','2','3','0'],
+      correct:2,
+      explain:'appendChild adds to what\'s already there rather than replacing it, so the original 1 plus the 2 new ones makes 3.'
+    }
+  ],
+  sandboxStarter3:`<ul id="list3"></ul>
+<button id="renderBtn3" type="button">Show grades</button>
+
+<script>
+  document.querySelector('#renderBtn3').addEventListener('click', function(){
+    const grades = [92, 55, 78, 40];
+    const list3 = document.querySelector('#list3');
+    grades.forEach(function(grade){
+      const li = document.createElement('li');
+      li.textContent = 'Grade: ' + grade;
+      if (grade < 60) {
+        li.className = 'fail';
+      }
+      list3.appendChild(li);
+    });
+  });
+</script>
+`,
+  stretchChallenge:{
+    title:'Render only the items that pass a filter',
+    desc:`Finished early? Loop over const scores = [45, 82, 90, 38, 67];, only creating and appending an
+      &lt;li&gt; for scores that are 50 or above (82, 90, 67 — skipping 45 and 38), and set a &lt;p
+      id="summary"&gt;'s textContent to "3 passing scores" using a counter you increase only for scores that
+      pass — a wrong solution that renders all 5 would show "5 passing scores" instead.`,
+    starter:`<ul id="list"></ul>
+<p id="summary"></p>
+<button id="renderBtn" type="button">Show passing scores</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const scores = [45, 82, 90, 38, 67];
+    // Only render an <li> for scores >= 50, count how many passed, and set #summary to that count + " passing scores"
+  });
+</script>
+`,
+    tests:[
+      {type:'dom', selector:'#summary', contains:'3 passing scores', label:'#summary correctly reports 3 passing scores, not 5'},
+      {type:'dom', selector:'#list', contains:'82', label:'82 (a passing score) is rendered'}
+    ]
+  }
+},
 ];
 
 const WD_INTERMEDIATE_MP1 = {
