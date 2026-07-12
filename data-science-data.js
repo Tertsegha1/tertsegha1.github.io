@@ -4301,6 +4301,180 @@ print(result)
       {type:'assert', expr:'result["name"].tolist() == ["Dee", "Ada"]', label:'The chain correctly produces the top-2 leaderboard'}
     ]
   }
+},
+{
+  key:'week7', num:7, title:'Writing a Summary Report',
+  scenarioTag:'Real world: nobody outside this course wants to read a DataFrame',
+  scenario:`A teacher or parent doesn't want to see printed rows of numbers — they want a sentence: "The class
+    averaged 75%, and Dee scored highest with 95%." Turning computed stats into real, readable text (often
+    alongside a chart) is the actual last step of a data analysis.`,
+  objectives:[
+    'Build a readable sentence from a computed statistic with an f-string',
+    'Pull a specific row (like the top scorer) into a sentence',
+    'Combine a chart\'s title with a computed value',
+    'Write a multi-line report combining several stats'
+  ],
+  conceptHtml:`
+    <p>An f-string can weave a computed number directly into a sentence — <code>{avg:.1f}</code> formats a
+    number to 1 decimal place inside the string:</p>
+    <pre class="code-block">import pandas as pd
+df = pd.DataFrame({"name": ["Ada", "Ben", "Chi", "Dee"], "score": [85.0, 65.0, 55.0, 95.0]})
+avg = df["score"].mean()
+report = f"The class average was {avg:.1f} across {len(df)} students."
+print(report)   # The class average was 75.0 across 4 students.</pre>
+    <p>To mention a SPECIFIC row (like the top scorer) in the sentence, sort and grab the first row with
+    <code>.iloc[0]</code>, then pull out its fields by name:</p>
+    <pre class="code-block">top = df.sort_values("score", ascending=False).iloc[0]
+report = f"{top['name']} scored the highest with {top['score']}."</pre>
+    <p>Chart titles can use the exact same computed values, so the chart and the written report stay consistent
+    with each other:</p>
+    <pre class="code-block">import matplotlib.pyplot as plt
+fig, ax = plt.subplots()
+ax.bar(df["name"], df["score"])
+ax.set_title(f"Class Average: {avg:.1f}")</pre>
+    <h3>Let's break down the f-string formatting</h3>
+    <ul>
+      <li><code>f"..."</code> — an f-string; anything inside <code>{}</code> gets evaluated and inserted as text.</li>
+      <li><code>{avg:.1f}</code> — the <code>:.1f</code> is a format spec: round to 1 decimal place, always show
+        as a fixed-point number (not scientific notation).</li>
+      <li><code>top['name']</code> — reading a single named value out of one row (a Series), the same syntax as
+        column access but on a row instead.</li>
+      <li>Multi-line reports use <code>\\n</code> inside the f-string, or several separate <code>print()</code>
+        calls — either works.</li>
+    </ul>`,
+  sandboxStarter:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada", "Ben", "Chi", "Dee"], "score": [85.0, 65.0, 55.0, 95.0]})
+avg = df["score"].mean()
+report = f"The class average was {avg:.1f} across {len(df)} students."
+print(report)
+`,
+  sandboxStarter2:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada", "Ben", "Chi", "Dee"], "score": [85.0, 65.0, 55.0, 95.0]})
+top = df.sort_values("score", ascending=False).iloc[0]
+report = f"{top['name']} scored the highest with {top['score']}."
+print(report)
+`,
+  exercises:[
+    {
+      title:'Write your first stat sentence',
+      desc:`Create df with columns "name" (Ada, Ben, Chi, Dee) and "score" (85.0, 65.0, 55.0, 95.0). Create
+        avg = df["score"].mean() and count = len(df). Create
+        report = f"The class average was {avg:.1f} across {count} students.". Assert that report ==
+        "The class average was 75.0 across 4 students.".`,
+      starter:`import pandas as pd
+# Create df, avg, count and report below
+`,
+      tests:[{type:'assert', expr:'report == "The class average was 75.0 across 4 students."', label:'The report sentence correctly includes the computed average and count'}]
+    },
+    {
+      title:'Name the top scorer in a sentence',
+      desc:`Using the same df, create top = df.sort_values("score", ascending=False).iloc[0]. Create
+        report = f"{top['name']} scored the highest with {top['score']}.". Assert that report ==
+        "Dee scored the highest with 95.0.".`,
+      starter:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada", "Ben", "Chi", "Dee"], "score": [85.0, 65.0, 55.0, 95.0]})
+# Create top and report below
+`,
+      tests:[{type:'assert', expr:'report == "Dee scored the highest with 95.0."', label:'The report correctly names Dee as the top scorer'}]
+    },
+    {
+      title:'Name who might need support',
+      desc:`Using the same df, create lowest_row = df.sort_values("score", ascending=True).iloc[0]. Create
+        report = f"{lowest_row['name']} may need extra support, with a score of {lowest_row['score']}.". Assert
+        that report == "Chi may need extra support, with a score of 55.0.".`,
+      starter:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada", "Ben", "Chi", "Dee"], "score": [85.0, 65.0, 55.0, 95.0]})
+# Create lowest_row and report below
+`,
+      tests:[{type:'assert', expr:'report == "Chi may need extra support, with a score of 55.0."', label:'The report correctly identifies Chi as needing support'}]
+    },
+    {
+      title:'Match a chart title to a computed value',
+      desc:`Create df with "name" (Ada, Ben, Chi, Dee) and "score" (85.0, 65.0, 55.0, 95.0). Create
+        avg = df["score"].mean(). Create fig, ax = plt.subplots() and ax.bar(df["name"], df["score"]). Call
+        ax.set_title(f"Class Average: {avg:.1f}"). Assert that ax.get_title() == "Class Average: 75.0".`,
+      starter:`import matplotlib.pyplot as plt
+import pandas as pd
+# Create df, avg, fig, ax and the bar chart, then set the title below
+`,
+      tests:[{type:'assert', expr:'ax.get_title() == "Class Average: 75.0"', label:"The chart title correctly matches the computed average"}]
+    },
+    {
+      title:'Write a multi-line report',
+      desc:`Create df with "name" (Ada, Ben, Chi, Dee) and "score" (85.0, 65.0, 55.0, 95.0). Create
+        avg = df["score"].mean(), lowest = df["score"].min(), and highest = df["score"].max(). Create
+        report = f"Average: {avg:.1f}\\nLowest: {lowest}\\nHighest: {highest}". Assert that report ==
+        "Average: 75.0\\nLowest: 55.0\\nHighest: 95.0".`,
+      starter:`import pandas as pd
+# Create df, avg, lowest, highest and report below
+`,
+      tests:[{type:'assert', expr:'report == "Average: 75.0\\nLowest: 55.0\\nHighest: 95.0"', label:'The multi-line report correctly combines all three stats'}]
+    },
+    {
+      title:'Report a pass rate',
+      desc:`Create df with "name" (Ada, Ben, Chi, Dee) and "score" (85.0, 65.0, 55.0, 95.0). Create
+        passed = df[df["score"] >= 60] and pass_rate = len(passed) / len(df) * 100. Create
+        report = f"{pass_rate:.0f}% of students passed.". Assert that report == "75% of students passed.".`,
+      starter:`import pandas as pd
+# Create df, passed, pass_rate and report below
+`,
+      tests:[{type:'assert', expr:'report == "75% of students passed."', label:'The report correctly states the pass rate (75%)'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does {avg:.1f} do inside an f-string?',
+      options:['Nothing special, it just prints "avg"','Formats the avg value to 1 decimal place','Rounds avg to the nearest 10','Converts avg to a whole number'],
+      correct:1,
+      explain:':.1f is a format spec meaning "show as a fixed-point number with 1 digit after the decimal point."'
+    },
+    {
+      q:'How do you read a specific field (like name) out of a single row returned by .iloc[0]?',
+      options:['row.name only works for columns, not rows','row["name"] (the same bracket syntax used for columns, applied to a row/Series)','You can\'t, rows don\'t have named fields','row.get_name()'],
+      correct:1,
+      explain:'A single row (from .iloc[0] or similar) is a Series, and its fields are read with the same bracket syntax as column access.'
+    },
+    {
+      q:'Why match a chart\'s title to a computed value with an f-string, instead of a fixed piece of text?',
+      options:['It\'s required by matplotlib','So the chart and the written report always describe the SAME number, even if the data changes','It makes the chart render faster','Static text titles are not allowed'],
+      correct:1,
+      explain:'Computing the title from the same variable as the report keeps them consistent — if the data changes, both update together.'
+    },
+    {
+      q:'Why write a narrative report at all, instead of just showing the raw numbers?',
+      options:['Reports are always required by pandas','A sentence is far more readable for someone who isn\'t going to read code output or a raw table','Raw numbers are always wrong','Reports run faster than printing a DataFrame'],
+      correct:1,
+      explain:'The final audience for an analysis is usually a person, not a programmer — plain sentences communicate findings far more clearly than a printed table.'
+    }
+  ],
+  sandboxStarter3:`import matplotlib.pyplot as plt
+import pandas as pd
+df = pd.DataFrame({"name": ["Ada", "Ben", "Chi", "Dee"], "score": [85.0, 65.0, 55.0, 95.0]})
+avg = df["score"].mean()
+top = df.sort_values("score", ascending=False).iloc[0]
+fig, ax = plt.subplots()
+ax.bar(df["name"], df["score"])
+ax.set_title(f"Class Average: {avg:.1f}")
+report = f"Average: {avg:.1f}. Top scorer: {top['name']} with {top['score']}."
+print(report)
+`,
+  stretchChallenge:{
+    title:'A report-building function with a chart',
+    desc:`Write a function build_report(df) that: computes avg = df["score"].mean() and
+      top = df.sort_values("score", ascending=False).iloc[0]; creates fig, ax = plt.subplots(),
+      ax.bar(df["name"], df["score"]), and ax.set_title(f"Class Average: {avg:.1f}"); builds
+      report = f"Average: {avg:.1f}. Top scorer: {top['name']} with {top['score']}."; and returns (report, ax).
+      Create df with "name" (Ada, Ben, Chi, Dee) and "score" (85.0, 65.0, 55.0, 95.0). Create
+      report, ax = build_report(df). Assert that report == "Average: 75.0. Top scorer: Dee with 95.0." and
+      ax.get_title() == "Class Average: 75.0".`,
+    starter:`import matplotlib.pyplot as plt
+import pandas as pd
+# Define build_report below, then create df, report and ax
+`,
+    tests:[
+      {type:'assert', expr:'report == "Average: 75.0. Top scorer: Dee with 95.0." and ax.get_title() == "Class Average: 75.0"', label:'The function correctly returns both the report text and a matching chart'}
+    ]
+  }
 }
 ];
 
