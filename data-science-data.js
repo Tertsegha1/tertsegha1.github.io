@@ -2305,6 +2305,323 @@ print(df)
       {type:'assert', expr:'df["label"].iloc[0] == "Ada Lovelace: Distinction"', label:'The formatted label is correct'}
     ]
   }
+},
+{
+  key:'week5', num:5, title:'Left, Right, and Outer Joins',
+  scenarioTag:'Real world: not every student has signed up for a club yet',
+  scenario:`Week 4's Sports Day merge kept only rows that matched in BOTH tables (an inner join). But sometimes you
+    need to know who's MISSING — e.g. every student who hasn't signed up for a club yet. Left, right, and outer
+    joins all keep unmatched rows too, filling the gaps with NaN.`,
+  objectives:[
+    'Keep every row from the left table with how="left"',
+    'Keep every row from the right table with how="right"',
+    'Keep every row from BOTH tables with how="outer"',
+    'Recognise and clean up the NaN gaps a non-inner join creates'
+  ],
+  conceptHtml:`
+    <p>.merge() defaults to <code>how="inner"</code> (only matching rows survive). Change <code>how</code> to keep
+    unmatched rows too:</p>
+    <pre class="code-block">import pandas as pd
+students = pd.DataFrame({"name": ["Ada", "Ben", "Chi"], "id": [1, 2, 3]})
+clubs = pd.DataFrame({"id": [1, 3], "club": ["Chess", "Art"]})
+merged = students.merge(clubs, on="id", how="left")
+print(merged)
+#   name  id   club
+# 0  Ada   1  Chess
+# 1  Ben   2    NaN   <- Ben has no club, but is still kept
+# 2  Chi   3    Art</pre>
+    <ul>
+      <li><code>how="left"</code> — keep every row from the LEFT table (the one .merge() was called on), filling
+        gaps from the right table with NaN.</li>
+      <li><code>how="right"</code> — the mirror image: keep every row from the RIGHT table, filling gaps from the
+        left with NaN.</li>
+      <li><code>how="outer"</code> — keep every row from BOTH tables, filling gaps on whichever side is missing.</li>
+    </ul>
+    <p>Those NaN gaps are usually meant to be cleaned up afterwards — <code>.fillna("No Club")</code> replaces
+    every NaN in a column with a real, readable value, the same idea used for cleaning any messy column, just
+    appearing after a join instead of in raw data.</p>`,
+  sandboxStarter:`import pandas as pd
+students = pd.DataFrame({"name": ["Ada", "Ben", "Chi"], "id": [1, 2, 3]})
+clubs = pd.DataFrame({"id": [1, 3], "club": ["Chess", "Art"]})
+merged = students.merge(clubs, on="id", how="left")
+print(merged)
+`,
+  sandboxStarter2:`import pandas as pd
+students = pd.DataFrame({"name": ["Ada", "Ben", "Chi"], "id": [1, 2, 3]})
+clubs = pd.DataFrame({"id": [1, 3], "club": ["Chess", "Art"]})
+merged = students.merge(clubs, on="id", how="left")
+merged["club"] = merged["club"].fillna("No Club")
+print(merged)
+`,
+  exercises:[
+    {
+      title:'Keep every student with a left join',
+      desc:`Create students with columns "name" (Ada, Ben, Chi) and "id" (1, 2, 3), and clubs with columns "id"
+        (1, 3) and "club" (Chess, Art). Create merged = students.merge(clubs, on="id", how="left"), then
+        print(len(merged)). It should print 3 — all three students are kept, even Ben who has no club.`,
+      starter:`import pandas as pd
+# Create students and clubs below
+`,
+      tests:[{type:'output', contains:['3'], label:'Keeps all 3 students in the left join'}]
+    },
+    {
+      title:'Count the missing clubs',
+      desc:`Using the same students/clubs/merged from the first exercise, print(merged["club"].isna().sum()). It
+        should print 1 — only Ben has no matching club.`,
+      starter:`import pandas as pd
+students = pd.DataFrame({"name": ["Ada", "Ben", "Chi"], "id": [1, 2, 3]})
+clubs = pd.DataFrame({"id": [1, 3], "club": ["Chess", "Art"]})
+merged = students.merge(clubs, on="id", how="left")
+# Print the count of missing clubs below
+`,
+      tests:[{type:'output', contains:['1'], label:'Correctly counts 1 missing club'}]
+    },
+    {
+      title:'Keep every club with a right join',
+      desc:`Create students with "name" (Ada, Ben, Chi) and "id" (1, 2, 3), and clubs with "id" (1, 3, 4) and
+        "club" (Chess, Art, Drama) — Drama's id (4) matches no student. Create
+        merged = students.merge(clubs, on="id", how="right"), then print(len(merged)). It should print 3 — all
+        three clubs are kept, even Drama which has no matching student.`,
+      starter:`import pandas as pd
+# Create students and clubs below
+`,
+      tests:[{type:'output', contains:['3'], label:'Keeps all 3 clubs in the right join'}]
+    },
+    {
+      title:'Find the club with no matching student',
+      desc:`Using students ("name": Ada, Ben, Chi, "id": 1, 2, 3) and clubs ("id": 1, 3, 4, "club": Chess, Art,
+        Drama), create merged = students.merge(clubs, on="id", how="right"). Assert that
+        merged.loc[merged["club"] == "Drama", "name"].isna().iloc[0] == True.`,
+      starter:`import pandas as pd
+# Create students and clubs below
+`,
+      tests:[{type:'assert', expr:'merged.loc[merged["club"] == "Drama", "name"].isna().iloc[0] == True', label:"Drama's row correctly has a missing (NaN) student name"}]
+    },
+    {
+      title:'Keep everyone with an outer join',
+      desc:`Using students ("name": Ada, Ben, Chi, "id": 1, 2, 3) and clubs ("id": 1, 3, 4, "club": Chess, Art,
+        Drama), create merged = students.merge(clubs, on="id", how="outer"), then print(len(merged)). It should
+        print 4 — Ben (no club) AND Drama (no student) are both kept, along with the two real matches.`,
+      starter:`import pandas as pd
+# Create students and clubs below
+`,
+      tests:[{type:'output', contains:['4'], label:'Outer join correctly keeps all 4 rows'}]
+    },
+    {
+      title:'Clean up the gaps',
+      desc:`Create students with "name" (Ada, Ben, Chi) and "id" (1, 2, 3), and clubs with "id" (1, 3) and "club"
+        (Chess, Art). Create merged = students.merge(clubs, on="id", how="left"), then reassign
+        merged["club"] to merged["club"].fillna("No Club"). Assert that
+        merged.loc[merged["name"] == "Ben", "club"].iloc[0] == "No Club".`,
+      starter:`import pandas as pd
+# Create students and clubs below
+`,
+      tests:[{type:'assert', expr:'merged.loc[merged["name"] == "Ben", "club"].iloc[0] == "No Club"', label:'Ben\'s missing club is correctly filled with "No Club"'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does how="left" do in a merge?',
+      options:['Sorts the table left to right','Keeps every row from the left table, even ones with no match','Only keeps matching rows','Deletes the left table'],
+      correct:1,
+      explain:'A left join keeps every row from the left table, filling any unmatched columns from the right with NaN.'
+    },
+    {
+      q:'What is the difference between how="left" and how="right"?',
+      options:['There is no difference','left keeps every row from the LEFT table; right keeps every row from the RIGHT table','right is always faster','left only works with numbers'],
+      correct:1,
+      explain:'They\'re mirror images of each other — which table\'s rows are always kept.'
+    },
+    {
+      q:'What does how="outer" do?',
+      options:['Keeps only matching rows','Keeps every row from BOTH tables, filling gaps with NaN on whichever side is missing','Deletes all unmatched rows','Only works with 3+ tables'],
+      correct:1,
+      explain:'An outer join is the most inclusive — nothing from either table is dropped.'
+    },
+    {
+      q:'After a left join leaves some NaN values in a column, what can you do to replace them?',
+      options:['Nothing, NaN can never be changed','.fillna("some value")','.dropna() to replace them with text','Merge again with how="inner"'],
+      correct:1,
+      explain:'.fillna() replaces NaN values with whatever you pass it — the same tool used for messy raw data, just applied after a join.'
+    }
+  ],
+  sandboxStarter3:`import pandas as pd
+students = pd.DataFrame({"name": ["Ada", "Ben", "Chi"], "id": [1, 2, 3]})
+clubs = pd.DataFrame({"id": [1, 3, 4], "club": ["Chess", "Art", "Drama"]})
+outer = students.merge(clubs, on="id", how="outer")
+print(outer)
+print("Total rows:", len(outer))
+`,
+  stretchChallenge:{
+    title:'Clean up both sides of an outer join',
+    desc:`Create students with "name" (Ada, Ben, Chi) and "id" (1, 2, 3), and clubs with "id" (1, 3, 4) and "club"
+      (Chess, Art, Drama). Create merged = students.merge(clubs, on="id", how="outer"), then reassign
+      merged["name"] to merged["name"].fillna("Unknown Student"), and merged["club"] to
+      merged["club"].fillna("No Club"). Assert that merged.loc[merged["id"] == 4, "name"].iloc[0] ==
+      "Unknown Student" and merged.loc[merged["id"] == 2, "club"].iloc[0] == "No Club".`,
+    starter:`import pandas as pd
+# Create students and clubs below
+`,
+    tests:[
+      {type:'assert', expr:'merged.loc[merged["id"] == 4, "name"].iloc[0] == "Unknown Student"', label:"The unmatched club's student name is correctly filled"},
+      {type:'assert', expr:'merged.loc[merged["id"] == 2, "club"].iloc[0] == "No Club"', label:"Ben's missing club is correctly filled"}
+    ]
+  }
+},
+{
+  key:'week6', num:6, title:'Multiple Aggregations at Once',
+  scenarioTag:'Real world: the house report needs several stats side by side',
+  scenario:`Week 1 (Beginner) computed .mean() and .max() one at a time. A real report usually wants several stats
+    together — average, highest score, and how many entries — all in one table, one call. .agg() computes several
+    aggregations at once, and can even give each resulting column a sensible name.`,
+  objectives:[
+    'Compute several stats at once with .agg(["mean", "max", "count"])',
+    'Give result columns readable names with named aggregation',
+    'Apply a different aggregation function to each column with a dict',
+    'Read a value out of a multi-column aggregation result'
+  ],
+  conceptHtml:`
+    <p>Pass a LIST of function names to .agg() to compute them all in one call:</p>
+    <pre class="code-block">import pandas as pd
+df = pd.DataFrame({"house": ["Red", "Red", "Blue", "Blue"], "score": [80, 90, 60, 70]})
+stats = df.groupby("house")["score"].agg(["mean", "max"])
+print(stats)
+#        mean  max
+# house
+# Blue   65.0   70
+# Red    85.0   90</pre>
+    <p><strong>Named aggregation</strong> lets you choose the result column names directly, which reads much more
+    clearly than generic "mean"/"max" column names:</p>
+    <pre class="code-block">summary = df.groupby("house").agg(avg_score=("score", "mean"), top_score=("score", "max"))
+print(summary.loc["Red", "top_score"])   # 90</pre>
+    <p>You can also apply a DIFFERENT function to each column by passing a dictionary instead of a list:</p>
+    <pre class="code-block">df.groupby("house").agg({"score": "mean", "attendance": "sum"})</pre>
+    <h3>Let's break down the named aggregation, line by line</h3>
+    <ul>
+      <li><code>avg_score=("score", "mean")</code> — the keyword <code>avg_score</code> becomes the RESULT column
+        name; the tuple <code>("score", "mean")</code> says "apply mean to the score column."</li>
+      <li>You can add as many <code>name=("column", "function")</code> pairs as you like, each becoming its own
+        result column.</li>
+      <li><code>summary.loc["Red", "top_score"]</code> reads a single cell out of the result — the same
+        <code>.loc[]</code> pattern used since Week 2 of the course.</li>
+    </ul>`,
+  sandboxStarter:`import pandas as pd
+df = pd.DataFrame({"house": ["Red", "Red", "Blue", "Blue"], "score": [80, 90, 60, 70]})
+stats = df.groupby("house")["score"].agg(["mean", "max"])
+print(stats)
+`,
+  sandboxStarter2:`import pandas as pd
+df = pd.DataFrame({"house": ["Red", "Red", "Blue", "Blue"], "score": [80, 90, 60, 70]})
+summary = df.groupby("house").agg(avg_score=("score", "mean"), top_score=("score", "max"))
+print(summary)
+`,
+  exercises:[
+    {
+      title:'Compute mean and max together',
+      desc:`Create df with columns "house" (Red, Red, Blue, Blue) and "score" (80, 90, 60, 70). Create
+        stats = df.groupby("house")["score"].agg(["mean", "max"]), then print(stats.loc["Red", "max"]). It should
+        print 90.`,
+      starter:`import pandas as pd
+# Create df and stats below
+`,
+      tests:[{type:'output', contains:['90'], label:"Prints Red's max score (90)"}]
+    },
+    {
+      title:'Add a count',
+      desc:`Using the same df, create stats = df.groupby("house")["score"].agg(["mean", "max", "count"]), then
+        print(stats.loc["Blue", "count"]). It should print 2 — Blue has 2 entries.`,
+      starter:`import pandas as pd
+df = pd.DataFrame({"house": ["Red", "Red", "Blue", "Blue"], "score": [80, 90, 60, 70]})
+# Create stats below
+`,
+      tests:[{type:'output', contains:['2'], label:"Prints Blue's entry count (2)"}]
+    },
+    {
+      title:'Name your result columns',
+      desc:`Using the same df, create summary = df.groupby("house").agg(avg_score=("score", "mean"),
+        top_score=("score", "max")), then print(summary.loc["Red", "top_score"]). It should print 90.`,
+      starter:`import pandas as pd
+df = pd.DataFrame({"house": ["Red", "Red", "Blue", "Blue"], "score": [80, 90, 60, 70]})
+# Create summary below
+`,
+      tests:[{type:'output', contains:['90'], label:'Prints the correctly named top_score column (90)'}]
+    },
+    {
+      title:'Check the average',
+      desc:`Using the same df, create summary = df.groupby("house").agg(avg_score=("score", "mean")). Assert that
+        summary.loc["Blue", "avg_score"] == 65.0.`,
+      starter:`import pandas as pd
+df = pd.DataFrame({"house": ["Red", "Red", "Blue", "Blue"], "score": [80, 90, 60, 70]})
+# Create summary below
+`,
+      tests:[{type:'assert', expr:'summary.loc["Blue", "avg_score"] == 65.0', label:"Blue's average score is correct (65.0)"}]
+    },
+    {
+      title:'Different functions for different columns',
+      desc:`Create df with columns "house" (Red, Red, Blue, Blue), "score" (80, 90, 60, 70), and "attendance" (5,
+        4, 3, 5). Create stats = df.groupby("house").agg({"score": "mean", "attendance": "sum"}). Assert that
+        stats.loc["Red", "score"] == 85.0 and stats.loc["Red", "attendance"] == 9 — score is AVERAGED but
+        attendance is TOTALLED, using two different rules in one call.`,
+      starter:`import pandas as pd
+# Create df and stats below
+`,
+      tests:[{type:'assert', expr:'stats.loc["Red", "score"] == 85.0 and stats.loc["Red", "attendance"] == 9', label:"Red's averaged score and totalled attendance are both correct"}]
+    },
+    {
+      title:'Combine a named average and a named total',
+      desc:`Create df with columns "house" (Red, Red, Blue, Blue), "score" (80, 90, 60, 70), and "attendance" (5,
+        4, 3, 5). Create summary = df.groupby("house").agg(avg_score=("score", "mean"),
+        total_attendance=("attendance", "sum")). Assert that summary.loc["Blue", "total_attendance"] == 8.`,
+      starter:`import pandas as pd
+# Create df and summary below
+`,
+      tests:[{type:'assert', expr:'summary.loc["Blue", "total_attendance"] == 8', label:"Blue's total attendance is correct (8)"}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does df.groupby("house")["score"].agg(["mean", "max"]) do?',
+      options:['Only computes the mean','Computes both mean and max in one call, as two result columns','Deletes the max value','Sorts by score'],
+      correct:1,
+      explain:'Passing a list of function names to .agg() computes all of them at once.'
+    },
+    {
+      q:'What does avg_score=("score", "mean") do inside .agg()?',
+      options:['Creates a column called avg_score by averaging the score column','Deletes the score column','Renames the house column','Filters out low scores'],
+      correct:0,
+      explain:'This is named aggregation — the keyword becomes the result column name, and the tuple says which column/function to use.'
+    },
+    {
+      q:'How do you apply a DIFFERENT aggregation function to different columns?',
+      options:['You can\'t — every column must use the same function','Pass a dictionary like {"score": "mean", "attendance": "sum"}','Call .agg() twice and combine manually only','Use .apply() instead'],
+      correct:1,
+      explain:'A dictionary maps each column name to its own aggregation function, all computed in one call.'
+    },
+    {
+      q:'Why use named aggregation instead of a plain list like ["mean", "max"]?',
+      options:['It\'s required by pandas','It gives the result columns clearer, custom names instead of generic function names','It runs faster','It only works with dates'],
+      correct:1,
+      explain:'Named aggregation lets you choose readable column names (avg_score, top_score) instead of generic ones (mean, max).'
+    }
+  ],
+  sandboxStarter3:`import pandas as pd
+df = pd.DataFrame({"house": ["Red", "Red", "Blue", "Blue"], "score": [80, 90, 60, 70], "attendance": [5, 4, 3, 5]})
+stats = df.groupby("house").agg({"score": "mean", "attendance": "sum"})
+print(stats)
+`,
+  stretchChallenge:{
+    title:'Rank the houses by average score',
+    desc:`Create df with columns "house" (Red, Red, Blue, Blue), "score" (80, 90, 60, 70), and "attendance" (5, 4,
+      3, 5). Create summary = df.groupby("house").agg(avg_score=("score", "mean")).reset_index(), then
+      ranked = summary.sort_values("avg_score", ascending=False). Assert that ranked["house"].iloc[0] == "Red" —
+      Red's higher average score puts it first.`,
+    starter:`import pandas as pd
+# Create df, summary and ranked below
+`,
+    tests:[
+      {type:'assert', expr:'ranked["house"].iloc[0] == "Red"', label:'ranked correctly puts Red first'}
+    ]
+  }
 }
 ];
 
