@@ -5827,6 +5827,285 @@ for (let i = 0; i < items.length; i++) {
     ]
   }
 },
+{
+  key:'week6', num:6, title:'Custom Events and Component-Style Thinking',
+  scenarioTag:'Real world: parts of a page reacting to each other',
+  scenario:`When a "like" button is clicked, a comment count elsewhere on the page might need to update — but
+    the like button shouldn't need to know exactly HOW the counter works, just that "something happened." Custom
+    events let one part of the page announce "this happened" and let any number of OTHER parts react, without
+    directly calling each other's code.`,
+  objectives:[
+    'Dispatch a custom event from one element',
+    'Listen for a custom event on a different element',
+    'Pass data along with a custom event using detail',
+    'Understand why this keeps different parts of a page loosely connected'
+  ],
+  conceptHtml:`
+    <p><code>new CustomEvent('name')</code> creates an event with any name you choose — not a built-in browser
+    event like 'click', but one you define yourself. <code>element.dispatchEvent(event)</code> fires it, and
+    <code>anyElement.addEventListener('name', function(e){ ... })</code> reacts to it, even from a completely
+    different part of the page.</p>
+    <pre class="code-block">document.querySelector('#likeBtn').addEventListener('click', function(){
+  const event = new CustomEvent('itemLiked');
+  document.dispatchEvent(event);
+});
+
+document.addEventListener('itemLiked', function(){
+  document.querySelector('#status').textContent = 'Someone liked this!';
+});</pre>
+    <ul>
+      <li>The click handler on <code>#likeBtn</code> doesn't touch <code>#status</code> directly at all — it
+        just announces <code>'itemLiked'</code> happened, dispatched on <code>document</code> so anything can
+        hear it.</li>
+      <li>The listener on <code>document</code> reacts by updating <code>#status</code> — it doesn't need to know
+        anything about <code>#likeBtn</code>, just that an <code>'itemLiked'</code> event occurred.</li>
+    </ul>
+    <p>Now look at the second example, passing data along with the event:</p>
+    <pre class="code-block">document.querySelector('#likeBtn').addEventListener('click', function(){
+  const event = new CustomEvent('itemLiked', { detail: { count: 5 } });
+  document.dispatchEvent(event);
+});
+
+document.addEventListener('itemLiked', function(e){
+  document.querySelector('#status').textContent = 'Total likes: ' + e.detail.count;
+});</pre>
+    <ul>
+      <li><code>{ detail: { count: 5 } }</code> — the second argument to <code>CustomEvent</code> attaches extra
+        data to the event.</li>
+      <li><code>e.detail.count</code> — inside the listener, the event object (<code>e</code>) carries that data
+        along, so the listener can use it.</li>
+    </ul>`,
+  sandboxStarter:`<button id="likeBtn" type="button">Like</button>
+<p id="status"></p>
+
+<script>
+  document.querySelector('#likeBtn').addEventListener('click', function(){
+    const event = new CustomEvent('itemLiked');
+    document.dispatchEvent(event);
+  });
+
+  document.addEventListener('itemLiked', function(){
+    document.querySelector('#status').textContent = 'Someone liked this!';
+  });
+</script>
+`,
+  sandboxStarter2:`<button id="likeBtn" type="button">Like</button>
+<p id="status"></p>
+
+<script>
+  document.querySelector('#likeBtn').addEventListener('click', function(){
+    const event = new CustomEvent('itemLiked', { detail: { count: 5 } });
+    document.dispatchEvent(event);
+  });
+
+  document.addEventListener('itemLiked', function(e){
+    document.querySelector('#status').textContent = 'Total likes: ' + e.detail.count;
+  });
+</script>
+`,
+  exercises:[
+    {
+      title:'Dispatch and listen for a custom event',
+      desc:`On &lt;button type="button" id="likeBtn"&gt; click, dispatch a CustomEvent named 'itemLiked' on
+        document. Separately, add a document listener for 'itemLiked' that sets &lt;p id="status"&gt;'s
+        textContent to "Liked!".`,
+      starter:`<button id="likeBtn" type="button">Like</button>
+<p id="status"></p>
+
+<script>
+  document.querySelector('#likeBtn').addEventListener('click', function(){
+    // Dispatch a CustomEvent named 'itemLiked' on document
+  });
+
+  // Add a document listener for 'itemLiked' that sets #status to "Liked!"
+</script>
+`,
+      tests:[{type:'dom', selector:'#status', contains:'Liked!', label:'#status shows "Liked!" after the custom event fires'}]
+    },
+    {
+      title:'Pass data with the event',
+      desc:`On &lt;button type="button" id="likeBtn"&gt; click, dispatch a CustomEvent named 'itemLiked' with
+        { detail: { count: 5 } }. The document listener should set #status to "Total likes: " + e.detail.count,
+        reading the count FROM the event, not hardcoding it.`,
+      starter:`<button id="likeBtn" type="button">Like</button>
+<p id="status"></p>
+
+<script>
+  document.querySelector('#likeBtn').addEventListener('click', function(){
+    // Dispatch 'itemLiked' with { detail: { count: 5 } }
+  });
+
+  document.addEventListener('itemLiked', function(e){
+    // Set #status to "Total likes: " + e.detail.count
+  });
+</script>
+`,
+      tests:[{type:'dom', selector:'#status', contains:'Total likes: 5', label:'#status shows "Total likes: 5", read from e.detail'}]
+    },
+    {
+      title:'Two listeners react to one event',
+      desc:`On &lt;button type="button" id="likeBtn"&gt; click, dispatch 'itemLiked' on document. Add TWO
+        separate document listeners for 'itemLiked' — one sets &lt;p id="status"&gt; to "Liked!", the other sets
+        &lt;p id="log"&gt; to "Event logged". Both should react to the SAME dispatched event.`,
+      starter:`<button id="likeBtn" type="button">Like</button>
+<p id="status"></p>
+<p id="log"></p>
+
+<script>
+  document.querySelector('#likeBtn').addEventListener('click', function(){
+    // Dispatch 'itemLiked' on document
+  });
+
+  // Add TWO separate document listeners for 'itemLiked': one updates #status, one updates #log
+</script>
+`,
+      tests:[
+        {type:'dom', selector:'#status', contains:'Liked!', label:'#status reacts to the event'},
+        {type:'dom', selector:'#log', contains:'Event logged', label:'#log ALSO reacts to the same event, independently'}
+      ]
+    },
+    {
+      title:'Compute something from event detail',
+      desc:`On &lt;button type="button" id="addBtn"&gt; click, dispatch a CustomEvent named 'itemAdded' with {
+        detail: { price: 4 } }. The listener should compute price * 2 (a "buy 2, this is the total" calculation)
+        and set &lt;p id="total"&gt; to "Total: $" + (price * 2), reading price from e.detail.`,
+      starter:`<button id="addBtn" type="button">Add x2</button>
+<p id="total"></p>
+
+<script>
+  document.querySelector('#addBtn').addEventListener('click', function(){
+    // Dispatch 'itemAdded' with { detail: { price: 4 } }
+  });
+
+  document.addEventListener('itemAdded', function(e){
+    // Set #total to "Total: $" + (e.detail.price * 2)
+  });
+</script>
+`,
+      tests:[{type:'dom', selector:'#total', contains:'Total: $8', label:'#total shows "Total: $8" (4 * 2), computed from e.detail.price'}]
+    },
+    {
+      title:'Dispatch from two different buttons',
+      desc:`Two buttons, #likeBtn and #shareBtn, both dispatch DIFFERENT custom events: #likeBtn dispatches
+        'itemLiked', #shareBtn dispatches 'itemShared'. Add separate listeners: 'itemLiked' sets #status to
+        "Liked!", 'itemShared' sets #status to "Shared!". Since both buttons get auto-clicked (in DOM order:
+        like, then share), #status should end up "Shared!" (the last event fired).`,
+      starter:`<button id="likeBtn" type="button">Like</button>
+<button id="shareBtn" type="button">Share</button>
+<p id="status"></p>
+
+<script>
+  document.querySelector('#likeBtn').addEventListener('click', function(){
+    // Dispatch 'itemLiked' on document
+  });
+  document.querySelector('#shareBtn').addEventListener('click', function(){
+    // Dispatch 'itemShared' on document
+  });
+
+  document.addEventListener('itemLiked', function(){
+    document.querySelector('#status').textContent = 'Liked!';
+  });
+  // Add a listener for 'itemShared' that sets #status to "Shared!"
+</script>
+`,
+      tests:[{type:'dom', selector:'#status', contains:'Shared!', label:'#status shows "Shared!" (the last event dispatched, from #shareBtn)'}]
+    },
+    {
+      title:'Build a complete component-style interaction',
+      desc:`On &lt;button type="button" id="addBtn"&gt; click, dispatch 'itemAdded' with { detail: { name: 'Pen',
+        price: 2 } }. Add TWO listeners: one sets &lt;p id="status"&gt; to "Added: " + e.detail.name, another
+        sets &lt;p id="total"&gt; to "Total: $" + e.detail.price — both reading from the SAME event's detail,
+        independently.`,
+      starter:`<button id="addBtn" type="button">Add Item</button>
+<p id="status"></p>
+<p id="total"></p>
+
+<script>
+  document.querySelector('#addBtn').addEventListener('click', function(){
+    // Dispatch 'itemAdded' with { detail: { name: 'Pen', price: 2 } }
+  });
+
+  // Add two listeners for 'itemAdded': one sets #status to "Added: " + name, one sets #total to "Total: $" + price
+</script>
+`,
+      tests:[
+        {type:'dom', selector:'#status', contains:'Added: Pen', label:'#status shows "Added: Pen" from e.detail.name'},
+        {type:'dom', selector:'#total', contains:'Total: $2', label:'#total shows "Total: $2" from e.detail.price, independently'}
+      ]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does new CustomEvent(\'itemLiked\') create?',
+      options:['A built-in browser event','An event you define yourself, with any name you choose','A CSS animation','A form submission'],
+      correct:1,
+      explain:'Unlike built-in events like "click", CustomEvent lets you invent your own event names for your own purposes.'
+    },
+    {
+      q:'What does element.dispatchEvent(event) do?',
+      options:['Deletes the element','Fires the custom event, triggering any listeners registered for it','Creates a new element','Removes all listeners'],
+      correct:1,
+      explain:'dispatchEvent actually fires the event — without calling it, the event object alone does nothing.'
+    },
+    {
+      q:'How does a listener access data attached via { detail: {...} }?',
+      options:['event.data','event.detail','event.info','It cannot be accessed'],
+      correct:1,
+      explain:'The detail property on the event object carries whatever data was attached when the event was created.'
+    },
+    {
+      q:'Why is dispatching a custom event useful compared to calling a function directly?',
+      options:['It\'s always faster','Multiple independent listeners can react to the same event without the dispatcher needing to know about any of them','It\'s required by JavaScript','There is no real benefit'],
+      correct:1,
+      explain:'The part of the code that dispatches the event stays decoupled from whatever reacts to it — any number of listeners can be added later without changing the dispatching code.'
+    }
+  ],
+  sandboxStarter3:`<button id="addBtn" type="button">Add Item</button>
+<p id="status"></p>
+<p id="total"></p>
+
+<script>
+  document.querySelector('#addBtn').addEventListener('click', function(){
+    const event = new CustomEvent('itemAdded', { detail: { name: 'Notebook', price: 5 } });
+    document.dispatchEvent(event);
+  });
+
+  document.addEventListener('itemAdded', function(e){
+    document.querySelector('#status').textContent = 'Added: ' + e.detail.name;
+  });
+
+  document.addEventListener('itemAdded', function(e){
+    document.querySelector('#total').textContent = 'Total: $' + e.detail.price;
+  });
+</script>
+`,
+  stretchChallenge:{
+    title:'Chain two custom events together',
+    desc:`Finished early? On #addBtn click, dispatch 'itemAdded' with { detail: { price: 10 } }. The 'itemAdded'
+      listener should THEN dispatch a SECOND custom event, 'totalUpdated', with { detail: { total: price + 2 }
+      } (adding a flat $2 shipping fee) — and a separate listener for 'totalUpdated' sets #total to "Total: $" +
+      total (should read "Total: $12").`,
+    starter:`<button id="addBtn" type="button">Add Item</button>
+<p id="total"></p>
+
+<script>
+  document.querySelector('#addBtn').addEventListener('click', function(){
+    const event = new CustomEvent('itemAdded', { detail: { price: 10 } });
+    document.dispatchEvent(event);
+  });
+
+  document.addEventListener('itemAdded', function(e){
+    // Dispatch a SECOND event, 'totalUpdated', with { detail: { total: e.detail.price + 2 } }
+  });
+
+  // Add a listener for 'totalUpdated' that sets #total to "Total: $" + e.detail.total
+</script>
+`,
+    tests:[
+      {type:'dom', selector:'#total', contains:'Total: $12', label:'#total shows "Total: $12" (10 + 2 shipping), via a chained second event'}
+    ]
+  }
+},
 ];
 
 const WD_ADVANCED_MP1 = {
