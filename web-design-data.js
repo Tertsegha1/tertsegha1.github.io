@@ -1862,6 +1862,1319 @@ const WD_MP2 = {
   ]
 };
 
+/* =========================================================================
+   Web Design Academy — Intermediate level
+   Focus: CSS depth (variables, transitions, pseudo-classes) + JS
+   interactivity (validation, localStorage, rendering lists) + accessibility.
+   ========================================================================= */
+
+const WD_INTERMEDIATE_WEEKS = [
+{
+  key:'week1', num:1, title:'Cleaner CSS: Variables and Custom Properties',
+  scenarioTag:'Real world: your site is growing and repeating colors everywhere',
+  scenario:`Your personal site now has several pages, and you keep retyping the same brand color and spacing
+    values in rule after rule. CSS custom properties (often just called "CSS variables") let you define a value
+    once and reuse it everywhere — change it in one place, and every rule that uses it updates automatically.`,
+  objectives:[
+    'Understand what a CSS custom property is and why it helps',
+    'Define variables inside :root',
+    'Use var() to apply a variable\'s value',
+    'Reuse the same variable across multiple rules and selectors'
+  ],
+  conceptHtml:`
+    <p>A <strong>CSS custom property</strong> (a "CSS variable") is a value you name once and reuse anywhere. You
+    define it inside <code>:root</code> — a selector that matches the whole page — using two dashes:
+    <code>:root { --brand-color: #4338ca; }</code>.</p>
+    <p>To use it, wrap the name in <code>var(...)</code>: <code>h1 { color: var(--brand-color); }</code>. The
+    browser resolves <code>var(--brand-color)</code> to <code>#4338ca</code> when it paints the page.</p>
+    <p>The real power: reuse the same variable across completely different properties and selectors — a heading's
+    text color, a box's border color, anything — and updating the one <code>:root</code> line updates all of
+    them at once.</p>
+    <h3>Let's break down the starter code, line by line</h3>
+    <pre class="code-block">&lt;style&gt;
+  :root {
+    --brand-color: #4338ca;
+  }
+  h1 {
+    color: var(--brand-color);
+  }
+&lt;/style&gt;
+&lt;h1&gt;Welcome to my page&lt;/h1&gt;</pre>
+    <ul>
+      <li><code>:root { --brand-color: #4338ca; }</code> — declares a variable named <code>--brand-color</code>
+        with the value <code>#4338ca</code>. The <strong>double dash</strong> at the start is what makes it a
+        custom property rather than a regular CSS keyword.</li>
+      <li><code>color: var(--brand-color);</code> — instead of writing <code>#4338ca</code> directly, this asks
+        the browser to look up whatever <code>--brand-color</code> currently means and use that.</li>
+      <li>Nothing about the &lt;h1&gt; itself changed — it's still a plain heading. All the new behaviour lives in
+        the &lt;style&gt; block.</li>
+    </ul>
+    <p>Now look at the second example, which reuses the same variable in a second place and adds a spacing
+    variable too:</p>
+    <pre class="code-block">&lt;style&gt;
+  :root {
+    --brand-color: #4338ca;
+    --card-padding: 16px;
+  }
+  .card {
+    padding: var(--card-padding);
+    border: 2px solid var(--brand-color);
+  }
+&lt;/style&gt;
+&lt;div class="card"&gt;A card that reuses both variables&lt;/div&gt;</pre>
+    <ul>
+      <li><code>--card-padding: 16px;</code> — a second variable, for a spacing value this time, not a color.
+        Variables can hold any CSS value: colors, lengths, even font names.</li>
+      <li><code>border: 2px solid var(--brand-color);</code> — the <strong>same</strong> <code>--brand-color</code>
+        from the heading is reused here for a border instead of a text color — one value, two completely
+        different properties.</li>
+    </ul>`,
+  sandboxStarter:`<style>
+  :root {
+    --brand-color: #4338ca;
+  }
+  h1 {
+    color: var(--brand-color);
+  }
+</style>
+<h1>Welcome to my page</h1>
+`,
+  sandboxStarter2:`<style>
+  :root {
+    --brand-color: #4338ca;
+    --card-padding: 16px;
+  }
+  .card {
+    padding: var(--card-padding);
+    border: 2px solid var(--brand-color);
+  }
+</style>
+<div class="card">A card that reuses both variables</div>
+`,
+  exercises:[
+    {
+      title:'Define and use a color variable',
+      desc:`Inside a &lt;style&gt; block, define a variable called --main-color inside :root with any color other
+        than black, then use var(--main-color) to set your &lt;h1&gt;'s text color.`,
+      starter:`<h1>My Page</h1>
+<!-- Add a <style> block above defining --main-color and using it on the h1 -->
+`,
+      tests:[
+        {type:'dom', selector:'style', contains:'var(', label:'Uses var() rather than a hardcoded value'},
+        {type:'computed-style', selector:'h1', prop:'color', notEqual:'rgb(0, 0, 0)', label:'Heading uses the custom color'}
+      ]
+    },
+    {
+      title:'Add a spacing variable',
+      desc:`Define a variable called --card-padding (e.g. 20px) and use it as the padding on a &lt;div
+        class="card"&gt;.`,
+      starter:`<style>
+  :root {
+    --main-color: #4338ca;
+  }
+</style>
+<div class="card">Card content</div>
+<!-- Add --card-padding to :root and apply it as the card's padding -->
+`,
+      tests:[
+        {type:'dom', selector:'style', contains:'var(', label:'Uses var() rather than a hardcoded value'},
+        {type:'computed-style', selector:'.card', prop:'paddingTop', atLeastPx:10, label:'.card has padding from the variable'}
+      ]
+    },
+    {
+      title:'Round the corners with a variable',
+      desc:`Define a variable called --radius (e.g. 12px) and use it as the border-radius of a &lt;button
+        class="btn"&gt;, giving it visibly rounded corners.`,
+      starter:`<button class="btn">Click me</button>
+<!-- Add a <style> block defining --radius and applying it as the button's border-radius -->
+`,
+      tests:[
+        {type:'dom', selector:'style', contains:'var(', label:'Uses var() rather than a hardcoded value'},
+        {type:'computed-style', selector:'.btn', prop:'borderTopLeftRadius', atLeastPx:8, label:'.btn has rounded corners from --radius'}
+      ]
+    },
+    {
+      title:'Combine two variables into a themed box',
+      desc:`Define --bg-color and --text-color in :root, then apply both to a &lt;div class="theme-box"&gt; — the
+        background from --bg-color, the text color from --text-color.`,
+      starter:`<div class="theme-box">Themed content</div>
+<!-- Add a <style> block defining --bg-color and --text-color, and apply both to .theme-box -->
+`,
+      tests:[
+        {type:'dom', selector:'style', contains:'var(', label:'Uses var() rather than a hardcoded value'},
+        {type:'computed-style', selector:'.theme-box', prop:'backgroundColor', notEqual:'rgba(0, 0, 0, 0)', label:'.theme-box has a background from --bg-color'},
+        {type:'computed-style', selector:'.theme-box', prop:'color', notEqual:'rgb(0, 0, 0)', label:'.theme-box text uses --text-color'}
+      ]
+    },
+    {
+      title:'Reuse one variable in two places',
+      desc:`Define --brand-color: #4338ca; once in :root. Reuse that exact same variable as BOTH the color of an
+        &lt;h1&gt; AND the border-color of a &lt;div class="box"&gt; with a visible border (e.g. border: 2px solid
+        var(--brand-color);).`,
+      starter:`<h1>My Page</h1>
+<div class="box">A box with a matching border</div>
+<!-- Add a <style> block defining --brand-color: #4338ca; and reusing it on both the h1 color and the .box border-color -->
+`,
+      tests:[
+        {type:'dom', selector:'style', contains:'var(', label:'Uses var() rather than a hardcoded value'},
+        {type:'computed-style', selector:'h1', prop:'color', equals:'rgb(67, 56, 202)', label:'Heading color comes from --brand-color'},
+        {type:'computed-style', selector:'.box', prop:'borderTopColor', equals:'rgb(67, 56, 202)', label:'.box border color comes from the same --brand-color'}
+      ]
+    },
+    {
+      title:'Override a variable in a more specific scope',
+      desc:`Define --accent: blue; in :root, and use var(--accent) as the color of a &lt;p id="outside"&gt;. Then
+        add a rule for .alert that redefines --accent: red; and use var(--accent) as the color of a &lt;p&gt;
+        INSIDE a &lt;div class="alert"&gt;. The outside paragraph should stay blue while the one inside .alert
+        turns red — the same variable name, two different values depending on scope.`,
+      starter:`<p id="outside">Regular text</p>
+<div class="alert">
+  <p>Alert text</p>
+</div>
+<!-- Add a <style> block: :root sets --accent: blue; .alert overrides --accent: red; both paragraphs use var(--accent) -->
+`,
+      tests:[
+        {type:'dom', selector:'style', contains:'var(', label:'Uses var() rather than a hardcoded value'},
+        {type:'computed-style', selector:'#outside', prop:'color', equals:'rgb(0, 0, 255)', label:'Text outside .alert stays blue'},
+        {type:'computed-style', selector:'.alert p', prop:'color', equals:'rgb(255, 0, 0)', label:'Text inside .alert is overridden to red'}
+      ]
+    }
+  ],
+  quiz:[
+    {
+      q:'Where do you normally declare a CSS variable so the whole page can use it?',
+      options:['Inside :root { }','Inside <head>','Inside var()','Inside the <title> tag'],
+      correct:0,
+      explain:':root matches the whole document, so variables declared there are available everywhere.'
+    },
+    {
+      q:'How do you apply a custom property called --main-color to a text color?',
+      options:['color: --main-color;','color: main-color;','color: var(--main-color);','color: $main-color;'],
+      correct:2,
+      explain:'var(--name) tells the browser to look up and use that custom property\'s current value.'
+    },
+    {
+      q:'What is the main benefit of using CSS variables for colors?',
+      options:['Pages load faster','You can change the color everywhere by editing one line','It makes the HTML shorter','Browsers require them'],
+      correct:1,
+      explain:'Reuse is the whole point — one edit to the :root declaration updates every rule that uses var().'
+    },
+    {
+      q:'Can the same --brand-color variable be reused for a border-color as well as a text color?',
+      options:['No, one variable = one property only','Yes, a variable\'s value can be used by any property that accepts that kind of value','Only if you rename it','Only inside the same selector'],
+      correct:1,
+      explain:'A variable just holds a value — any property that accepts that type of value (like a color) can use it.'
+    }
+  ],
+  sandboxStarter3:`<style>
+  :root {
+    --bg-color: #eef0fc;
+    --text-color: #211f3d;
+  }
+  .theme-box {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    padding: 12px;
+  }
+  .theme-box h2 {
+    color: var(--brand-color, #4338ca);
+  }
+</style>
+<div class="theme-box">
+  <h2>Themed section</h2>
+  <p>This box uses two variables together: a background and a text color.</p>
+</div>
+`,
+  stretchChallenge:{
+    title:'Build a themed badge from three variables',
+    desc:`Finished early? Define three variables in :root — --primary (a background color), --secondary (a text
+      color), and --radius (e.g. 12px) — then build a &lt;span class="badge"&gt; that uses all three: background
+      from --primary, text color from --secondary, and border-radius from --radius.`,
+    starter:`<span class="badge">New!</span>
+<!-- Add a <style> block defining --primary, --secondary, and --radius, and apply all 3 to .badge -->
+`,
+    tests:[
+      {type:'dom', selector:'style', contains:'var(', label:'Uses var() rather than hardcoded values'},
+      {type:'computed-style', selector:'.badge', prop:'backgroundColor', notEqual:'rgba(0, 0, 0, 0)', label:'.badge has a background color from --primary'},
+      {type:'computed-style', selector:'.badge', prop:'borderTopLeftRadius', atLeastPx:4, label:'.badge has rounded corners from --radius'}
+    ]
+  }
+},
+{
+  key:'week2', num:2, title:'Transitions and Simple Animation',
+  scenarioTag:'Real world: making buttons and cards feel alive',
+  scenario:`Right now everything on your site snaps instantly between states — a button's color changes the
+    instant you hover over it, with no smoothness at all. Real sites use CSS transitions and animations to make
+    those changes feel natural, and to draw attention to things without needing any JavaScript.`,
+  objectives:[
+    'Understand what the transition property does',
+    'Change styles on :hover and :focus',
+    'Smoothly animate a property change with transition',
+    'Build a simple looping animation with @keyframes'
+  ],
+  conceptHtml:`
+    <p>By default, CSS changes happen instantly. The <code>transition</code> property tells the browser to
+    smoothly animate a property change over time instead: <code>transition: background-color 0.3s;</code> means
+    "whenever background-color changes on this element, animate it over 0.3 seconds."</p>
+    <p><code>:hover</code> is a pseudo-class — a selector that only matches while the mouse is over the element.
+    Combine it with <code>transition</code> on the element's normal (non-hover) rule, and the change from normal to
+    hover state animates smoothly instead of snapping.</p>
+    <p>For a repeating or more complex animation (not tied to hovering), use <code>@keyframes</code> to describe
+    the steps, then apply it with the <code>animation</code> property: <code>animation: spin 2s linear
+    infinite;</code>.</p>
+    <h3>Let's break down the starter code, line by line</h3>
+    <pre class="code-block">&lt;style&gt;
+  .btn {
+    background-color: #4338ca;
+    transition: background-color 0.3s;
+  }
+  .btn:hover {
+    background-color: #6366f1;
+  }
+&lt;/style&gt;
+&lt;button class="btn"&gt;Hover me&lt;/button&gt;</pre>
+    <ul>
+      <li><code>transition: background-color 0.3s;</code> — lives on the <strong>normal</strong> <code>.btn</code>
+        rule, not inside <code>:hover</code>. It tells the browser "animate this property whenever it changes,"
+        no matter what causes the change.</li>
+      <li><code>.btn:hover { background-color: #6366f1; }</code> — a separate rule that only applies while the
+        mouse is over the button. The moment it applies, <code>background-color</code> changes — and because of
+        the <code>transition</code> above, that change animates instead of snapping.</li>
+    </ul>
+    <p>Now look at the second example, which animates a transform and adds a @keyframes animation:</p>
+    <pre class="code-block">&lt;style&gt;
+  .card {
+    transition: transform 0.3s;
+  }
+  .card:hover {
+    transform: scale(1.05);
+  }
+  @keyframes pulse {
+    0%   { opacity: 1; }
+    50%  { opacity: 0.5; }
+    100% { opacity: 1; }
+  }
+  .badge {
+    animation: pulse 1.5s infinite;
+  }
+&lt;/style&gt;
+&lt;div class="card"&gt;Hover to grow&lt;/div&gt;
+&lt;span class="badge"&gt;NEW&lt;/span&gt;</pre>
+    <ul>
+      <li><code>transform: scale(1.05)</code> on hover, combined with <code>transition: transform 0.3s;</code> on
+        the base rule, makes the card smoothly grow slightly larger while hovered.</li>
+      <li><code>@keyframes pulse { 0%{...} 50%{...} 100%{...} }</code> describes a sequence of steps as
+        percentages of the animation's duration — here, fading from fully visible, to half-visible, and back.</li>
+      <li><code>animation: pulse 1.5s infinite;</code> applies that keyframe sequence to <code>.badge</code>,
+        repeating forever — unlike <code>transition</code>, this animation plays automatically, with no hover or
+        other trigger needed.</li>
+    </ul>`,
+  sandboxStarter:`<style>
+  .btn {
+    background-color: #4338ca;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    transition: background-color 0.3s;
+  }
+  .btn:hover {
+    background-color: #6366f1;
+  }
+</style>
+<button class="btn">Hover me</button>
+`,
+  sandboxStarter2:`<style>
+  .card {
+    padding: 16px;
+    border: 1px solid #ccc;
+    transition: transform 0.3s;
+  }
+  .card:hover {
+    transform: scale(1.05);
+  }
+</style>
+<div class="card">Hover to grow</div>
+`,
+  exercises:[
+    {
+      title:'Animate a button on hover',
+      desc:`Give a &lt;button class="btn"&gt; a transition on background-color (e.g. transition:
+        background-color 0.3s;) on its normal rule, then add a .btn:hover rule that changes the background-color
+        to a different value.`,
+      starter:`<button class="btn">Hover me</button>
+<!-- Add a <style> block: .btn gets a transition, .btn:hover changes background-color -->
+`,
+      tests:[
+        {type:'computed-style', selector:'.btn', prop:'transitionDuration', notEqual:'0s', label:'.btn has a transition set'},
+        {type:'dom', selector:'style', contains:':hover', label:'Includes a :hover rule'}
+      ]
+    },
+    {
+      title:'Grow a card on hover',
+      desc:`Give a &lt;div class="card"&gt; a transition on transform, then a .card:hover rule that applies
+        transform: scale(1.05) (or similar) so the card visibly grows while hovered.`,
+      starter:`<div class="card">Hover to grow</div>
+<!-- Add a <style> block: .card gets a transition on transform, .card:hover scales it up -->
+`,
+      tests:[
+        {type:'computed-style', selector:'.card', prop:'transitionDuration', notEqual:'0s', label:'.card has a transition set'},
+        {type:'dom', selector:'style', contains:':hover', label:'Includes a :hover rule'},
+        {type:'dom', selector:'style', contains:'transform:', label:'Applies a transform: declaration on hover'}
+      ]
+    },
+    {
+      title:'Play a looping animation',
+      desc:`Write a @keyframes rule called "fade" that goes from opacity: 1 to opacity: 0.3 and back to opacity: 1
+        (using 0%, 50%, 100% steps), then apply animation: fade 2s infinite; to a &lt;span class="tag"&gt;.`,
+      starter:`<span class="tag">Live</span>
+<!-- Add a <style> block: @keyframes fade with 0%/50%/100% steps, .tag uses animation: fade ... infinite -->
+`,
+      tests:[
+        {type:'dom', selector:'style', contains:'@keyframes', label:'Defines a @keyframes rule'},
+        {type:'dom', selector:'style', contains:'50%', label:'Uses a 3-step animation (0%, 50%, 100%)'},
+        {type:'computed-style', selector:'.tag', prop:'animationName', notEqual:'none', label:'.tag has the animation applied'}
+      ]
+    },
+    {
+      title:'Change two properties together on hover',
+      desc:`Give a &lt;div class="tile"&gt; a transition on BOTH background-color and transform, then a
+        .tile:hover rule that changes both properties at once (e.g. a new background-color AND transform: scale
+        or translateY).`,
+      starter:`<div class="tile">Hover me</div>
+<!-- Add a <style> block: .tile transitions background-color and transform, .tile:hover changes both -->
+`,
+      tests:[
+        {type:'dom', selector:'style', contains:':hover', label:'Includes a :hover rule'},
+        {type:'dom', selector:'style', contains:'background-color', label:'Changes background-color'},
+        {type:'dom', selector:'style', contains:'transform', label:'Changes transform too'}
+      ]
+    },
+    {
+      title:'Style an input on focus',
+      desc:`Give an &lt;input&gt; a transition on border-color, then an input:focus rule that changes
+        border-color to a different, visible color — so clicking into the input smoothly highlights it.`,
+      starter:`<input type="text" placeholder="Click me">
+<!-- Add a <style> block: input gets a transition, input:focus changes border-color -->
+`,
+      tests:[
+        {type:'computed-style', selector:'input', prop:'transitionDuration', notEqual:'0s', label:'input has a transition set'},
+        {type:'dom', selector:'style', contains:':focus', label:'Includes a :focus rule'}
+      ]
+    },
+    {
+      title:'Play an animation a fixed number of times',
+      desc:`Write a @keyframes rule called "bounce" (any two-or-more-step effect, e.g. moving transform:
+        translateY), then apply it to a &lt;div class="alert-icon"&gt; with animation: bounce 0.4s ease 3; — the
+        "3" means it plays exactly 3 times and then stops, unlike infinite.`,
+      starter:`<div class="alert-icon">!</div>
+<!-- Add a <style> block: @keyframes bounce, .alert-icon uses animation: bounce ... 3; (not infinite) -->
+`,
+      tests:[
+        {type:'dom', selector:'style', contains:'@keyframes', label:'Defines a @keyframes rule'},
+        {type:'computed-style', selector:'.alert-icon', prop:'animationName', notEqual:'none', label:'.alert-icon has the animation applied'},
+        {type:'computed-style', selector:'.alert-icon', prop:'animationIterationCount', equals:'3', label:'Animation is set to play exactly 3 times, not infinite'}
+      ]
+    }
+  ],
+  quiz:[
+    {
+      q:'Where should the transition property normally be written?',
+      options:['Inside the :hover rule','On the element\'s normal (non-hover) rule','Inside @keyframes','Inside <head>'],
+      correct:1,
+      explain:'transition belongs on the base rule — it tells the browser to animate ANY change to that property, however it happens.'
+    },
+    {
+      q:'Which pseudo-class matches an element while the mouse is over it?',
+      options:[':active',':hover',':before',':root'],
+      correct:1,
+      explain:':hover matches only while the pointer is currently over the element.'
+    },
+    {
+      q:'What is @keyframes used for?',
+      options:['Defining a CSS variable','Describing the steps of a custom animation','Selecting an element by class','Importing a font'],
+      correct:1,
+      explain:'@keyframes names a sequence of style steps (like 0%, 50%, 100%) that animation can then play.'
+    },
+    {
+      q:'What does animation: pulse 1.5s infinite; do differently from a :hover transition?',
+      options:['Nothing, they\'re identical','It plays automatically and repeats forever, with no hover needed','It only works on text','It requires JavaScript'],
+      correct:1,
+      explain:'animation runs on its own schedule (here, forever) rather than needing a trigger like :hover.'
+    }
+  ],
+  sandboxStarter3:`<style>
+  @keyframes pulse {
+    0%   { opacity: 1; }
+    50%  { opacity: 0.5; }
+    100% { opacity: 1; }
+  }
+  .badge {
+    display: inline-block;
+    padding: 4px 10px;
+    background: #ef4444;
+    color: white;
+    animation: pulse 1.5s infinite;
+  }
+</style>
+<span class="badge">NEW</span>
+`,
+  stretchChallenge:{
+    title:'Build a spinning loader',
+    desc:`Finished early? Write a @keyframes rule called "spin" that rotates an element a full turn (from
+      transform: rotate(0deg) to transform: rotate(360deg)), then apply animation: spin 1s linear infinite; to a
+      &lt;div class="loader"&gt;.`,
+    starter:`<div class="loader">‌</div>
+<!-- Add a <style> block: @keyframes spin rotates 0deg to 360deg, .loader uses animation: spin ... infinite -->
+`,
+    tests:[
+      {type:'dom', selector:'style', contains:'@keyframes', label:'Defines a @keyframes rule'},
+      {type:'computed-style', selector:'.loader', prop:'animationName', notEqual:'none', label:'.loader has an animation applied'}
+    ]
+  }
+},
+{
+  key:'week3', num:3, title:'More Selectors: Pseudo-classes and Combinators',
+  scenarioTag:'Real world: styling a list without adding classes to every item',
+  scenario:`Your noticeboard's list items all look identical right now, and adding a class to every single
+    &lt;li&gt; just to style them slightly differently would get tedious fast. More powerful selectors let you
+    target elements by their position or relationship to other elements — no extra classes needed.`,
+  objectives:[
+    'Select an element based on its position with :nth-child',
+    'Select the first or last child with :first-child / :last-child',
+    'Understand the descendant combinator (space)',
+    'Understand the direct child combinator (>)'
+  ],
+  conceptHtml:`
+    <p>So far every selector has matched by tag, class, or id. <strong>Pseudo-class</strong> selectors like
+    <code>:nth-child(2)</code> match based on an element's position among its siblings instead — no extra class
+    needed. <code>li:nth-child(2)</code> matches only the 2nd &lt;li&gt; inside its parent.</p>
+    <p><code>:first-child</code> and <code>:last-child</code> are shortcuts for the first and last position.</p>
+    <p><strong>Combinators</strong> describe relationships between selectors. A space means "descendant, anywhere
+    inside": <code>ul li</code> matches any &lt;li&gt; inside any &lt;ul&gt;, no matter how deeply nested. A
+    <code>&gt;</code> means "direct child only": <code>ul &gt; li</code> matches only &lt;li&gt;s that are
+    immediate children of a &lt;ul&gt;, not ones nested inside a further &lt;ul&gt; inside that first one.</p>
+    <h3>Let's break down the starter code, line by line</h3>
+    <pre class="code-block">&lt;style&gt;
+  li:nth-child(2) {
+    font-weight: bold;
+  }
+  li:first-child {
+    color: #4338ca;
+  }
+&lt;/style&gt;
+&lt;ul&gt;
+  &lt;li&gt;First item&lt;/li&gt;
+  &lt;li&gt;Second item&lt;/li&gt;
+  &lt;li&gt;Third item&lt;/li&gt;
+&lt;/ul&gt;</pre>
+    <ul>
+      <li><code>li:nth-child(2)</code> — matches only the 2nd &lt;li&gt; among its siblings, here "Second item".
+        <code>nth-child</code> counts position among ALL siblings, not just &lt;li&gt; ones.</li>
+      <li><code>li:first-child</code> — matches an &lt;li&gt; only if it's also the very first child of its
+        parent — here, "First item".</li>
+    </ul>
+    <p>Now look at the second example, which uses combinators:</p>
+    <pre class="code-block">&lt;style&gt;
+  .board li {
+    color: #4338ca;
+  }
+  .board &gt; p {
+    font-style: italic;
+  }
+&lt;/style&gt;
+&lt;div class="board"&gt;
+  &lt;p&gt;A note&lt;/p&gt;
+  &lt;ul&gt;&lt;li&gt;An item&lt;/li&gt;&lt;/ul&gt;
+&lt;/div&gt;</pre>
+    <ul>
+      <li><code>.board li</code> (a space) — matches any &lt;li&gt; anywhere inside .board, no matter how deeply
+        nested inside other elements.</li>
+      <li><code>.board &gt; p</code> — matches a &lt;p&gt; only if it's a DIRECT child of .board, not one buried
+        inside another element inside .board.</li>
+    </ul>`,
+  sandboxStarter:`<style>
+  li:nth-child(2) {
+    font-weight: bold;
+  }
+  li:first-child {
+    color: #4338ca;
+  }
+</style>
+<ul>
+  <li>First item</li>
+  <li>Second item</li>
+  <li>Third item</li>
+</ul>
+`,
+  sandboxStarter2:`<style>
+  .board li {
+    color: #4338ca;
+  }
+  .board > p {
+    font-style: italic;
+  }
+</style>
+<div class="board">
+  <p>A note</p>
+  <ul><li>An item</li></ul>
+</div>
+`,
+  exercises:[
+    {
+      title:'Style the first list item',
+      desc:`Add a li:first-child rule that gives the first &lt;li&gt; in a &lt;ul&gt; a different color than the
+        others (which should stay unstyled/black).`,
+      starter:`<ul>
+  <li>First item</li>
+  <li>Second item</li>
+  <li>Third item</li>
+</ul>
+<!-- Add a <style> block with li:first-child -->
+`,
+      tests:[
+        {type:'dom', selector:'style', contains:':first-child', label:'Uses :first-child'},
+        {type:'computed-style', selector:'li:first-child', prop:'color', notEqual:'rgb(0, 0, 0)', label:'First item has a non-default color'}
+      ]
+    },
+    {
+      title:'Style the last list item',
+      desc:`Add a li:last-child rule that gives the LAST &lt;li&gt; a different color.`,
+      starter:`<ul>
+  <li>First item</li>
+  <li>Second item</li>
+  <li>Third item</li>
+</ul>
+<!-- Add a <style> block with li:last-child -->
+`,
+      tests:[
+        {type:'dom', selector:'style', contains:':last-child', label:'Uses :last-child'},
+        {type:'computed-style', selector:'li:last-child', prop:'color', notEqual:'rgb(0, 0, 0)', label:'Last item has a non-default color'}
+      ]
+    },
+    {
+      title:'Target only direct children',
+      desc:`Add a rule using the &gt; combinator (e.g. .board &gt; p) that styles a &lt;p&gt; that is a DIRECT
+        child of &lt;div class="board"&gt; — give it a non-default color. A &lt;p&gt; nested inside another
+        element inside .board should NOT be affected.`,
+      starter:`<div class="board">
+  <p id="direct">A direct paragraph</p>
+  <div><p id="nested">A nested paragraph</p></div>
+</div>
+<!-- Add a <style> block using .board > p -->
+`,
+      tests:[
+        {type:'dom', selector:'style', contains:'>', label:'Uses the > direct-child combinator'},
+        {type:'computed-style', selector:'#direct', prop:'color', notEqual:'rgb(0, 0, 0)', label:'The direct child paragraph is styled'},
+        {type:'computed-style', selector:'#nested', prop:'color', equals:'rgb(0, 0, 0)', label:'The nested (non-direct) paragraph is untouched'}
+      ]
+    },
+    {
+      title:'Style any descendant, at any depth',
+      desc:`Add a rule using the descendant combinator (a space, e.g. .board p) that styles EVERY &lt;p&gt; inside
+        &lt;div class="board"&gt;, no matter how deeply nested — including one wrapped inside another &lt;div&gt;.`,
+      starter:`<div class="board">
+  <p id="direct">A direct paragraph</p>
+  <div><p id="nested">A nested paragraph</p></div>
+</div>
+<!-- Add a <style> block using .board p (a space, not >) so BOTH paragraphs are styled -->
+`,
+      tests:[
+        {type:'computed-style', selector:'#direct', prop:'color', notEqual:'rgb(0, 0, 0)', label:'The direct paragraph is styled'},
+        {type:'computed-style', selector:'#nested', prop:'color', notEqual:'rgb(0, 0, 0)', label:'The nested paragraph is ALSO styled (descendant combinator reaches any depth)'}
+      ]
+    },
+    {
+      title:'Style one specific position with nth-child',
+      desc:`Use li:nth-child(2) specifically to give ONLY the 2nd &lt;li&gt; in a list a background color. The
+        1st and 3rd items should be unaffected.`,
+      starter:`<ul>
+  <li id="item1">First item</li>
+  <li id="item2">Second item</li>
+  <li id="item3">Third item</li>
+</ul>
+<!-- Add a <style> block with li:nth-child(2) giving only the 2nd item a background color -->
+`,
+      tests:[
+        {type:'dom', selector:'style', contains:'nth-child(2)', label:'Uses :nth-child(2)'},
+        {type:'computed-style', selector:'#item2', prop:'backgroundColor', notEqual:'rgba(0, 0, 0, 0)', label:'Only the 2nd item has a background color'},
+        {type:'computed-style', selector:'#item1', prop:'backgroundColor', equals:'rgba(0, 0, 0, 0)', label:'The 1st item is unaffected'}
+      ]
+    },
+    {
+      title:'Combine nth-child with a descendant selector',
+      desc:`Inside &lt;div class="board"&gt;, use .board li:nth-child(even) to style every EVEN-numbered
+        &lt;li&gt; anywhere inside .board with a background color — combining a descendant selector with a
+        position-based pseudo-class in one rule.`,
+      starter:`<div class="board">
+  <ul>
+    <li id="row1">Row 1</li>
+    <li id="row2">Row 2</li>
+    <li id="row3">Row 3</li>
+    <li id="row4">Row 4</li>
+  </ul>
+</div>
+<!-- Add a <style> block using .board li:nth-child(even) -->
+`,
+      tests:[
+        {type:'dom', selector:'style', contains:'nth-child(even)', label:'Uses :nth-child(even)'},
+        {type:'computed-style', selector:'#row2', prop:'backgroundColor', notEqual:'rgba(0, 0, 0, 0)', label:'Row 2 (even) has a background color'},
+        {type:'computed-style', selector:'#row1', prop:'backgroundColor', equals:'rgba(0, 0, 0, 0)', label:'Row 1 (odd) is unaffected'}
+      ]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does li:nth-child(2) select?',
+      options:['Every 2nd list on the page','The 2nd child among its siblings, if it\'s an li','Every li after the 2nd one','The 2nd word in the li'],
+      correct:1,
+      explain:':nth-child(2) matches an element only if it is BOTH an li AND the 2nd child of its parent.'
+    },
+    {
+      q:'What does a space between two selectors mean, e.g. ".board li"?',
+      options:['A direct child only','Any descendant, at any depth of nesting','An error','The same as a comma'],
+      correct:1,
+      explain:'The descendant combinator (space) matches an element anywhere inside the other, no matter how deep.'
+    },
+    {
+      q:'What does .board > p match that .board p would NOT?',
+      options:['Nothing, they\'re identical','Only <p> elements that are DIRECT children of .board','Only <p> elements outside .board','Every element in .board'],
+      correct:1,
+      explain:'> restricts the match to direct children only, excluding <p>s nested inside other elements within .board.'
+    },
+    {
+      q:'Which selector matches the very first child of its parent, whatever tag it is?',
+      options:[':nth-child(1) or :first-child',':start',':top','#first'],
+      correct:0,
+      explain:':first-child and :nth-child(1) both match the first child position.'
+    }
+  ],
+  sandboxStarter3:`<style>
+  .list li:nth-child(odd) {
+    background-color: #eef0fc;
+  }
+  .list > li:last-child {
+    font-weight: bold;
+  }
+</style>
+<ul class="list">
+  <li>Row 1</li>
+  <li>Row 2</li>
+  <li>Row 3</li>
+  <li>Row 4</li>
+</ul>
+`,
+  stretchChallenge:{
+    title:'Stripe every other row',
+    desc:`Finished early? Use li:nth-child(odd) (or :nth-child(2n+1)) to give every ODD-numbered &lt;li&gt; in a
+      list a background color, creating a "striped table" effect — a very common real-world pattern.`,
+    starter:`<ul class="rows">
+  <li>Row 1</li>
+  <li>Row 2</li>
+  <li>Row 3</li>
+  <li>Row 4</li>
+</ul>
+<!-- Add a <style> block striping odd rows with a background color -->
+`,
+    tests:[
+      {type:'dom', selector:'style', contains:'nth-child', label:'Uses :nth-child'},
+      {type:'computed-style', selector:'.rows li:nth-child(1)', prop:'backgroundColor', notEqual:'rgba(0, 0, 0, 0)', label:'Row 1 (odd) has a background color'},
+      {type:'computed-style', selector:'.rows li:nth-child(2)', prop:'backgroundColor', equals:'rgba(0, 0, 0, 0)', label:'Row 2 (even) has no background color'}
+    ]
+  }
+},
+{
+  key:'week4', num:4, title:'Forms That Talk Back: JS Validation',
+  scenarioTag:'Real world: catching a mistake before it\'s submitted',
+  scenario:`Right now, any form on your site accepts whatever a visitor types — an empty name, an email with no
+    @ sign, anything. Real sites check the input with JavaScript and show a helpful message immediately, before
+    the visitor even leaves the page, instead of silently accepting bad data.`,
+  objectives:[
+    'Read what a visitor typed into an input with .value',
+    'Check a value against a simple rule (empty, missing a character, out of range)',
+    'Show and hide an inline error message based on that check',
+    'Check more than one condition before accepting the input'
+  ],
+  conceptHtml:`
+    <p>An &lt;input&gt;'s current text lives in its <code>.value</code> property in JavaScript —
+    <code>document.querySelector('#name').value</code> gets whatever the visitor has typed so far.</p>
+    <p>To validate it, check that value against a rule: is it empty (<code>.trim() === ''</code>)? Does it
+    contain something it should (<code>.includes('@')</code>)? Based on the result, show or hide an inline error
+    message the same way you already know — <code>.style.display = 'block'</code> to show it, <code>'none'</code>
+    to hide it.</p>
+    <p><strong>A note on how this track tests it</strong>: a real site would check this when the form is
+    submitted. Here, we check it when a "Check" button is clicked instead — the exact same validation logic, just
+    triggered a slightly different way, so you can practice it directly.</p>
+    <h3>Let's break down the starter code, line by line</h3>
+    <pre class="code-block">&lt;input id="name" type="text"&gt;
+&lt;button id="checkBtn" type="button"&gt;Check&lt;/button&gt;
+&lt;p id="error" style="display:none;"&gt;Please enter your name&lt;/p&gt;
+
+&lt;script&gt;
+  document.querySelector('#checkBtn').addEventListener('click', function(){
+    var name = document.querySelector('#name').value;
+    if (name.trim() === '') {
+      document.querySelector('#error').style.display = 'block';
+    } else {
+      document.querySelector('#error').style.display = 'none';
+    }
+  });
+&lt;/script&gt;</pre>
+    <ul>
+      <li><code>var name = document.querySelector('#name').value;</code> — reads whatever text is currently
+        inside the input, exactly as the visitor typed it.</li>
+      <li><code>name.trim() === ''</code> — <code>.trim()</code> removes leading/trailing spaces first (so
+        someone typing just spaces still counts as empty), then compares to an empty string.</li>
+      <li>The <code>if</code>/<code>else</code> shows the error when invalid, and explicitly hides it again when
+        valid — without the <code>else</code>, a previously-shown error would stay stuck on screen even after the
+        visitor fixes their input and clicks again.</li>
+    </ul>
+    <p>Now look at the second example, checking for a required character instead of emptiness:</p>
+    <pre class="code-block">&lt;input id="email" type="text"&gt;
+&lt;button id="checkBtn2" type="button"&gt;Check&lt;/button&gt;
+&lt;p id="error2" style="display:none;"&gt;Please enter a valid email&lt;/p&gt;
+
+&lt;script&gt;
+  document.querySelector('#checkBtn2').addEventListener('click', function(){
+    var email = document.querySelector('#email').value;
+    if (!email.includes('@')) {
+      document.querySelector('#error2').style.display = 'block';
+    } else {
+      document.querySelector('#error2').style.display = 'none';
+    }
+  });
+&lt;/script&gt;</pre>
+    <ul>
+      <li><code>!email.includes('@')</code> — <code>.includes('@')</code> checks whether that character appears
+        anywhere in the string; the <code>!</code> flips it to "does NOT include", so the error shows exactly
+        when the @ sign is missing.</li>
+    </ul>`,
+  sandboxStarter:`<input id="name" type="text">
+<button id="checkBtn" type="button">Check</button>
+<p id="error" style="display:none;">Please enter your name</p>
+
+<script>
+  document.querySelector('#checkBtn').addEventListener('click', function(){
+    var name = document.querySelector('#name').value;
+    if (name.trim() === '') {
+      document.querySelector('#error').style.display = 'block';
+    } else {
+      document.querySelector('#error').style.display = 'none';
+    }
+  });
+</script>
+`,
+  sandboxStarter2:`<input id="email" type="text">
+<button id="checkBtn2" type="button">Check</button>
+<p id="error2" style="display:none;">Please enter a valid email</p>
+
+<script>
+  document.querySelector('#checkBtn2').addEventListener('click', function(){
+    var email = document.querySelector('#email').value;
+    if (!email.includes('@')) {
+      document.querySelector('#error2').style.display = 'block';
+    } else {
+      document.querySelector('#error2').style.display = 'none';
+    }
+  });
+</script>
+`,
+  exercises:[
+    {
+      title:'Catch an empty name field',
+      desc:`Add an &lt;input id="name"&gt; (leave it empty), a &lt;button type="button" id="checkBtn"&gt;, and a
+        hidden &lt;p id="error"&gt;. When #checkBtn is clicked, if #name's value is empty (after trimming), show
+        #error.`,
+      starter:`<input id="name" type="text">
+<button id="checkBtn" type="button">Check</button>
+<p id="error" style="display:none;">Please enter your name</p>
+
+<script>
+  // Add a click handler on #checkBtn: if #name is empty, show #error
+</script>
+`,
+      tests:[{type:'computed-style', selector:'#error', prop:'display', notEqual:'none', label:'#error shows when the name field is empty'}]
+    },
+    {
+      title:'Catch a missing @ in an email',
+      desc:`Add an &lt;input id="email"&gt; with the value "not-an-email" (no @ sign), a &lt;button type="button"
+        id="checkBtn"&gt;, and a hidden &lt;p id="error"&gt;. When clicked, if #email's value doesn't include "@",
+        show #error.`,
+      starter:`<input id="email" type="text" value="not-an-email">
+<button id="checkBtn" type="button">Check</button>
+<p id="error" style="display:none;">Please enter a valid email</p>
+
+<script>
+  // Add a click handler on #checkBtn: if #email doesn't include "@", show #error
+</script>
+`,
+      tests:[{type:'computed-style', selector:'#error', prop:'display', notEqual:'none', label:'#error shows when the email is missing an @'}]
+    },
+    {
+      title:'Check a number is in range',
+      desc:`Add an &lt;input id="age" type="number" value="25"&gt;, a &lt;button type="button" id="checkBtn"&gt;,
+        and a hidden &lt;p id="error"&gt;. When clicked, if #age's value (converted with Number(...)) is less than
+        5 or greater than 18, show #error. (25 is out of range, so #error should show.)`,
+      starter:`<input id="age" type="number" value="25">
+<button id="checkBtn" type="button">Check</button>
+<p id="error" style="display:none;">Age must be between 5 and 18</p>
+
+<script>
+  // Add a click handler on #checkBtn: if Number(#age.value) is < 5 or > 18, show #error
+</script>
+`,
+      tests:[{type:'computed-style', selector:'#error', prop:'display', notEqual:'none', label:'#error shows when the age is out of range'}]
+    },
+    {
+      title:'Check two fields together',
+      desc:`Add &lt;input id="name" value="Ada"&gt; (already valid) and &lt;input id="email"
+        value="not-an-email"&gt; (missing @), a &lt;button type="button" id="checkBtn"&gt;, and a hidden &lt;p
+        id="error"&gt;. When clicked, show #error if EITHER #name is empty OR #email is missing "@" — since the
+        email is invalid here, #error should show even though the name alone is fine.`,
+      starter:`<input id="name" type="text" value="Ada">
+<input id="email" type="text" value="not-an-email">
+<button id="checkBtn" type="button">Check</button>
+<p id="error" style="display:none;">Please fix the highlighted fields</p>
+
+<script>
+  // Add a click handler: if #name is empty OR #email is missing "@", show #error
+</script>
+`,
+      tests:[{type:'computed-style', selector:'#error', prop:'display', notEqual:'none', label:'#error shows because the email is still invalid, even though the name is fine'}]
+    },
+    {
+      title:'Show a success message when valid',
+      desc:`Add an &lt;input id="name" value="Ada"&gt; (already valid), a &lt;button type="button"
+        id="checkBtn"&gt;, and a hidden &lt;p id="success"&gt;. When clicked, if #name is NOT empty, show #success
+        instead of an error — the same if/else pattern, but rewarding valid input this time.`,
+      starter:`<input id="name" type="text" value="Ada">
+<button id="checkBtn" type="button">Check</button>
+<p id="success" style="display:none;">Looks good!</p>
+
+<script>
+  // Add a click handler on #checkBtn: if #name is NOT empty, show #success
+</script>
+`,
+      tests:[{type:'computed-style', selector:'#success', prop:'display', notEqual:'none', label:'#success shows because the name is valid'}]
+    },
+    {
+      title:'Mark an invalid field visually',
+      desc:`Add an &lt;input id="name"&gt; (leave it empty) and a &lt;button type="button" id="checkBtn"&gt;. When
+        clicked, if #name is empty, add an inline style directly to #name giving it a visible red border (e.g.
+        document.querySelector('#name').style.border = '2px solid red';) — marking the field itself, not just
+        showing a separate message.`,
+      starter:`<input id="name" type="text">
+<button id="checkBtn" type="button">Check</button>
+
+<script>
+  // Add a click handler on #checkBtn: if #name is empty, give #name a red border via .style.border
+</script>
+`,
+      tests:[{type:'computed-style', selector:'#name', prop:'borderTopColor', equals:'rgb(255, 0, 0)', label:'#name gets a red border when left empty'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'How do you read what a visitor has typed into an <input id="name">?',
+      options:['document.querySelector(\'#name\').text','document.querySelector(\'#name\').value','document.querySelector(\'#name\').innerHTML','document.querySelector(\'#name\').content'],
+      correct:1,
+      explain:'.value holds the current text inside a form input.'
+    },
+    {
+      q:'Why include an else branch that hides the error, not just an if that shows it?',
+      options:['It\'s required by HTML','Otherwise a previously-shown error stays on screen even after the input becomes valid','It makes the code shorter','It has no real purpose'],
+      correct:1,
+      explain:'Without explicitly hiding it again, a shown error never disappears once the visitor fixes their mistake.'
+    },
+    {
+      q:'What does "abc".includes(\'@\') return?',
+      options:['true','false','undefined','An error'],
+      correct:1,
+      explain:'"abc" does not contain an @ character, so .includes(\'@\') returns false.'
+    },
+    {
+      q:'Why does this track check validation on a button click instead of a real form submission?',
+      options:['Because forms don\'t exist in HTML','Because the sandboxed practice area blocks real form submission, so a click event is used to test the exact same validation logic safely','Because clicking is faster','There is no reason'],
+      correct:1,
+      explain:'The sandbox intentionally blocks real navigation for safety — a button click lets you practice identical validation logic without that restriction.'
+    }
+  ],
+  sandboxStarter3:`<input id="age" type="number" value="12">
+<input id="name" type="text" value="Ben">
+<button id="checkBtn3" type="button">Check</button>
+<p id="error3" style="display:none;">Please fix the highlighted fields</p>
+<p id="success3" style="display:none;">All good!</p>
+
+<script>
+  document.querySelector('#checkBtn3').addEventListener('click', function(){
+    var age = Number(document.querySelector('#age').value);
+    var name = document.querySelector('#name').value;
+    if (name.trim() === '' || age < 5 || age > 18) {
+      document.querySelector('#error3').style.display = 'block';
+      document.querySelector('#success3').style.display = 'none';
+    } else {
+      document.querySelector('#error3').style.display = 'none';
+      document.querySelector('#success3').style.display = 'block';
+    }
+  });
+</script>
+`,
+  stretchChallenge:{
+    title:'Count how many fields are still invalid',
+    desc:`Finished early? Add three inputs (#name, #email, #age) and a &lt;button type="button" id="checkBtn"&gt;.
+      When clicked, count how many of the three are invalid (name empty, email missing @, age outside 5-18), and
+      set a &lt;p id="count"&gt;'s textContent to "X field(s) need fixing" where X is that count.`,
+    starter:`<input id="name" type="text" value="">
+<input id="email" type="text" value="not-an-email">
+<input id="age" type="number" value="12">
+<button id="checkBtn" type="button">Check</button>
+<p id="count"></p>
+<!-- Add a click handler that counts invalid fields and updates #count's textContent -->
+`,
+    tests:[
+      {type:'dom', selector:'#count', contains:'2 field', label:'#count correctly reports 2 invalid fields (empty name, bad email)'}
+    ]
+  }
+},
+{
+  key:'week5', num:5, title:'Multi-Page Navigation',
+  scenarioTag:'Real world: a site is more than one page',
+  scenario:`A real site is never just one page — it's several pages linked together by a shared navigation bar,
+    with the current page's link visibly marked so visitors always know where they are. (Since this practice area
+    grades one page at a time, you'll build the navigation bar itself — the same markup and styling you'd reuse
+    across every real page of a multi-page site.)`,
+  objectives:[
+    'Build a navigation bar with relative links between pages',
+    'Mark the current page\'s link as "active" with a class',
+    'Style the active link differently from the others',
+    'Lay out a nav bar with flexbox and add a hover state'
+  ],
+  conceptHtml:`
+    <p>A <strong>relative link</strong> points to another page in the same site by filename, not a full web
+    address: <code>&lt;a href="about.html"&gt;About&lt;/a&gt;</code> means "the about.html file, next to this
+    one" — much shorter than a full URL, and it keeps working if you move the whole site to a new domain.</p>
+    <p>Every page of a real site repeats the same nav bar, but marks a DIFFERENT link as <code>class="active"</code>
+    depending on which page you're currently on — so a visitor can always see where they are.</p>
+    <h3>Let's break down the starter code, line by line</h3>
+    <pre class="code-block">&lt;nav&gt;
+  &lt;a href="index.html"&gt;Home&lt;/a&gt;
+  &lt;a href="about.html" class="active"&gt;About&lt;/a&gt;
+  &lt;a href="contact.html"&gt;Contact&lt;/a&gt;
+&lt;/nav&gt;
+
+&lt;style&gt;
+  .active {
+    color: #4338ca;
+    font-weight: bold;
+  }
+&lt;/style&gt;</pre>
+    <ul>
+      <li>Three &lt;a&gt; links, each pointing to a different relative filename — this is the same nav bar every
+        page of the site would include.</li>
+      <li><code>class="active"</code> sits only on the "About" link here — on the about.html page itself, this is
+        how a visitor sees "you are here" without any special component or framework.</li>
+      <li><code>.active { color: #4338ca; font-weight: bold; }</code> — the active link is styled distinctly
+        (bold, colored) so it visually stands out from the other two.</li>
+    </ul>
+    <p>Now look at the second example, which lays the nav out with flexbox and adds a hover effect:</p>
+    <pre class="code-block">&lt;style&gt;
+  nav {
+    display: flex;
+    gap: 20px;
+  }
+  nav a {
+    transition: color 0.3s;
+  }
+  nav a:hover {
+    color: #6366f1;
+  }
+&lt;/style&gt;</pre>
+    <ul>
+      <li><code>display: flex; gap: 20px;</code> on &lt;nav&gt; — the same flexbox layout skill from earlier,
+        applied here to lay the links out in a row with even spacing.</li>
+      <li><code>nav a:hover</code> — a hover effect on the REGULAR links, separate from <code>.active</code>'s
+        permanent styling, so hovering over any link gives feedback even if it isn't the current page.</li>
+    </ul>`,
+  sandboxStarter:`<nav>
+  <a href="index.html">Home</a>
+  <a href="about.html" class="active">About</a>
+  <a href="contact.html">Contact</a>
+</nav>
+
+<style>
+  .active {
+    color: #4338ca;
+    font-weight: bold;
+  }
+</style>
+`,
+  sandboxStarter2:`<nav>
+  <a href="index.html">Home</a>
+  <a href="about.html" class="active">About</a>
+  <a href="contact.html">Contact</a>
+</nav>
+
+<style>
+  nav {
+    display: flex;
+    gap: 20px;
+  }
+  nav a {
+    transition: color 0.3s;
+  }
+  nav a:hover {
+    color: #6366f1;
+  }
+  .active {
+    color: #4338ca;
+    font-weight: bold;
+  }
+</style>
+`,
+  exercises:[
+    {
+      title:'Build a 3-link nav bar',
+      desc:`Build a &lt;nav&gt; with 3 &lt;a&gt; links using relative filenames (e.g. href="index.html",
+        "about.html", "contact.html") — not full web addresses.`,
+      starter:`<!-- Build a <nav> with 3 <a> links using relative filenames -->
+`,
+      tests:[
+        {type:'dom-count', selector:'nav a', min:3, label:'nav has at least 3 links'},
+        {type:'dom-attr', selector:'nav a', attr:'href', notEmpty:true, label:'Links have real href values'}
+      ]
+    },
+    {
+      title:'Mark the current page as active',
+      desc:`In a 3-link &lt;nav&gt;, give exactly ONE link class="active" (e.g. the "About" link), and add a
+        .active rule giving it a color different from black.`,
+      starter:`<nav>
+  <a href="index.html">Home</a>
+  <a href="about.html">About</a>
+  <a href="contact.html">Contact</a>
+</nav>
+<!-- Add class="active" to one link, and a <style> block coloring .active -->
+`,
+      tests:[
+        {type:'dom-count', selector:'nav a.active', min:1, label:'Exactly one link has the active class'},
+        {type:'computed-style', selector:'.active', prop:'color', notEqual:'rgb(0, 0, 0)', label:'.active has a non-default color'}
+      ]
+    },
+    {
+      title:'Add a hover effect to nav links',
+      desc:`Give nav a (all nav links) a transition on color, then a nav a:hover rule that changes their color —
+        so hovering over any link gives visible feedback.`,
+      starter:`<nav>
+  <a href="index.html">Home</a>
+  <a href="about.html" class="active">About</a>
+  <a href="contact.html">Contact</a>
+</nav>
+<style>
+  .active { color: #4338ca; }
+</style>
+<!-- Add nav a transition + nav a:hover -->
+`,
+      tests:[
+        {type:'computed-style', selector:'nav a', prop:'transitionDuration', notEqual:'0s', label:'nav a has a transition set'},
+        {type:'dom', selector:'style', contains:':hover', label:'Includes a :hover rule'}
+      ]
+    },
+    {
+      title:'Distinguish active from a regular link',
+      desc:`Give .active a text-decoration: none; (removing its underline) while regular nav links keep their
+        default underline — so the active link looks visually different in a second way, not just color.`,
+      starter:`<nav>
+  <a href="index.html">Home</a>
+  <a href="about.html" class="active">About</a>
+  <a href="contact.html">Contact</a>
+</nav>
+<style>
+  .active { color: #4338ca; }
+</style>
+<!-- Add text-decoration: none; to .active only -->
+`,
+      tests:[
+        {type:'computed-style', selector:'.active', prop:'textDecorationLine', equals:'none', label:'.active has no underline'},
+        {type:'computed-style', selector:'nav a:not(.active)', prop:'textDecorationLine', notEqual:'none', label:'Regular links keep their underline'}
+      ]
+    },
+    {
+      title:'Lay the nav out with flexbox',
+      desc:`Give &lt;nav&gt; display: flex; and a gap so the 3 links sit in a row with visible spacing between
+        them, instead of stacking or touching.`,
+      starter:`<nav>
+  <a href="index.html">Home</a>
+  <a href="about.html" class="active">About</a>
+  <a href="contact.html">Contact</a>
+</nav>
+<!-- Add a <style> block: nav gets display: flex and a gap -->
+`,
+      tests:[
+        {type:'computed-style', selector:'nav', prop:'display', equals:'flex', label:'nav uses display: flex'},
+        {type:'computed-style', selector:'nav', prop:'columnGap', atLeastPx:5, label:'nav has visible spacing (gap) between links'}
+      ]
+    },
+    {
+      title:'Build the complete nav bar',
+      desc:`Combine everything: a flexbox &lt;nav&gt; with 3 relative links, one marked class="active" with a
+        distinct color AND no underline, and a :hover rule on the non-active links.`,
+      starter:`<!-- Build the full nav: flexbox layout, 3 relative links, one .active (colored, no underline), :hover on the rest -->
+`,
+      tests:[
+        {type:'computed-style', selector:'nav', prop:'display', equals:'flex', label:'nav uses display: flex'},
+        {type:'dom-count', selector:'nav a.active', min:1, label:'Exactly one link has the active class'},
+        {type:'computed-style', selector:'.active', prop:'textDecorationLine', equals:'none', label:'.active has no underline'},
+        {type:'dom', selector:'style', contains:':hover', label:'Includes a :hover rule for the other links'}
+      ]
+    }
+  ],
+  quiz:[
+    {
+      q:'What is a relative link, e.g. href="about.html"?',
+      options:['A link to a random page','A link to another page in the same site, by filename rather than full URL','A broken link','A link that only works on mobile'],
+      correct:1,
+      explain:'Relative links point to files in the same site without needing the full domain name.'
+    },
+    {
+      q:'Why mark the current page\'s nav link with class="active"?',
+      options:['It\'s required by HTML','So it can be styled differently, showing the visitor which page they\'re currently on','It makes the link work faster','It hides the link'],
+      correct:1,
+      explain:'"active" is just a class name convention — CSS then styles it distinctly so visitors always know where they are.'
+    },
+    {
+      q:'Which CSS removes an element\'s underline?',
+      options:['text-decoration: none;','underline: false;','text-style: plain;','border: none;'],
+      correct:0,
+      explain:'text-decoration: none; removes underlines (and other line decorations) from text.'
+    },
+    {
+      q:'What does display: flex; on a <nav> typically do to its links?',
+      options:['Hides them','Lays them out in a row (by default), instead of stacking vertically','Makes them bigger','Removes their href attributes'],
+      correct:1,
+      explain:'Flexbox lays children out in a row by default, which is exactly what a horizontal nav bar needs.'
+    }
+  ],
+  sandboxStarter3:`<style>
+  nav {
+    display: flex;
+    gap: 24px;
+    padding: 12px;
+    background-color: #eef0fc;
+  }
+  nav a {
+    text-decoration: none;
+    color: #211f3d;
+    transition: color 0.3s;
+  }
+  nav a:hover {
+    color: #6366f1;
+  }
+  nav a.active {
+    color: #4338ca;
+    font-weight: bold;
+  }
+</style>
+<nav>
+  <a href="index.html" class="active">Home</a>
+  <a href="about.html">About</a>
+  <a href="contact.html">Contact</a>
+</nav>
+`,
+  stretchChallenge:{
+    title:'Add a 4th link for a new page',
+    desc:`Finished early? Add a 4th link (e.g. href="gallery.html") to a flexbox nav bar that already has 3
+      links, keeping the same active-link and hover styling consistent across all 4.`,
+    starter:`<style>
+  nav { display: flex; gap: 20px; }
+  nav a { text-decoration: none; color: #211f3d; }
+  nav a.active { color: #4338ca; font-weight: bold; }
+</style>
+<nav>
+  <a href="index.html" class="active">Home</a>
+  <a href="about.html">About</a>
+  <a href="contact.html">Contact</a>
+  <!-- Add a 4th link here, e.g. to gallery.html -->
+</nav>
+`,
+    tests:[
+      {type:'dom-count', selector:'nav a', min:4, label:'nav now has at least 4 links'},
+      {type:'computed-style', selector:'nav', prop:'display', equals:'flex', label:'nav still uses display: flex'}
+    ]
+  }
+},
+];
+
+const WD_INTERMEDIATE_MP1 = {
+  key:'mp1',
+  title:'Mini Project 1 — Build an Interactive FAQ Page',
+  intro:`Your school wants an FAQ page students can actually interact with. You'll build it in three stages,
+    combining everything from Weeks 1-4: theming with CSS variables (Week 1), hover animation and striping with
+    pseudo-classes (Weeks 2-3), and a JS-validated feedback form at the bottom (Week 4).`,
+  newTrick:`Combining a themed, animated list with a genuinely interactive form on the same page — every earlier
+    mini-project practiced one layer at a time; this one asks for CSS variables, transitions, selectors, and
+    JavaScript all working together.`,
+  stages:[
+    {
+      key:'a', title:'Stage A — Theme the FAQ list with variables',
+      desc:`Build a &lt;ul class="faq"&gt; with at least 3 &lt;li&gt; questions. Define --faq-bg and --faq-text
+        variables in :root, and use both on the .faq list (background-color and color) — the variables pattern
+        from Week 1.`,
+      starter:`<!-- Build a .faq <ul> with 3+ <li> questions, and a <style> block defining --faq-bg/--faq-text used on .faq -->
+`,
+      tests:[
+        {type:'dom-count', selector:'.faq li', min:3, label:'.faq has at least 3 questions'},
+        {type:'dom', selector:'style', contains:'var(', label:'Uses var() rather than hardcoded values'},
+        {type:'computed-style', selector:'.faq', prop:'backgroundColor', notEqual:'rgba(0, 0, 0, 0)', label:'.faq uses the --faq-bg variable'}
+      ]
+    },
+    {
+      key:'b', title:'Stage B — Animate and stripe the list',
+      desc:`Give .faq li a transition and a :hover rule that changes its background-color (Week 2), AND use
+        li:nth-child(odd) to give alternating rows a subtle background stripe (Week 3).`,
+      starter:`<style>
+  :root { --faq-bg: #eef0fc; --faq-text: #211f3d; }
+  .faq { background-color: var(--faq-bg); color: var(--faq-text); padding: 10px; }
+</style>
+<ul class="faq">
+  <li>What time does school start?</li>
+  <li>Where is the library?</li>
+  <li>Who do I ask about lost property?</li>
+</ul>
+<!-- Add .faq li transition + :hover, and li:nth-child(odd) striping -->
+`,
+      tests:[
+        {type:'computed-style', selector:'.faq li', prop:'transitionDuration', notEqual:'0s', label:'.faq li has a transition set'},
+        {type:'dom', selector:'style', contains:':hover', label:'Includes a :hover rule'},
+        {type:'dom', selector:'style', contains:'nth-child', label:'Uses :nth-child for striping'}
+      ]
+    },
+    {
+      key:'c', title:'Stage C — Add a validated feedback form',
+      desc:`Below the FAQ list, add an &lt;input id="feedback"&gt;, a &lt;button type="button" id="sendBtn"&gt;,
+        and a hidden &lt;p id="error"&gt;. When #sendBtn is clicked, if #feedback is empty, show #error — the
+        click-validation pattern from Week 4.`,
+      starter:`<style>
+  :root { --faq-bg: #eef0fc; --faq-text: #211f3d; }
+  .faq { background-color: var(--faq-bg); color: var(--faq-text); padding: 10px; }
+  .faq li { transition: background-color 0.3s; }
+  .faq li:hover { background-color: #d6d8f7; }
+  .faq li:nth-child(odd) { background-color: #f8f8ff; }
+</style>
+<ul class="faq">
+  <li>What time does school start?</li>
+  <li>Where is the library?</li>
+  <li>Who do I ask about lost property?</li>
+</ul>
+<input id="feedback" type="text">
+<button id="sendBtn" type="button">Send Feedback</button>
+<p id="error" style="display:none;">Please write some feedback first</p>
+<!-- Add a click handler on #sendBtn: if #feedback is empty, show #error -->
+`,
+      tests:[
+        {type:'computed-style', selector:'#error', prop:'display', notEqual:'none', label:'#error shows because #feedback was left empty'}
+      ]
+    }
+  ]
+};
+
 window.SUBJECT_DATA = window.SUBJECT_DATA || {};
 window.SUBJECT_DATA.wd = {
   b: {weeks: WD_WEEKS, mp1: WD_MP1, mp2: WD_MP2},
