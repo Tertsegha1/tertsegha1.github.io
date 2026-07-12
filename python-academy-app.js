@@ -924,8 +924,11 @@ async function ensurePyodideML(){
 
 // Data Science also reuses the Pyodide/execIsolatedPy path, but only installs
 // pandas — skipping scikit-learn (which Data Science exercises don't need)
-// keeps its first-run load noticeably lighter than AutoML's.
+// keeps its first-run load noticeably lighter than AutoML's. matplotlib is
+// installed separately and only when Advanced is reached (its charting
+// weeks), so Beginner/Intermediate DS students never pay that extra load cost.
 let _pyodideDSReady = false;
+let _pyodideDSChartsReady = false;
 async function ensurePyodideDS(){
   const py = await ensurePyodide();
   if(!_pyodideDSReady){
@@ -933,6 +936,13 @@ async function ensurePyodideDS(){
     const micropip = py.pyimport('micropip');
     await micropip.install(['pandas']);
     _pyodideDSReady = true;
+  }
+  if(CURRENT_LEVEL==='a' && !_pyodideDSChartsReady){
+    await py.loadPackage('micropip');
+    const micropip = py.pyimport('micropip');
+    await micropip.install(['matplotlib']);
+    py.runPython(`import matplotlib\nmatplotlib.use('Agg')`);
+    _pyodideDSChartsReady = true;
   }
   return py;
 }
