@@ -4234,6 +4234,293 @@ const WD_INTERMEDIATE_MP2 = {
   ]
 };
 
+/* =========================================================================
+   Web Design Academy — Advanced level
+   Focus: working with structured data (arrays of objects), filtering/sorting,
+   client-side routing, multi-step forms, debugging, custom events, theming,
+   and a 2-week capstone.
+   ========================================================================= */
+
+const WD_ADVANCED_WEEKS = [
+{
+  key:'week1', num:1, title:'Working with Data: Arrays of Objects',
+  scenarioTag:'Real world: the shape data actually arrives in',
+  scenario:`Real sites don't hardcode their content — a shop's product list, a school's staff directory, a
+    gallery's photos all arrive as data: an array where each item is an OBJECT with several properties, not just
+    a single string. Learning to read and render that shape is the real foundation every dynamic page is built
+    on.`,
+  objectives:[
+    'Understand an array of objects — the shape real data usually arrives in',
+    'Access a property on each object with dot notation',
+    'Render text built from multiple properties per item',
+    'Know that fetch() delivers this exact same shape in a real app'
+  ],
+  conceptHtml:`
+    <p>So far, arrays have held simple values: <code>['Apple', 'Banana']</code>. Real data is usually an array of
+    <strong>objects</strong> instead — each item has several named properties: <code>{name: 'Pen', price: 2}</code>.
+    Access a property with dot notation: <code>item.name</code>, <code>item.price</code>.</p>
+    <pre class="code-block">const products = [
+  { name: 'Pen', price: 2 },
+  { name: 'Notebook', price: 5 }
+];
+
+products.forEach(function(product){
+  const li = document.createElement('li');
+  li.textContent = product.name + ': $' + product.price;
+  document.querySelector('#list').appendChild(li);
+});</pre>
+    <ul>
+      <li><code>{ name: 'Pen', price: 2 }</code> — an object literal, holding two named properties. Unlike a
+        plain array item, you access each piece of information by NAME (<code>.name</code>, <code>.price</code>),
+        not by guessing position.</li>
+      <li><code>product.name + ': $' + product.price</code> — combines two DIFFERENT properties of the same item
+        into one rendered line — "Pen: $2".</li>
+    </ul>
+    <p><strong>A note on real data</strong>: in a real app, this array would usually come from
+    <code>fetch('/api/products').then(res => res.json())</code> — a real network request. This practice area's
+    sandbox can't check code that depends on a network response arriving (for the same safety reasons covered
+    earlier), so these exercises work with the array directly — exactly the shape you'd have once a real
+    <code>fetch()</code> finished, just skipping the waiting.</p>
+    <p>Now look at the second example, where each object also carries a boolean:</p>
+    <pre class="code-block">const products = [
+  { name: 'Pen', price: 2, inStock: true },
+  { name: 'Notebook', price: 5, inStock: false }
+];
+
+products.forEach(function(product){
+  const li = document.createElement('li');
+  li.textContent = product.name;
+  if (!product.inStock) {
+    li.className = 'out-of-stock';
+  }
+  document.querySelector('#list').appendChild(li);
+});</pre>
+    <ul>
+      <li><code>inStock: false</code> — a boolean property, used to decide something (here, whether to add a
+        class) rather than being displayed directly as text.</li>
+    </ul>`,
+  sandboxStarter:`<ul id="list"></ul>
+<button id="renderBtn" type="button">Show products</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const products = [
+      { name: 'Pen', price: 2 },
+      { name: 'Notebook', price: 5 }
+    ];
+    const list = document.querySelector('#list');
+    products.forEach(function(product){
+      const li = document.createElement('li');
+      li.textContent = product.name + ': $' + product.price;
+      list.appendChild(li);
+    });
+  });
+</script>
+`,
+  sandboxStarter2:`<ul id="list"></ul>
+<button id="renderBtn" type="button">Show products</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const products = [
+      { name: 'Pen', price: 2, inStock: true },
+      { name: 'Notebook', price: 5, inStock: false }
+    ];
+    const list = document.querySelector('#list');
+    products.forEach(function(product){
+      const li = document.createElement('li');
+      li.textContent = product.name;
+      if (!product.inStock) {
+        li.className = 'out-of-stock';
+      }
+      list.appendChild(li);
+    });
+  });
+</script>
+`,
+  exercises:[
+    {
+      title:'Render name and price together',
+      desc:`Loop over const products = [{name:'Pen', price:2}, {name:'Notebook', price:5}];. For each one,
+        create an &lt;li&gt; with text product.name + ": $" + product.price, so the list reads "Pen: $2",
+        "Notebook: $5".`,
+      starter:`<ul id="list"></ul>
+<button id="renderBtn" type="button">Show products</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const products = [{name:'Pen', price:2}, {name:'Notebook', price:5}];
+    // Render each product as "name: $price"
+  });
+</script>
+`,
+      tests:[{type:'dom', selector:'#list', contains:'Notebook: $5', label:'#list includes "Notebook: $5"'}]
+    },
+    {
+      title:'Include a third property',
+      desc:`Loop over const products = [{name:'Pen', price:2, qty:10}, {name:'Notebook', price:5, qty:3}];. For
+        each one, render "name: $price (qty in stock)" so the list reads "Pen: $2 (10 in stock)".`,
+      starter:`<ul id="list"></ul>
+<button id="renderBtn" type="button">Show products</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const products = [{name:'Pen', price:2, qty:10}, {name:'Notebook', price:5, qty:3}];
+    // Render each as "name: $price (qty in stock)"
+  });
+</script>
+`,
+      tests:[{type:'dom', selector:'#list', contains:'Pen: $2 (10 in stock)', label:'#list includes "Pen: $2 (10 in stock)"'}]
+    },
+    {
+      title:'Compute a value from two properties',
+      desc:`Loop over const products = [{name:'Pen', price:2, qty:10}, {name:'Notebook', price:5, qty:3}];. For
+        each one, compute a total (price * qty) and render "name: $total total value", so the list includes
+        "Pen: $20 total value".`,
+      starter:`<ul id="list"></ul>
+<button id="renderBtn" type="button">Show products</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const products = [{name:'Pen', price:2, qty:10}, {name:'Notebook', price:5, qty:3}];
+    // For each, compute price * qty and render "name: $total total value"
+  });
+</script>
+`,
+      tests:[{type:'dom', selector:'#list', contains:'Pen: $20 total value', label:'#list includes "Pen: $20 total value" (2 * 10)'}]
+    },
+    {
+      title:'Sum a property across the whole array',
+      desc:`Loop over const products = [{name:'Pen', price:2}, {name:'Notebook', price:5}, {name:'Ruler',
+        price:3}];, adding up ALL the prices into a running total, then set &lt;p id="total"&gt;'s textContent to
+        "Total: $" + total (should read "Total: $10").`,
+      starter:`<p id="total"></p>
+<button id="renderBtn" type="button">Show total</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const products = [{name:'Pen', price:2}, {name:'Notebook', price:5}, {name:'Ruler', price:3}];
+    // Add up all the prices, then set #total to "Total: $" + total
+  });
+</script>
+`,
+      tests:[{type:'dom', selector:'#total', contains:'Total: $10', label:'#total shows "Total: $10"'}]
+    },
+    {
+      title:'Mark out-of-stock items',
+      desc:`Loop over const products = [{name:'Pen', inStock:true}, {name:'Notebook', inStock:false}];. Render
+        each as an &lt;li&gt; with its name — but if inStock is false, ALSO set li.className = 'out-of-stock';.`,
+      starter:`<ul id="list"></ul>
+<button id="renderBtn" type="button">Show products</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const products = [{name:'Pen', inStock:true}, {name:'Notebook', inStock:false}];
+    // Render each; if !inStock, set li.className = 'out-of-stock'
+  });
+</script>
+`,
+      tests:[
+        {type:'dom-count', selector:'#list li', min:2, label:'#list shows both products'},
+        {type:'dom-count', selector:'#list li.out-of-stock', min:1, label:'Exactly the out-of-stock item ("Notebook") gets the class'}
+      ]
+    },
+    {
+      title:'Build the complete product list',
+      desc:`Combine everything: loop over const products = [{name:'Pen', price:2, qty:10, inStock:true},
+        {name:'Notebook', price:5, qty:0, inStock:false}];. Render each as "name: $price" text, mark
+        out-of-stock items with class 'out-of-stock', AND set &lt;p id="total"&gt; to the sum of price*qty across
+        all products (should read "Total value: $20", since Pen alone contributes 2*10=20 and Notebook
+        contributes 5*0=0).`,
+      starter:`<ul id="list"></ul>
+<p id="total"></p>
+<button id="renderBtn" type="button">Show products</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const products = [{name:'Pen', price:2, qty:10, inStock:true}, {name:'Notebook', price:5, qty:0, inStock:false}];
+    // Render "name: $price", mark out-of-stock items, and set #total to the summed price*qty as "Total value: $X"
+  });
+</script>
+`,
+      tests:[
+        {type:'dom-count', selector:'#list li.out-of-stock', min:1, label:'The out-of-stock product is marked'},
+        {type:'dom', selector:'#total', contains:'Total value: $20', label:'#total shows "Total value: $20"'}
+      ]
+    }
+  ],
+  quiz:[
+    {
+      q:'What is { name: "Pen", price: 2 }?',
+      options:['An array','An object literal with two named properties','A function','A CSS rule'],
+      correct:1,
+      explain:'Curly braces with name:value pairs create an object — a single item with multiple named properties.'
+    },
+    {
+      q:'How do you access the price property of an object stored in the variable product?',
+      options:['product[price]','product.price','product->price','price(product)'],
+      correct:1,
+      explain:'Dot notation (object.propertyName) is the standard way to read a property from an object.'
+    },
+    {
+      q:'In a real app, where would an array of objects like this usually come from?',
+      options:['Always typed by hand','Often a fetch() call to an API, arriving as this same array-of-objects shape','CSS files','It\'s impossible to get real data this way'],
+      correct:1,
+      explain:'fetch().then(res => res.json()) commonly returns exactly this shape — an array of objects.'
+    },
+    {
+      q:'Why does this week\'s practice area skip actually calling fetch()?',
+      options:['fetch() doesn\'t exist','The sandbox can\'t reliably check code that depends on a network response arriving, so exercises work with the resulting data directly instead','fetch() is deprecated','No real reason'],
+      correct:1,
+      explain:'The practice area evaluates your code immediately, before any real network response could arrive — so exercises use the data fetch() WOULD deliver, directly.'
+    }
+  ],
+  sandboxStarter3:`<ul id="list"></ul>
+<p id="total"></p>
+<button id="renderBtn" type="button">Show products</button>
+
+<script>
+  // In a real app: fetch('/api/products').then(res => res.json()).then(products => { ...render... });
+  // Here, we already have the data products WOULD deliver:
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const products = [
+      { name: 'Pen', price: 2, qty: 10 },
+      { name: 'Notebook', price: 5, qty: 3 }
+    ];
+    let totalValue = 0;
+    const list = document.querySelector('#list');
+    products.forEach(function(product){
+      const li = document.createElement('li');
+      li.textContent = product.name + ': $' + product.price;
+      list.appendChild(li);
+      totalValue += product.price * product.qty;
+    });
+    document.querySelector('#total').textContent = 'Total value: $' + totalValue;
+  });
+</script>
+`,
+  stretchChallenge:{
+    title:'Find the most expensive item',
+    desc:`Finished early? Loop over const products = [{name:'Pen', price:2}, {name:'Notebook', price:5},
+      {name:'Bag', price:15}];, tracking the item with the HIGHEST price as you go, then set &lt;p
+      id="priciest"&gt;'s textContent to "Priciest: " + name (should read "Priciest: Bag").`,
+    starter:`<p id="priciest"></p>
+<button id="renderBtn" type="button">Find priciest</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const products = [{name:'Pen', price:2}, {name:'Notebook', price:5}, {name:'Bag', price:15}];
+    // Track the item with the highest price, then set #priciest to "Priciest: " + its name
+  });
+</script>
+`,
+    tests:[
+      {type:'dom', selector:'#priciest', contains:'Priciest: Bag', label:'#priciest correctly identifies "Bag" as the most expensive'}
+    ]
+  }
+},
+];
+
 window.SUBJECT_DATA = window.SUBJECT_DATA || {};
 window.SUBJECT_DATA.wd = {
   b: {weeks: WD_WEEKS, mp1: WD_MP1, mp2: WD_MP2},
