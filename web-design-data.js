@@ -4519,6 +4519,285 @@ products.forEach(function(product){
     ]
   }
 },
+{
+  key:'week2', num:2, title:'Filtering and Sorting Rendered Data',
+  scenarioTag:'Real world: showing a chosen subset, in a chosen order',
+  scenario:`A shop page doesn't dump every product in whatever order they happen to be stored — it shows what's
+    actually in stock, sorted cheapest-first or newest-first. Filtering and sorting the array BEFORE rendering it
+    is what makes that possible, and it's exactly what a real product listing does under the hood.`,
+  objectives:[
+    'Filter an array down to only the items that match a condition',
+    'Sort an array numerically with a comparator function',
+    'Understand why sort needs a comparator for numbers',
+    'Combine filtering and sorting before rendering'
+  ],
+  conceptHtml:`
+    <p><code>.filter(callback)</code> returns a NEW array containing only the items where the callback returns
+    true — the original array is untouched. <code>products.filter(function(p){ return p.inStock; })</code> keeps
+    only in-stock products.</p>
+    <p><code>.sort(comparator)</code> reorders an array. For NUMBERS, you must pass a comparator function —
+    <code>products.sort(function(a, b){ return a.price - b.price; })</code> sorts ascending by price. Without a
+    comparator, <code>.sort()</code> compares everything as TEXT, which gives wrong results for numbers (e.g. 100
+    would sort before 20).</p>
+    <pre class="code-block">const products = [
+  { name: 'Bag', price: 15, inStock: true },
+  { name: 'Pen', price: 2, inStock: false },
+  { name: 'Notebook', price: 5, inStock: true }
+];
+
+const inStockOnly = products.filter(function(p){ return p.inStock; });
+inStockOnly.forEach(function(p){
+  const li = document.createElement('li');
+  li.textContent = p.name;
+  document.querySelector('#list').appendChild(li);
+});</pre>
+    <ul>
+      <li><code>products.filter(function(p){ return p.inStock; })</code> — keeps only Bag and Notebook (both
+        <code>inStock: true</code>), dropping Pen entirely. The result is stored in a NEW array,
+        <code>inStockOnly</code>.</li>
+      <li>Rendering loops over <code>inStockOnly</code>, not the original <code>products</code> — so Pen never
+        appears on the page at all.</li>
+    </ul>
+    <p>Now look at the second example, sorting by price:</p>
+    <pre class="code-block">const sorted = products.slice().sort(function(a, b){ return a.price - b.price; });
+sorted.forEach(function(p){
+  const li = document.createElement('li');
+  li.textContent = p.name + ': $' + p.price;
+  document.querySelector('#list').appendChild(li);
+});</pre>
+    <ul>
+      <li><code>.slice()</code> before <code>.sort()</code> makes a COPY of the array first — <code>.sort()</code>
+        reorders the array it's called on IN PLACE, so copying first avoids silently reordering the original
+        <code>products</code> array too.</li>
+      <li><code>function(a, b){ return a.price - b.price; }</code> — if this returns a negative number, a comes
+        first; positive, b comes first. Subtracting prices gives exactly that: cheaper items sort earlier.</li>
+    </ul>`,
+  sandboxStarter:`<ul id="list"></ul>
+<button id="renderBtn" type="button">Show in-stock items</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const products = [
+      { name: 'Bag', price: 15, inStock: true },
+      { name: 'Pen', price: 2, inStock: false },
+      { name: 'Notebook', price: 5, inStock: true }
+    ];
+    const inStockOnly = products.filter(function(p){ return p.inStock; });
+    const list = document.querySelector('#list');
+    inStockOnly.forEach(function(p){
+      const li = document.createElement('li');
+      li.textContent = p.name;
+      list.appendChild(li);
+    });
+  });
+</script>
+`,
+  sandboxStarter2:`<ul id="list"></ul>
+<button id="renderBtn" type="button">Show sorted by price</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const products = [
+      { name: 'Bag', price: 15 },
+      { name: 'Pen', price: 2 },
+      { name: 'Notebook', price: 5 }
+    ];
+    const sorted = products.slice().sort(function(a, b){ return a.price - b.price; });
+    const list = document.querySelector('#list');
+    sorted.forEach(function(p){
+      const li = document.createElement('li');
+      li.textContent = p.name + ': $' + p.price;
+      list.appendChild(li);
+    });
+  });
+</script>
+`,
+  exercises:[
+    {
+      title:'Filter to only in-stock items',
+      desc:`Loop over const products = [{name:'Bag', inStock:true}, {name:'Pen', inStock:false}, {name:'Notebook',
+        inStock:true}];, but first use .filter() to keep only inStock:true items, then render just those.`,
+      starter:`<ul id="list"></ul>
+<button id="renderBtn" type="button">Show in-stock</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const products = [{name:'Bag', inStock:true}, {name:'Pen', inStock:false}, {name:'Notebook', inStock:true}];
+    // Filter to inStock:true only, then render each remaining item's name
+  });
+</script>
+`,
+      tests:[
+        {type:'dom-count', selector:'#list li', min:2, label:'#list shows the 2 in-stock items'},
+        {type:'dom', selector:'#list', contains:'BagNotebook', label:'Only Bag and Notebook appear, adjacent, with Pen filtered out'}
+      ]
+    },
+    {
+      title:'Sort by price, cheapest first',
+      desc:`Loop over const products = [{name:'Bag', price:15}, {name:'Pen', price:2}, {name:'Notebook',
+        price:5}];. Sort by price ascending (cheapest first) BEFORE rendering, so the list reads Pen, then
+        Notebook, then Bag.`,
+      starter:`<ul id="list"></ul>
+<button id="renderBtn" type="button">Show sorted</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const products = [{name:'Bag', price:15}, {name:'Pen', price:2}, {name:'Notebook', price:5}];
+    // Sort by price ascending, then render each name in that order
+  });
+</script>
+`,
+      tests:[{type:'dom', selector:'#list', contains:'PenNotebookBag', label:'Items appear in price order: Pen, then Notebook, then Bag'}]
+    },
+    {
+      title:'Sort by price, most expensive first',
+      desc:`Loop over const products = [{name:'Pen', price:2}, {name:'Bag', price:15}, {name:'Notebook',
+        price:5}];. Sort by price DESCENDING (most expensive first) — swap the comparator's subtraction order —
+        so the list reads Bag, then Notebook, then Pen.`,
+      starter:`<ul id="list"></ul>
+<button id="renderBtn" type="button">Show sorted</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const products = [{name:'Pen', price:2}, {name:'Bag', price:15}, {name:'Notebook', price:5}];
+    // Sort by price DESCENDING, then render each name in that order
+  });
+</script>
+`,
+      tests:[{type:'dom', selector:'#list', contains:'BagNotebookPen', label:'Items appear highest-to-lowest: Bag, then Notebook, then Pen'}]
+    },
+    {
+      title:'Filter, then sort',
+      desc:`Loop over const products = [{name:'Bag', price:15, inStock:true}, {name:'Pen', price:2,
+        inStock:false}, {name:'Notebook', price:5, inStock:true}, {name:'Ruler', price:1, inStock:true}];. First
+        filter to inStock:true only, THEN sort what's left by price ascending — the list should read Ruler,
+        Notebook, Bag (Pen is filtered out entirely, so it never affects the order).`,
+      starter:`<ul id="list"></ul>
+<button id="renderBtn" type="button">Show filtered and sorted</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const products = [{name:'Bag', price:15, inStock:true}, {name:'Pen', price:2, inStock:false}, {name:'Notebook', price:5, inStock:true}, {name:'Ruler', price:1, inStock:true}];
+    // Filter to inStock:true, then sort what's left by price ascending
+  });
+</script>
+`,
+      tests:[{type:'dom', selector:'#list', contains:'RulerNotebookBag', label:'In-stock items appear cheapest-first: Ruler, Notebook, Bag (Pen excluded)'}]
+    },
+    {
+      title:'Filter by a price threshold',
+      desc:`Loop over const products = [{name:'Pen', price:2}, {name:'Bag', price:15}, {name:'Notebook',
+        price:5}];, using .filter() to keep only items with price less than 10, then render just those (Pen and
+        Notebook, not Bag).`,
+      starter:`<ul id="list"></ul>
+<button id="renderBtn" type="button">Show affordable items</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const products = [{name:'Pen', price:2}, {name:'Bag', price:15}, {name:'Notebook', price:5}];
+    // Filter to price < 10, then render each remaining item's name
+  });
+</script>
+`,
+      tests:[
+        {type:'dom-count', selector:'#list li', min:2, label:'#list shows the 2 affordable items'},
+        {type:'dom', selector:'#list', contains:'PenNotebook', label:'Only Pen and Notebook appear (both under $10), adjacent — a solution that forgot to filter would show Bag sitting between them instead'}
+      ]
+    },
+    {
+      title:'Filter, sort, and count the results',
+      desc:`Loop over const products = [{name:'Bag', price:15, inStock:true}, {name:'Pen', price:2,
+        inStock:false}, {name:'Notebook', price:5, inStock:true}, {name:'Ruler', price:1, inStock:true}];. Filter
+        to inStock:true, sort by price ascending, render the names (Ruler, Notebook, Bag), AND set &lt;p
+        id="count"&gt; to "Showing 3 items" (the count AFTER filtering, not the original 4).`,
+      starter:`<ul id="list"></ul>
+<p id="count"></p>
+<button id="renderBtn" type="button">Show results</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const products = [{name:'Bag', price:15, inStock:true}, {name:'Pen', price:2, inStock:false}, {name:'Notebook', price:5, inStock:true}, {name:'Ruler', price:1, inStock:true}];
+    // Filter to inStock:true, sort by price ascending, render names, and set #count to "Showing " + count + " items"
+  });
+</script>
+`,
+      tests:[
+        {type:'dom', selector:'#list', contains:'RulerNotebookBag', label:'In-stock items appear cheapest-first'},
+        {type:'dom', selector:'#count', contains:'Showing 3 items', label:'#count reports the FILTERED count (3), not the original 4'}
+      ]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does products.filter(function(p){ return p.inStock; }) return?',
+      options:['The original array, modified','A brand new array containing only items where the callback returned true','A single item','Nothing, filter has no return value'],
+      correct:1,
+      explain:'.filter() always builds and returns a new array, leaving the original untouched.'
+    },
+    {
+      q:'Why does .sort() need a comparator function when sorting numbers?',
+      options:['It doesn\'t, numbers always sort correctly','Without one, .sort() compares items as TEXT, giving wrong results like "100" sorting before "20"','Comparators make sorting faster','JavaScript requires it for arrays longer than 2 items'],
+      correct:1,
+      explain:'Default sort compares as strings; a comparator function like (a,b) => a.price - b.price is needed for correct numeric order.'
+    },
+    {
+      q:'Why call .slice() before .sort() in const sorted = products.slice().sort(...)?',
+      options:['.slice() is required syntax','.sort() reorders in place, so .slice() makes a copy first to avoid changing the original array','.slice() makes sorting faster','There\'s no real reason'],
+      correct:1,
+      explain:'.sort() mutates the array it\'s called on — copying first with .slice() protects the original from being silently reordered.'
+    },
+    {
+      q:'If you filter an array down from 4 items to 3, then want to display the new count, which number should you use?',
+      options:['The original length (4)','The length of the array AFTER filtering (3)','Always 0','It doesn\'t matter'],
+      correct:1,
+      explain:'The count should reflect what\'s actually being shown — the filtered array\'s length, not the original.'
+    }
+  ],
+  sandboxStarter3:`<ul id="list"></ul>
+<p id="count"></p>
+<button id="renderBtn" type="button">Show affordable in-stock items</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const products = [
+      { name: 'Bag', price: 15, inStock: true },
+      { name: 'Pen', price: 2, inStock: false },
+      { name: 'Notebook', price: 5, inStock: true },
+      { name: 'Ruler', price: 1, inStock: true }
+    ];
+    const affordable = products.filter(function(p){ return p.inStock && p.price < 10; });
+    const sorted = affordable.slice().sort(function(a, b){ return a.price - b.price; });
+    const list = document.querySelector('#list');
+    sorted.forEach(function(p){
+      const li = document.createElement('li');
+      li.textContent = p.name + ': $' + p.price;
+      list.appendChild(li);
+    });
+    document.querySelector('#count').textContent = 'Showing ' + sorted.length + ' items';
+  });
+</script>
+`,
+  stretchChallenge:{
+    title:'Sort alphabetically by name',
+    desc:`Finished early? Loop over const products = [{name:'Notebook'}, {name:'Bag'}, {name:'Pen'}];, sorting
+      alphabetically by name — for strings, .sort() actually works correctly WITHOUT a numeric comparator, but you
+      still need to pass a comparator function that returns a.name.localeCompare(b.name) for reliable results.
+      Render the names in alphabetical order: Bag, Notebook, Pen.`,
+    starter:`<ul id="list"></ul>
+<button id="renderBtn" type="button">Show alphabetically</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const products = [{name:'Notebook'}, {name:'Bag'}, {name:'Pen'}];
+    // Sort alphabetically by name using a.name.localeCompare(b.name), then render
+  });
+</script>
+`,
+    tests:[
+      {type:'dom', selector:'#list', contains:'BagNotebookPen', label:'Items appear alphabetically: Bag, Notebook, Pen'}
+    ]
+  }
+},
 ];
 
 window.SUBJECT_DATA = window.SUBJECT_DATA || {};
