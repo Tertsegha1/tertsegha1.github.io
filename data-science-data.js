@@ -2622,6 +2622,359 @@ print(stats)
       {type:'assert', expr:'ranked["house"].iloc[0] == "Red"', label:'ranked correctly puts Red first'}
     ]
   }
+},
+{
+  key:'week7', num:7, title:'Ranking Within Groups',
+  scenarioTag:'Real world: "who\'s top of their OWN house" isn\'t "who\'s top overall"',
+  scenario:`A school-wide leaderboard tells you who scored highest overall — but a house report needs to know who's
+    top WITHIN each house. .rank() combined with .groupby() ranks each student against only their own group, not
+    the whole school.`,
+  objectives:[
+    'Rank values within each group using .groupby().rank()',
+    'Control rank direction with ascending=True/False',
+    'Combine ranking with sort_values() to build an ordered leaderboard',
+    'Filter for rank == 1 to find each group\'s top scorer'
+  ],
+  conceptHtml:`
+    <p>.rank() assigns a position (1st, 2nd, 3rd...) to each value — combined with .groupby(), it ranks within each
+    group separately instead of across the whole table:</p>
+    <pre class="code-block">import pandas as pd
+df = pd.DataFrame({
+    "name": ["Ada", "Ben", "Chi", "Dee"],
+    "house": ["Red", "Red", "Blue", "Blue"],
+    "score": [95, 85, 80, 60]
+})
+df["rank"] = df.groupby("house")["score"].rank(ascending=False)
+print(df)
+#   name house  score  rank
+# 0  Ada   Red     95    1.0   <- 1st in Red
+# 1  Ben   Red     85    2.0   <- 2nd in Red
+# 2  Chi  Blue     80    1.0   <- 1st in Blue (NOT 3rd overall!)
+# 3  Dee  Blue     60    2.0   <- 2nd in Blue</pre>
+    <p>Notice Chi is ranked 1st, even though Ada and Ben both scored higher OVERALL — because ranking happens
+    separately within each house.</p>
+    <p><code>ascending=False</code> means the HIGHEST score gets rank 1 (a normal leaderboard).
+    <code>ascending=True</code> flips it, so the LOWEST score gets rank 1 instead — useful for "who needs the most
+    support" style reports.</p>
+    <h3>Let's break down the ranking line</h3>
+    <ul>
+      <li><code>df.groupby("house")["score"]</code> — groups the score column by house, same as Week 5/6's
+        groupby, but this time feeding into .rank() instead of .agg().</li>
+      <li><code>.rank(ascending=False)</code> — within EACH group separately, assigns 1 to the highest score, 2 to
+        the next highest, and so on.</li>
+      <li>Ranks come back as decimals (1.0, 2.0) because tied scores can produce fractional ranks like 1.5 — this
+        is normal pandas behaviour, not a bug.</li>
+    </ul>`,
+  sandboxStarter:`import pandas as pd
+df = pd.DataFrame({
+    "name": ["Ada", "Ben", "Chi", "Dee"],
+    "house": ["Red", "Red", "Blue", "Blue"],
+    "score": [95, 85, 80, 60]
+})
+df["rank"] = df.groupby("house")["score"].rank(ascending=False)
+print(df)
+`,
+  sandboxStarter2:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada", "Ben", "Chi", "Dee"], "house": ["Red", "Red", "Blue", "Blue"], "score": [80, 90, 60, 70]})
+df["rank"] = df.groupby("house")["score"].rank(ascending=False)
+leaderboard = df.sort_values(["house", "rank"])
+print(leaderboard)
+`,
+  exercises:[
+    {
+      title:'Rank within each house',
+      desc:`Create df with columns "name" (Ada, Ben, Chi, Dee), "house" (Red, Red, Blue, Blue), and "score" (95,
+        85, 80, 60). Create df["rank"] = df.groupby("house")["score"].rank(ascending=False). Assert that
+        df.loc[df["name"] == "Chi", "rank"].iloc[0] == 1.0 — Chi is 1st WITHIN Blue, even though two Red students
+        scored higher overall.`,
+      starter:`import pandas as pd
+# Create df below
+`,
+      tests:[{type:'assert', expr:'df.loc[df["name"] == "Chi", "rank"].iloc[0] == 1.0', label:"Chi is correctly ranked 1st within Blue house"}]
+    },
+    {
+      title:'Check a second-place rank',
+      desc:`Using the same df and rank column from the first exercise, assert that
+        df.loc[df["name"] == "Dee", "rank"].iloc[0] == 2.0 — Dee is 2nd in Blue house.`,
+      starter:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada", "Ben", "Chi", "Dee"], "house": ["Red", "Red", "Blue", "Blue"], "score": [95, 85, 80, 60]})
+# Create df["rank"] below
+`,
+      tests:[{type:'assert', expr:'df.loc[df["name"] == "Dee", "rank"].iloc[0] == 2.0', label:"Dee is correctly ranked 2nd within Blue house"}]
+    },
+    {
+      title:'Build an ordered leaderboard',
+      desc:`Create df with columns "name" (Ada, Ben, Chi, Dee), "house" (Red, Red, Blue, Blue), and "score" (80,
+        90, 60, 70). Create df["rank"] = df.groupby("house")["score"].rank(ascending=False), then
+        leaderboard = df.sort_values(["house", "rank"]). Assert that leaderboard["name"].tolist() ==
+        ["Dee", "Chi", "Ben", "Ada"] — sorted first by house (Blue before Red alphabetically), then by rank.`,
+      starter:`import pandas as pd
+# Create df, rank and leaderboard below
+`,
+      tests:[{type:'assert', expr:'leaderboard["name"].tolist() == ["Dee", "Chi", "Ben", "Ada"]', label:'leaderboard is correctly ordered by house then rank'}]
+    },
+    {
+      title:'Check who tops the leaderboard',
+      desc:`Using the same leaderboard from the previous exercise, assert that leaderboard["name"].iloc[0] ==
+        "Dee" — the first row of a leaderboard sorted by house-then-rank is whichever house comes first
+        alphabetically.`,
+      starter:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada", "Ben", "Chi", "Dee"], "house": ["Red", "Red", "Blue", "Blue"], "score": [80, 90, 60, 70]})
+df["rank"] = df.groupby("house")["score"].rank(ascending=False)
+# Create leaderboard below
+`,
+      tests:[{type:'assert', expr:'leaderboard["name"].iloc[0] == "Dee"', label:'leaderboard correctly starts with Dee'}]
+    },
+    {
+      title:'Rank the other way for a support list',
+      desc:`Create df with columns "name" (Ada, Ben, Chi, Dee), "house" (Red, Red, Blue, Blue), and "score" (80,
+        90, 60, 70). Create df["improve_rank"] = df.groupby("house")["score"].rank(ascending=True) — the LOWEST
+        score in each house now gets rank 1. Assert that df.loc[df["name"] == "Ada", "improve_rank"].iloc[0] ==
+        1.0 — Ada scored lowest in Red house.`,
+      starter:`import pandas as pd
+# Create df below
+`,
+      tests:[{type:'assert', expr:'df.loc[df["name"] == "Ada", "improve_rank"].iloc[0] == 1.0', label:"Ada is correctly ranked 1st (lowest) for follow-up"}]
+    },
+    {
+      title:'Find every house\'s top scorer',
+      desc:`Create df with columns "name" (Ada, Ben, Chi, Dee), "house" (Red, Red, Blue, Blue), and "score" (80,
+        90, 60, 70). Create df["rank"] = df.groupby("house")["score"].rank(ascending=False), then
+        top = df[df["rank"] == 1]. Assert that sorted(top["name"].tolist()) == ["Ben", "Dee"] — the top scorer
+        from each house.`,
+      starter:`import pandas as pd
+# Create df, rank and top below
+`,
+      tests:[{type:'assert', expr:'sorted(top["name"].tolist()) == ["Ben", "Dee"]', label:'top correctly contains each house\'s top scorer'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does df.groupby("house")["score"].rank(ascending=False) do?',
+      options:['Ranks every student against the whole school','Ranks each student against only their own house','Sorts houses alphabetically','Deletes tied scores'],
+      correct:1,
+      explain:'Combining groupby with rank ranks each value only against others in the SAME group.'
+    },
+    {
+      q:'Why might a student rank 1st within their house but not be the top scorer in the whole school?',
+      options:['That\'s not possible','Ranking within a group only compares against that group, not everyone','Rank always means top overall','.rank() ignores house entirely'],
+      correct:1,
+      explain:'Per-group ranking is local to each group — someone can be #1 in their house while others elsewhere scored even higher.'
+    },
+    {
+      q:'What does ascending=True do differently in .rank()?',
+      options:['Nothing changes','The LOWEST value gets rank 1 instead of the highest','It sorts alphabetically','It only works with dates'],
+      correct:1,
+      explain:'ascending=True flips the direction, so the smallest value in each group is ranked 1st.'
+    },
+    {
+      q:'How do you find just the top-ranked row from each group after ranking?',
+      options:['df.top()','df[df["rank"] == 1]','df.groupby("house").first()','You can\'t filter on rank'],
+      correct:1,
+      explain:'Once a rank column exists, filtering df[df["rank"] == 1] keeps only each group\'s top row.'
+    }
+  ],
+  sandboxStarter3:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada", "Ben", "Chi", "Dee"], "house": ["Red", "Red", "Blue", "Blue"], "score": [80, 90, 60, 70]})
+df["rank"] = df.groupby("house")["score"].rank(ascending=False)
+top = df[df["rank"] == 1]
+print(sorted(top["name"].tolist()))
+`,
+  stretchChallenge:{
+    title:'Build a clean, whole-number leaderboard',
+    desc:`Create df with columns "name" (Ada, Ben, Chi, Dee), "house" (Red, Red, Blue, Blue), and "score" (80, 90,
+      60, 70). Create df["rank"] = df.groupby("house")["score"].rank(ascending=False).astype(int) (converts the
+      rank to a whole number, not 1.0/2.0), then leaderboard = df.sort_values(["house", "rank"]). Assert that
+      int(leaderboard.loc[leaderboard["name"] == "Chi", "rank"].iloc[0]) == 2.`,
+    starter:`import pandas as pd
+# Create df, rank and leaderboard below
+`,
+    tests:[
+      {type:'assert', expr:'int(leaderboard.loc[leaderboard["name"] == "Chi", "rank"].iloc[0]) == 2', label:"Chi's rank is correctly converted to a whole number (2)"}
+    ]
+  }
+},
+{
+  key:'week8', num:8, title:'Spotting Outliers',
+  scenarioTag:'Real world: one score looks like a typo, not a real result',
+  scenario:`Six scores come in: 72, 75, 78, 74, 76, 15. That last one is wildly out of step with the rest — maybe a
+    data entry error, maybe a genuine problem worth investigating. Rather than eyeballing a list, the IQR
+    (interquartile range) method gives a repeatable, numeric way to flag values that don't fit the pattern.`,
+  objectives:[
+    'Compute Q1, Q3 and the IQR with .quantile()',
+    'Calculate lower/upper outlier bounds from the IQR',
+    'Filter for rows outside those bounds',
+    'Flag outliers in a new column with .loc, without removing them'
+  ],
+  conceptHtml:`
+    <p>The IQR method defines "normal" as everything between the 25th and 75th percentile, with a bit of padding.
+    Anything further out is flagged as an outlier:</p>
+    <pre class="code-block">import pandas as pd
+df = pd.DataFrame({"score": [72, 75, 78, 74, 76, 15]})
+Q1 = df["score"].quantile(0.25)
+Q3 = df["score"].quantile(0.75)
+IQR = Q3 - Q1
+lower = Q1 - 1.5 * IQR
+upper = Q3 + 1.5 * IQR
+outliers = df[(df["score"] < lower) | (df["score"] > upper)]
+print(outliers)   # just the row with score 15</pre>
+    <h3>Let's break down the bound calculation, line by line</h3>
+    <ul>
+      <li><code>.quantile(0.25)</code> — the value below which 25% of the data falls (Q1, the "first quarter"
+        mark). <code>.quantile(0.75)</code> is the same idea at 75% (Q3).</li>
+      <li><code>IQR = Q3 - Q1</code> — the spread of the "middle half" of the data, ignoring extreme values.</li>
+      <li><code>Q1 - 1.5 * IQR</code> / <code>Q3 + 1.5 * IQR</code> — the standard "fence" used to define outliers:
+        anything below the lower fence or above the upper fence is flagged.</li>
+      <li>The <code>|</code> (or) combines both conditions — a value is an outlier if it's TOO LOW or TOO HIGH.</li>
+    </ul>
+    <p>You can also flag outliers WITHOUT removing them, using .loc to set a new column only on the matching rows —
+    handy when you want to keep the full dataset but mark which rows are suspicious.</p>`,
+  sandboxStarter:`import pandas as pd
+df = pd.DataFrame({"score": [72, 75, 78, 74, 76, 15]})
+Q1 = df["score"].quantile(0.25)
+Q3 = df["score"].quantile(0.75)
+IQR = Q3 - Q1
+print(IQR)
+`,
+  sandboxStarter2:`import pandas as pd
+df = pd.DataFrame({"score": [72, 75, 78, 74, 76, 15]})
+Q1 = df["score"].quantile(0.25)
+Q3 = df["score"].quantile(0.75)
+IQR = Q3 - Q1
+lower = Q1 - 1.5 * IQR
+upper = Q3 + 1.5 * IQR
+outliers = df[(df["score"] < lower) | (df["score"] > upper)]
+print(outliers)
+`,
+  exercises:[
+    {
+      title:'Compute the IQR',
+      desc:`Create df with one column "score" containing 72, 75, 78, 74, 76, 15. Create Q1 = df["score"].quantile(0.25),
+        Q3 = df["score"].quantile(0.75), and IQR = Q3 - Q1. Print(IQR). It should print 3.25.`,
+      starter:`import pandas as pd
+# Create df, Q1, Q3 and IQR below
+`,
+      tests:[{type:'output', contains:['3.25'], label:'Prints the correct IQR (3.25)'}]
+    },
+    {
+      title:'Compute the upper bound',
+      desc:`Using the same df, Q1, Q3, and IQR from the first exercise, create upper = Q3 + 1.5 * IQR, then
+        print(upper). It should print 80.625.`,
+      starter:`import pandas as pd
+df = pd.DataFrame({"score": [72, 75, 78, 74, 76, 15]})
+Q1 = df["score"].quantile(0.25)
+Q3 = df["score"].quantile(0.75)
+IQR = Q3 - Q1
+# Create and print upper below
+`,
+      tests:[{type:'output', contains:['80.625'], label:'Prints the correct upper bound (80.625)'}]
+    },
+    {
+      title:'Filter for the outliers',
+      desc:`Using df, Q1, Q3, and IQR from the first exercise, create lower = Q1 - 1.5 * IQR and
+        upper = Q3 + 1.5 * IQR. Create outliers = df[(df["score"] < lower) | (df["score"] > upper)], then
+        print(len(outliers)). It should print 1.`,
+      starter:`import pandas as pd
+df = pd.DataFrame({"score": [72, 75, 78, 74, 76, 15]})
+Q1 = df["score"].quantile(0.25)
+Q3 = df["score"].quantile(0.75)
+IQR = Q3 - Q1
+# Create lower, upper and outliers below
+`,
+      tests:[{type:'output', contains:['1'], label:'Finds exactly 1 outlier'}]
+    },
+    {
+      title:'Check which value is the outlier',
+      desc:`Using outliers from the previous exercise, assert that outliers["score"].iloc[0] == 15.`,
+      starter:`import pandas as pd
+df = pd.DataFrame({"score": [72, 75, 78, 74, 76, 15]})
+Q1 = df["score"].quantile(0.25)
+Q3 = df["score"].quantile(0.75)
+IQR = Q3 - Q1
+lower = Q1 - 1.5 * IQR
+upper = Q3 + 1.5 * IQR
+# Create outliers below
+`,
+      tests:[{type:'assert', expr:'outliers["score"].iloc[0] == 15', label:'outliers correctly contains the score of 15'}]
+    },
+    {
+      title:'Flag outliers without removing them',
+      desc:`Using df, Q1, Q3, IQR, lower, and upper from the previous exercises, create df["is_outlier"] = False,
+        then use df.loc[(df["score"] < lower) | (df["score"] > upper), "is_outlier"] = True to flag just the
+        outlier rows. Assert that bool(df.loc[df["score"] == 15, "is_outlier"].iloc[0]) == True.`,
+      starter:`import pandas as pd
+df = pd.DataFrame({"score": [72, 75, 78, 74, 76, 15]})
+Q1 = df["score"].quantile(0.25)
+Q3 = df["score"].quantile(0.75)
+IQR = Q3 - Q1
+lower = Q1 - 1.5 * IQR
+upper = Q3 + 1.5 * IQR
+# Add df["is_outlier"] below
+`,
+      tests:[{type:'assert', expr:'bool(df.loc[df["score"] == 15, "is_outlier"].iloc[0]) == True', label:"df['is_outlier'] correctly flags the score of 15"}]
+    },
+    {
+      title:'A simpler fixed-threshold flag',
+      desc:`Not every situation needs the full IQR method — sometimes a simple fixed threshold is enough. Create
+        df with one column "score" containing 72, 75, 78, 74, 76, 15. Create
+        df["flagged"] = (df["score"] < 40) | (df["score"] > 100). Assert that df["flagged"].tolist() ==
+        [False, False, False, False, False, True].`,
+      starter:`import pandas as pd
+# Create df below
+`,
+      tests:[{type:'assert', expr:'df["flagged"].tolist() == [False, False, False, False, False, True]', label:'df["flagged"] correctly identifies only the score of 15'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does IQR stand for and represent?',
+      options:['Individual Quality Rank — a per-student score','Interquartile Range — the spread of the middle 50% of the data','Instant Query Result — a pandas function name','Index Quantity Reference'],
+      correct:1,
+      explain:'IQR = Q3 - Q1, measuring the spread of the middle half of the data, ignoring extreme values.'
+    },
+    {
+      q:'How is the upper outlier bound usually calculated?',
+      options:['Q3 + 1.5 * IQR','The maximum value in the column','Q1 - 1.5 * IQR','The mean plus 10'],
+      correct:0,
+      explain:'The standard "fence" for the upper bound is Q3 (75th percentile) plus 1.5 times the IQR.'
+    },
+    {
+      q:'What is the advantage of flagging outliers with .loc instead of just filtering them out?',
+      options:['.loc is faster','Flagging keeps the full dataset intact, just marking which rows are suspicious','.loc automatically fixes the outlier value','There is no difference'],
+      correct:1,
+      explain:'Filtering removes rows entirely; flagging with .loc adds a marker column so you can still see (and decide about) every row.'
+    },
+    {
+      q:'Why might you use a simple fixed threshold instead of the IQR method?',
+      options:['Fixed thresholds are always more accurate','Sometimes a known, sensible cutoff (e.g. "below 40 is definitely wrong") is simpler and clearer than computing quartiles','IQR only works with text data','You must always use both together'],
+      correct:1,
+      explain:'If you already know a sensible cutoff, a simple fixed threshold can be simpler and more transparent than the IQR calculation.'
+    }
+  ],
+  sandboxStarter3:`import pandas as pd
+df = pd.DataFrame({"score": [72, 75, 78, 74, 76, 15]})
+Q1 = df["score"].quantile(0.25)
+Q3 = df["score"].quantile(0.75)
+IQR = Q3 - Q1
+lower = Q1 - 1.5 * IQR
+upper = Q3 + 1.5 * IQR
+df["is_outlier"] = False
+df.loc[(df["score"] < lower) | (df["score"] > upper), "is_outlier"] = True
+print(df)
+`,
+  stretchChallenge:{
+    title:'Compute a "clean" average, excluding outliers',
+    desc:`Create df with one column "score" containing 72, 75, 78, 74, 76, 15. Compute Q1, Q3, IQR, lower, and
+      upper as before. Create clean = df[(df["score"] >= lower) & (df["score"] <= upper)], then
+      clean_mean = clean["score"].mean(). Assert that round(float(clean_mean), 2) == 75.0 — noticeably higher than
+      the raw mean (which the outlier drags down).`,
+    starter:`import pandas as pd
+# Create df, Q1, Q3, IQR, lower, upper, clean and clean_mean below
+`,
+    tests:[
+      {type:'assert', expr:'round(float(clean_mean), 2) == 75.0', label:'clean_mean correctly excludes the outlier (75.0)'}
+    ]
+  }
 }
 ];
 
