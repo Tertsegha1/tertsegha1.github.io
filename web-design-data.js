@@ -5523,6 +5523,79 @@ document.querySelector('#nextBtn').addEventListener('click', function(){
 },
 ];
 
+const WD_ADVANCED_MP1 = {
+  key:'mp1',
+  title:'Mini Project 1 — Build a Multi-Step Sign-Up Wizard',
+  intro:`A club sign-up wizard needs everything from Weeks 1-4: an array-of-objects list of clubs to choose from
+    (Week 1), filtered down to only the clubs still open (Week 2), a step-by-step form flow (Week 3's routing),
+    and validation gating each step (Week 4).`,
+  newTrick:`Combining a data-driven choice list with a validated multi-step flow — every earlier mini-project
+    combined 2-3 skills; this one asks for all four Advanced weeks working together.`,
+  stages:[
+    {
+      key:'a', title:'Stage A — Render the club list',
+      desc:`Loop over const clubs = [{name:'Chess Club', full:false}, {name:'Art Club', full:true}, {name:'Coding
+        Club', full:false}]; and render each as an &lt;li&gt; inside &lt;ul id="clubList"&gt; — the array-of-
+        objects rendering pattern from Week 1.`,
+      starter:`<ul id="clubList"></ul>
+<button id="renderBtn" type="button">Show clubs</button>
+<!-- Loop over clubs, rendering each as an <li> with its name -->
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const clubs = [{name:'Chess Club', full:false}, {name:'Art Club', full:true}, {name:'Coding Club', full:false}];
+    // Render each club's name as an <li> inside #clubList
+  });
+</script>
+`,
+      tests:[
+        {type:'dom-count', selector:'#clubList li', min:3, label:'#clubList shows all 3 clubs'},
+        {type:'dom', selector:'#clubList', contains:'Coding Club', label:'#clubList includes "Coding Club"'}
+      ]
+    },
+    {
+      key:'b', title:'Stage B — Filter to open clubs only',
+      desc:`Same clubs array, but this time use .filter() to keep only full:false clubs BEFORE rendering — so
+        Art Club (full) is excluded, and #clubList should show exactly Chess Club and Coding Club.`,
+      starter:`<ul id="clubList"></ul>
+<button id="renderBtn" type="button">Show open clubs</button>
+
+<script>
+  document.querySelector('#renderBtn').addEventListener('click', function(){
+    const clubs = [{name:'Chess Club', full:false}, {name:'Art Club', full:true}, {name:'Coding Club', full:false}];
+    // Filter to full:false only, then render each remaining club's name
+  });
+</script>
+`,
+      tests:[
+        {type:'dom-count', selector:'#clubList li', min:2, label:'#clubList shows the 2 open clubs'},
+        {type:'dom', selector:'#clubList', contains:'Chess ClubCoding Club', label:'Only Chess Club and Coding Club appear, adjacent (Art Club filtered out)'}
+      ]
+    },
+    {
+      key:'c', title:'Stage C — Add the validated sign-up step',
+      desc:`Below the club list, add a &lt;div class="step" id="step1"&gt; containing &lt;input id="name"&gt;
+        and &lt;button type="button" id="nextBtn"&gt;, plus a hidden &lt;div class="step" id="step2"&gt;
+        confirmation section. Clicking #nextBtn should validate #name is non-empty (showing an error if it
+        isn't) before hiding #step1 and showing #step2 — Week 4's multi-step pattern.`,
+      starter:`<div class="step" id="step1">
+  <input id="name" type="text" value="Ada">
+  <p id="nameError" style="display:none;">Please enter your name</p>
+  <button id="nextBtn" type="button">Sign Up</button>
+</div>
+<div class="step" id="step2" style="display:none;">
+  <p>You're signed up!</p>
+</div>
+<!-- Add a click handler on #nextBtn: if #name is empty, show #nameError; otherwise hide #step1 and show #step2 -->
+`,
+      tests:[
+        {type:'computed-style', selector:'#step2', prop:'display', equals:'block', label:'#step2 becomes visible after signing up with a valid name'},
+        {type:'computed-style', selector:'#step1', prop:'display', equals:'none', label:'#step1 is hidden'}
+      ]
+    }
+  ]
+};
+
 window.SUBJECT_DATA = window.SUBJECT_DATA || {};
 window.SUBJECT_DATA.wd = {
   b: {weeks: WD_WEEKS, mp1: WD_MP1, mp2: WD_MP2},
