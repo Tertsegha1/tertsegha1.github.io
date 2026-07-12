@@ -5136,6 +5136,391 @@ document.querySelector('#aboutBtn').addEventListener('click', function(){ showSe
     ]
   }
 },
+{
+  key:'week4', num:4, title:'Form State and Multi-Step Forms',
+  scenarioTag:'Real world: breaking a long form into manageable steps',
+  scenario:`A long sign-up form all on one screen is overwhelming. Real sign-up flows break it into steps —
+    name first, then email, then confirmation — showing one step at a time and only letting you move on once the
+    current step is actually valid. This combines Week 3's show/hide sections with Intermediate Week 4's
+    click-based validation, plus a remembered "which step am I on" variable.`,
+  objectives:[
+    'Track the current step in a remembered variable',
+    'Show only the current step\'s section',
+    'Validate the current step before allowing advancement',
+    'Combine tracking, validation, and display together'
+  ],
+  conceptHtml:`
+    <p>A multi-step form combines three ideas already learned: a remembered <code>currentStep</code> variable
+    (Week 6 of Intermediate), a <code>showStep(n)</code> function that hides all steps and shows just one (Week
+    3's routing pattern), and validating the CURRENT step's input before allowing the "Next" button to actually
+    advance (Intermediate Week 4).</p>
+    <pre class="code-block">let currentStep = 1;
+
+function showStep(n){
+  document.querySelectorAll('.step').forEach(function(s){ s.style.display = 'none'; });
+  document.querySelector('#step' + n).style.display = 'block';
+}
+
+document.querySelector('#nextBtn').addEventListener('click', function(){
+  const name = document.querySelector('#name').value;
+  if (name.trim() === '') {
+    document.querySelector('#step1error').style.display = 'block';
+    return; // stop here — don't advance on invalid input
+  }
+  currentStep = 2;
+  showStep(currentStep);
+});</pre>
+    <ul>
+      <li><code>let currentStep = 1;</code> — remembers which step is active, outside any click handler.</li>
+      <li><code>if (name.trim() === '') { ...; return; }</code> — the <code>return</code> stops the function
+        immediately, BEFORE <code>currentStep</code> changes or <code>showStep</code> runs — so invalid input
+        genuinely blocks advancement rather than just showing an error alongside moving on anyway.</li>
+    </ul>
+    <p>Now look at the second example, adding a "Back" button:</p>
+    <pre class="code-block">document.querySelector('#backBtn').addEventListener('click', function(){
+  currentStep = 1;
+  showStep(currentStep);
+});</pre>
+    <ul>
+      <li>Going back never needs validation — you're always allowed to revisit an earlier step, so this handler
+        is simpler than "Next"'s.</li>
+    </ul>`,
+  sandboxStarter:`<div class="step" id="step1">
+  <input id="name" type="text" value="Ada">
+  <p id="step1error" style="display:none;">Please enter your name</p>
+  <button id="nextBtn" type="button">Next</button>
+</div>
+<div class="step" id="step2" style="display:none;">
+  <p>Step 2: Email</p>
+</div>
+
+<script>
+  let currentStep = 1;
+
+  function showStep(n){
+    document.querySelectorAll('.step').forEach(function(s){ s.style.display = 'none'; });
+    document.querySelector('#step' + n).style.display = 'block';
+  }
+
+  document.querySelector('#nextBtn').addEventListener('click', function(){
+    const name = document.querySelector('#name').value;
+    if (name.trim() === '') {
+      document.querySelector('#step1error').style.display = 'block';
+      return;
+    }
+    currentStep = 2;
+    showStep(currentStep);
+  });
+</script>
+`,
+  sandboxStarter2:`<div class="step" id="step1">
+  <input id="name" type="text" value="Ada">
+  <p id="step1error" style="display:none;">Please enter your name</p>
+  <button id="nextBtn" type="button">Next</button>
+</div>
+<div class="step" id="step2" style="display:none;">
+  <p>Step 2: Email</p>
+  <button id="backBtn" type="button">Back</button>
+</div>
+
+<script>
+  let currentStep = 1;
+
+  function showStep(n){
+    document.querySelectorAll('.step').forEach(function(s){ s.style.display = 'none'; });
+    document.querySelector('#step' + n).style.display = 'block';
+  }
+
+  document.querySelector('#nextBtn').addEventListener('click', function(){
+    const name = document.querySelector('#name').value;
+    if (name.trim() === '') {
+      document.querySelector('#step1error').style.display = 'block';
+      return;
+    }
+    currentStep = 2;
+    showStep(currentStep);
+  });
+
+  document.querySelector('#backBtn').addEventListener('click', function(){
+    currentStep = 1;
+    showStep(currentStep);
+  });
+</script>
+`,
+  exercises:[
+    {
+      title:'Advance to step 2 with valid input',
+      desc:`&lt;input id="name" value="Ada"&gt; already has a valid value. Clicking &lt;button type="button"
+        id="nextBtn"&gt; should hide #step1 and show #step2 (both &lt;div class="step"&gt;), since the name is
+        not empty.`,
+      starter:`<div class="step" id="step1">
+  <input id="name" type="text" value="Ada">
+  <button id="nextBtn" type="button">Next</button>
+</div>
+<div class="step" id="step2" style="display:none;">
+  <p>Step 2: Email</p>
+</div>
+
+<script>
+  document.querySelector('#nextBtn').addEventListener('click', function(){
+    // If #name is valid, hide #step1 and show #step2
+  });
+</script>
+`,
+      tests:[
+        {type:'computed-style', selector:'#step2', prop:'display', equals:'block', label:'#step2 becomes visible'},
+        {type:'computed-style', selector:'#step1', prop:'display', equals:'none', label:'#step1 becomes hidden'}
+      ]
+    },
+    {
+      title:'Block advancement on invalid input',
+      desc:`&lt;input id="name" value=""&gt; is empty. Clicking &lt;button type="button" id="nextBtn"&gt; should
+        show &lt;p id="step1error"&gt; and NOT advance — #step1 should STAY visible, #step2 should STAY hidden.`,
+      starter:`<div class="step" id="step1">
+  <input id="name" type="text" value="">
+  <p id="step1error" style="display:none;">Please enter your name</p>
+  <button id="nextBtn" type="button">Next</button>
+</div>
+<div class="step" id="step2" style="display:none;">
+  <p>Step 2: Email</p>
+</div>
+
+<script>
+  document.querySelector('#nextBtn').addEventListener('click', function(){
+    // If #name is empty, show #step1error and do NOT advance (use return to stop early)
+  });
+</script>
+`,
+      tests:[
+        {type:'computed-style', selector:'#step1error', prop:'display', notEqual:'none', label:'#step1error shows because the name is empty'},
+        {type:'computed-style', selector:'#step2', prop:'display', equals:'none', label:'#step2 stays hidden — advancement was correctly blocked'}
+      ]
+    },
+    {
+      title:'Advance through three steps',
+      desc:`&lt;input id="name" value="Ada"&gt; and &lt;input id="email" value="ada@example.com"&gt; are both
+        valid. Two "Next" buttons (#next1Btn then #next2Btn, in that DOM order) get auto-clicked — after both,
+        #step3 should be visible, with #step1 and #step2 both hidden.`,
+      starter:`<div class="step" id="step1">
+  <input id="name" type="text" value="Ada">
+  <button id="next1Btn" type="button">Next</button>
+</div>
+<div class="step" id="step2" style="display:none;">
+  <input id="email" type="text" value="ada@example.com">
+  <button id="next2Btn" type="button">Next</button>
+</div>
+<div class="step" id="step3" style="display:none;">
+  <p>Step 3: Confirm</p>
+</div>
+
+<script>
+  document.querySelector('#next1Btn').addEventListener('click', function(){
+    // If #name is valid, hide #step1 and show #step2
+  });
+  document.querySelector('#next2Btn').addEventListener('click', function(){
+    // If #email is valid, hide #step2 and show #step3
+  });
+</script>
+`,
+      tests:[
+        {type:'computed-style', selector:'#step3', prop:'display', equals:'block', label:'#step3 is visible after both Next buttons'},
+        {type:'computed-style', selector:'#step2', prop:'display', equals:'none', label:'#step2 is hidden'}
+      ]
+    },
+    {
+      title:'Go forward, then back',
+      desc:`With &lt;input id="name" value="Ada"&gt; valid, &lt;button id="nextBtn"&gt; then &lt;button
+        id="backBtn"&gt; get auto-clicked in that order (Next first, Back second). Next should advance to
+        #step2; Back should return to #step1 — so the FINAL visible step should be #step1 again.`,
+      starter:`<div class="step" id="step1">
+  <input id="name" type="text" value="Ada">
+  <button id="nextBtn" type="button">Next</button>
+</div>
+<div class="step" id="step2" style="display:none;">
+  <p>Step 2: Email</p>
+  <button id="backBtn" type="button">Back</button>
+</div>
+
+<script>
+  document.querySelector('#nextBtn').addEventListener('click', function(){
+    // If #name is valid, hide #step1 and show #step2
+  });
+  document.querySelector('#backBtn').addEventListener('click', function(){
+    // Hide #step2, show #step1 (no validation needed to go back)
+  });
+</script>
+`,
+      tests:[
+        {type:'computed-style', selector:'#step1', prop:'display', equals:'block', label:'#step1 is visible again after going Next then Back'},
+        {type:'computed-style', selector:'#step2', prop:'display', equals:'none', label:'#step2 ends up hidden'}
+      ]
+    },
+    {
+      title:'Track the current step in a variable',
+      desc:`Declare let currentStep = 1; outside the handler. Clicking &lt;button type="button" id="nextBtn"&gt;
+        (with &lt;input id="name" value="Ada"&gt; valid) should increase currentStep to 2, then call a
+        showStep(currentStep) function that hides all .step elements and shows just #step + currentStep.`,
+      starter:`<div class="step" id="step1">
+  <input id="name" type="text" value="Ada">
+  <button id="nextBtn" type="button">Next</button>
+</div>
+<div class="step" id="step2" style="display:none;">
+  <p>Step 2: Email</p>
+</div>
+
+<script>
+  let currentStep = 1;
+
+  function showStep(n){
+    document.querySelectorAll('.step').forEach(function(s){ s.style.display = 'none'; });
+    document.querySelector('#step' + n).style.display = 'block';
+  }
+
+  document.querySelector('#nextBtn').addEventListener('click', function(){
+    // If #name is valid, increase currentStep to 2, then call showStep(currentStep)
+  });
+</script>
+`,
+      tests:[
+        {type:'computed-style', selector:'#step2', prop:'display', equals:'block', label:'#step2 becomes visible via showStep(currentStep)'}
+      ]
+    },
+    {
+      title:'Get stuck on an invalid middle step',
+      desc:`&lt;input id="name" value="Ada"&gt; is valid, but &lt;input id="email" value=""&gt; is empty. Two
+        "Next" buttons (#next1Btn then #next2Btn) get auto-clicked. The first should advance to #step2, but the
+        second should FAIL validation and leave #step2 visible — #step3 should never appear.`,
+      starter:`<div class="step" id="step1">
+  <input id="name" type="text" value="Ada">
+  <button id="next1Btn" type="button">Next</button>
+</div>
+<div class="step" id="step2" style="display:none;">
+  <input id="email" type="text" value="">
+  <p id="step2error" style="display:none;">Please enter your email</p>
+  <button id="next2Btn" type="button">Next</button>
+</div>
+<div class="step" id="step3" style="display:none;">
+  <p>Step 3: Confirm</p>
+</div>
+
+<script>
+  document.querySelector('#next1Btn').addEventListener('click', function(){
+    // If #name is valid, hide #step1 and show #step2
+  });
+  document.querySelector('#next2Btn').addEventListener('click', function(){
+    // If #email is empty, show #step2error and do NOT advance (return early)
+  });
+</script>
+`,
+      tests:[
+        {type:'computed-style', selector:'#step2', prop:'display', equals:'block', label:'#step2 stays visible — the empty email correctly blocked advancement'},
+        {type:'computed-style', selector:'#step3', prop:'display', equals:'none', label:'#step3 is never reached'}
+      ]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why use return; inside a click handler when validation fails?',
+      options:['It\'s not necessary','It stops the function immediately, so the code that advances to the next step never runs','It deletes the input','It shows an alert automatically'],
+      correct:1,
+      explain:'return exits the function right away — any code written after it (like advancing the step) simply never executes.'
+    },
+    {
+      q:'In a 3-step form, why does the "Back" button typically skip validation?',
+      options:['Back always requires validation too','You should always be allowed to revisit an earlier step you\'ve already filled in, without being blocked','Back is not allowed in real forms','There is no real reason'],
+      correct:1,
+      explain:'Validation exists to stop you moving FORWARD with bad data — going back to review or fix something doesn\'t need that same gate.'
+    },
+    {
+      q:'What does the remembered currentStep variable let showStep(currentStep) do?',
+      options:['Nothing useful','Always show the step matching whatever step is currently active, wherever it\'s called from','Only work once','Delete old steps'],
+      correct:1,
+      explain:'Since currentStep is remembered outside any single handler, any code can call showStep(currentStep) and get the right step every time.'
+    },
+    {
+      q:'If step 2\'s validation fails when the "Next" button for step 2→3 is clicked, what should happen to step 3?',
+      options:['It shows anyway','It should never become visible — the invalid step blocks all further progress until fixed','It shows a blank page','It skips straight to step 1'],
+      correct:1,
+      explain:'A properly gated multi-step form never lets you reach a later step while an earlier one is still invalid.'
+    }
+  ],
+  sandboxStarter3:`<div class="step" id="step1">
+  <input id="name" type="text" value="Ada">
+  <p id="step1error" style="display:none;">Please enter your name</p>
+  <button id="next1Btn" type="button">Next</button>
+</div>
+<div class="step" id="step2" style="display:none;">
+  <input id="email" type="text" value="ada@example.com">
+  <p id="step2error" style="display:none;">Please enter your email</p>
+  <button id="backBtn" type="button">Back</button>
+  <button id="next2Btn" type="button">Next</button>
+</div>
+<div class="step" id="step3" style="display:none;">
+  <p>Step 3: All done!</p>
+</div>
+
+<script>
+  let currentStep = 1;
+
+  function showStep(n){
+    document.querySelectorAll('.step').forEach(function(s){ s.style.display = 'none'; });
+    document.querySelector('#step' + n).style.display = 'block';
+  }
+
+  document.querySelector('#next1Btn').addEventListener('click', function(){
+    if (document.querySelector('#name').value.trim() === '') {
+      document.querySelector('#step1error').style.display = 'block';
+      return;
+    }
+    currentStep = 2;
+    showStep(currentStep);
+  });
+
+  document.querySelector('#backBtn').addEventListener('click', function(){
+    currentStep = 1;
+    showStep(currentStep);
+  });
+
+  document.querySelector('#next2Btn').addEventListener('click', function(){
+    if (!document.querySelector('#email').value.includes('@')) {
+      document.querySelector('#step2error').style.display = 'block';
+      return;
+    }
+    currentStep = 3;
+    showStep(currentStep);
+  });
+</script>
+`,
+  stretchChallenge:{
+    title:'Add a progress label',
+    desc:`Finished early? Add a &lt;p id="progress"&gt; that shows "Step X of 3" (updated inside showStep(n), set
+      to "Step " + n + " of 3") — so after advancing to step 2, #progress reads "Step 2 of 3".`,
+    starter:`<p id="progress">Step 1 of 3</p>
+<div class="step" id="step1">
+  <input id="name" type="text" value="Ada">
+  <button id="nextBtn" type="button">Next</button>
+</div>
+<div class="step" id="step2" style="display:none;">
+  <p>Step 2: Email</p>
+</div>
+
+<script>
+  function showStep(n){
+    document.querySelectorAll('.step').forEach(function(s){ s.style.display = 'none'; });
+    document.querySelector('#step' + n).style.display = 'block';
+    // Also update #progress to "Step " + n + " of 3"
+  }
+  document.querySelector('#nextBtn').addEventListener('click', function(){
+    if (document.querySelector('#name').value.trim() === '') { return; }
+    showStep(2);
+  });
+</script>
+`,
+    tests:[
+      {type:'dom', selector:'#progress', contains:'Step 2 of 3', label:'#progress correctly updates to "Step 2 of 3"'}
+    ]
+  }
+},
 ];
 
 window.SUBJECT_DATA = window.SUBJECT_DATA || {};
