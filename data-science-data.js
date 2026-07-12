@@ -1651,6 +1651,725 @@ leaderboard = filled.sort_values("score", ascending=False)
   ]
 };
 
+/* =========================================================================
+   Data Science Academy — Intermediate level
+   Focus: messier real-world data — text cleaning, dates, reshaping, custom
+   row/column functions, richer joins, multi-aggregation, ranking, outliers,
+   and the inverse of pivoting (melt).
+   ========================================================================= */
+
+const DS_INTERMEDIATE_WEEKS = [
+{
+  key:'week1', num:1, title:'Cleaning Messy Text Columns',
+  scenarioTag:'Real world: the sign-up sheet is a mess',
+  scenario:`Students filled in a sign-up sheet by hand, and the names/emails came in inconsistently — extra
+    spaces, mixed CAPS, typos. Before you can analyse anything, you need to clean the text columns up. pandas has
+    a whole family of string tools for exactly this, all accessed through .str.`,
+  objectives:[
+    'Remove extra spaces with .str.strip()',
+    'Standardise case with .str.lower()',
+    'Find rows matching a pattern with .str.contains()',
+    'Reassign a cleaned column back onto the DataFrame'
+  ],
+  conceptHtml:`
+    <p>Any text column has a <strong>.str</strong> accessor that unlocks string methods you can apply to every row
+    at once — no loop needed:</p>
+    <pre class="code-block">import pandas as pd
+df = pd.DataFrame({"name": [" Ada", "Ben ", " Chi "]})
+df["name"] = df["name"].str.strip()
+print(df["name"].tolist())   # ['Ada', 'Ben', 'Chi']</pre>
+    <p><code>.str.lower()</code> standardises case, which matters a lot when comparing text — "Ada" and "ada" look
+    the same to a human but are different strings to Python:</p>
+    <pre class="code-block">df["email"] = df["email"].str.lower()</pre>
+    <p><code>.str.contains("text")</code> checks each row for a substring, returning True/False per row — put it
+    inside df[...] to filter, just like a number comparison:</p>
+    <pre class="code-block">maths_classes = df[df["subject"].str.contains("Math")]</pre>
+    <h3>Let's break down the strip example, line by line</h3>
+    <ul>
+      <li><code>df["name"]</code> pulls out the "name" column as a Series (a single column of values).</li>
+      <li><code>.str</code> switches into "string mode" — every method after it (like <code>.strip()</code>) runs
+        on each value in the column individually, the same way you'd call <code>" Ada".strip()</code> on one
+        string.</li>
+      <li><code>df["name"] = ...</code> — reassigning back onto the SAME column name replaces the messy values with
+        the cleaned ones. This is the safe pattern: always reassign the whole column, never edit values in place.</li>
+      <li><code>.tolist()</code> converts a Series into a plain Python list, which is handy for printing something
+        you can read at a glance.</li>
+    </ul>
+    <p>You can chain <code>.str</code> methods together: <code>df["name"].str.strip().str.lower()</code> strips
+    spaces AND lowercases in one line, run left to right.</p>`,
+  sandboxStarter:`import pandas as pd
+df = pd.DataFrame({"name": [" Ada", "Ben ", " Chi "]})
+print(df["name"].tolist())
+df["name"] = df["name"].str.strip()
+print(df["name"].tolist())
+`,
+  sandboxStarter2:`import pandas as pd
+df = pd.DataFrame({"email": ["Ada@SCHOOL.com", "ben@school.com", "CHI@SCHOOL.COM"]})
+df["email"] = df["email"].str.strip().str.lower()
+print(df["email"].tolist())
+`,
+  exercises:[
+    {
+      title:'Strip the extra spaces',
+      desc:`Create df with one column "name" containing " Ada", "Ben ", " Chi ". Reassign df["name"] to
+        df["name"].str.strip(), then print(df["name"].tolist()). It should print ['Ada', 'Ben', 'Chi'].`,
+      starter:`import pandas as pd
+# Create df below
+`,
+      tests:[{type:'output', contains:["['Ada', 'Ben', 'Chi']"], label:"Prints the correctly stripped list"}]
+    },
+    {
+      title:'Lowercase for comparing',
+      desc:`Create df with one column "email" containing "Ada@SCHOOL.com", "ben@school.com", "CHI@SCHOOL.COM".
+        Reassign df["email"] to df["email"].str.lower(), then print(df["email"].tolist()).`,
+      starter:`import pandas as pd
+# Create df below
+`,
+      tests:[{type:'output', contains:["['ada@school.com', 'ben@school.com', 'chi@school.com']"], label:'Prints the correctly lowercased list'}]
+    },
+    {
+      title:'Find matching subjects',
+      desc:`Create df with one column "subject" containing "Mathematics", "Math Extension", "English", "Science".
+        Create matches = df[df["subject"].str.contains("Math", case=False)], then print(len(matches)). It should
+        print 2 — only the two rows containing "Math" match.`,
+      starter:`import pandas as pd
+# Create df and matches below
+`,
+      tests:[{type:'output', contains:['2'], label:'Filters to the correct number of matches (2)'}]
+    },
+    {
+      title:'Strip and lower together',
+      desc:`Create df with one column "name" containing " Ada ", "BEN", " chi". Reassign df["name"] to
+        df["name"].str.strip().str.lower(), then assert df["name"].tolist() == ['ada', 'ben', 'chi'].`,
+      starter:`import pandas as pd
+# Create df below
+`,
+      tests:[{type:'assert', expr:"df[\"name\"].tolist() == ['ada', 'ben', 'chi']", label:"df['name'] is correctly stripped and lowercased"}]
+    },
+    {
+      title:'Clean a class column before counting',
+      desc:`Create df with one column "class" containing " 7A", "7A ", "7B", " 7A" (note the inconsistent spacing
+        — some entries are really the same class). Reassign df["class"] to df["class"].str.strip(), then print
+        df["class"].nunique(). It should print 2 — without cleaning first, pandas would count 3 different-looking
+        values instead of the real 2 classes.`,
+      starter:`import pandas as pd
+# Create df below
+`,
+      tests:[{type:'output', contains:['2'], label:'Prints the correct number of unique classes after cleaning (2)'}]
+    },
+    {
+      title:'Flag emails missing an @',
+      desc:`Create df with one column "email" containing "ada@school.com", "ben.school.com", "chi@school.com" (Ben's
+        is missing the @ symbol — a typo). Create a new column df["valid"] = df["email"].str.contains("@"), then
+        print(df["valid"].tolist()). It should print [True, False, True].`,
+      starter:`import pandas as pd
+# Create df below
+`,
+      tests:[{type:'output', contains:['[True, False, True]'], label:'Correctly flags which emails contain an @'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does the .str accessor let you do?',
+      options:['Convert a DataFrame to a string','Run string methods on every value in a column at once','Sort a column alphabetically','Delete a column'],
+      correct:1,
+      explain:'.str unlocks string methods (like .strip(), .lower(), .contains()) applied row-by-row across a whole column.'
+    },
+    {
+      q:'What does df["name"].str.strip() do?',
+      options:['Removes the "name" column entirely','Removes leading/trailing spaces from every value','Removes all spaces, including inside words','Deletes empty rows'],
+      correct:1,
+      explain:'.str.strip() removes whitespace only from the start and end of each string, matching Python\'s built-in str.strip().'
+    },
+    {
+      q:'Why lowercase text columns before comparing them?',
+      options:['It makes the DataFrame smaller','Python treats "Ada" and "ada" as different strings unless case matches','It\'s required by pandas','It sorts the column automatically'],
+      correct:1,
+      explain:'String comparisons are case-sensitive by default, so standardising case avoids missed matches like "Ada" vs "ada".'
+    },
+    {
+      q:'What does df[df["subject"].str.contains("Math")] return?',
+      options:['A single True/False value','The word "Math" repeated','Only the rows where "subject" contains "Math"','Every row in the DataFrame'],
+      correct:2,
+      explain:'.str.contains() returns a True/False Series used the same way as a numeric condition — it filters rows.'
+    }
+  ],
+  sandboxStarter3:`import pandas as pd
+df = pd.DataFrame({"subject": ["Mathematics", "Math Extension", "English", "Science"]})
+maths_classes = df[df["subject"].str.contains("Math", case=False)]
+print(maths_classes)
+print("Matches:", len(maths_classes))
+`,
+  stretchChallenge:{
+    title:'Clean a full sign-up row and check it',
+    desc:`Create df with columns "name" (" Ada ") and "email" ("ADA@SCHOOL.COM "). Reassign df["name"] to
+      df["name"].str.strip(), and df["email"] to df["email"].str.strip().str.lower(). Then assert that
+      df["name"].iloc[0] == 'Ada' and df["email"].iloc[0] == 'ada@school.com'.`,
+    starter:`import pandas as pd
+# Create df below
+`,
+    tests:[
+      {type:'assert', expr:"df[\"name\"].iloc[0] == 'Ada'", label:"df['name'] is correctly stripped"},
+      {type:'assert', expr:"df[\"email\"].iloc[0] == 'ada@school.com'", label:"df['email'] is correctly stripped and lowercased"}
+    ]
+  }
+},
+{
+  key:'week2', num:2, title:'Working with Dates',
+  scenarioTag:'Real world: the attendance log is full of dates',
+  scenario:`The attendance register stores each entry's date as plain text ("2026-01-15"), which looks like a date
+    to a human but is just a string to pandas — you can't ask a string "which month were you?" pandas can convert
+    text into a real date type, unlocking year/month/day and proper date comparisons.`,
+  objectives:[
+    'Convert a text column into real dates with pd.to_datetime()',
+    'Pull out year/month with the .dt accessor',
+    'Filter rows using a date comparison',
+    'Find the day of the week with .dt.day_name()'
+  ],
+  conceptHtml:`
+    <p><code>pd.to_datetime()</code> converts a column of date-like text into pandas' real datetime type:</p>
+    <pre class="code-block">import pandas as pd
+df = pd.DataFrame({"date": ["2026-01-15", "2026-02-03", "2026-03-10"]})
+df["date"] = pd.to_datetime(df["date"])
+print(df["date"].dt.year.tolist())    # [2026, 2026, 2026]
+print(df["date"].dt.month.tolist())   # [1, 2, 3]</pre>
+    <p>Just like <code>.str</code> unlocks string methods, <strong>.dt</strong> unlocks date methods once a column
+    is a real datetime type. Once converted, you can filter using ordinary comparisons — pandas understands that
+    "before" means "earlier in time," not "earlier alphabetically":</p>
+    <pre class="code-block">before_half_term = df[df["date"] < pd.Timestamp("2026-02-15")]</pre>
+    <h3>Let's break down the conversion, line by line</h3>
+    <ul>
+      <li><code>pd.to_datetime(df["date"])</code> reads each text value and parses it into pandas' datetime type —
+        it recognises common formats like "2026-01-15" automatically.</li>
+      <li><code>df["date"] = ...</code> reassigns the SAME column, replacing the text version with the real-date
+        version — after this line, df["date"] is no longer plain text.</li>
+      <li><code>.dt.year</code> / <code>.dt.month</code> pull out just that part of each date as a whole number,
+        one per row — the dot-dt-dot pattern mirrors dot-str-dot from Week 1.</li>
+      <li><code>pd.Timestamp("2026-02-15")</code> builds a single specific date to compare against — you can use
+        <code>&lt;</code>, <code>&gt;</code>, <code>==</code> the same way you would with numbers.</li>
+    </ul>
+    <p><code>.dt.day_name()</code> returns the day of the week as text, e.g. "Thursday" — handy for questions like
+    "was this a Monday?"</p>`,
+  sandboxStarter:`import pandas as pd
+df = pd.DataFrame({"date": ["2026-01-15", "2026-02-03", "2026-03-10"]})
+df["date"] = pd.to_datetime(df["date"])
+print(df["date"].dt.year.tolist())
+print(df["date"].dt.month.tolist())
+`,
+  sandboxStarter2:`import pandas as pd
+df = pd.DataFrame({"date": ["2026-01-15", "2026-02-03", "2026-02-20", "2026-03-10"]})
+df["date"] = pd.to_datetime(df["date"])
+feb_entries = df[df["date"].dt.month == 2]
+print(feb_entries)
+`,
+  exercises:[
+    {
+      title:'Convert text to real dates',
+      desc:`Create df with one column "date" containing "2026-01-15", "2026-02-03", "2026-03-10". Reassign df["date"]
+        to pd.to_datetime(df["date"]), then print(df["date"].dt.year.tolist()). It should print [2026, 2026, 2026].`,
+      starter:`import pandas as pd
+# Create df below
+`,
+      tests:[{type:'output', contains:['[2026, 2026, 2026]'], label:'Prints the correct list of years'}]
+    },
+    {
+      title:'Extract the month',
+      desc:`Create df with one column "date" containing "2026-01-15", "2026-02-03", "2026-03-10". Reassign df["date"]
+        to pd.to_datetime(df["date"]), then print(df["date"].dt.month.tolist()). It should print [1, 2, 3].`,
+      starter:`import pandas as pd
+# Create df below
+`,
+      tests:[{type:'output', contains:['[1, 2, 3]'], label:'Prints the correct list of months'}]
+    },
+    {
+      title:'Filter to February',
+      desc:`Create df with one column "date" containing "2026-01-15", "2026-02-03", "2026-02-20", "2026-03-10".
+        Reassign df["date"] to pd.to_datetime(df["date"]). Create feb = df[df["date"].dt.month == 2], then
+        print(len(feb)). It should print 2.`,
+      starter:`import pandas as pd
+# Create df below
+`,
+      tests:[{type:'output', contains:['2'], label:'Filters to the correct number of February rows (2)'}]
+    },
+    {
+      title:'Who attended in January?',
+      desc:`Create df with columns "name" (Ada, Ben, Chi) and "date" ("2026-01-15", "2026-02-03", "2026-01-28").
+        Reassign df["date"] to pd.to_datetime(df["date"]). Create jan = df[df["date"].dt.month == 1]. Assert that
+        sorted(jan["name"].tolist()) == ["Ada", "Chi"].`,
+      starter:`import pandas as pd
+# Create df below
+`,
+      tests:[{type:'assert', expr:'sorted(jan["name"].tolist()) == ["Ada", "Chi"]', label:'jan correctly contains Ada and Chi'}]
+    },
+    {
+      title:'Count entries before half-term',
+      desc:`Create df with one column "date" containing "2026-01-10", "2026-02-01", "2026-02-20", "2026-03-05".
+        Reassign df["date"] to pd.to_datetime(df["date"]). Create before = df[df["date"] < pd.Timestamp("2026-02-15")],
+        then print(len(before)). It should print 2 — dates are compared as real dates, not as text.`,
+      starter:`import pandas as pd
+# Create df below
+`,
+      tests:[{type:'output', contains:['2'], label:'Filters to the correct number of rows before half-term (2)'}]
+    },
+    {
+      title:'Find the day of the week',
+      desc:`Create df with one column "date" containing just "2026-01-15". Reassign df["date"] to
+        pd.to_datetime(df["date"]), then print(df["date"].dt.day_name().iloc[0]). It should print "Thursday".`,
+      starter:`import pandas as pd
+# Create df below
+`,
+      tests:[{type:'output', contains:['Thursday'], label:'Prints the correct day of the week (Thursday)'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does pd.to_datetime() do?',
+      options:['Deletes a date column','Converts text into pandas\' real date type','Sorts a DataFrame by date','Prints today\'s date'],
+      correct:1,
+      explain:'pd.to_datetime() parses date-like text and converts it into a real datetime type pandas can compute with.'
+    },
+    {
+      q:'How do you get the month from a real datetime column called "date"?',
+      options:['df["date"].month()','df["date"].dt.month','df.month("date")','df["date"].getMonth()'],
+      correct:1,
+      explain:'.dt.month (the .dt accessor, mirroring .str for strings) pulls out the month from each date.'
+    },
+    {
+      q:'Why convert text to real dates before filtering by date?',
+      options:['It makes the DataFrame print in colour','Text comparisons don\'t understand "before"/"after" in time the way real dates do','pandas requires it to print anything','It\'s only needed for very old dates'],
+      correct:1,
+      explain:'Once converted, comparisons like < and > correctly mean "earlier/later in time," not alphabetical order.'
+    },
+    {
+      q:'What does df["date"].dt.day_name() return?',
+      options:['The date as a number','The day of the week as text, e.g. "Thursday"','The year only','Nothing — this method doesn\'t exist'],
+      correct:1,
+      explain:'.dt.day_name() returns the weekday name for each date.'
+    }
+  ],
+  sandboxStarter3:`import pandas as pd
+df = pd.DataFrame({"date": ["2026-01-10", "2026-02-01", "2026-02-20", "2026-03-05"]})
+df["date"] = pd.to_datetime(df["date"])
+before = df[df["date"] < pd.Timestamp("2026-02-15")]
+print("Before half-term:", len(before))
+print("Day of first entry:", df["date"].dt.day_name().iloc[0])
+`,
+  stretchChallenge:{
+    title:'Find who attended during the spring term window',
+    desc:`Create df with columns "name" (Ada, Ben, Chi, Dee) and "date" ("2026-01-10", "2026-02-05", "2026-02-25",
+      "2026-03-01"). Reassign df["date"] to pd.to_datetime(df["date"]). Create
+      spring_term = df[(df["date"] >= pd.Timestamp("2026-02-01")) &amp; (df["date"] &lt; pd.Timestamp("2026-03-01"))].
+      Assert that sorted(spring_term["name"].tolist()) == ["Ben", "Chi"].`,
+    starter:`import pandas as pd
+# Create df below
+`,
+    tests:[
+      {type:'assert', expr:'sorted(spring_term["name"].tolist()) == ["Ben", "Chi"]', label:'spring_term correctly contains Ben and Chi'}
+    ]
+  }
+},
+{
+  key:'week3', num:3, title:'Changing Shape: pivot_table',
+  scenarioTag:'Real world: the gradebook needs to be "wide," not "long"',
+  scenario:`Exam results usually come in one row per (student, subject) pair — Ada's Maths score, Ada's Science
+    score, Ben's Maths score, and so on, stacked one after another. That's easy to log but awkward to read.
+    pd.pivot_table() reshapes it into the familiar "one row per student, one column per subject" gradebook
+    layout.`,
+  objectives:[
+    'Reshape data with pd.pivot_table(index, columns, values)',
+    'Understand the default aggfunc ("mean") when duplicate combinations exist',
+    'Switch aggfunc to "count" or "sum" for a different summary',
+    'Fill missing combinations with fill_value'
+  ],
+  conceptHtml:`
+    <p><strong>pd.pivot_table()</strong> reshapes "long" data (one row per fact) into "wide" data (one row per
+    group, one column per category):</p>
+    <pre class="code-block">import pandas as pd
+df = pd.DataFrame({
+    "name": ["Ada", "Ada", "Ben", "Ben"],
+    "subject": ["Maths", "Science", "Maths", "Science"],
+    "score": [80, 70, 60, 90]
+})
+pivot = pd.pivot_table(df, index="name", columns="subject", values="score")
+print(pivot)
+print(pivot.loc["Ada", "Maths"])   # 80.0</pre>
+    <p>If more than one row shares the same (name, subject) combination, pivot_table needs to know how to combine
+    them — that's the <strong>aggfunc</strong> parameter, which defaults to <code>"mean"</code> (the average):</p>
+    <pre class="code-block">pivot = pd.pivot_table(df, index="name", columns="subject", values="score", aggfunc="sum")</pre>
+    <p>If some (name, subject) combinations never appear in the data, pivot_table leaves them as <code>NaN</code>
+    (missing) by default — pass <code>fill_value=0</code> to replace those gaps with a real number instead.</p>
+    <h3>Let's break down the pivot_table call, line by line</h3>
+    <ul>
+      <li><code>index="name"</code> — becomes the ROW labels of the reshaped table, one row per unique name.</li>
+      <li><code>columns="subject"</code> — becomes the COLUMN labels, one column per unique subject.</li>
+      <li><code>values="score"</code> — the numbers that fill the table, matched up by (name, subject) pair.</li>
+      <li><code>pivot.loc["Ada", "Maths"]</code> — once reshaped, you can look up a single cell exactly like Week
+        2's <code>.loc[]</code>, but now BOTH the row AND column labels come from the original data, not just
+        positions.</li>
+    </ul>`,
+  sandboxStarter:`import pandas as pd
+df = pd.DataFrame({
+    "name": ["Ada", "Ada", "Ben", "Ben"],
+    "subject": ["Maths", "Science", "Maths", "Science"],
+    "score": [80, 70, 60, 90]
+})
+pivot = pd.pivot_table(df, index="name", columns="subject", values="score")
+print(pivot)
+`,
+  sandboxStarter2:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada", "Ada", "Ben"], "subject": ["Maths", "Maths", "Maths"], "score": [80, 90, 60]})
+mean_pivot = pd.pivot_table(df, index="name", columns="subject", values="score")
+sum_pivot = pd.pivot_table(df, index="name", columns="subject", values="score", aggfunc="sum")
+print(mean_pivot.loc["Ada", "Maths"])
+print(sum_pivot.loc["Ada", "Maths"])
+`,
+  exercises:[
+    {
+      title:'Build your first pivot table',
+      desc:`Create df with columns "name" (Ada, Ada, Ben, Ben), "subject" (Maths, Science, Maths, Science), and
+        "score" (80, 70, 60, 90). Create pivot = pd.pivot_table(df, index="name", columns="subject",
+        values="score"), then print(pivot.loc["Ada", "Maths"]). It should print 80.0.`,
+      starter:`import pandas as pd
+# Create df and pivot below
+`,
+      tests:[{type:'output', contains:['80.0'], label:"Prints the correct value for Ada's Maths score (80.0)"}]
+    },
+    {
+      title:'Look up a different cell',
+      desc:`Using the same df and pivot from the first exercise, print(pivot.loc["Ben", "Science"]). It should
+        print 90.0.`,
+      starter:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada", "Ada", "Ben", "Ben"], "subject": ["Maths", "Science", "Maths", "Science"], "score": [80, 70, 60, 90]})
+pivot = pd.pivot_table(df, index="name", columns="subject", values="score")
+# Print pivot.loc["Ben", "Science"] below
+`,
+      tests:[{type:'output', contains:['90.0'], label:"Prints the correct value for Ben's Science score (90.0)"}]
+    },
+    {
+      title:'Average duplicate scores',
+      desc:`Create df with columns "name" (Ada, Ada, Ben) and "subject" (Maths, Maths, Maths) and "score" (80, 90,
+        60) — Ada has two separate Maths scores. Create pivot = pd.pivot_table(df, index="name", columns="subject",
+        values="score") (default aggfunc averages duplicates), then print(pivot.loc["Ada", "Maths"]). It should
+        print 85.0 — the average of 80 and 90.`,
+      starter:`import pandas as pd
+# Create df and pivot below
+`,
+      tests:[{type:'output', contains:['85.0'], label:"Prints the correctly averaged value (85.0)"}]
+    },
+    {
+      title:'Check the reshaped columns',
+      desc:`Using df with "name" (Ada, Ada, Ben, Ben), "subject" (Maths, Science, Maths, Science), and "score" (80,
+        70, 60, 90), create pivot = pd.pivot_table(df, index="name", columns="subject", values="score"). Assert
+        that sorted(list(pivot.columns)) == ["Maths", "Science"].`,
+      starter:`import pandas as pd
+# Create df and pivot below
+`,
+      tests:[{type:'assert', expr:'sorted(list(pivot.columns)) == ["Maths", "Science"]', label:'pivot has exactly the Maths and Science columns'}]
+    },
+    {
+      title:'Count how many attempts, not the average',
+      desc:`Create df with columns "name" (Ada, Ada, Ben) and "subject" (Maths, Maths, Maths) and "score" (80, 90,
+        60). Create pivot = pd.pivot_table(df, index="name", columns="subject", values="score", aggfunc="count"),
+        then print(pivot.loc["Ada", "Maths"]). It should print 2 — Ada attempted Maths twice.`,
+      starter:`import pandas as pd
+# Create df and pivot below
+`,
+      tests:[{type:'output', contains:['2'], label:"Prints the correct attempt count (2)"}]
+    },
+    {
+      title:'Fill in the gaps',
+      desc:`Create df with columns "name" (Ada, Ada, Ben), "subject" (Maths, Science, Maths), and "score" (80, 70,
+        60) — Ben has no Science score at all. Create pivot = pd.pivot_table(df, index="name", columns="subject",
+        values="score", fill_value=0), then print(pivot.loc["Ben", "Science"]). It should print 0.0, not NaN.`,
+      starter:`import pandas as pd
+# Create df and pivot below
+`,
+      tests:[{type:'output', contains:['0.0'], label:"Prints 0.0 for Ben's missing Science score, not NaN"}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does pd.pivot_table(df, index="name", columns="subject", values="score") do?',
+      options:['Deletes duplicate rows','Reshapes the data into one row per name, one column per subject','Sorts the DataFrame','Merges two DataFrames'],
+      correct:1,
+      explain:'pivot_table reshapes "long" data into a "wide" table using index for rows and columns for columns.'
+    },
+    {
+      q:'What does pivot_table do by default when multiple rows share the same index/column combination?',
+      options:['It raises an error','It keeps only the first one','It averages them (aggfunc="mean" by default)','It adds them together'],
+      correct:2,
+      explain:'The default aggfunc is "mean" — pivot_table averages duplicate combinations unless told otherwise.'
+    },
+    {
+      q:'How do you make pivot_table add values together instead of averaging?',
+      options:['aggfunc="sum"','values="sum"','index="sum"','It always adds by default'],
+      correct:0,
+      explain:'Passing aggfunc="sum" (or "count", etc.) overrides the default "mean" behaviour.'
+    },
+    {
+      q:'What does fill_value=0 do in pivot_table?',
+      options:['Replaces every value with 0','Fills in missing index/column combinations with 0 instead of NaN','Deletes rows with a score of 0','Sets the aggfunc to 0'],
+      correct:1,
+      explain:'Without fill_value, combinations that never appeared in the original data show up as NaN — fill_value replaces those gaps.'
+    }
+  ],
+  sandboxStarter3:`import pandas as pd
+df = pd.DataFrame({"name": ["Ada", "Ada", "Ben"], "subject": ["Maths", "Science", "Maths"], "score": [80, 70, 60]})
+pivot = pd.pivot_table(df, index="name", columns="subject", values="score", fill_value=0)
+print(pivot)
+print("Ben's Science score (filled):", pivot.loc["Ben", "Science"])
+`,
+  stretchChallenge:{
+    title:'Total Sports Day points by house and event',
+    desc:`Create df with columns "house" (Red, Red, Blue, Blue), "event" (Relay, Relay, Relay, Long Jump), and
+      "points" (10, 15, 8, 12). Create pivot = pd.pivot_table(df, index="house", columns="event", values="points",
+      aggfunc="sum", fill_value=0). Assert that pivot.loc["Red", "Relay"] == 25 — Red's two Relay entries (10+15)
+      are added together, not averaged.`,
+    starter:`import pandas as pd
+# Create df and pivot below
+`,
+    tests:[
+      {type:'assert', expr:'pivot.loc["Red", "Relay"] == 25', label:"Red's Relay points are correctly totalled (25)"}
+    ]
+  }
+},
+{
+  key:'week4', num:4, title:'Applying Your Own Function',
+  scenarioTag:'Real world: the grading rule is yours, not pandas\'',
+  scenario:`pandas ships with .mean(), .max(), and friends — but "turn a score into a letter grade" is a rule only
+    your school has. .apply() lets you write that rule as an ordinary Python function, then run it across an
+    entire column (or row) in one line.`,
+  objectives:[
+    'Write a plain Python function that takes one value and returns one value',
+    'Run it across a column with .apply()',
+    'Run a function across a whole ROW at once with .apply(..., axis=1)',
+    'Use a function\'s return value to build a new column'
+  ],
+  conceptHtml:`
+    <p>.apply() runs a function once per value in a column, collecting the results into a new Series:</p>
+    <pre class="code-block">import pandas as pd
+def score_to_grade(score):
+    if score >= 70:
+        return "A"
+    else:
+        return "B"
+
+df = pd.DataFrame({"score": [75, 60]})
+df["grade"] = df["score"].apply(score_to_grade)
+print(df["grade"].tolist())   # ['A', 'B']</pre>
+    <p>By default .apply() hands your function ONE VALUE at a time (one cell). Pass <code>axis=1</code> to instead
+    hand your function a whole ROW at a time, letting it read multiple columns:</p>
+    <pre class="code-block">df["full_name"] = df.apply(lambda row: row["first"] + " " + row["last"], axis=1)</pre>
+    <h3>Let's break down the score_to_grade example, line by line</h3>
+    <ul>
+      <li><code>def score_to_grade(score):</code> — an ordinary Python function, no pandas involved yet. It takes
+        ONE score and returns ONE grade.</li>
+      <li><code>df["score"].apply(score_to_grade)</code> — note there are no parentheses after
+        <code>score_to_grade</code> here. You're handing pandas the FUNCTION ITSELF, and pandas calls it once for
+        every value in the column.</li>
+      <li><code>df["grade"] = ...</code> — the results (one per row) become a brand new column.</li>
+      <li>With <code>axis=1</code>, your function receives a <code>row</code> object instead of a single value —
+        <code>row["first"]</code> works just like <code>df["first"]</code>, but for that one row only.</li>
+    </ul>
+    <p>You can also use a short <code>lambda</code> instead of a full <code>def</code> when the function is a
+    one-liner — both work the same way with .apply().</p>`,
+  sandboxStarter:`import pandas as pd
+def score_to_grade(score):
+    if score >= 70:
+        return "A"
+    else:
+        return "B"
+
+df = pd.DataFrame({"score": [75, 60]})
+df["grade"] = df["score"].apply(score_to_grade)
+print(df)
+`,
+  sandboxStarter2:`import pandas as pd
+df = pd.DataFrame({"first": ["Ada", "Ben"], "last": ["Lovelace", "Franklin"]})
+df["full_name"] = df.apply(lambda row: row["first"] + " " + row["last"], axis=1)
+print(df["full_name"].tolist())
+`,
+  exercises:[
+    {
+      title:'Write your first grading function',
+      desc:`Write a function score_to_grade(score) that returns "A" if score >= 70, otherwise "B". Create df with
+        one column "score" containing 75, 60. Create df["grade"] = df["score"].apply(score_to_grade), then
+        print(df["grade"].tolist()). It should print ['A', 'B'].`,
+      starter:`import pandas as pd
+# Define score_to_grade below, then create df and apply it
+`,
+      tests:[{type:'output', contains:["['A', 'B']"], label:'Prints the correctly graded list'}]
+    },
+    {
+      title:'Give low scorers a bonus',
+      desc:`Write a function add_bonus(x) that returns x + 5 if x < 50, otherwise just x. Create df with one column
+        "score" containing 45, 80. Create df["bonus_score"] = df["score"].apply(add_bonus), then
+        print(df["bonus_score"].tolist()). It should print [50, 80].`,
+      starter:`import pandas as pd
+# Define add_bonus below, then create df and apply it
+`,
+      tests:[{type:'output', contains:['[50, 80]'], label:'Prints the correctly boosted list'}]
+    },
+    {
+      title:'Combine two columns with axis=1',
+      desc:`Create df with columns "first" (Ada, Ben) and "last" (Lovelace, Franklin). Create
+        df["full_name"] = df.apply(lambda row: row["first"] + " " + row["last"], axis=1), then
+        print(df["full_name"].tolist()). It should print ['Ada Lovelace', 'Ben Franklin'].`,
+      starter:`import pandas as pd
+# Create df and full_name below
+`,
+      tests:[{type:'output', contains:["['Ada Lovelace', 'Ben Franklin']"], label:'Prints the correctly combined names'}]
+    },
+    {
+      title:'Flag who passed',
+      desc:`Create df with one column "score" containing 95, 40. Create
+        df["passed"] = df["score"].apply(lambda x: x >= 50). Assert that df["passed"].tolist() == [True, False].`,
+      starter:`import pandas as pd
+# Create df below
+`,
+      tests:[{type:'assert', expr:'df["passed"].tolist() == [True, False]', label:"df['passed'] correctly flags who passed"}]
+    },
+    {
+      title:'Five grade bands',
+      desc:`Write a function grade_band(score) that returns "A" for score >= 90, "B" for >= 80, "C" for >= 70, "D"
+        for >= 60, and "F" otherwise (use elif for the middle cases). Create df with one column "score" containing
+        95, 85, 75, 65, 50. Create df["grade"] = df["score"].apply(grade_band), then print(df["grade"].tolist()).
+        It should print ['A', 'B', 'C', 'D', 'F'].`,
+      starter:`import pandas as pd
+# Define grade_band below, then create df and apply it
+`,
+      tests:[{type:'output', contains:["['A', 'B', 'C', 'D', 'F']"], label:'Prints the correctly banded grades'}]
+    },
+    {
+      title:'Pass both subjects, row by row',
+      desc:`Create df with columns "maths" (80, 40, 60) and "science" (70, 90, 40). Create
+        df["result"] = df.apply(lambda row: "Pass" if row["maths"] >= 50 and row["science"] >= 50 else "Fail",
+        axis=1), then print(df["result"].tolist()). It should print ['Pass', 'Fail', 'Fail'] — the middle and last
+        students each fail exactly one subject.`,
+      starter:`import pandas as pd
+# Create df and result below
+`,
+      tests:[{type:'output', contains:["['Pass', 'Fail', 'Fail']"], label:'Prints the correctly combined pass/fail results'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does df["score"].apply(my_function) do?',
+      options:['Calls my_function once, on the whole column at once','Calls my_function once for every value in the "score" column','Deletes the "score" column','Sorts the column using my_function'],
+      correct:1,
+      explain:'.apply() runs your function once per value (by default), collecting the results into a new Series.'
+    },
+    {
+      q:'What does passing axis=1 to .apply() change?',
+      options:['Nothing, it\'s optional and does nothing','Your function now receives a whole ROW instead of a single value','It sorts the DataFrame first','It only works on numbers'],
+      correct:1,
+      explain:'axis=1 makes .apply() run once per ROW, handing your function a row object so it can read multiple columns.'
+    },
+    {
+      q:'In df["score"].apply(score_to_grade), why is there no () after score_to_grade?',
+      options:['It\'s a typo','You\'re passing the function itself, not calling it — pandas calls it for you',' () would delete the function','Functions never need ()'],
+      correct:1,
+      explain:'Without (), you hand pandas the function object itself; pandas then calls it once per value automatically.'
+    },
+    {
+      q:'Inside a function used with axis=1, how do you read the "maths" value for the current row?',
+      options:['maths','df["maths"]','row["maths"]','row.maths()'],
+      correct:2,
+      explain:'With axis=1, your function receives a row object — row["maths"] reads that one row\'s "maths" value.'
+    }
+  ],
+  sandboxStarter3:`import pandas as pd
+def grade_band(score):
+    if score >= 90:
+        return "A"
+    elif score >= 70:
+        return "B"
+    else:
+        return "C"
+
+df = pd.DataFrame({"score": [95, 75, 50]})
+df["grade"] = df["score"].apply(grade_band)
+print(df)
+`,
+  stretchChallenge:{
+    title:'Format a name and grade band together',
+    desc:`Write a function label_student(row) that: takes row["name"], strips it and converts it to title case with
+      .strip().title(), then decides a band — "Distinction" if row["score"] >= 70, "Pass" if >= 50, otherwise
+      "Fail" — and returns the name, then ": ", then the band, all joined together. Create df with one row: "name"
+      = " ada lovelace ", "score" = 85. Create df["label"] = df.apply(label_student, axis=1). Assert that
+      df["label"].iloc[0] == "Ada Lovelace: Distinction".`,
+    starter:`import pandas as pd
+# Define label_student below, then create df and apply it
+`,
+    tests:[
+      {type:'assert', expr:'df["label"].iloc[0] == "Ada Lovelace: Distinction"', label:'The formatted label is correct'}
+    ]
+  }
+}
+];
+
+const DS_INTERMEDIATE_MP1 = {
+  key:'mp1',
+  title:'Mini Project 1 — Clean and Reshape the Attendance Log',
+  intro:`The attendance log is a mess — names typed inconsistently, dates as plain text, one row per day per
+    student. Three stages, combining everything from Weeks 1-4: clean the text, parse the dates, reshape into a
+    per-student summary, then apply your own rule to flag students worth following up with.`,
+  newTrick:`Chaining cleaning → reshaping → a custom rule into one real pipeline — up to now each week practiced one
+    skill in isolation, but a real attendance report needs all of them, one after another, on the SAME messy data.`,
+  stages:[
+    {
+      key:'a', title:'Stage A — Clean the names and parse the dates',
+      desc:`Create df with columns "name" (" ada ", "BEN", " chi ", "ada", "Ben", "CHI"), "date" ("2026-01-05" ×3,
+        "2026-01-12" ×3, in that row order), and "present" (1, 0, 1, 1, 1, 0). Reassign df["name"] to
+        df["name"].str.strip().str.title(), and df["date"] to pd.to_datetime(df["date"]). Assert that
+        df["name"].tolist() == ["Ada", "Ben", "Chi", "Ada", "Ben", "Chi"].`,
+      starter:`import pandas as pd
+# Create df below
+`,
+      tests:[{type:'assert', expr:'df["name"].tolist() == ["Ada", "Ben", "Chi", "Ada", "Ben", "Chi"]', label:'df["name"] is correctly cleaned to title case'}]
+    },
+    {
+      key:'b', title:'Stage B — Reshape into a per-student, per-month summary',
+      desc:`Using the cleaned df from Stage A, add df["month"] = df["date"].dt.month. Create
+        pivot = pd.pivot_table(df, index="name", columns="month", values="present", aggfunc="sum", fill_value=0)
+        — this totals each student's present days per month (not averages them). Assert that pivot.loc["Ada", 1] == 2
+        — Ada attended both January sessions.`,
+      starter:`import pandas as pd
+df = pd.DataFrame({
+    "name": [" ada ", "BEN", " chi ", "ada", "Ben", "CHI"],
+    "date": ["2026-01-05", "2026-01-05", "2026-01-05", "2026-01-12", "2026-01-12", "2026-01-12"],
+    "present": [1, 0, 1, 1, 1, 0]
+})
+df["name"] = df["name"].str.strip().str.title()
+df["date"] = pd.to_datetime(df["date"])
+# Add a "month" column, then create pivot below
+`,
+      tests:[{type:'assert', expr:'pivot.loc["Ada", 1] == 2', label:"Ada's January total is correctly summed (2)"}]
+    },
+    {
+      key:'c', title:'Stage C — Flag students who need a follow-up',
+      desc:`Using pivot from Stage B, create summary = pivot.reset_index() (turns the pivot back into a normal
+        DataFrame with a "name" column). Write a function flag_attendance(days) that returns "Needs Follow-up" if
+        days &lt; 2, otherwise "Good". Create summary["flag"] = summary[1].apply(flag_attendance) (column 1 is
+        January's total). Assert that sorted(summary.loc[summary["flag"] == "Needs Follow-up", "name"].tolist())
+        == ["Ben", "Chi"] — Ada attended both sessions and is fine; Ben and Chi each attended only one.`,
+      starter:`import pandas as pd
+df = pd.DataFrame({
+    "name": [" ada ", "BEN", " chi ", "ada", "Ben", "CHI"],
+    "date": ["2026-01-05", "2026-01-05", "2026-01-05", "2026-01-12", "2026-01-12", "2026-01-12"],
+    "present": [1, 0, 1, 1, 1, 0]
+})
+df["name"] = df["name"].str.strip().str.title()
+df["date"] = pd.to_datetime(df["date"])
+df["month"] = df["date"].dt.month
+pivot = pd.pivot_table(df, index="name", columns="month", values="present", aggfunc="sum", fill_value=0)
+# Define flag_attendance below, then create summary and summary["flag"]
+`,
+      tests:[{type:'assert', expr:'sorted(summary.loc[summary["flag"] == "Needs Follow-up", "name"].tolist()) == ["Ben", "Chi"]', label:'summary correctly flags Ben and Chi for follow-up'}]
+    }
+  ]
+};
+
 window.SUBJECT_DATA = window.SUBJECT_DATA || {};
 window.SUBJECT_DATA.ds = {
   b: {weeks: DS_WEEKS, mp1: DS_MP1, mp2: DS_MP2},
