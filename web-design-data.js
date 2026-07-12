@@ -3570,6 +3570,495 @@ scores.forEach(function(score, index){
     ]
   }
 },
+{
+  key:'week8', num:8, title:'Accessibility Basics',
+  scenarioTag:'Real world: not everyone browses the same way you do',
+  scenario:`Some visitors use a screen reader instead of looking at the page. Some navigate with a keyboard
+    instead of a mouse. A page built from meaningless &lt;div&gt;s everywhere is genuinely hard for both — a page
+    built from the RIGHT tags, with real alt text and visible focus states, works for everyone automatically.`,
+  objectives:[
+    'Use semantic tags (nav, main, footer) instead of generic divs',
+    'Use a real <button> for clickable actions, not a styled <div>',
+    'Give every meaningful image real, descriptive alt text',
+    'Add a visible focus style so keyboard users can see what\'s selected'
+  ],
+  conceptHtml:`
+    <p>A &lt;div&gt; carries no meaning at all — a screen reader announces it as nothing special. Tags like
+    <code>&lt;nav&gt;</code>, <code>&lt;main&gt;</code>, and <code>&lt;footer&gt;</code> announce exactly what
+    that section IS, letting a screen reader user jump straight to "the navigation" or "the main content"
+    instead of hunting through generic wrapper after generic wrapper.</p>
+    <p>Similarly, a clickable &lt;div&gt; with a click handler LOOKS clickable but isn't reachable by keyboard
+    Tab, and a screen reader won't announce it as a button. A real <code>&lt;button&gt;</code> gets keyboard
+    focus, Enter/Space activation, and correct screen-reader announcement automatically, for free.</p>
+    <pre class="code-block">&lt;nav&gt;
+  &lt;a href="index.html"&gt;Home&lt;/a&gt;
+&lt;/nav&gt;
+&lt;main&gt;
+  &lt;h1&gt;Welcome&lt;/h1&gt;
+  &lt;button type="button"&gt;Learn more&lt;/button&gt;
+&lt;/main&gt;
+&lt;footer&gt;
+  &lt;p&gt;&amp;copy; My School&lt;/p&gt;
+&lt;/footer&gt;</pre>
+    <ul>
+      <li><code>&lt;nav&gt;</code>, <code>&lt;main&gt;</code>, <code>&lt;footer&gt;</code> — each wraps exactly
+        the section its name describes, replacing what would otherwise be three meaningless
+        &lt;div&gt;s.</li>
+      <li><code>&lt;button type="button"&gt;</code> — a real button, reachable by keyboard and correctly
+        announced, instead of a &lt;div&gt; styled to look like one.</li>
+    </ul>
+    <p>Now look at the second example, adding real alt text and a visible focus style:</p>
+    <pre class="code-block">&lt;img src="team.jpg" alt="Five students working together at a table"&gt;
+
+&lt;style&gt;
+  button:focus {
+    outline: 3px solid #4338ca;
+  }
+&lt;/style&gt;</pre>
+    <ul>
+      <li><code>alt="Five students working together at a table"</code> — describes what the image actually
+        SHOWS, not just "image" or the filename — this is what a screen reader reads aloud instead of the
+        picture.</li>
+      <li><code>button:focus { outline: 3px solid #4338ca; }</code> — gives keyboard users (who Tab between
+        elements instead of clicking) a clearly visible indicator of which element is currently selected.</li>
+    </ul>`,
+  sandboxStarter:`<nav>
+  <a href="index.html">Home</a>
+</nav>
+<main>
+  <h1>Welcome</h1>
+  <button type="button">Learn more</button>
+</main>
+<footer>
+  <p>&copy; My School</p>
+</footer>
+`,
+  sandboxStarter2:`<img src="team.jpg" alt="Five students working together at a table">
+
+<style>
+  button:focus {
+    outline: 3px solid #4338ca;
+  }
+</style>
+<button type="button">Click me</button>
+`,
+  exercises:[
+    {
+      title:'Structure the page with semantic tags',
+      desc:`Rebuild a page's structure using &lt;nav&gt;, &lt;main&gt;, and &lt;footer&gt; — one of each — instead
+        of generic &lt;div&gt;s.`,
+      starter:`<!-- Rebuild using <nav>, <main>, and <footer> instead of <div>s -->
+`,
+      tests:[
+        {type:'dom-count', selector:'nav', min:1, label:'Page has a <nav>'},
+        {type:'dom-count', selector:'main', min:1, label:'Page has a <main>'},
+        {type:'dom-count', selector:'footer', min:1, label:'Page has a <footer>'}
+      ]
+    },
+    {
+      title:'Use a real button',
+      desc:`Add a real &lt;button type="button"&gt;Subscribe&lt;/button&gt; — not a &lt;div&gt; styled to look
+        like one — so it's reachable by keyboard automatically.`,
+      starter:`<!-- Add a real <button type="button">Subscribe</button> -->
+`,
+      tests:[{type:'dom', selector:'button', contains:'Subscribe', label:'A real <button> with the text "Subscribe" exists'}]
+    },
+    {
+      title:'Add a visible focus style',
+      desc:`Give &lt;button&gt; a :focus rule with a visible outline (e.g. outline: 3px solid #4338ca;), so
+        keyboard users can see which button is currently selected.`,
+      starter:`<button type="button">Click me</button>
+<!-- Add a <style> block: button:focus gets a visible outline -->
+`,
+      tests:[{type:'dom', selector:'style', contains:':focus', label:'Includes a :focus rule for keyboard visibility'}]
+    },
+    {
+      key:'a11y-labelled',
+      title:'Label an icon-only button',
+      desc:`Add a &lt;button type="button" aria-label="Close"&gt;✕&lt;/button&gt; — since the ✕ symbol alone
+        means nothing to a screen reader, aria-label gives it a real spoken name.`,
+      starter:`<!-- Add a <button type="button" aria-label="Close">✕</button> -->
+`,
+      tests:[{type:'dom-attr', selector:'button', attr:'aria-label', notEmpty:true, label:'The icon-only button has an aria-label'}]
+    },
+    {
+      title:'Write real alt text for two images',
+      desc:`Add two &lt;img&gt; tags, each with alt text that actually describes what the image shows (not
+        empty, not just "image").`,
+      starter:`<!-- Add 2 <img> tags, each with real descriptive alt text -->
+`,
+      tests:[
+        {type:'dom-count', selector:'img', min:2, label:'Page has at least 2 images'},
+        {type:'dom-attr', selector:'img', attr:'alt', notEmpty:true, label:'The first image has non-empty alt text'}
+      ]
+    },
+    {
+      title:'Build an accessible page section',
+      desc:`Combine everything: a &lt;nav&gt;, a &lt;main&gt; containing a real &lt;button type="button"&gt; with
+        a :focus outline style, and an &lt;img&gt; with real alt text.`,
+      starter:`<!-- Build: <nav>, <main> with a real focusable <button>, and an <img> with real alt text -->
+`,
+      tests:[
+        {type:'dom-count', selector:'nav', min:1, label:'Page has a <nav>'},
+        {type:'dom-count', selector:'main button', min:1, label:'<main> contains a real <button>'},
+        {type:'dom', selector:'style', contains:':focus', label:'Includes a :focus rule'},
+        {type:'dom-attr', selector:'img', attr:'alt', notEmpty:true, label:'The image has real alt text'}
+      ]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why is <nav> better than a generic <div> for a navigation bar?',
+      options:['<nav> looks different by default','<nav> announces its purpose to screen readers and other tools; <div> carries no meaning','<div> is not allowed in HTML5','There is no difference'],
+      correct:1,
+      explain:'Semantic tags describe what a section IS, which assistive technology can use directly — a <div> tells it nothing.'
+    },
+    {
+      q:'Why use a real <button> instead of a <div> styled to look clickable?',
+      options:['Buttons are always blue','A real <button> is reachable by Tab and announced correctly by screen readers automatically; a styled <div> is not','<div> is faster','There is no real difference'],
+      correct:1,
+      explain:'Keyboard reachability and correct announcement come for free with a real <button>, but need to be rebuilt by hand for a <div>.'
+    },
+    {
+      q:'What should alt text on an image describe?',
+      options:['The image\'s filename','What the image actually shows, in words','Nothing, it can be left empty for any image','The image\'s file size'],
+      correct:1,
+      explain:'Good alt text describes the image\'s actual content, since that\'s what a screen reader reads aloud in its place.'
+    },
+    {
+      q:'What does aria-label="Close" do on an icon-only button showing "✕"?',
+      options:['Changes the icon\'s color','Gives the button a real spoken name for screen readers, since the symbol alone has no meaning','Makes the button bigger','Removes the button'],
+      correct:1,
+      explain:'aria-label supplies an accessible name when the visible content (like a symbol) doesn\'t convey one on its own.'
+    }
+  ],
+  sandboxStarter3:`<nav>
+  <a href="index.html">Home</a>
+  <a href="about.html">About</a>
+</nav>
+<main>
+  <h1>Photo Gallery</h1>
+  <img src="photo1.jpg" alt="Sunset over the school playing field">
+  <button type="button" aria-label="Close gallery">✕</button>
+</main>
+<footer>
+  <p>&copy; My School</p>
+</footer>
+
+<style>
+  button:focus {
+    outline: 3px solid #4338ca;
+  }
+</style>
+`,
+  stretchChallenge:{
+    title:'Fully label a form',
+    desc:`Finished early? Add a &lt;label for="email"&gt;Email&lt;/label&gt; paired with an &lt;input id="email"
+      type="email"&gt; (matching for/id values) — a properly paired label lets a screen reader announce "Email"
+      when the input receives focus, and lets clicking the label itself focus the input.`,
+    starter:`<!-- Add a <label for="email">Email</label> paired with <input id="email" type="email"> -->
+`,
+    tests:[
+      {type:'dom-attr', selector:'label', attr:'for', notEmpty:true, label:'<label> has a for attribute'},
+      {type:'dom-count', selector:'input#email', min:1, label:'An input with id="email" exists, matching the label\'s for'}
+    ]
+  }
+},
+{
+  key:'week9', num:9, title:'Putting It Together: A Small Interactive App',
+  scenarioTag:'Real world: a mini app, not just isolated tricks',
+  scenario:`A "Favorites List" widget needs every skill from this level working together at once: a remembered
+    array (Week 6), rendering that array as real elements (Week 7), and an accessible structure around it (Week
+    8) — this week combines all three into one small, genuinely interactive feature.`,
+  objectives:[
+    'Add to a remembered array and re-render the full list from it',
+    'Clear a list before rebuilding it, so rendering stays accurate',
+    'Combine rendering with a live count of items',
+    'Wrap an interactive widget in accessible, semantic structure'
+  ],
+  conceptHtml:`
+    <p>Rendering "add one more item" the RIGHT way means re-rendering the WHOLE list from the remembered array
+    every time, not just appending one new element — that way the displayed list always exactly matches what's
+    actually remembered, however many times it's rebuilt.</p>
+    <pre class="code-block">let tasks = ['Homework'];
+
+function renderTasks(){
+  const list = document.querySelector('#list');
+  list.innerHTML = ''; // clear first, so rebuilding never duplicates
+  tasks.forEach(function(task){
+    const li = document.createElement('li');
+    li.textContent = task;
+    list.appendChild(li);
+  });
+}
+
+document.querySelector('#addBtn').addEventListener('click', function(){
+  tasks.push('Chores');
+  renderTasks();
+});</pre>
+    <ul>
+      <li><code>list.innerHTML = '';</code> — empties the &lt;ul&gt; completely before the loop runs, so calling
+        <code>renderTasks()</code> again never leaves old, stale &lt;li&gt;s behind.</li>
+      <li>Wrapping the render logic in its own <code>function renderTasks(){ ... }</code> means it can be called
+        from anywhere — here, right after <code>tasks.push(...)</code> — keeping the displayed list and the
+        remembered array always in sync.</li>
+    </ul>
+    <p>Now look at the second example, adding a live count alongside the accessible structure:</p>
+    <pre class="code-block">&lt;main&gt;
+  &lt;ul id="list"&gt;&lt;/ul&gt;
+  &lt;p id="count"&gt;&lt;/p&gt;
+  &lt;button type="button" id="addBtn"&gt;Add Chores&lt;/button&gt;
+&lt;/main&gt;</pre>
+    <ul>
+      <li>The whole widget lives inside a real <code>&lt;main&gt;</code>, and the action uses a real
+        <code>&lt;button&gt;</code> — the same accessibility habits from Week 8, now applied to something that
+        actually does something.</li>
+    </ul>`,
+  sandboxStarter:`<ul id="list"><li>Homework</li></ul>
+<button id="addBtn" type="button">Add Chores</button>
+
+<script>
+  let tasks = ['Homework'];
+
+  function renderTasks(){
+    const list = document.querySelector('#list');
+    list.innerHTML = '';
+    tasks.forEach(function(task){
+      const li = document.createElement('li');
+      li.textContent = task;
+      list.appendChild(li);
+    });
+  }
+
+  document.querySelector('#addBtn').addEventListener('click', function(){
+    tasks.push('Chores');
+    renderTasks();
+  });
+</script>
+`,
+  sandboxStarter2:`<main>
+  <ul id="list"><li>Homework</li></ul>
+  <p id="count"></p>
+  <button type="button" id="addBtn">Add Chores</button>
+</main>
+
+<script>
+  let tasks = ['Homework'];
+
+  function renderTasks(){
+    const list = document.querySelector('#list');
+    list.innerHTML = '';
+    tasks.forEach(function(task){
+      const li = document.createElement('li');
+      li.textContent = task;
+      list.appendChild(li);
+    });
+    document.querySelector('#count').textContent = tasks.length + ' tasks';
+  }
+
+  document.querySelector('#addBtn').addEventListener('click', function(){
+    tasks.push('Chores');
+    renderTasks();
+  });
+</script>
+`,
+  exercises:[
+    {
+      title:'Add to the array and re-render',
+      desc:`Declare let tasks = ['Homework']; outside a click handler on &lt;button type="button" id="addBtn"&gt;.
+        When clicked, push('Chores') onto tasks, then re-render &lt;ul id="list"&gt; from the whole array (clear
+        it first with list.innerHTML = '';, then loop and append).`,
+      starter:`<ul id="list"><li>Homework</li></ul>
+<button id="addBtn" type="button">Add Chores</button>
+
+<script>
+  let tasks = ['Homework'];
+  // Add a click handler: push('Chores'), clear #list, then re-render all of tasks
+</script>
+`,
+      tests:[
+        {type:'dom-count', selector:'#list li', min:2, label:'#list shows both tasks after clicking'},
+        {type:'dom', selector:'#list', contains:'Chores', label:'#list includes the newly added "Chores"'}
+      ]
+    },
+    {
+      title:'Clear before rebuilding',
+      desc:`&lt;ul id="list"&gt; already contains 3 STATIC &lt;li&gt;s typed directly in the HTML. Declare let
+        tasks = ['Reading']; outside a click handler. When clicked, clear #list completely (list.innerHTML =
+        '';), render ONLY from tasks, then set &lt;p id="count"&gt;'s textContent to
+        list.children.length + " items shown" — should read "1 items shown" (a solution that forgets to clear
+        first would incorrectly show "4 items shown", since the 3 stale items would still be there too).`,
+      starter:`<ul id="list"><li>Old A</li><li>Old B</li><li>Old C</li></ul>
+<p id="count"></p>
+<button id="addBtn" type="button">Replace with tasks</button>
+
+<script>
+  let tasks = ['Reading'];
+  // Add a click handler: clear #list completely, render ONLY tasks, then set #count to list.children.length + " items shown"
+</script>
+`,
+      tests:[
+        {type:'dom', selector:'#count', contains:'1 items shown', label:'#count shows "1 items shown" — the stale items were actually cleared'},
+        {type:'dom', selector:'#list', contains:'Reading', label:'#list shows "Reading"'}
+      ]
+    },
+    {
+      title:'Wrap the widget in <main>',
+      desc:`Build the same add-and-render pattern as before (tasks array, #addBtn, #list), but wrap the whole
+        widget in a &lt;main&gt; element instead of leaving it loose at the top level.`,
+      starter:`<!-- Build a <main> containing: a <ul id="list">, a <button type="button" id="addBtn">, and a click handler that adds 'Chores' to a remembered tasks array and re-renders #list -->
+`,
+      tests:[
+        {type:'dom-count', selector:'main ul#list', min:1, label:'#list is inside a <main>'},
+        {type:'dom-count', selector:'main button', min:1, label:'The button is inside <main> too'}
+      ]
+    },
+    {
+      title:'Show a live count with the list',
+      desc:`Declare let tasks = ['Homework', 'Reading']; outside a click handler on &lt;button type="button"
+        id="addBtn"&gt;. When clicked, push('Chores'), re-render #list from tasks, AND set &lt;p id="count"&gt;'s
+        textContent to tasks.length + " tasks" (should read "3 tasks").`,
+      starter:`<ul id="list"><li>Homework</li><li>Reading</li></ul>
+<p id="count"></p>
+<button id="addBtn" type="button">Add Chores</button>
+
+<script>
+  let tasks = ['Homework', 'Reading'];
+  // Add a click handler: push('Chores'), re-render #list, and set #count to tasks.length + " tasks"
+</script>
+`,
+      tests:[
+        {type:'dom-count', selector:'#list li', min:3, label:'#list shows all 3 tasks'},
+        {type:'dom', selector:'#count', contains:'3 tasks', label:'#count shows "3 tasks"'}
+      ]
+    },
+    {
+      title:'Use a real accessible button for the action',
+      desc:`Build the tasks array + render pattern, but use a real &lt;button type="button" id="addBtn"&gt; (not
+        a styled &lt;div&gt;) so the widget stays keyboard-accessible.`,
+      starter:`<ul id="list"><li>Homework</li></ul>
+<!-- Add a real <button type="button" id="addBtn">Add Chores</button> and a click handler that adds 'Chores' to a remembered array and re-renders #list -->
+
+<script>
+  let tasks = ['Homework'];
+</script>
+`,
+      tests:[
+        {type:'dom', selector:'button', contains:'Add', label:'A real <button> exists for the action'},
+        {type:'dom-count', selector:'#list li', min:2, label:'#list shows both tasks after clicking'}
+      ]
+    },
+    {
+      title:'Build the complete mini widget',
+      desc:`Combine everything: a &lt;main&gt; wrapping &lt;ul id="list"&gt;, &lt;p id="count"&gt;, and a real
+        &lt;button type="button" id="addBtn"&gt;. Remember let tasks = ['Homework']; outside the handler; on
+        click, push('Chores'), clear and re-render #list, and update #count to tasks.length + " tasks".`,
+      starter:`<!-- Build the full widget: <main> wrapping <ul id="list">, <p id="count">, and a real <button id="addBtn"> -->
+<!-- On click: push('Chores') onto a remembered tasks array, re-render #list, update #count -->
+
+<script>
+  let tasks = ['Homework'];
+</script>
+`,
+      tests:[
+        {type:'dom-count', selector:'main ul#list li', min:2, label:'#list (inside <main>) shows both tasks'},
+        {type:'dom', selector:'#count', contains:'2 tasks', label:'#count shows "2 tasks"'},
+        {type:'dom-count', selector:'main button', min:1, label:'A real <button> inside <main> triggers the action'}
+      ]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why clear a list with innerHTML = \'\' before re-rendering it from an array?',
+      options:['It\'s required by HTML','So old, stale items don\'t stay mixed in with the freshly rendered ones','It makes the array bigger','It has no real purpose'],
+      correct:1,
+      explain:'Without clearing first, each re-render would just keep appending on top of whatever was already there.'
+    },
+    {
+      q:'Why wrap a render function\'s logic in its own named function, e.g. function renderTasks(){...}?',
+      options:['It\'s slower','So it can be called again from anywhere (like right after pushing a new item) without repeating the code','It hides the code','It\'s required by JavaScript'],
+      correct:1,
+      explain:'A reusable function means "re-render the list" only needs to be written once, then called wherever it\'s needed.'
+    },
+    {
+      q:'In this widget, why use a real <button> for #addBtn instead of a styled <div>?',
+      options:['Buttons render faster','So the widget stays reachable and usable by keyboard, consistent with Week 8\'s accessibility habits','No real reason','<div> can\'t have an id'],
+      correct:1,
+      explain:'Real buttons come with keyboard accessibility built in — exactly the habit Week 8 introduced, now applied here.'
+    },
+    {
+      q:'If tasks = [\'Homework\', \'Reading\'] and you push(\'Chores\') then re-render, how many <li>s should the list show?',
+      options:['1','2','3','0'],
+      correct:2,
+      explain:'The array now has 3 items (the original 2 plus the new one), so a correct re-render shows all 3.'
+    }
+  ],
+  sandboxStarter3:`<main>
+  <ul id="list"><li>Homework</li></ul>
+  <p id="count"></p>
+  <button type="button" id="addBtn">Add Chores</button>
+</main>
+
+<style>
+  button:focus {
+    outline: 3px solid #4338ca;
+  }
+</style>
+
+<script>
+  let tasks = ['Homework'];
+
+  function renderTasks(){
+    const list = document.querySelector('#list');
+    list.innerHTML = '';
+    tasks.forEach(function(task){
+      const li = document.createElement('li');
+      li.textContent = task;
+      list.appendChild(li);
+    });
+    document.querySelector('#count').textContent = tasks.length + ' tasks';
+  }
+
+  document.querySelector('#addBtn').addEventListener('click', function(){
+    tasks.push('Chores');
+    renderTasks();
+  });
+</script>
+`,
+  stretchChallenge:{
+    title:'Add a remove-last-item button too',
+    desc:`Finished early? Add a SECOND button, #removeBtn, that pops the last item off tasks (tasks.pop();) and
+      re-renders #list AND updates a &lt;p id="count"&gt; to tasks.length + " items" — alongside the existing
+      #addBtn that pushes a new item and does the same. Both buttons get auto-clicked once each when this is
+      checked, in DOM order (add first, then remove) — starting from ['Homework', 'Reading'], adding 'Chores'
+      then removing the last item should leave exactly 2 items, so #count should read "2 items" (a solution
+      where #removeBtn doesn't actually work would incorrectly leave 3).`,
+    starter:`<ul id="list"><li>Homework</li><li>Reading</li></ul>
+<p id="count"></p>
+<button id="addBtn" type="button">Add Chores</button>
+<button id="removeBtn" type="button">Remove Last</button>
+
+<script>
+  let tasks = ['Homework', 'Reading'];
+  function renderTasks(){
+    const list = document.querySelector('#list');
+    list.innerHTML = '';
+    tasks.forEach(function(task){
+      const li = document.createElement('li');
+      li.textContent = task;
+      list.appendChild(li);
+    });
+    document.querySelector('#count').textContent = tasks.length + ' items';
+  }
+  // Add click handlers: #addBtn pushes 'Chores' + re-renders; #removeBtn pops the last item + re-renders
+</script>
+`,
+    tests:[
+      {type:'dom', selector:'#count', contains:'2 items', label:'#count shows exactly "2 items" after adding then removing one'},
+      {type:'dom', selector:'#list', contains:'Homework', label:'The original items are still there'}
+    ]
+  }
+},
 ];
 
 const WD_INTERMEDIATE_MP1 = {
