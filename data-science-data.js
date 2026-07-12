@@ -5132,9 +5132,71 @@ df = pd.DataFrame({"name": ["Ada", "Ben", "Chi", "Dee", "Eli"], "hours_studied":
   ]
 };
 
+const DS_ADVANCED_MP2 = {
+  key:'mp2',
+  title:'Mini Project 2 — The Full Term Report: Analysis + Charts',
+  intro:`Two separate tables arrive at the end of term — exam scores and attendance records, tracked separately
+    all year. The final capstone combines everything from the whole Advanced level: merge them, analyse the
+    combined data with a correlation and a grouped comparison, build two labelled charts, and write the complete
+    narrative report a real school would actually read.`,
+  fixtureNote:`All three doors build on these two separate tables, joined together in Door A:`,
+  fixtureCode:`scores_df = pd.DataFrame({"name": ["Ada", "Ben", "Chi", "Dee", "Eli"], "score": [85, 60, 75, 90, 50]})
+attendance_df = pd.DataFrame({"name": ["Ada", "Ben", "Chi", "Dee", "Eli"], "attendance_pct": [95, 70, 85, 92, 55]})`,
+  doors:[
+    {
+      key:'a', title:'Door 1 — Merge the two tables',
+      desc:`Create scores_df with columns "name" (Ada, Ben, Chi, Dee, Eli) and "score" (85, 60, 75, 90, 50), and
+        attendance_df with "name" (same order) and "attendance_pct" (95, 70, 85, 92, 55). Create
+        merged = scores_df.merge(attendance_df, on="name"). Assert that
+        list(merged.columns) == ["name", "score", "attendance_pct"] and len(merged) == 5.`,
+      starter:`import pandas as pd
+# Create scores_df, attendance_df and merged below
+`,
+      tests:[{type:'assert', expr:'list(merged.columns) == ["name", "score", "attendance_pct"] and len(merged) == 5', label:'merged correctly combines both tables into one'}]
+    },
+    {
+      key:'b', title:'Door 2 — Analyse the combined data',
+      desc:`Using merged from Door 1, write a function band(pct) that returns "High" if pct &gt;= 80, otherwise
+        "Low". Create corr_val = merged["attendance_pct"].corr(merged["score"]). Create merged = merged.copy(),
+        merged["band"] = merged["attendance_pct"].apply(band), and
+        avg_by_band = merged.groupby("band")["score"].mean(). Assert that round(float(corr_val), 2) == 0.98 and
+        round(float(avg_by_band["High"]), 2) == 83.33.`,
+      starter:`import pandas as pd
+scores_df = pd.DataFrame({"name": ["Ada", "Ben", "Chi", "Dee", "Eli"], "score": [85, 60, 75, 90, 50]})
+attendance_df = pd.DataFrame({"name": ["Ada", "Ben", "Chi", "Dee", "Eli"], "attendance_pct": [95, 70, 85, 92, 55]})
+merged = scores_df.merge(attendance_df, on="name")
+# Define band, then create corr_val, merged["band"] and avg_by_band below
+`,
+      tests:[{type:'assert', expr:'round(float(corr_val), 2) == 0.98 and round(float(avg_by_band["High"]), 2) == 83.33', label:'The correlation and grouped comparison are both correctly computed'}]
+    },
+    {
+      key:'c', title:'Door 3 — Chart it and write the final report',
+      desc:`Write a function build_term_report(scores_df, attendance_df) that: merges the two tables; computes
+        corr_val (attendance vs score), avg_by_band (via band() and groupby, as in Door 2), avg = merged["score"].mean(),
+        top = merged.sort_values("score", ascending=False).iloc[0], and pass_rate from scores &gt;= 60; creates TWO
+        charts — fig1/ax1 a bar chart of avg_by_band with title "Average Score by Attendance Band", and fig2/ax2 a
+        scatter of attendance vs score with title f"Attendance vs Score (r={corr_val:.2f})"; builds
+        report = f"Class average: {avg:.1f}. Top performer: {top['name']} ({top['score']}). Pass rate:
+        {pass_rate:.0f}%. Attendance-score correlation: {corr_val:.2f}."; and returns report, ax1, ax2. Create
+        report, ax1, ax2 = build_term_report(scores_df, attendance_df). Assert that report ==
+        "Class average: 72.0. Top performer: Dee (90). Pass rate: 80%. Attendance-score correlation: 0.98." and
+        ax1.get_title() == "Average Score by Attendance Band" and ax2.get_title() == "Attendance vs Score (r=0.98)".`,
+      starter:`import matplotlib.pyplot as plt
+import pandas as pd
+
+def band(pct):
+    return "High" if pct >= 80 else "Low"
+
+# Define build_term_report below, then create scores_df, attendance_df, report, ax1 and ax2
+`,
+      tests:[{type:'assert', expr:'report == "Class average: 72.0. Top performer: Dee (90). Pass rate: 80%. Attendance-score correlation: 0.98." and ax1.get_title() == "Average Score by Attendance Band" and ax2.get_title() == "Attendance vs Score (r=0.98)"', label:'The final report and both charts are all correctly produced'}]
+    }
+  ]
+};
+
 window.SUBJECT_DATA = window.SUBJECT_DATA || {};
 window.SUBJECT_DATA.ds = {
   b: {weeks: DS_WEEKS, mp1: DS_MP1, mp2: DS_MP2},
   i: {weeks: DS_INTERMEDIATE_WEEKS, mp1: DS_INTERMEDIATE_MP1, mp2: DS_INTERMEDIATE_MP2},
-  a: {weeks: DS_WEEKS, mp1: DS_MP1, mp2: DS_MP2}
+  a: {weeks: DS_ADVANCED_WEEKS, mp1: DS_ADVANCED_MP1, mp2: DS_ADVANCED_MP2}
 };
