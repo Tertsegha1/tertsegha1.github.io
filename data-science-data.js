@@ -3948,6 +3948,196 @@ import pandas as pd
       {type:'assert', expr:'ax.get_title() == "Houses Ranked by Average Score" and top_height == 85.0', label:'Chart is correctly titled and shows the top house first'}
     ]
   }
+},
+{
+  key:'week5', num:5, title:'Building a Clean Pipeline Function',
+  scenarioTag:'Real world: every new batch of data needs the same cleanup',
+  scenario:`Every week a new export of exam scores arrives — and every week it needs the exact same treatment:
+    drop missing rows, throw out impossible negative scores. Copy-pasting that cleanup code each time is a recipe
+    for typos and drift. Wrapping it in a function means writing it once, correctly, and reusing it forever.`,
+  objectives:[
+    'Write a function that takes a DataFrame and returns a cleaned one',
+    'Chain multiple cleaning/transform steps inside one function',
+    'Reuse the same function across different datasets',
+    'Add a parameter to make a pipeline function more flexible'
+  ],
+  conceptHtml:`
+    <p>A pipeline function takes a raw DataFrame in, and returns a cleaned one out — bundling several steps into a
+    single, reusable call:</p>
+    <pre class="code-block">import pandas as pd
+
+def clean_pipeline(df):
+    df = df.dropna()
+    df = df[df["score"] >= 0]
+    return df
+
+df = pd.DataFrame({"name": ["Ada", "Ben", "Chi"], "score": [85.0, None, -10.0]})
+cleaned = clean_pipeline(df)
+print(len(cleaned))   # 1 — only Ada survives both the missing-value drop and the negative-score filter</pre>
+    <p>The real payoff is REUSE — the same function works on any DataFrame shaped the same way, without
+    re-writing the cleanup logic each time:</p>
+    <pre class="code-block">next_terms_data = pd.DataFrame({"name": ["Dee", "Eli"], "score": [30.0, 90.0]})
+cleaned2 = clean_pipeline(next_terms_data)   # same function, brand new data</pre>
+    <h3>Let's break down the pipeline function, line by line</h3>
+    <ul>
+      <li><code>def clean_pipeline(df):</code> — takes ONE DataFrame in as a parameter.</li>
+      <li><code>df = df.dropna()</code> — reassigning <code>df</code> inside the function chains the next step
+        onto the ALREADY-cleaned version, not the original.</li>
+      <li><code>df = df[df["score"] >= 0]</code> — a second cleaning step, applied to the already-dropna'd data.</li>
+      <li><code>return df</code> — hands back the fully-cleaned result; the ORIGINAL DataFrame passed in is
+        untouched outside the function (unless you explicitly reassign it, like <code>df = clean_pipeline(df)</code>).</li>
+      <li>Adding a parameter like <code>def clean_pipeline(df, threshold):</code> lets the SAME function behave
+        differently per call, without writing a new function for every threshold.</li>
+    </ul>`,
+  sandboxStarter:`import pandas as pd
+
+def clean_pipeline(df):
+    df = df.dropna()
+    df = df[df["score"] >= 0]
+    return df
+
+df = pd.DataFrame({"name": ["Ada", "Ben", "Chi", "Dee"], "score": [85.0, None, 55.0, -10.0]})
+cleaned = clean_pipeline(df)
+print(cleaned)
+`,
+  sandboxStarter2:`import pandas as pd
+
+def clean_pipeline(df):
+    df = df.dropna()
+    df = df[df["score"] >= 0]
+    return df
+
+data1 = pd.DataFrame({"name": ["Ada", "Ben"], "score": [85.0, None]})
+data2 = pd.DataFrame({"name": ["Chi", "Dee"], "score": [-5.0, 90.0]})
+print(len(clean_pipeline(data1)), len(clean_pipeline(data2)))
+`,
+  exercises:[
+    {
+      title:'Write your first pipeline function',
+      desc:`Write a function clean_pipeline(df) that: reassigns df to df.dropna(), then reassigns df to
+        df[df["score"] >= 0], then returns df. Create df with columns "name" (Ada, Ben, Chi, Dee) and "score"
+        (85.0, None, 55.0, -10.0). Create cleaned = clean_pipeline(df). Assert that len(cleaned) == 2.`,
+      starter:`import pandas as pd
+# Define clean_pipeline below, then create df and cleaned
+`,
+      tests:[{type:'assert', expr:'len(cleaned) == 2', label:'The pipeline correctly drops missing and negative scores'}]
+    },
+    {
+      title:'Check exactly who survives cleaning',
+      desc:`Using the same clean_pipeline function and df, assert that cleaned["name"].tolist() == ["Ada", "Chi"].`,
+      starter:`import pandas as pd
+
+def clean_pipeline(df):
+    df = df.dropna()
+    df = df[df["score"] >= 0]
+    return df
+
+df = pd.DataFrame({"name": ["Ada", "Ben", "Chi", "Dee"], "score": [85.0, None, 55.0, -10.0]})
+# Create cleaned below
+`,
+      tests:[{type:'assert', expr:'cleaned["name"].tolist() == ["Ada", "Chi"]', label:'The pipeline correctly keeps only Ada and Chi'}]
+    },
+    {
+      title:'Add a computed column inside a function',
+      desc:`Write a function add_pass_column(df) that: makes a copy with df = df.copy(), sets
+        df["passed"] = df["score"] >= 50, then returns df. Create df with one column "score" containing 85.0,
+        45.0, 55.0. Create result = add_pass_column(df). Assert that result["passed"].tolist() ==
+        [True, False, True].`,
+      starter:`import pandas as pd
+# Define add_pass_column below, then create df and result
+`,
+      tests:[{type:'assert', expr:'result["passed"].tolist() == [True, False, True]', label:'The function correctly adds a computed "passed" column'}]
+    },
+    {
+      title:'Chain multiple steps in one function',
+      desc:`Write a function full_pipeline(df) that: reassigns df to df.dropna(), then to df[df["score"] >= 0],
+        then makes a copy (df = df.copy()) and sets df["passed"] = df["score"] >= 50, then returns df. Create df
+        with "name" (Ada, Ben, Chi, Dee) and "score" (85.0, None, 55.0, -10.0). Create
+        result = full_pipeline(df). Assert that len(result) == 2 and result["passed"].tolist() == [True, True].`,
+      starter:`import pandas as pd
+# Define full_pipeline below, then create df and result
+`,
+      tests:[{type:'assert', expr:'len(result) == 2 and result["passed"].tolist() == [True, True]', label:'The chained pipeline correctly cleans and labels the data'}]
+    },
+    {
+      title:'Reuse the same function on two datasets',
+      desc:`Using the clean_pipeline function from the first exercise, create data1 with "name" (Ada, Ben, Chi,
+        Dee) and "score" (85.0, None, 55.0, -10.0), and data2 with "name" (Eli, Fay) and "score" (30.0, 90.0).
+        Create result1 = clean_pipeline(data1) and result2 = clean_pipeline(data2). Assert that len(result1) == 2
+        and len(result2) == 2 — the SAME function correctly cleans two different datasets.`,
+      starter:`import pandas as pd
+
+def clean_pipeline(df):
+    df = df.dropna()
+    df = df[df["score"] >= 0]
+    return df
+
+# Create data1, data2, result1 and result2 below
+`,
+      tests:[{type:'assert', expr:'len(result1) == 2 and len(result2) == 2', label:'The same pipeline function is correctly reused on both datasets'}]
+    },
+    {
+      title:'Add a flexible threshold parameter',
+      desc:`Write a function clean_pipeline_threshold(df, threshold) that: reassigns df to df.dropna(), then to
+        df[df["score"] >= threshold], then returns df. Create df with "name" (Ada, Ben, Chi, Dee) and "score"
+        (85.0, None, 55.0, -10.0). Create result = clean_pipeline_threshold(df, 60). Assert that len(result) == 1
+        — only Ada's 85.0 clears a threshold of 60.`,
+      starter:`import pandas as pd
+# Define clean_pipeline_threshold below, then create df and result
+`,
+      tests:[{type:'assert', expr:'len(result) == 1', label:'The threshold parameter correctly filters to just 1 row'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What is the main benefit of wrapping cleaning steps in a function?',
+      options:['Functions run faster than plain code','The same logic can be reused correctly on new data without re-writing it','It\'s required by pandas','It makes the DataFrame smaller'],
+      correct:1,
+      explain:'A pipeline function bundles cleaning logic once, so every future dataset gets treated identically without copy-paste drift.'
+    },
+    {
+      q:'In def clean_pipeline(df): df = df.dropna(); df = df[df["score"] >= 0]; return df — why reassign df each time?',
+      options:['It\'s optional and does nothing','Each step chains onto the ALREADY-modified version from the previous step','It resets df back to the original','Reassignment is required by Python syntax'],
+      correct:1,
+      explain:'Reassigning df means the next line operates on the result of the previous line, chaining the steps together.'
+    },
+    {
+      q:'What happens to the DataFrame passed into a pipeline function if you don\'t reassign the result?',
+      options:['It\'s automatically cleaned in place','It stays unchanged outside the function — you must do df = clean_pipeline(df) to keep the result','It gets deleted','It becomes a copy automatically without needing df.copy()'],
+      correct:1,
+      explain:'Unless a function specifically mutates in place, the original variable outside the function is untouched — the caller must capture the returned value.'
+    },
+    {
+      q:'What does adding a parameter like threshold to a pipeline function give you?',
+      options:['Nothing, it\'s just documentation','The ability to reuse the same function with different behaviour per call, instead of writing a new function each time','It automatically speeds up the function','It\'s required for all Python functions'],
+      correct:1,
+      explain:'A parameter lets one function serve many use cases (e.g. different cutoffs) without duplicating the function itself.'
+    }
+  ],
+  sandboxStarter3:`import pandas as pd
+
+def clean_pipeline_threshold(df, threshold):
+    df = df.dropna()
+    df = df[df["score"] >= threshold]
+    return df
+
+df = pd.DataFrame({"name": ["Ada", "Ben", "Chi", "Dee"], "score": [85.0, None, 55.0, -10.0]})
+print(len(clean_pipeline_threshold(df, 60)))
+print(len(clean_pipeline_threshold(df, 0)))
+`,
+  stretchChallenge:{
+    title:'A pipeline that summarizes, not just cleans',
+    desc:`Write a function summarize_pipeline(df) that: reassigns df to df.dropna(), then to
+      df[df["score"] >= 0], then returns df["score"].mean(). Create df with "name" (Ada, Ben, Chi, Dee) and
+      "score" (85.0, None, 55.0, -10.0). Create result = summarize_pipeline(df). Assert that
+      round(float(result), 1) == 70.0.`,
+    starter:`import pandas as pd
+# Define summarize_pipeline below, then create df and result
+`,
+    tests:[
+      {type:'assert', expr:'round(float(result), 1) == 70.0', label:'The pipeline correctly returns a cleaned average (70.0)'}
+    ]
+  }
 }
 ];
 
