@@ -4798,6 +4798,344 @@ sorted.forEach(function(p){
     ]
   }
 },
+{
+  key:'week3', num:3, title:'Show/Hide Sections: Simple Client-Side Routing',
+  scenarioTag:'Real world: switching pages without ever reloading',
+  scenario:`A single-page app never actually navigates to a new file — it just shows a different SECTION of the
+    same page and hides the rest, giving the feel of separate pages without a real page reload. This is the same
+    idea real client-side routers automate, built here by hand with plain show/hide logic.`,
+  objectives:[
+    'Show one section while hiding others',
+    'Switch which section is visible based on which button was clicked',
+    'Mark the corresponding nav button as active to match the visible section',
+    'Understand this is the core idea behind client-side routing'
+  ],
+  conceptHtml:`
+    <p>The core trick: keep ALL sections in the HTML at once, but only one visible at a time
+    (<code>display: block</code>), with the rest hidden (<code>display: none</code>). Clicking a nav button hides
+    every section, then shows just the one that button corresponds to.</p>
+    <pre class="code-block">function showSection(id){
+  document.querySelectorAll('section').forEach(function(s){
+    s.style.display = 'none';
+  });
+  document.querySelector('#' + id).style.display = 'block';
+}
+
+document.querySelector('#homeBtn').addEventListener('click', function(){ showSection('home'); });
+document.querySelector('#aboutBtn').addEventListener('click', function(){ showSection('about'); });</pre>
+    <ul>
+      <li><code>document.querySelectorAll('section').forEach(...)</code> — hides EVERY section first, no matter
+        which was previously visible, so there's never a moment with two sections shown at once.</li>
+      <li><code>document.querySelector('#' + id).style.display = 'block';</code> — then shows just the ONE
+        section whose id matches, using string concatenation to build the selector from the id passed in.</li>
+      <li>Writing this as a reusable <code>showSection(id)</code> function (Intermediate Week 9's pattern) means
+        each button's click handler is just one short line calling it with a different id.</li>
+    </ul>
+    <p>Now look at the second example, which also marks the matching nav button as active:</p>
+    <pre class="code-block">function showSection(id){
+  document.querySelectorAll('section').forEach(function(s){ s.style.display = 'none'; });
+  document.querySelector('#' + id).style.display = 'block';
+  document.querySelectorAll('nav button').forEach(function(b){ b.classList.remove('active'); });
+  document.querySelector('#' + id + 'Btn').classList.add('active');
+}</pre>
+    <ul>
+      <li>The same "clear everything, then set the one that matters" pattern is repeated for the active class —
+        remove it from every button first, then add it back to just the matching one.</li>
+    </ul>`,
+  sandboxStarter:`<nav>
+  <button id="homeBtn" type="button">Home</button>
+  <button id="aboutBtn" type="button">About</button>
+</nav>
+<section id="home">Welcome home!</section>
+<section id="about" style="display:none;">About us.</section>
+
+<script>
+  function showSection(id){
+    document.querySelectorAll('section').forEach(function(s){
+      s.style.display = 'none';
+    });
+    document.querySelector('#' + id).style.display = 'block';
+  }
+  document.querySelector('#homeBtn').addEventListener('click', function(){ showSection('home'); });
+  document.querySelector('#aboutBtn').addEventListener('click', function(){ showSection('about'); });
+</script>
+`,
+  sandboxStarter2:`<style>
+  nav button.active { font-weight: bold; }
+</style>
+<nav>
+  <button id="homeBtn" type="button" class="active">Home</button>
+  <button id="aboutBtn" type="button">About</button>
+</nav>
+<section id="home">Welcome home!</section>
+<section id="about" style="display:none;">About us.</section>
+
+<script>
+  function showSection(id){
+    document.querySelectorAll('section').forEach(function(s){ s.style.display = 'none'; });
+    document.querySelector('#' + id).style.display = 'block';
+    document.querySelectorAll('nav button').forEach(function(b){ b.classList.remove('active'); });
+    document.querySelector('#' + id + 'Btn').classList.add('active');
+  }
+  document.querySelector('#homeBtn').addEventListener('click', function(){ showSection('home'); });
+  document.querySelector('#aboutBtn').addEventListener('click', function(){ showSection('about'); });
+</script>
+`,
+  exercises:[
+    {
+      title:'Switch between two sections',
+      desc:`&lt;section id="home"&gt; is visible, &lt;section id="about" style="display:none;"&gt; is hidden.
+        Since BOTH buttons get clicked once each when checked (in order: #homeBtn then #aboutBtn), the FINAL
+        visible section should be #about (the last button clicked). Write showSection(id) so clicking a button
+        hides all sections then shows the matching one.`,
+      starter:`<nav>
+  <button id="homeBtn" type="button">Home</button>
+  <button id="aboutBtn" type="button">About</button>
+</nav>
+<section id="home">Welcome home!</section>
+<section id="about" style="display:none;">About us.</section>
+
+<script>
+  function showSection(id){
+    // Hide every <section>, then show just the one matching id
+  }
+  document.querySelector('#homeBtn').addEventListener('click', function(){ showSection('home'); });
+  document.querySelector('#aboutBtn').addEventListener('click', function(){ showSection('about'); });
+</script>
+`,
+      tests:[
+        {type:'computed-style', selector:'#about', prop:'display', equals:'block', label:'#about is visible (the last button clicked)'},
+        {type:'computed-style', selector:'#home', prop:'display', equals:'none', label:'#home is hidden'}
+      ]
+    },
+    {
+      title:'Switch between three sections',
+      desc:`Same pattern, but with THREE sections and three buttons (#homeBtn, #aboutBtn, #contactBtn, in that
+        DOM order). Since all three get auto-clicked in order, the FINAL visible section should be #contact (the
+        last one clicked), with #home and #about both hidden.`,
+      starter:`<nav>
+  <button id="homeBtn" type="button">Home</button>
+  <button id="aboutBtn" type="button">About</button>
+  <button id="contactBtn" type="button">Contact</button>
+</nav>
+<section id="home">Welcome home!</section>
+<section id="about" style="display:none;">About us.</section>
+<section id="contact" style="display:none;">Contact us.</section>
+
+<script>
+  function showSection(id){
+    // Hide every <section>, then show just the one matching id
+  }
+  document.querySelector('#homeBtn').addEventListener('click', function(){ showSection('home'); });
+  document.querySelector('#aboutBtn').addEventListener('click', function(){ showSection('about'); });
+  document.querySelector('#contactBtn').addEventListener('click', function(){ showSection('contact'); });
+</script>
+`,
+      tests:[
+        {type:'computed-style', selector:'#contact', prop:'display', equals:'block', label:'#contact is visible (the last button clicked)'},
+        {type:'computed-style', selector:'#home', prop:'display', equals:'none', label:'#home is hidden'},
+        {type:'computed-style', selector:'#about', prop:'display', equals:'none', label:'#about is hidden'}
+      ]
+    },
+    {
+      title:'Combine routing with active-button styling',
+      desc:`Extend showSection(id) so it ALSO removes class "active" from every nav button, then adds it to the
+        one whose id is id + "Btn". With #homeBtn then #aboutBtn auto-clicked in order, #aboutBtn should end up
+        with class "active", and #homeBtn should not.`,
+      starter:`<style>
+  nav button.active { font-weight: bold; }
+</style>
+<nav>
+  <button id="homeBtn" type="button" class="active">Home</button>
+  <button id="aboutBtn" type="button">About</button>
+</nav>
+<section id="home">Welcome home!</section>
+<section id="about" style="display:none;">About us.</section>
+
+<script>
+  function showSection(id){
+    document.querySelectorAll('section').forEach(function(s){ s.style.display = 'none'; });
+    document.querySelector('#' + id).style.display = 'block';
+    // Also: remove 'active' from every nav button, then add it to #<id>Btn
+  }
+  document.querySelector('#homeBtn').addEventListener('click', function(){ showSection('home'); });
+  document.querySelector('#aboutBtn').addEventListener('click', function(){ showSection('about'); });
+</script>
+`,
+      tests:[
+        {type:'dom-attr', selector:'#aboutBtn', attr:'class', notEmpty:true, label:'#aboutBtn has the active class'},
+        {type:'computed-style', selector:'#about', prop:'display', equals:'block', label:'#about is visible'}
+      ]
+    },
+    {
+      title:'Only one section visible, always',
+      desc:`With THREE sections (#home visible, #about and #contact hidden) and three buttons clicked in order
+        (home, about, contact), confirm that at the end EXACTLY ONE section has display:block — never two shown
+        at once, no matter which was visible before.`,
+      starter:`<nav>
+  <button id="homeBtn" type="button">Home</button>
+  <button id="aboutBtn" type="button">About</button>
+  <button id="contactBtn" type="button">Contact</button>
+</nav>
+<section id="home">Welcome home!</section>
+<section id="about" style="display:none;">About us.</section>
+<section id="contact" style="display:none;">Contact us.</section>
+
+<script>
+  function showSection(id){
+    // Hide every <section>, then show just the one matching id
+  }
+  document.querySelector('#homeBtn').addEventListener('click', function(){ showSection('home'); });
+  document.querySelector('#aboutBtn').addEventListener('click', function(){ showSection('about'); });
+  document.querySelector('#contactBtn').addEventListener('click', function(){ showSection('contact'); });
+</script>
+`,
+      tests:[
+        {type:'computed-style', selector:'#contact', prop:'display', equals:'block', label:'#contact ends up visible'},
+        {type:'computed-style', selector:'#about', prop:'display', equals:'none', label:'#about stays hidden, not shown alongside #contact'}
+      ]
+    },
+    {
+      title:'Switch back to home last',
+      desc:`This time #aboutBtn comes FIRST in the HTML and #homeBtn comes SECOND — so the auto-click order is
+        reversed (about, then home), and #home should end up visible with #about hidden. &lt;section id="about"&gt;
+        starts visible; wire up showSection(id) so it correctly ends up hidden (a handler that does nothing would
+        incorrectly leave #about visible).`,
+      starter:`<nav>
+  <button id="aboutBtn" type="button" class="active">About</button>
+  <button id="homeBtn" type="button">Home</button>
+</nav>
+<section id="about">About us.</section>
+<section id="home" style="display:none;">Welcome home!</section>
+
+<script>
+  function showSection(id){
+    // Hide every <section>, then show just the one matching id
+  }
+  document.querySelector('#aboutBtn').addEventListener('click', function(){ showSection('about'); });
+  document.querySelector('#homeBtn').addEventListener('click', function(){ showSection('home'); });
+</script>
+`,
+      tests:[
+        {type:'computed-style', selector:'#home', prop:'display', equals:'block', label:'#home ends up visible (the last button clicked) — a no-op handler would fail this'},
+        {type:'computed-style', selector:'#about', prop:'display', equals:'none', label:'#about ends up hidden (a no-op handler would fail this too)'}
+      ]
+    },
+    {
+      title:'Build the complete mini router',
+      desc:`Combine everything with THREE sections/buttons: showSection(id) hides all sections then shows the
+        matching one, AND removes/adds the "active" class on the matching nav button. With buttons clicked in
+        order (home, about, contact), #contact should end up visible and #contactBtn should have class
+        "active".`,
+      starter:`<style>
+  nav button.active { font-weight: bold; }
+</style>
+<nav>
+  <button id="homeBtn" type="button" class="active">Home</button>
+  <button id="aboutBtn" type="button">About</button>
+  <button id="contactBtn" type="button">Contact</button>
+</nav>
+<section id="home">Welcome home!</section>
+<section id="about" style="display:none;">About us.</section>
+<section id="contact" style="display:none;">Contact us.</section>
+
+<script>
+  function showSection(id){
+    // Hide every <section>, show just the matching one, and update the active nav button
+  }
+  document.querySelector('#homeBtn').addEventListener('click', function(){ showSection('home'); });
+  document.querySelector('#aboutBtn').addEventListener('click', function(){ showSection('about'); });
+  document.querySelector('#contactBtn').addEventListener('click', function(){ showSection('contact'); });
+</script>
+`,
+      tests:[
+        {type:'computed-style', selector:'#contact', prop:'display', equals:'block', label:'#contact ends up visible'},
+        {type:'dom-attr', selector:'#contactBtn', attr:'class', notEmpty:true, label:'#contactBtn has the active class'}
+      ]
+    }
+  ],
+  quiz:[
+    {
+      q:'What is the core trick behind show/hide client-side routing?',
+      options:['Loading a new HTML file','Keeping all sections in the page but only showing one at a time via display', 'Refreshing the whole page','Using a database'],
+      correct:1,
+      explain:'Every section already exists in the HTML — routing here just toggles which one is visible.'
+    },
+    {
+      q:'Why hide EVERY section first, before showing the target one?',
+      options:['It\'s not necessary','So there\'s never a moment where two sections are visible at once, no matter which was showing before','It makes the page load faster','HTML requires it'],
+      correct:1,
+      explain:'Clearing everything first guarantees a clean, predictable state before showing the one section that should be visible.'
+    },
+    {
+      q:'In showSection(id), what does document.querySelector(\'#\' + id) do?',
+      options:['Selects a random element','Builds a selector string by combining "#" with the id argument, then finds that exact element','Always selects the first section','Causes an error'],
+      correct:1,
+      explain:'String concatenation builds the selector dynamically, so one function works for any section id passed in.'
+    },
+    {
+      q:'Why write this as a reusable showSection(id) function instead of separate code in each button\'s handler?',
+      options:['It\'s required by JavaScript','So the hide-all-then-show-one logic is written once and reused for every button, matching Week 9\'s Intermediate lesson','It makes buttons clickable','No real reason'],
+      correct:1,
+      explain:'A shared function avoids repeating the same hide/show logic in every single click handler.'
+    }
+  ],
+  sandboxStarter3:`<style>
+  nav button.active { font-weight: bold; text-decoration: underline; }
+</style>
+<nav>
+  <button id="homeBtn" type="button" class="active">Home</button>
+  <button id="aboutBtn" type="button">About</button>
+  <button id="contactBtn" type="button">Contact</button>
+</nav>
+<section id="home">Welcome home!</section>
+<section id="about" style="display:none;">About us.</section>
+<section id="contact" style="display:none;">Contact us.</section>
+
+<script>
+  function showSection(id){
+    document.querySelectorAll('section').forEach(function(s){ s.style.display = 'none'; });
+    document.querySelector('#' + id).style.display = 'block';
+    document.querySelectorAll('nav button').forEach(function(b){ b.classList.remove('active'); });
+    document.querySelector('#' + id + 'Btn').classList.add('active');
+  }
+  document.querySelector('#homeBtn').addEventListener('click', function(){ showSection('home'); });
+  document.querySelector('#aboutBtn').addEventListener('click', function(){ showSection('about'); });
+  document.querySelector('#contactBtn').addEventListener('click', function(){ showSection('contact'); });
+</script>
+`,
+  stretchChallenge:{
+    title:'Add a 4th section',
+    desc:`Finished early? Add a 4th section, #gallery, and a matching &lt;button id="galleryBtn"&gt; wired to
+      showSection('gallery') — keeping the same hide-all-then-show-one pattern working for all 4 sections. Since
+      #galleryBtn is last in DOM order, #gallery should end up visible after all 4 buttons are auto-clicked.`,
+    starter:`<nav>
+  <button id="homeBtn" type="button" class="active">Home</button>
+  <button id="aboutBtn" type="button">About</button>
+  <button id="contactBtn" type="button">Contact</button>
+  <!-- Add a 4th button, #galleryBtn, here -->
+</nav>
+<section id="home">Welcome home!</section>
+<section id="about" style="display:none;">About us.</section>
+<section id="contact" style="display:none;">Contact us.</section>
+<!-- Add a 4th section, #gallery, here -->
+
+<script>
+  function showSection(id){
+    document.querySelectorAll('section').forEach(function(s){ s.style.display = 'none'; });
+    document.querySelector('#' + id).style.display = 'block';
+  }
+  document.querySelector('#homeBtn').addEventListener('click', function(){ showSection('home'); });
+  document.querySelector('#aboutBtn').addEventListener('click', function(){ showSection('about'); });
+  document.querySelector('#contactBtn').addEventListener('click', function(){ showSection('contact'); });
+  // Add a click handler for #galleryBtn calling showSection('gallery')
+</script>
+`,
+    tests:[
+      {type:'computed-style', selector:'#gallery', prop:'display', equals:'block', label:'#gallery ends up visible (the last button clicked)'}
+    ]
+  }
+},
 ];
 
 window.SUBJECT_DATA = window.SUBJECT_DATA || {};
