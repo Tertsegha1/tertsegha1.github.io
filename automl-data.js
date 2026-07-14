@@ -4235,9 +4235,104 @@ passed = [0,0,0,0,0,1,1,1,1,1,0,0,1,1,0,0,1,1,0,1,0,1,0,1]
   ]
 };
 
+const ML_INTERMEDIATE_MP2 = {
+  key:'mp2',
+  title:'Mini Project 2 — The Robust Model Comparison Lab',
+  intro:`This term's resit data has BOTH a couple of missing hours values AND a categorical study-method column —
+    genuinely messy, real-world-shaped data. Three doors: build a preprocessing pipeline robust enough to handle
+    it, compare 3 model types fairly through that SAME pipeline, then tune the winner.`,
+  fixtureNote:`All three doors build on this same class of 30 students:`,
+  fixtureCode:`hours = [1,2,3,None,5,6,7,8,9,10,1,2,8,9,3,4,6,None,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+method = ["solo","group"] * 15
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]`,
+  doors:[
+    {
+      key:'a', title:'Door 1 — Build the robust preprocessing pipeline',
+      desc:`Using hours, attendance, method and passed above, build df with all four as columns. Create
+        X = df[["hours", "attendance", "method"]]. Build num_pipe = Pipeline([("impute",
+        SimpleImputer(strategy="median")), ("scale", StandardScaler())]), then ct = ColumnTransformer([("num",
+        num_pipe, ["hours", "attendance"]), ("cat", OneHotEncoder(), ["method"])]). Create
+        Xt = ct.fit_transform(X). Create n_features = Xt.shape[1] and
+        imputed_hours_scaled = round(float(Xt[3][0]), 2) (row 3 is one of the students whose hours value was
+        missing). Assert that n_features == 4 and imputed_hours_scaled == 0.07 — proving the missing value was
+        genuinely filled with the MEDIAN (not just some placeholder) before being scaled.`,
+      starter:`import pandas as pd
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+hours = [1,2,3,None,5,6,7,8,9,10,1,2,8,9,3,4,6,None,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+method = ["solo","group"] * 15
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+# Create df, X, num_pipe, ct, Xt, n_features and imputed_hours_scaled below
+`,
+      tests:[{type:'assert', expr:'n_features == 4 and imputed_hours_scaled == 0.07', label:'The robust preprocessing pipeline correctly imputes, scales and encodes'}]
+    },
+    {
+      key:'b', title:'Door 2 — Compare 3 models through the SAME pipeline',
+      desc:`Using ct, X and y = df["passed"] from Door 1, build models = {"rf": RandomForestClassifier(
+        n_estimators=50, random_state=42), "knn": KNeighborsClassifier(n_neighbors=3), "logit":
+        LogisticRegression()}. Loop over models.items(); for each, build pipe = Pipeline([("prep", ct), ("model",
+        model)]), cross-validate with cv=5, and store results[name] = round(float(scores.mean()), 2). Create
+        best_name = max(results, key=results.get). Assert that results == {"rf": 0.77, "knn": 0.83, "logit":
+        0.87} and best_name == "logit".`,
+      starter:`import pandas as pd
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score
+hours = [1,2,3,None,5,6,7,8,9,10,1,2,8,9,3,4,6,None,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+method = ["solo","group"] * 15
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method, "passed": passed})
+X = df[["hours", "attendance", "method"]]
+y = df["passed"]
+num_pipe = Pipeline([("impute", SimpleImputer(strategy="median")), ("scale", StandardScaler())])
+ct = ColumnTransformer([("num", num_pipe, ["hours", "attendance"]), ("cat", OneHotEncoder(), ["method"])])
+# Create models, results (via a loop) and best_name below
+`,
+      tests:[{type:'assert', expr:'results == {"rf": 0.77, "knn": 0.83, "logit": 0.87} and best_name == "logit"', label:'All three models are correctly compared through the same robust pipeline'}]
+    },
+    {
+      key:'c', title:'Door 3 — Tune the winner',
+      desc:`Using ct, X and y from before, build final_pipe = Pipeline([("prep", ct), ("model",
+        LogisticRegression())]). Build param_grid = {"model__C": [0.1, 1, 10]} and
+        grid = GridSearchCV(final_pipe, param_grid, cv=5), then grid.fit(X, y). Create
+        best_C = grid.best_params_["model__C"] and best_score = round(grid.best_score_, 2). Assert that
+        best_C == 0.1 and best_score == 0.9 — tuning the winning model type improves it even further.`,
+      starter:`import pandas as pd
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GridSearchCV
+hours = [1,2,3,None,5,6,7,8,9,10,1,2,8,9,3,4,6,None,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+method = ["solo","group"] * 15
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method, "passed": passed})
+X = df[["hours", "attendance", "method"]]
+y = df["passed"]
+num_pipe = Pipeline([("impute", SimpleImputer(strategy="median")), ("scale", StandardScaler())])
+ct = ColumnTransformer([("num", num_pipe, ["hours", "attendance"]), ("cat", OneHotEncoder(), ["method"])])
+# Create final_pipe, param_grid, grid, best_C and best_score below
+`,
+      tests:[{type:'assert', expr:'best_C == 0.1 and best_score == 0.9', label:'The winning model type is correctly tuned for an even better score'}]
+    }
+  ]
+};
+
 window.SUBJECT_DATA = window.SUBJECT_DATA || {};
 window.SUBJECT_DATA.ml = {
   b: {weeks: ML_WEEKS, mp1: ML_MP1, mp2: ML_MP2},
-  i: {weeks: ML_INTERMEDIATE_WEEKS, mp1: ML_INTERMEDIATE_MP1, mp2: ML_MP2},
+  i: {weeks: ML_INTERMEDIATE_WEEKS, mp1: ML_INTERMEDIATE_MP1, mp2: ML_INTERMEDIATE_MP2},
   a: {weeks: ML_WEEKS, mp1: ML_MP1, mp2: ML_MP2}
 };
