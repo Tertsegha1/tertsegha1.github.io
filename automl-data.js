@@ -3332,6 +3332,234 @@ y_pred_b = [1,1,1,1,1,0,0,0,0,0,0,0,0,0]
       {type:'assert', expr:'recall_a == 1.0 and precision_a == 0.73 and recall_b == 0.62 and precision_b == 1.0', label:'Both models\' precision/recall trade-off is correctly measured'}
     ]
   }
+},
+{
+  key:'week7', num:7, title:'Searching for the Best Setting: GridSearchCV (intro)',
+  scenarioTag:'Real world: how deep should the tree be allowed to grow? Trying every value by hand is slow.',
+  scenario:`RandomForestClassifier has settings you can tune, like how deep each tree is allowed to grow. Trying
+    every value by hand with cross_val_score works, but GridSearchCV automates the whole search — trying every
+    setting, cross-validating each one, and reporting which one won.`,
+  objectives:[
+    'Search over a range of hyperparameter values with GridSearchCV',
+    'Read the best-performing setting GridSearchCV found',
+    'Read the best cross-validated score achieved during the search',
+    'Use the best model GridSearchCV found directly, without refitting it yourself'
+  ],
+  conceptHtml:`
+    <p><code>GridSearchCV</code> tries every value in a "grid" of settings, cross-validates each one, and keeps
+    track of which one performed best:</p>
+    <pre class="code-block">from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+
+param_grid = {"max_depth": [1, 2, 3, 4]}
+grid = GridSearchCV(RandomForestClassifier(n_estimators=50, random_state=42), param_grid, cv=5)
+grid.fit(X, y)
+
+print(grid.best_params_)   # {'max_depth': 1} — the setting that scored highest
+print(grid.best_score_)    # 0.87 — the best cross-validated score found</pre>
+    <h3>Let's break down GridSearchCV, line by line</h3>
+    <ul>
+      <li><code>param_grid</code> is a dictionary: each key is a setting name, each value is a LIST of values to
+        try for that setting.</li>
+      <li><code>GridSearchCV(model, param_grid, cv=5)</code> wraps a model — for EVERY value in the grid, it runs
+        a full 5-fold cross-validation, exactly like Week 4's <code>cross_val_score</code>, just automated across
+        every candidate setting.</li>
+      <li><code>.fit(X, y)</code> runs the whole search — for a grid of 4 values with cv=5, that's 20 total
+        model fits happening behind the scenes.</li>
+      <li><code>grid.best_params_</code> is a dictionary showing which setting won. <code>grid.best_score_</code>
+        is that setting's cross-validated score.</li>
+      <li><code>grid.best_estimator_</code> is the actual trained model using the winning setting — already fit
+        on the full data, ready to use directly, no need to retrain it yourself.</li>
+    </ul>`,
+  sandboxStarter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+
+param_grid = {"max_depth": [1, 2, 3, 4]}
+grid = GridSearchCV(RandomForestClassifier(n_estimators=50, random_state=42), param_grid, cv=5)
+grid.fit(X, passed)
+print(grid.best_params_)
+print(round(grid.best_score_, 2))
+`,
+  sandboxStarter2:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+
+param_grid = {"max_depth": [1, 2, 3, 4]}
+grid = GridSearchCV(RandomForestClassifier(n_estimators=50, random_state=42), param_grid, cv=5)
+grid.fit(X, passed)
+best_model = grid.best_estimator_
+print(round(best_model.score(X, passed), 2))
+`,
+  exercises:[
+    {
+      title:'Search for the best max_depth',
+      desc:`Create hours, attendance and passed exactly as in the concept box (30 values each). Create
+        X = list(zip(hours, attendance)). Build param_grid = {"max_depth": [1, 2, 3, 4]} and
+        grid = GridSearchCV(RandomForestClassifier(n_estimators=50, random_state=42), param_grid, cv=5), then
+        grid.fit(X, passed). Create best_depth = grid.best_params_["max_depth"]. Assert that best_depth == 1.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+# Create X, param_grid, grid and best_depth below
+`,
+      tests:[{type:'assert', expr:'best_depth == 1', label:'GridSearchCV correctly finds max_depth 1 as the best setting'}]
+    },
+    {
+      title:'Read the best cross-validated score',
+      desc:`Using grid from before, create best_score = round(grid.best_score_, 2). Assert that
+        best_score == 0.87.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+param_grid = {"max_depth": [1, 2, 3, 4]}
+grid = GridSearchCV(RandomForestClassifier(n_estimators=50, random_state=42), param_grid, cv=5)
+grid.fit(X, passed)
+# Create best_score below
+`,
+      tests:[{type:'assert', expr:'best_score == 0.87', label:'The best cross-validated score is correctly read'}]
+    },
+    {
+      title:'Count how many settings were tried',
+      desc:`Using grid from before, create n_candidates = len(grid.cv_results_["params"]). Assert that
+        n_candidates == 4 — one for each value in the grid.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+param_grid = {"max_depth": [1, 2, 3, 4]}
+grid = GridSearchCV(RandomForestClassifier(n_estimators=50, random_state=42), param_grid, cv=5)
+grid.fit(X, passed)
+# Create n_candidates below
+`,
+      tests:[{type:'assert', expr:'n_candidates == 4', label:'All 4 candidate settings were correctly tried'}]
+    },
+    {
+      title:'Use the best model directly',
+      desc:`Using grid from before, create best_model = grid.best_estimator_. Create
+        best_full_score = round(best_model.score(X, passed), 2). Assert that best_full_score == 0.93 — the
+        winning model, already trained, ready to use without refitting it yourself.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+param_grid = {"max_depth": [1, 2, 3, 4]}
+grid = GridSearchCV(RandomForestClassifier(n_estimators=50, random_state=42), param_grid, cv=5)
+grid.fit(X, passed)
+# Create best_model and best_full_score below
+`,
+      tests:[{type:'assert', expr:'best_full_score == 0.93', label:'The best_estimator_ is correctly used directly without refitting'}]
+    },
+    {
+      title:'Search a different setting: n_estimators',
+      desc:`Using the same hours/attendance/passed/X, build param_grid2 = {"n_estimators": [10, 50, 100]} and
+        grid2 = GridSearchCV(RandomForestClassifier(random_state=42, max_depth=2), param_grid2, cv=5), then
+        grid2.fit(X, passed). Create best_n = grid2.best_params_["n_estimators"]. Assert that best_n == 10.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+# Create param_grid2, grid2 and best_n below
+`,
+      tests:[{type:'assert', expr:'best_n == 10', label:'GridSearchCV correctly searches a different setting (n_estimators)'}]
+    },
+    {
+      title:'Confirm the grid you actually searched',
+      desc:`Using grid from the max_depth search, create searched_grid = grid.param_grid. Assert that
+        searched_grid == {"max_depth": [1, 2, 3, 4]} — GridSearchCV remembers exactly what you asked it to try.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+param_grid = {"max_depth": [1, 2, 3, 4]}
+grid = GridSearchCV(RandomForestClassifier(n_estimators=50, random_state=42), param_grid, cv=5)
+grid.fit(X, passed)
+# Create searched_grid below
+`,
+      tests:[{type:'assert', expr:'searched_grid == {"max_depth": [1, 2, 3, 4]}', label:'The searched param_grid is correctly remembered by GridSearchCV'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does param_grid = {"max_depth": [1, 2, 3, 4]} tell GridSearchCV to do?',
+      options:['Only try max_depth=4','Try every one of the 4 listed values for max_depth and cross-validate each one','Ignore max_depth entirely','Train exactly 1 model'],
+      correct:1,
+      explain:'Each key is a setting name and its list is every value GridSearchCV will try, cross-validating each candidate.'
+    },
+    {
+      q:'What does grid.best_params_ contain after fitting?',
+      options:['Every setting that was tried','A dictionary showing the specific setting(s) that scored best','The original param_grid, unchanged','The worst-performing setting'],
+      correct:1,
+      explain:'best_params_ is a dictionary with just the winning value(s) — the setting combination that achieved the highest cross-validated score.'
+    },
+    {
+      q:'What is grid.best_estimator_?',
+      options:['A brand new, untrained model','The actual trained model using the winning setting, already fit and ready to use','The same as grid.best_score_','A list of every model that was tried'],
+      correct:1,
+      explain:'best_estimator_ is the fully-trained model using the best setting found — you can call .predict() or .score() on it directly, no need to refit.'
+    },
+    {
+      q:'For a grid of 4 values with cv=5, roughly how many model fits happen behind the scenes?',
+      options:['Just 1','4','5','20 — each of the 4 settings gets a full 5-fold cross-validation'],
+      correct:3,
+      explain:'Every candidate setting gets its own full cross-validation, so the total number of fits multiplies: 4 settings × 5 folds = 20.'
+    }
+  ],
+  sandboxStarter3:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+
+param_grid = {"n_estimators": [10, 50, 100]}
+grid = GridSearchCV(RandomForestClassifier(random_state=42, max_depth=2), param_grid, cv=5)
+grid.fit(X, passed)
+print("Best n_estimators:", grid.best_params_["n_estimators"])
+print("Best score:", round(grid.best_score_, 2))
+`,
+  stretchChallenge:{
+    title:'Confirm the search by hand',
+    desc:`Using hours, attendance, passed and X as before, manually loop over depths = [1, 2, 3, 4]: for each
+      depth, create a RandomForestClassifier(n_estimators=50, random_state=42, max_depth=depth), run
+      cross_val_score(model, X, passed, cv=5), and store round(float(scores.mean()), 3) in a list called
+      manual_scores. Create manual_best_depth = depths[manual_scores.index(max(manual_scores))]. Assert that
+      manual_best_depth == 1 — hand-searching the same grid finds the exact same winner GridSearchCV did.`,
+    starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+depths = [1, 2, 3, 4]
+# Create manual_scores and manual_best_depth below
+`,
+    tests:[
+      {type:'assert', expr:'manual_best_depth == 1', label:'Hand-searching the grid finds the same best depth as GridSearchCV'}
+    ]
+  }
 }
 ];
 
