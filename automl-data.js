@@ -3850,6 +3850,322 @@ for name, model in models.items():
       {type:'assert', expr:'tuned_score == 0.87 and tuned_score > plain_score and tuned_score < knn_score', label:'Tuning is correctly shown to help, but not enough to beat the simpler model'}
     ]
   }
+},
+{
+  key:'week9', num:9, title:'A Cleaner Pipeline: ColumnTransformer + Pipeline',
+  scenarioTag:'Real world: preprocessing, tuning and predicting should all travel together as ONE object.',
+  scenario:`Every skill from this term comes together here: a ColumnTransformer that handles mixed numeric and
+    categorical data, wrapped in a Pipeline with a model, tuned with GridSearchCV — all as a single clean object
+    you can fit, cross-validate, tune, and predict with.`,
+  objectives:[
+    'Combine ColumnTransformer and a model into one Pipeline',
+    'Cross-validate a full pipeline in one call',
+    'Tune a model setting INSIDE a pipeline using "stepname__paramname"',
+    'Access individual pipeline steps directly with named_steps'
+  ],
+  conceptHtml:`
+    <p>A <code>Pipeline</code> combining a <code>ColumnTransformer</code> and a model lets EVERYTHING — scaling,
+    encoding, training, tuning — travel together as one object:</p>
+    <pre class="code-block">from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+
+pipe = Pipeline([
+    ("prep", ColumnTransformer([
+        ("num", StandardScaler(), ["hours", "attendance"]),
+        ("cat", OneHotEncoder(), ["method"])
+    ])),
+    ("rf", RandomForestClassifier(n_estimators=50, random_state=42))
+])
+
+param_grid = {"rf__max_depth": [1, 2, 3, 4]}
+grid = GridSearchCV(pipe, param_grid, cv=5)
+grid.fit(X, y)
+print(grid.best_params_)   # {'rf__max_depth': 1}</pre>
+    <h3>Let's break down the new piece: tuning inside a pipeline</h3>
+    <ul>
+      <li>The pipeline's steps are named — here, <code>"prep"</code> and <code>"rf"</code> — exactly like Week 5's
+        ColumnTransformer step names.</li>
+      <li>To tune a SETTING that belongs to one specific step, use <code>"stepname__paramname"</code> — the
+        DOUBLE UNDERSCORE tells GridSearchCV which step's setting to change. <code>"rf__max_depth"</code> means
+        "the <code>max_depth</code> setting on the step named <code>rf</code>".</li>
+      <li><code>GridSearchCV(pipe, param_grid, cv=5)</code> works exactly like tuning a bare model — the ENTIRE
+        pipeline (preprocessing included) gets refit fresh for every candidate setting, on every fold.</li>
+      <li><code>pipe.named_steps["rf"]</code> lets you reach into the fitted pipeline and inspect one specific
+        step directly — useful for checking a setting or reading an attribute like
+        <code>.feature_importances_</code> later on.</li>
+    </ul>`,
+  sandboxStarter:`import pandas as pd
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+method = ["solo","group"] * 15
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method, "passed": passed})
+X = df[["hours", "attendance", "method"]]
+y = df["passed"]
+
+pipe = Pipeline([
+    ("prep", ColumnTransformer([("num", StandardScaler(), ["hours", "attendance"]), ("cat", OneHotEncoder(), ["method"])])),
+    ("rf", RandomForestClassifier(n_estimators=50, random_state=42))
+])
+pipe.fit(X, y)
+print(round(pipe.score(X, y), 2))
+`,
+  sandboxStarter2:`import pandas as pd
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+method = ["solo","group"] * 15
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method, "passed": passed})
+X = df[["hours", "attendance", "method"]]
+y = df["passed"]
+
+pipe = Pipeline([
+    ("prep", ColumnTransformer([("num", StandardScaler(), ["hours", "attendance"]), ("cat", OneHotEncoder(), ["method"])])),
+    ("rf", RandomForestClassifier(n_estimators=50, random_state=42))
+])
+param_grid = {"rf__max_depth": [1, 2, 3, 4]}
+grid = GridSearchCV(pipe, param_grid, cv=5)
+grid.fit(X, y)
+print(grid.best_params_)
+print(round(grid.best_score_, 2))
+`,
+  exercises:[
+    {
+      title:'Build the full pipeline',
+      desc:`Create hours, attendance, method and passed exactly as in the concept box (30 values each), then
+        build df with all four as columns. Create X = df[["hours", "attendance", "method"]] and y = df["passed"].
+        Build pipe = Pipeline([("prep", ColumnTransformer([("num", StandardScaler(), ["hours", "attendance"]),
+        ("cat", OneHotEncoder(), ["method"])])), ("rf", RandomForestClassifier(n_estimators=50,
+        random_state=42))]), fit it on X/y, then pipe_score = round(pipe.score(X, y), 2). Create
+        n_features = pipe.named_steps["prep"].transform(X).shape[1]. Assert that pipe_score == 1.0 and
+        n_features == 4 — proving BOTH the numeric and the categorical columns were genuinely included.`,
+      starter:`import pandas as pd
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+method = ["solo","group"] * 15
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+# Create df, X, y, pipe, pipe_score and n_features below
+`,
+      tests:[{type:'assert', expr:'pipe_score == 1.0 and n_features == 4', label:'The full ColumnTransformer + model pipeline is correctly built and scored'}]
+    },
+    {
+      title:'Cross-validate the full pipeline',
+      desc:`Using pipe, X and y from before, create scores = cross_val_score(pipe, X, y, cv=5). Create
+        cv_mean = round(float(scores.mean()), 2). Assert that cv_mean == 0.8.`,
+      starter:`import pandas as pd
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+method = ["solo","group"] * 15
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method, "passed": passed})
+X = df[["hours", "attendance", "method"]]
+y = df["passed"]
+pipe = Pipeline([("prep", ColumnTransformer([("num", StandardScaler(), ["hours", "attendance"]), ("cat", OneHotEncoder(), ["method"])])), ("rf", RandomForestClassifier(n_estimators=50, random_state=42))])
+# Create scores and cv_mean below
+`,
+      tests:[{type:'assert', expr:'cv_mean == 0.8', label:'The full pipeline is correctly cross-validated as one object'}]
+    },
+    {
+      title:'Tune a setting inside the pipeline',
+      desc:`Using pipe, X and y from before, build param_grid = {"rf__max_depth": [1, 2, 3, 4]} and
+        grid = GridSearchCV(pipe, param_grid, cv=5), then grid.fit(X, y). Create
+        best_depth = grid.best_params_["rf__max_depth"]. Assert that best_depth == 1.`,
+      starter:`import pandas as pd
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+method = ["solo","group"] * 15
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method, "passed": passed})
+X = df[["hours", "attendance", "method"]]
+y = df["passed"]
+pipe = Pipeline([("prep", ColumnTransformer([("num", StandardScaler(), ["hours", "attendance"]), ("cat", OneHotEncoder(), ["method"])])), ("rf", RandomForestClassifier(n_estimators=50, random_state=42))])
+# Create param_grid, grid and best_depth below
+`,
+      tests:[{type:'assert', expr:'best_depth == 1', label:'A model setting is correctly tuned INSIDE the pipeline using rf__max_depth'}]
+    },
+    {
+      title:'Read the best tuned score',
+      desc:`Using grid from before, create best_score = round(grid.best_score_, 2). Assert that
+        best_score == 0.87.`,
+      starter:`import pandas as pd
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+method = ["solo","group"] * 15
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method, "passed": passed})
+X = df[["hours", "attendance", "method"]]
+y = df["passed"]
+pipe = Pipeline([("prep", ColumnTransformer([("num", StandardScaler(), ["hours", "attendance"]), ("cat", OneHotEncoder(), ["method"])])), ("rf", RandomForestClassifier(n_estimators=50, random_state=42))])
+param_grid = {"rf__max_depth": [1, 2, 3, 4]}
+grid = GridSearchCV(pipe, param_grid, cv=5)
+grid.fit(X, y)
+# Create best_score below
+`,
+      tests:[{type:'assert', expr:'best_score == 0.87', label:'The best tuned cross-validated score is correctly read'}]
+    },
+    {
+      title:'Reach into one named step',
+      desc:`Using pipe from before (already fit), create n_estimators_used = pipe.named_steps["rf"].n_estimators.
+        Assert that n_estimators_used == 50.`,
+      starter:`import pandas as pd
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+method = ["solo","group"] * 15
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method, "passed": passed})
+X = df[["hours", "attendance", "method"]]
+y = df["passed"]
+pipe = Pipeline([("prep", ColumnTransformer([("num", StandardScaler(), ["hours", "attendance"]), ("cat", OneHotEncoder(), ["method"])])), ("rf", RandomForestClassifier(n_estimators=50, random_state=42))])
+pipe.fit(X, y)
+# Create n_estimators_used below
+`,
+      tests:[{type:'assert', expr:'n_estimators_used == 50', label:'A single named step is correctly reached into and inspected'}]
+    },
+    {
+      title:'Use the tuned pipeline directly',
+      desc:`Using grid from the tuning exercise, create best_pipe_score = round(grid.best_estimator_.score(X, y),
+        2). Assert that best_pipe_score == 0.93 — the winning pipeline, ColumnTransformer and all, ready to use
+        directly.`,
+      starter:`import pandas as pd
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+method = ["solo","group"] * 15
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method, "passed": passed})
+X = df[["hours", "attendance", "method"]]
+y = df["passed"]
+pipe = Pipeline([("prep", ColumnTransformer([("num", StandardScaler(), ["hours", "attendance"]), ("cat", OneHotEncoder(), ["method"])])), ("rf", RandomForestClassifier(n_estimators=50, random_state=42))])
+param_grid = {"rf__max_depth": [1, 2, 3, 4]}
+grid = GridSearchCV(pipe, param_grid, cv=5)
+grid.fit(X, y)
+# Create best_pipe_score below
+`,
+      tests:[{type:'assert', expr:'best_pipe_score == 0.93', label:'The tuned pipeline is correctly used directly, without rebuilding it'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does "rf__max_depth" mean inside a param_grid?',
+      options:['A typo that scikit-learn ignores','The max_depth setting belonging to the pipeline step named "rf"','A setting for the ColumnTransformer','It always refers to the first step in the pipeline'],
+      correct:1,
+      explain:'The double underscore is scikit-learn\'s syntax for "this setting belongs to this specific named step" — essential once a model lives inside a pipeline.'
+    },
+    {
+      q:'When GridSearchCV tunes a pipeline, what gets refit for every candidate setting?',
+      options:['Only the model step','Only the ColumnTransformer step','The ENTIRE pipeline — preprocessing and model together','Nothing is refit, only scored'],
+      correct:2,
+      explain:'Every candidate setting triggers a full pipeline refit — scaling, encoding, and training all happen fresh for each one, keeping the comparison fair.'
+    },
+    {
+      q:'What does pipe.named_steps["rf"] give you?',
+      options:['The step\'s name as a string','Direct access to that specific fitted step, so you can inspect its attributes','A new, empty model','An error, since pipelines cannot be inspected'],
+      correct:1,
+      explain:'named_steps is a dictionary of the pipeline\'s actual fitted objects, keyed by the name you gave each step — letting you reach in and check any of them directly.'
+    },
+    {
+      q:'Why combine ColumnTransformer and a model into ONE Pipeline instead of keeping them separate?',
+      options:['It is required by scikit-learn','It lets you fit, cross-validate, tune and predict using ONE object, with preprocessing always applied consistently','It makes the model train faster','It removes the need for a param_grid'],
+      correct:1,
+      explain:'A single pipeline object guarantees the same preprocessing is applied every time — fitting, cross-validating, and predicting — with no risk of forgetting a step or applying it inconsistently.'
+    }
+  ],
+  sandboxStarter3:`import pandas as pd
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+method = ["solo","group"] * 15
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method, "passed": passed})
+X = df[["hours", "attendance", "method"]]
+y = df["passed"]
+
+pipe = Pipeline([
+    ("prep", ColumnTransformer([("num", StandardScaler(), ["hours", "attendance"]), ("cat", OneHotEncoder(), ["method"])])),
+    ("rf", RandomForestClassifier(n_estimators=50, random_state=42))
+])
+param_grid = {"rf__max_depth": [1, 2, 3, 4]}
+grid = GridSearchCV(pipe, param_grid, cv=5)
+grid.fit(X, y)
+best_pipe = grid.best_estimator_
+print("Best pipeline score:", round(best_pipe.score(X, y), 2))
+`,
+  stretchChallenge:{
+    title:'Tune two settings at once',
+    desc:`Using X and y as before, build a fresh pipe2 = Pipeline([("prep", ColumnTransformer([("num",
+      StandardScaler(), ["hours", "attendance"]), ("cat", OneHotEncoder(), ["method"])])), ("rf",
+      RandomForestClassifier(random_state=42))]) (no n_estimators fixed this time). Build
+      param_grid2 = {"rf__max_depth": [1, 2, 3, 4], "rf__n_estimators": [10, 50, 100]} and
+      grid2 = GridSearchCV(pipe2, param_grid2, cv=5), then grid2.fit(X, y). Create
+      best_depth2 = grid2.best_params_["rf__max_depth"], best_n2 = grid2.best_params_["rf__n_estimators"],
+      best_score2 = round(grid2.best_score_, 2), and n_candidates2 = len(grid2.cv_results_["params"]). Assert
+      that best_depth2 == 1 and best_n2 == 10 and best_score2 == 0.87 and n_candidates2 == 12 — searching TWO
+      settings inside the pipeline at once, 4 depths times 3 estimator counts.`,
+    starter:`import pandas as pd
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+method = ["solo","group"] * 15
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method, "passed": passed})
+X = df[["hours", "attendance", "method"]]
+y = df["passed"]
+# Create pipe2, param_grid2, grid2, best_depth2, best_n2, best_score2 and n_candidates2 below
+`,
+    tests:[
+      {type:'assert', expr:'best_depth2 == 1 and best_n2 == 10 and best_score2 == 0.87 and n_candidates2 == 12', label:'Two settings inside the pipeline are correctly tuned together'}
+    ]
+  }
 }
 ];
 
