@@ -3560,6 +3560,296 @@ depths = [1, 2, 3, 4]
       {type:'assert', expr:'manual_best_depth == 1', label:'Hand-searching the grid finds the same best depth as GridSearchCV'}
     ]
   }
+},
+{
+  key:'week8', num:8, title:'Comparing Models Systematically',
+  scenarioTag:'Real world: which model type actually deserves to be used — not just the first one you tried?',
+  scenario:`So far each week has used one model type at a time. But a real project should compare several model
+    types on the SAME data, the SAME way, before picking a winner — looping over candidates and cross-validating
+    each one, exactly like GridSearchCV does for settings, but now for entire model types.`,
+  objectives:[
+    'Loop over several model types and cross-validate each one the same way',
+    'Store results in a dictionary for easy comparison',
+    'Find the best and worst performing model from a results dictionary',
+    'Sort models by score to build a simple leaderboard'
+  ],
+  conceptHtml:`
+    <p>Comparing model TYPES works the same way as comparing settings — cross-validate each candidate, and store
+    the results somewhere you can compare them:</p>
+    <pre class="code-block">from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score
+
+models = {
+    "rf": RandomForestClassifier(n_estimators=50, random_state=42),
+    "knn": KNeighborsClassifier(n_neighbors=3),
+    "logit": LogisticRegression(),
+}
+results = {}
+for name, model in models.items():
+    scores = cross_val_score(model, X, y, cv=5)
+    results[name] = round(float(scores.mean()), 2)
+
+print(results)   # {'rf': 0.77, 'knn': 0.9, 'logit': 0.9}</pre>
+    <h3>Let's break down the comparison pattern</h3>
+    <ul>
+      <li>A dictionary of <code>{"name": model_object}</code> lets you loop over several completely different
+        model types with the SAME code, rather than copy-pasting the cross-validation code for each one.</li>
+      <li>Every model gets cross-validated the exact same way (same <code>X</code>, same <code>y</code>, same
+        <code>cv=5</code>) — that's what makes the comparison fair.</li>
+      <li>Storing each result in a <code>results</code> dictionary, keyed by model name, means you can look up
+        any model's score, find the best with <code>max(results.values())</code>, or find WHICH model won with
+        <code>max(results, key=results.get)</code>.</li>
+      <li><code>sorted(results.items(), key=lambda x: -x[1])</code> turns the dictionary into a ranked
+        leaderboard, best score first.</li>
+    </ul>`,
+  sandboxStarter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+
+models = {
+    "rf": RandomForestClassifier(n_estimators=50, random_state=42),
+    "knn": KNeighborsClassifier(n_neighbors=3),
+    "logit": LogisticRegression(),
+}
+results = {}
+for name, model in models.items():
+    scores = cross_val_score(model, X, passed, cv=5)
+    results[name] = round(float(scores.mean()), 2)
+print(results)
+`,
+  sandboxStarter2:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+
+models = {
+    "rf": RandomForestClassifier(n_estimators=50, random_state=42),
+    "knn": KNeighborsClassifier(n_neighbors=3),
+    "logit": LogisticRegression(),
+}
+results = {}
+for name, model in models.items():
+    scores = cross_val_score(model, X, passed, cv=5)
+    results[name] = round(float(scores.mean()), 2)
+
+best_name = max(results, key=results.get)
+print("Best model:", best_name, results[best_name])
+`,
+  exercises:[
+    {
+      title:'Compare three models',
+      desc:`Create hours, attendance and passed exactly as in the concept box (30 values each). Create
+        X = list(zip(hours, attendance)). Build models = {"rf": RandomForestClassifier(n_estimators=50,
+        random_state=42), "knn": KNeighborsClassifier(n_neighbors=3), "logit": LogisticRegression()}. Loop over
+        models.items(), cross-validate each with cv=5, and store results[name] = round(float(scores.mean()), 2).
+        Assert that results == {"rf": 0.77, "knn": 0.9, "logit": 0.9}.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+# Create X, models, results (via a loop) below
+`,
+      tests:[{type:'assert', expr:'results == {"rf": 0.77, "knn": 0.9, "logit": 0.9}', label:'All three models are correctly cross-validated and compared'}]
+    },
+    {
+      title:'Find the best score',
+      desc:`Using results from before, create best_score = max(results.values()). Assert that best_score == 0.9.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+models = {"rf": RandomForestClassifier(n_estimators=50, random_state=42), "knn": KNeighborsClassifier(n_neighbors=3), "logit": LogisticRegression()}
+results = {}
+for name, model in models.items():
+    scores = cross_val_score(model, X, passed, cv=5)
+    results[name] = round(float(scores.mean()), 2)
+# Create best_score below
+`,
+      tests:[{type:'assert', expr:'best_score == 0.9', label:'The best score across all models is correctly found'}]
+    },
+    {
+      title:'Find the worst-performing model',
+      desc:`Using results from before, create worst_model = min(results, key=results.get). Assert that
+        worst_model == "rf".`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+models = {"rf": RandomForestClassifier(n_estimators=50, random_state=42), "knn": KNeighborsClassifier(n_neighbors=3), "logit": LogisticRegression()}
+results = {}
+for name, model in models.items():
+    scores = cross_val_score(model, X, passed, cv=5)
+    results[name] = round(float(scores.mean()), 2)
+# Create worst_model below
+`,
+      tests:[{type:'assert', expr:'worst_model == "rf"', label:'The worst-performing model is correctly identified'}]
+    },
+    {
+      title:'Count the strong models',
+      desc:`Using results from before, create good_models = sum(1 for v in results.values() if v >= 0.9). Assert
+        that good_models == 2.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+models = {"rf": RandomForestClassifier(n_estimators=50, random_state=42), "knn": KNeighborsClassifier(n_neighbors=3), "logit": LogisticRegression()}
+results = {}
+for name, model in models.items():
+    scores = cross_val_score(model, X, passed, cv=5)
+    results[name] = round(float(scores.mean()), 2)
+# Create good_models below
+`,
+      tests:[{type:'assert', expr:'good_models == 2', label:'The number of models scoring 0.9 or above is correctly counted'}]
+    },
+    {
+      title:'Build a leaderboard',
+      desc:`Using results from before, create sorted_models = sorted(results.items(), key=lambda x: -x[1]).
+        Assert that sorted_models[0][1] == 0.9 and sorted_models[-1][0] == "rf" — the leaderboard's top score is
+        0.9, and "rf" sits last.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+models = {"rf": RandomForestClassifier(n_estimators=50, random_state=42), "knn": KNeighborsClassifier(n_neighbors=3), "logit": LogisticRegression()}
+results = {}
+for name, model in models.items():
+    scores = cross_val_score(model, X, passed, cv=5)
+    results[name] = round(float(scores.mean()), 2)
+# Create sorted_models below
+`,
+      tests:[{type:'assert', expr:'sorted_models[0][1] == 0.9 and sorted_models[-1][0] == "rf"', label:'The leaderboard is correctly sorted, best score first'}]
+    },
+    {
+      title:'Add a fourth model to the comparison',
+      desc:`Using X and passed from before, add "dt": DecisionTreeClassifier(random_state=42) into the models
+        dictionary (alongside rf, knn and logit), then rebuild results the same way as before, looping over ALL
+        4 models. Assert that results["dt"] == 0.77 and len(results) == 4.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+# Create models (including "dt") and results below
+`,
+      tests:[{type:'assert', expr:'results["dt"] == 0.77 and len(results) == 4', label:'A 4th model type is correctly added to the comparison'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why store each model in a dictionary of {"name": model_object} rather than separate variables?',
+      options:['Dictionaries are required by scikit-learn','It lets you loop over every model with the same code, instead of copy-pasting the cross-validation step for each one','It trains the models faster','It is the only way cross_val_score works'],
+      correct:1,
+      explain:'Looping over a dictionary means every model gets compared with identical code — same data, same cv, same rounding — which is exactly what makes the comparison fair.'
+    },
+    {
+      q:'What does max(results, key=results.get) return?',
+      options:['The highest score itself','The NAME of the model with the highest score','A list of every model name','An error, since results is a dictionary'],
+      correct:1,
+      explain:'key=results.get tells max() to compare dictionary VALUES while still returning the corresponding KEY — so you get the winning model\'s name, not its score.'
+    },
+    {
+      q:'What does sorted(results.items(), key=lambda x: -x[1]) produce?',
+      options:['The dictionary in its original order','A list of (name, score) pairs sorted from lowest score to highest','A list of (name, score) pairs sorted from highest score to lowest','Just the model names, alphabetically'],
+      correct:2,
+      explain:'The negative sign flips the usual ascending sort into descending order, so the best-scoring model comes first — a simple leaderboard.'
+    },
+    {
+      q:'Why is it important that every model in the comparison uses the SAME cv value and the SAME X/y?',
+      options:['It isn\'t important, any settings work','So the comparison is fair — every model is judged under identical conditions','To make the code run faster','Because scikit-learn requires it'],
+      correct:1,
+      explain:'If one model got 10-fold cross-validation and another got 3-fold, or they saw different data, the scores wouldn\'t be comparable — fairness comes from using identical conditions for every candidate.'
+    }
+  ],
+  sandboxStarter3:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+
+models = {
+    "rf": RandomForestClassifier(n_estimators=50, random_state=42),
+    "dt": DecisionTreeClassifier(random_state=42),
+    "knn": KNeighborsClassifier(n_neighbors=3),
+    "logit": LogisticRegression(),
+}
+results = {}
+for name, model in models.items():
+    scores = cross_val_score(model, X, passed, cv=5)
+    results[name] = round(float(scores.mean()), 2)
+
+leaderboard = sorted(results.items(), key=lambda x: -x[1])
+for name, score in leaderboard:
+    print(name, score)
+`,
+  stretchChallenge:{
+    title:'Does tuning close the gap?',
+    desc:`Using X and passed from before, create plain_score = results["rf"] (0.77, the untuned RandomForest from
+      the comparison). Build tuned_grid = GridSearchCV(RandomForestClassifier(n_estimators=50, random_state=42),
+      {"max_depth": [1, 2, 3, 4]}, cv=5), fit it on X/passed, then tuned_score = round(tuned_grid.best_score_, 2).
+      Create knn_score = results["knn"]. Assert that tuned_score == 0.87 and tuned_score > plain_score and
+      tuned_score < knn_score — tuning helps RandomForest, but it still doesn't catch up to the simpler KNN model
+      on this particular dataset.`,
+    starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score, GridSearchCV
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+models = {"rf": RandomForestClassifier(n_estimators=50, random_state=42), "knn": KNeighborsClassifier(n_neighbors=3), "logit": LogisticRegression()}
+results = {}
+for name, model in models.items():
+    scores = cross_val_score(model, X, passed, cv=5)
+    results[name] = round(float(scores.mean()), 2)
+# Create plain_score, tuned_grid, tuned_score and knn_score below
+`,
+    tests:[
+      {type:'assert', expr:'tuned_score == 0.87 and tuned_score > plain_score and tuned_score < knn_score', label:'Tuning is correctly shown to help, but not enough to beat the simpler model'}
+    ]
+  }
 }
 ];
 
