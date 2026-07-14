@@ -4762,6 +4762,240 @@ importances = rf.feature_importances_
       {type:'assert', expr:'importance_dict["shoe_size"] < 0.15 and importance_dict["attendance"] > importance_dict["hours"] and importance_dict["hours"] > importance_dict["shoe_size"]', label:'The named importance report correctly confirms the full ranking'}
     ]
   }
+},
+{
+  key:'week3', num:3, title:'Tuning for Real: GridSearchCV Over Multiple Parameters',
+  scenarioTag:'Real world: a model has more than one dial — tune them all at once, not one at a time.',
+  scenario:`Week 7's GridSearchCV searched one setting at a time. RandomForestClassifier has SEVERAL settings that
+    interact with each other — the best tree depth can depend on how many trees you use. Searching them together,
+    all at once, finds combinations a one-at-a-time search could easily miss.`,
+  objectives:[
+    'Build a param_grid with more than one hyperparameter',
+    'Read the full winning combination from best_params_',
+    'Know exactly how many candidate combinations a multi-parameter grid tries',
+    'Read which single candidate, by index, actually won'
+  ],
+  conceptHtml:`
+    <p>A <code>param_grid</code> can list more than one setting — GridSearchCV tries every COMBINATION, not just
+    every value of each setting separately:</p>
+    <pre class="code-block">from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+
+param_grid = {
+    "max_depth": [1, 2, 3, 4],
+    "n_estimators": [10, 50, 100],
+    "min_samples_leaf": [1, 2, 4]
+}
+grid = GridSearchCV(RandomForestClassifier(random_state=42), param_grid, cv=5)
+grid.fit(X, y)
+print(grid.best_params_)
+# {'max_depth': 1, 'min_samples_leaf': 1, 'n_estimators': 50}</pre>
+    <h3>Let's break down a multi-parameter search</h3>
+    <ul>
+      <li>With 3 settings listed (4 values × 3 values × 3 values), GridSearchCV tries every COMBINATION —
+        4 × 3 × 3 = 36 total candidates, each one fully 5-fold cross-validated.</li>
+      <li><code>grid.best_params_</code> now returns a dictionary with ALL THREE winning values at once — the
+        combination that scored highest together, not three separate "best" values found independently.</li>
+      <li><code>grid.best_index_</code> tells you WHICH row, by position, in the full results table
+        (<code>grid.cv_results_</code>) corresponds to that winning combination.</li>
+      <li>Searching parameters together (rather than tuning <code>max_depth</code> alone, then
+        <code>n_estimators</code> alone) can find a genuinely better combination, since settings can interact —
+        the best depth for 10 trees isn't necessarily the best depth for 100 trees.</li>
+    </ul>`,
+  sandboxStarter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+
+param_grid = {"max_depth": [1, 2, 3, 4], "n_estimators": [10, 50, 100], "min_samples_leaf": [1, 2, 4]}
+grid = GridSearchCV(RandomForestClassifier(random_state=42), param_grid, cv=5)
+grid.fit(X, passed)
+print(grid.best_params_)
+`,
+  sandboxStarter2:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+
+param_grid = {"max_depth": [1, 2, 3, 4], "n_estimators": [10, 50, 100], "min_samples_leaf": [1, 2, 4]}
+grid = GridSearchCV(RandomForestClassifier(random_state=42), param_grid, cv=5)
+grid.fit(X, passed)
+print("Total candidates tried:", len(grid.cv_results_["params"]))
+print("Best score:", round(grid.best_score_, 2))
+`,
+  exercises:[
+    {
+      title:'Search three settings at once',
+      desc:`Create hours, attendance and passed exactly as in the concept box (30 values each). Create
+        X = list(zip(hours, attendance)). Build param_grid = {"max_depth": [1, 2, 3, 4], "n_estimators": [10, 50,
+        100], "min_samples_leaf": [1, 2, 4]} and grid = GridSearchCV(RandomForestClassifier(random_state=42),
+        param_grid, cv=5), then grid.fit(X, passed). Create best_depth = grid.best_params_["max_depth"]. Assert
+        that best_depth == 1.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+# Create X, param_grid, grid and best_depth below
+`,
+      tests:[{type:'assert', expr:'best_depth == 1', label:'The best max_depth from the multi-parameter search is correctly read'}]
+    },
+    {
+      title:'Read the best n_estimators from the same search',
+      desc:`Using grid from before, create best_n = grid.best_params_["n_estimators"]. Assert that best_n == 50.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+param_grid = {"max_depth": [1, 2, 3, 4], "n_estimators": [10, 50, 100], "min_samples_leaf": [1, 2, 4]}
+grid = GridSearchCV(RandomForestClassifier(random_state=42), param_grid, cv=5)
+grid.fit(X, passed)
+# Create best_n below
+`,
+      tests:[{type:'assert', expr:'best_n == 50', label:'The best n_estimators from the SAME winning combination is correctly read'}]
+    },
+    {
+      title:'Read the best min_samples_leaf too',
+      desc:`Using grid from before, create best_leaf = grid.best_params_["min_samples_leaf"]. Assert that
+        best_leaf == 1 — all three winning values come from the SAME combination, found together.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+param_grid = {"max_depth": [1, 2, 3, 4], "n_estimators": [10, 50, 100], "min_samples_leaf": [1, 2, 4]}
+grid = GridSearchCV(RandomForestClassifier(random_state=42), param_grid, cv=5)
+grid.fit(X, passed)
+# Create best_leaf below
+`,
+      tests:[{type:'assert', expr:'best_leaf == 1', label:'The best min_samples_leaf from the winning combination is correctly read'}]
+    },
+    {
+      title:'Read the winning score',
+      desc:`Using grid from before, create best_score = round(grid.best_score_, 2). Assert that
+        best_score == 0.87.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+param_grid = {"max_depth": [1, 2, 3, 4], "n_estimators": [10, 50, 100], "min_samples_leaf": [1, 2, 4]}
+grid = GridSearchCV(RandomForestClassifier(random_state=42), param_grid, cv=5)
+grid.fit(X, passed)
+# Create best_score below
+`,
+      tests:[{type:'assert', expr:'best_score == 0.87', label:'The winning cross-validated score is correctly read'}]
+    },
+    {
+      title:'Count every candidate combination tried',
+      desc:`Using grid from before, create n_candidates = len(grid.cv_results_["params"]). Assert that
+        n_candidates == 36 — 4 depths times 3 estimator counts times 3 leaf sizes.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+param_grid = {"max_depth": [1, 2, 3, 4], "n_estimators": [10, 50, 100], "min_samples_leaf": [1, 2, 4]}
+grid = GridSearchCV(RandomForestClassifier(random_state=42), param_grid, cv=5)
+grid.fit(X, passed)
+# Create n_candidates below
+`,
+      tests:[{type:'assert', expr:'n_candidates == 36', label:'All 36 candidate combinations are correctly counted'}]
+    },
+    {
+      title:'Find the winning candidate\'s position',
+      desc:`Using grid from before, create best_index = int(grid.best_index_). Assert that best_index == 1 — the
+        position, within the full results table, of the combination that actually won.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+param_grid = {"max_depth": [1, 2, 3, 4], "n_estimators": [10, 50, 100], "min_samples_leaf": [1, 2, 4]}
+grid = GridSearchCV(RandomForestClassifier(random_state=42), param_grid, cv=5)
+grid.fit(X, passed)
+# Create best_index below
+`,
+      tests:[{type:'assert', expr:'best_index == 1', label:'The winning candidate\'s position in the results table is correctly read'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'With param_grid = {"max_depth": [1,2,3,4], "n_estimators": [10,50,100], "min_samples_leaf": [1,2,4]}, how many total candidates does GridSearchCV try?',
+      options:['4 + 3 + 3 = 10','4 \\u00d7 3 \\u00d7 3 = 36','Just 3, one per setting','It depends on cv'],
+      correct:1,
+      explain:'GridSearchCV tries every COMBINATION across all listed settings — multiply the number of values for each setting together.'
+    },
+    {
+      q:'What does grid.best_params_ contain when the grid has 3 settings?',
+      options:['Only the single most important setting','A dictionary with the winning value for ALL THREE settings, found together as one combination','Three separate best-of-each-setting dictionaries','The original param_grid, unchanged'],
+      correct:1,
+      explain:'best_params_ reflects the ONE combination that scored highest overall — not three independently-optimal values that might not even work well together.'
+    },
+    {
+      q:'Why search multiple settings together instead of tuning one at a time?',
+      options:['It never matters, one-at-a-time is just as good','Settings can interact — the best depth for 10 trees isn\'t necessarily the best depth for 100 trees, so searching together can find combinations a one-at-a-time search would miss','It is always faster','GridSearchCV cannot accept more than one setting'],
+      correct:1,
+      explain:'Hyperparameters often interact — searching them jointly is the only way to be sure you\'re not missing a genuinely better combination.'
+    },
+    {
+      q:'What does grid.best_index_ tell you?',
+      options:['The best score itself','The position, within the full results table, of the winning candidate','The number of settings searched','Always 0'],
+      correct:1,
+      explain:'best_index_ is a row position into grid.cv_results_ — useful for looking up any other detail about the winning candidate directly from the results table.'
+    }
+  ],
+  sandboxStarter3:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+import numpy as np
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+
+param_grid = {"max_depth": [1, 2, 3, 4], "n_estimators": [10, 50, 100], "min_samples_leaf": [1, 2, 4]}
+grid = GridSearchCV(RandomForestClassifier(random_state=42), param_grid, cv=5)
+grid.fit(X, passed)
+
+scores = np.array(grid.cv_results_["mean_test_score"])
+n_tied = int((scores.round(2) == round(grid.best_score_, 2)).sum())
+print("Candidates tied for the best score:", n_tied)
+`,
+  stretchChallenge:{
+    title:'How many candidates tied for first place?',
+    desc:`Using grid from before, create scores = np.array(grid.cv_results_["mean_test_score"]). Create
+      n_tied = int((scores.round(2) == round(grid.best_score_, 2)).sum()). Assert that n_tied == 28 — on this
+      dataset, a LOT of combinations tie for the best rounded score, showing the model is fairly insensitive to
+      several of these settings here.`,
+    starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+import numpy as np
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+param_grid = {"max_depth": [1, 2, 3, 4], "n_estimators": [10, 50, 100], "min_samples_leaf": [1, 2, 4]}
+grid = GridSearchCV(RandomForestClassifier(random_state=42), param_grid, cv=5)
+grid.fit(X, passed)
+# Create scores and n_tied below
+`,
+    tests:[
+      {type:'assert', expr:'n_tied == 28', label:'The number of tied-for-best candidates is correctly counted'}
+    ]
+  }
 }
 ];
 
