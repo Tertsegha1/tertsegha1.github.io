@@ -4330,9 +4330,218 @@ ct = ColumnTransformer([("num", num_pipe, ["hours", "attendance"]), ("cat", OneH
   ]
 };
 
+const ML_ADVANCED_WEEKS = [
+{
+  key:'week1', num:1, title:'A Different Kind of Boundary: SVC',
+  scenarioTag:'Real world: not every model draws the line between "pass" and "fail" the same way.',
+  scenario:`Every model tried so far draws a decision boundary differently. SVC (Support Vector Classifier) finds
+    the boundary that stays as far as possible from the nearest points of each class — often a genuinely stronger
+    choice than a tree-based model, worth trying whenever accuracy matters more than explainability.`,
+  objectives:[
+    'Train an SVC exactly like any other classifier — same fit/predict/score interface',
+    'Cross-validate SVC fairly against other model types',
+    'See how the C setting controls how strict the boundary is',
+    'Read a linear SVC\'s coefficients when interpretability matters'
+  ],
+  conceptHtml:`
+    <p><code>SVC</code> uses the exact same interface as every model you've used so far — the only thing that
+    changes is what shape of boundary it draws between classes:</p>
+    <pre class="code-block">from sklearn.svm import SVC
+from sklearn.model_selection import cross_val_score
+
+svc = SVC()
+svc.fit(X, y)
+print(round(svc.score(X, y), 2))
+
+scores = cross_val_score(svc, X, y, cv=5)
+print(round(float(scores.mean()), 2))</pre>
+    <h3>Let's break down what makes SVC different</h3>
+    <ul>
+      <li>SVC tries to find the boundary with the LARGEST margin — the widest possible gap — between the two
+        classes, rather than splitting on one feature at a time like a tree does.</li>
+      <li>The <code>C</code> setting controls how strict that boundary is: a SMALL C allows more points to sit on
+        the "wrong" side of the margin (a softer, more tolerant boundary); a LARGE C punishes those mistakes more
+        heavily (a stricter boundary, which can also risk overfitting).</li>
+      <li>With the default <code>kernel="rbf"</code>, SVC can draw curved boundaries — powerful, but the fitted
+        model has no simple "coefficients" you can read directly.</li>
+      <li>With <code>kernel="linear"</code>, SVC draws a straight-line boundary AND exposes
+        <code>.coef_</code> — one weight per feature, similar in spirit to LogisticRegression's coefficients.</li>
+    </ul>`,
+  sandboxStarter:`from sklearn.svm import SVC
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+
+svc = SVC()
+svc.fit(X, passed)
+print(round(svc.score(X, passed), 2))
+`,
+  sandboxStarter2:`from sklearn.svm import SVC
+from sklearn.model_selection import cross_val_score
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+
+svc = SVC()
+scores = cross_val_score(svc, X, passed, cv=5)
+print(round(float(scores.mean()), 2))
+`,
+  exercises:[
+    {
+      title:'Train and score an SVC',
+      desc:`Create hours, attendance and passed exactly as in the concept box (30 values each). Create
+        X = list(zip(hours, attendance)). Create svc = SVC(), fit it on X/passed, then
+        svc_score = round(svc.score(X, passed), 2). Assert that svc_score == 0.9.`,
+      starter:`from sklearn.svm import SVC
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+# Create X, svc and svc_score below
+`,
+      tests:[{type:'assert', expr:'svc_score == 0.9', label:'SVC is correctly trained and scored (0.9)'}]
+    },
+    {
+      title:'Cross-validate the SVC fairly',
+      desc:`Using X and passed from before, create svc = SVC(), then
+        scores = cross_val_score(svc, X, passed, cv=5). Create svc_cv_mean = round(float(scores.mean()), 2).
+        Assert that svc_cv_mean == 0.9.`,
+      starter:`from sklearn.svm import SVC
+from sklearn.model_selection import cross_val_score
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+# Create svc, scores and svc_cv_mean below
+`,
+      tests:[{type:'assert', expr:'svc_cv_mean == 0.9', label:'SVC is correctly cross-validated (0.9)'}]
+    },
+    {
+      title:'See a weak C setting hurt performance',
+      desc:`Using X and passed from before, create svc_weak = SVC(C=0.1), then
+        weak_scores = cross_val_score(svc_weak, X, passed, cv=5). Create
+        weak_cv_mean = round(float(weak_scores.mean()), 2). Assert that weak_cv_mean == 0.6 — a boundary that's
+        too tolerant of mistakes performs noticeably worse here.`,
+      starter:`from sklearn.svm import SVC
+from sklearn.model_selection import cross_val_score
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+# Create svc_weak, weak_scores and weak_cv_mean below
+`,
+      tests:[{type:'assert', expr:'weak_cv_mean == 0.6', label:'A weak C setting is correctly shown to hurt performance (0.6)'}]
+    },
+    {
+      title:'Confirm a stronger C recovers performance',
+      desc:`Using X and passed from before, create svc_strong = SVC(C=10), then
+        strong_scores = cross_val_score(svc_strong, X, passed, cv=5). Create
+        strong_cv_mean = round(float(strong_scores.mean()), 2). Assert that strong_cv_mean == 0.9 and
+        strong_cv_mean > 0.6.`,
+      starter:`from sklearn.svm import SVC
+from sklearn.model_selection import cross_val_score
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+# Create svc_strong, strong_scores and strong_cv_mean below
+`,
+      tests:[{type:'assert', expr:'strong_cv_mean == 0.9 and strong_cv_mean > 0.6', label:'A stronger C setting correctly recovers performance'}]
+    },
+    {
+      title:'Compare SVC against RandomForest',
+      desc:`Using X and passed from before, create rf = RandomForestClassifier(n_estimators=50, random_state=42),
+        then rf_scores = cross_val_score(rf, X, passed, cv=5) and rf_cv_mean = round(float(rf_scores.mean()), 2).
+        Create svc = SVC(), svc_scores = cross_val_score(svc, X, passed, cv=5), and
+        svc_cv_mean = round(float(svc_scores.mean()), 2). Assert that svc_cv_mean == 0.9 and rf_cv_mean == 0.77
+        and svc_cv_mean > rf_cv_mean — SVC genuinely outperforms the default RandomForest here.`,
+      starter:`from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+# Create rf, rf_cv_mean, svc and svc_cv_mean below
+`,
+      tests:[{type:'assert', expr:'svc_cv_mean == 0.9 and rf_cv_mean == 0.77 and svc_cv_mean > rf_cv_mean', label:'SVC is correctly shown to outperform RandomForest here'}]
+    },
+    {
+      title:'Count the support vectors',
+      desc:`Using X and passed from before, create svc = SVC(), fit it on X/passed, then
+        n_support = len(svc.support_vectors_). Assert that n_support == 18.`,
+      starter:`from sklearn.svm import SVC
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+# Create svc and n_support below
+`,
+      tests:[{type:'assert', expr:'n_support == 18', label:'The number of support vectors is correctly counted'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does SVC try to find when drawing a decision boundary?',
+      options:['The boundary closest to the most points','The boundary with the LARGEST margin — the widest possible gap between classes','A random boundary, retried until it works','The same boundary a decision tree would draw'],
+      correct:1,
+      explain:'SVC specifically searches for the maximum-margin boundary — the one that stays as far as possible from the nearest points of each class.'
+    },
+    {
+      q:'What does a SMALL value of C do?',
+      options:['Makes the boundary stricter, punishing mistakes more','Allows a softer, more tolerant boundary that permits more points on the "wrong" side','Has no effect on the model at all','Only applies to linear kernels'],
+      correct:1,
+      explain:'A small C relaxes the margin, tolerating more misclassified points during training — sometimes helpful, but too small can genuinely hurt performance, as seen with C=0.1 here.'
+    },
+    {
+      q:'Why does kernel="linear" expose .coef_ but the default kernel="rbf" does not?',
+      options:['It is a scikit-learn bug','A linear kernel draws a straight-line boundary describable by simple per-feature weights; rbf\'s curved boundary has no such simple weight representation','coef_ is available for every kernel equally','rbf models cannot be trained at all'],
+      correct:1,
+      explain:'A straight-line (linear) boundary can be described by one weight per feature, exactly like LogisticRegression — a curved (rbf) boundary fundamentally cannot be reduced to a simple set of weights.'
+    },
+    {
+      q:'Does SVC use the same .fit()/.predict()/.score() interface as RandomForestClassifier or LogisticRegression?',
+      options:['No, it needs a completely different API','Yes — every scikit-learn classifier shares the same interface, which is exactly what makes swapping model types so easy','Only .fit() is shared, not .predict()','Only for linear kernels'],
+      correct:1,
+      explain:'This consistent interface is why Week 8\'s model-comparison pattern (loop over a dict of models, cross-validate each the same way) works for ANY scikit-learn classifier, SVC included.'
+    }
+  ],
+  sandboxStarter3:`from sklearn.svm import SVC
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+
+svc_linear = SVC(kernel="linear")
+svc_linear.fit(X, passed)
+print("Coefficients:", svc_linear.coef_.round(3))
+`,
+  stretchChallenge:{
+    title:'Read a linear SVC\'s coefficients',
+    desc:`Using X and passed from before, create svc_linear = SVC(kernel="linear"), fit it on X/passed, then
+      n_coefs = svc_linear.coef_.shape[1]. Assert that n_coefs == 2 — one weight per feature (hours and
+      attendance), readable directly because a linear kernel draws a straight-line boundary.`,
+    starter:`from sklearn.svm import SVC
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+# Create svc_linear and n_coefs below
+`,
+    tests:[
+      {type:'assert', expr:'n_coefs == 2', label:'The linear SVC\'s coefficients are correctly read (one per feature)'}
+    ]
+  }
+}
+];
+
 window.SUBJECT_DATA = window.SUBJECT_DATA || {};
 window.SUBJECT_DATA.ml = {
   b: {weeks: ML_WEEKS, mp1: ML_MP1, mp2: ML_MP2},
   i: {weeks: ML_INTERMEDIATE_WEEKS, mp1: ML_INTERMEDIATE_MP1, mp2: ML_INTERMEDIATE_MP2},
-  a: {weeks: ML_WEEKS, mp1: ML_MP1, mp2: ML_MP2}
+  a: {weeks: ML_ADVANCED_WEEKS, mp1: ML_MP1, mp2: ML_MP2}
 };
