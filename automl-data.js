@@ -2882,6 +2882,270 @@ from sklearn.model_selection import cross_val_score
       {type:'assert', expr:'rf_mean == 1.0 and knn_mean == 1.0', label:'Both models are correctly cross-validated and compared'}
     ]
   }
+},
+{
+  key:'week5', num:5, title:'Numeric and Categorical Together: ColumnTransformer',
+  scenarioTag:'Real world: real school data is never all-numbers — some columns are categories like "solo" or "group".',
+  scenario:`Hours and attendance are numbers that need scaling. But "study method" (solo or group) is a category —
+    scaling doesn't make sense for it, it needs encoding instead. ColumnTransformer applies a DIFFERENT
+    preprocessing step to each column, all in one call.`,
+  objectives:[
+    'Build a ColumnTransformer that scales numeric columns and encodes a categorical column at once',
+    'Train a model on the combined, transformed features',
+    'Confirm scaling and encoding were both genuinely applied',
+    'Combine a ColumnTransformer with a model in one Pipeline'
+  ],
+  conceptHtml:`
+    <p><code>ColumnTransformer</code> lets you point DIFFERENT preprocessing steps at DIFFERENT columns, and runs
+    them all together, returning one combined array:</p>
+    <pre class="code-block">from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+
+ct = ColumnTransformer([
+    ("num", StandardScaler(), ["hours", "attendance"]),
+    ("cat", OneHotEncoder(), ["method"])
+])
+Xt = ct.fit_transform(df[["hours", "attendance", "method"]])
+print(Xt.shape)   # (24, 4) — 2 scaled numeric columns + 2 one-hot category columns</pre>
+    <h3>Let's break down ColumnTransformer, line by line</h3>
+    <ul>
+      <li>Each entry in the list is a 3-part tuple: <code>(name, transformer, columns)</code> — a label you choose,
+        the preprocessing step to apply, and WHICH columns it applies to.</li>
+      <li><code>"num"</code> applies <code>StandardScaler()</code> only to <code>["hours", "attendance"]</code> —
+        the categorical column is completely untouched by this step.</li>
+      <li><code>"cat"</code> applies <code>OneHotEncoder()</code> only to <code>["method"]</code> — turning each
+        category into its own 0/1 column, exactly like Week 6's encoding, but scoped to just this one column.</li>
+      <li><code>fit_transform</code> runs BOTH steps and glues the results together into one array — that's why
+        the output has more columns than the input (each category becomes multiple 0/1 columns).</li>
+      <li>You can feed <code>Xt</code> straight into any model's <code>.fit()</code> exactly like before — the
+        model never needs to know some of its input used to be text.</li>
+    </ul>`,
+  sandboxStarter:`import pandas as pd
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99]
+method = ["solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group"]
+df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method})
+
+ct = ColumnTransformer([
+    ("num", StandardScaler(), ["hours", "attendance"]),
+    ("cat", OneHotEncoder(), ["method"])
+])
+Xt = ct.fit_transform(df)
+print(Xt.shape)
+print(Xt[0])
+`,
+  sandboxStarter2:`import pandas as pd
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99]
+method = ["solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group"]
+passed = [0,0,0,0,0,1,1,1,1,1,0,0,1,1,0,0,1,1,0,1,0,1,0,1]
+df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method, "passed": passed})
+
+ct = ColumnTransformer([
+    ("num", StandardScaler(), ["hours", "attendance"]),
+    ("cat", OneHotEncoder(), ["method"])
+])
+Xt = ct.fit_transform(df[["hours", "attendance", "method"]])
+model = RandomForestClassifier(n_estimators=50, random_state=42)
+model.fit(Xt, df["passed"])
+print(round(model.score(Xt, df["passed"]), 2))
+`,
+  exercises:[
+    {
+      title:'Build the combined transformer',
+      desc:`Create hours, attendance, method (all 24 values, exactly as in the concept box), and put them in a
+        DataFrame df with columns "hours", "attendance", "method". Build ct = ColumnTransformer([("num",
+        StandardScaler(), ["hours", "attendance"]), ("cat", OneHotEncoder(), ["method"])]). Create
+        X = df[["hours", "attendance", "method"]] and Xt = ct.fit_transform(X). Create n_cols = Xt.shape[1].
+        Assert that n_cols == 4.`,
+      starter:`import pandas as pd
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99]
+method = ["solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group"]
+# Create df, ct, X, Xt and n_cols below
+`,
+      tests:[{type:'assert', expr:'n_cols == 4', label:'The transformed data correctly has 4 columns (2 scaled + 2 one-hot)'}]
+    },
+    {
+      title:'Train a model on the combined features',
+      desc:`Using Xt from before, create passed = [0,0,0,0,0,1,1,1,1,1,0,0,1,1,0,0,1,1,0,1,0,1,0,1]. Create
+        model = RandomForestClassifier(n_estimators=50, random_state=42), fit it on Xt/passed, then
+        score = round(model.score(Xt, passed), 2). Assert that score == 1.0.`,
+      starter:`import pandas as pd
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99]
+method = ["solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group"]
+df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method})
+ct = ColumnTransformer([("num", StandardScaler(), ["hours", "attendance"]), ("cat", OneHotEncoder(), ["method"])])
+Xt = ct.fit_transform(df[["hours", "attendance", "method"]])
+# Create passed, model and score below
+`,
+      tests:[{type:'assert', expr:'score == 1.0', label:'The model correctly scores 1.0 on the combined features'}]
+    },
+    {
+      title:'Confirm the numeric columns were really scaled',
+      desc:`Using Xt from before, create first_hours_scaled = round(float(Xt[0][0]), 2). Assert that
+        first_hours_scaled == -1.47 — proving the first student's hours value was genuinely standardized, not
+        just passed through as the raw number 1.`,
+      starter:`import pandas as pd
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99]
+method = ["solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group"]
+df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method})
+ct = ColumnTransformer([("num", StandardScaler(), ["hours", "attendance"]), ("cat", OneHotEncoder(), ["method"])])
+Xt = ct.fit_transform(df[["hours", "attendance", "method"]])
+# Create first_hours_scaled below
+`,
+      tests:[{type:'assert', expr:'first_hours_scaled == -1.47', label:'The first row shows genuinely scaled hours (-1.47)'}]
+    },
+    {
+      title:'Combine it all in one Pipeline',
+      desc:`Create df with hours, attendance, method, passed (all as before) as columns. Create
+        X = df[["hours", "attendance", "method"]] and y = df["passed"]. Build pipe = Pipeline([("prep",
+        ColumnTransformer([("num", StandardScaler(), ["hours", "attendance"]), ("cat", OneHotEncoder(),
+        ["method"])])), ("rf", RandomForestClassifier(n_estimators=50, random_state=42))]), fit it directly on the
+        RAW X (with the text column still in it) and y, then pipe_score = round(pipe.score(X, y), 2). Assert that
+        pipe_score == 1.0.`,
+      starter:`import pandas as pd
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.pipeline import Pipeline
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99]
+method = ["solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group"]
+passed = [0,0,0,0,0,1,1,1,1,1,0,0,1,1,0,0,1,1,0,1,0,1,0,1]
+# Create df, X, y, pipe and pipe_score below
+`,
+      tests:[{type:'assert', expr:'pipe_score == 1.0', label:'The full Pipeline correctly scores 1.0 fit directly on raw mixed data'}]
+    },
+    {
+      title:'More categories, more columns',
+      desc:`Create method3 = ["solo","group","pair","solo","group","pair","solo","group","pair","solo","group",
+        "pair","solo","group","pair","solo","group","pair","solo","group","pair","solo","group","pair"] (three
+        study methods instead of two). Create df3 with hours, attendance, method3 as columns (name the method3
+        column "method"). Build ct3 the same way as before (StandardScaler on hours/attendance, OneHotEncoder on
+        method), transform df3[["hours", "attendance", "method"]], and create n_cols3 = Xt3.shape[1]. Assert that
+        n_cols3 == 5 — one more category means one more one-hot column.`,
+      starter:`import pandas as pd
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99]
+method3 = ["solo","group","pair","solo","group","pair","solo","group","pair","solo","group","pair","solo","group","pair","solo","group","pair","solo","group","pair","solo","group","pair"]
+# Create df3, ct3, Xt3 and n_cols3 below
+`,
+      tests:[{type:'assert', expr:'n_cols3 == 5', label:'Adding a third category correctly adds a 5th column'}]
+    },
+    {
+      title:'Cross-validate the whole thing',
+      desc:`Using df, X and y from the Pipeline exercise, build pipe the same way (a fresh ColumnTransformer
+        wrapped with a fresh RandomForestClassifier(n_estimators=50, random_state=42) in a Pipeline). Create
+        scores = cross_val_score(pipe, X, y, cv=5). Create cv_mean = round(float(scores.mean()), 2). Assert that
+        cv_mean == 1.0.`,
+      starter:`import pandas as pd
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_score
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99]
+method = ["solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group"]
+passed = [0,0,0,0,0,1,1,1,1,1,0,0,1,1,0,0,1,1,0,1,0,1,0,1]
+df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method, "passed": passed})
+X = df[["hours", "attendance", "method"]]
+y = df["passed"]
+# Create pipe, scores and cv_mean below
+`,
+      tests:[{type:'assert', expr:'cv_mean == 1.0', label:'The full pipeline cross-validates correctly (1.0)'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does ColumnTransformer let you do that a single StandardScaler or OneHotEncoder can\'t?',
+      options:['Apply the SAME preprocessing step to every column','Apply DIFFERENT preprocessing steps to different columns in one combined call','Remove columns you don\'t want','Train a model directly, without any other step'],
+      correct:1,
+      explain:'ColumnTransformer routes each named group of columns to its own transformer, then glues the results together — exactly what mixed numeric+categorical data needs.'
+    },
+    {
+      q:'In ColumnTransformer([("num", StandardScaler(), ["hours","attendance"]), ("cat", OneHotEncoder(), ["method"])]), what does the "num" and "cat" text do?',
+      options:['They are required scikit-learn keywords','They are just labels you choose, to identify each step','They tell Python the data type of the column','They set the model\'s hyperparameters'],
+      correct:1,
+      explain:'The name in each tuple is an arbitrary label you pick — it has no special meaning to scikit-learn beyond identifying that step.'
+    },
+    {
+      q:'Why does the transformed output have MORE columns than the original DataFrame?',
+      options:['It always does, regardless of the data','Because OneHotEncoder turns one category column into multiple 0/1 columns, one per category','Because StandardScaler adds extra columns','It doesn\'t — the column count always stays the same'],
+      correct:1,
+      explain:'A single categorical column becomes one 0/1 column per category after one-hot encoding, so more categories means more resulting columns.'
+    },
+    {
+      q:'Can a Pipeline combine a ColumnTransformer AND a model together?',
+      options:['No, they must always be used separately','Yes — the ColumnTransformer becomes one step, the model becomes the next step, and .fit() runs both in order','Only if the ColumnTransformer has just one column','Only for regression models, not classifiers'],
+      correct:1,
+      explain:'Pipeline([("prep", ColumnTransformer(...)), ("model", SomeModel())]) lets you fit and predict directly on raw, mixed-type data in one call.'
+    }
+  ],
+  sandboxStarter3:`import pandas as pd
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.pipeline import Pipeline
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99]
+method = ["solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group"]
+passed = [0,0,0,0,0,1,1,1,1,1,0,0,1,1,0,0,1,1,0,1,0,1,0,1]
+df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method, "passed": passed})
+X = df[["hours", "attendance", "method"]]
+y = df["passed"]
+
+pipe = Pipeline([
+    ("prep", ColumnTransformer([("num", StandardScaler(), ["hours", "attendance"]), ("cat", OneHotEncoder(), ["method"])])),
+    ("rf", RandomForestClassifier(n_estimators=50, random_state=42))
+])
+pipe.fit(X, y)
+print(round(pipe.score(X, y), 2))
+`,
+  stretchChallenge:{
+    title:'Does the category actually help?',
+    desc:`Using df, X and y as before, build pipe_cat_only = Pipeline([("prep", ColumnTransformer([("cat",
+      OneHotEncoder(), ["method"])])), ("rf", RandomForestClassifier(n_estimators=50, random_state=42))]) and fit
+      it on X[["method"]] and y ONLY. Calculate cat_only_score = round(pipe_cat_only.score(X[["method"]], y), 2).
+      Separately, build pipe_full the same way as the earlier Pipeline exercise (numeric + categorical together)
+      and fit it on the full X and y, calculating full_score = round(pipe_full.score(X, y), 2). Assert that
+      cat_only_score == 0.67 and full_score == 1.0 — the study method alone doesn't capture nearly as much as
+      combining it with hours and attendance.`,
+    starter:`import pandas as pd
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.pipeline import Pipeline
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99]
+method = ["solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group","solo","group"]
+passed = [0,0,0,0,0,1,1,1,1,1,0,0,1,1,0,0,1,1,0,1,0,1,0,1]
+# Create df, X, y, pipe_cat_only, cat_only_score, pipe_full and full_score below
+`,
+    tests:[
+      {type:'assert', expr:'cat_only_score == 0.67 and full_score == 1.0', label:'Both the category-only and full-feature scores are correctly compared'}
+    ]
+  }
 }
 ];
 
