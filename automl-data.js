@@ -2294,6 +2294,190 @@ from sklearn.neighbors import KNeighborsClassifier
       {type:'assert', expr:'score == 1.0', label:'The full scale-train-score pipeline correctly achieves a perfect held-out score'}
     ]
   }
+},
+{
+  key:'week2', num:2, title:'A Stronger Tree: RandomForestClassifier',
+  scenarioTag:'Real world: one decision tree can be a bit too opinionated',
+  scenario:`A single DecisionTreeClassifier can latch onto quirks in the training data that don't generalise well.
+    A RandomForestClassifier trains many trees on slightly different slices of the data and lets them vote — the
+    same "swap the model" pattern from the Beginner level, just with a sturdier model type.`,
+  objectives:[
+    'Train a RandomForestClassifier with the same fit/predict/score interface',
+    'Read the number of trees it built via .estimators_',
+    'Confirm a random forest\'s prediction on a new sample',
+    'Check that .feature_importances_ exists for every feature used'
+  ],
+  conceptHtml:`
+    <p><code>RandomForestClassifier</code> follows the exact same interface as every other scikit-learn model —
+    <code>.fit()</code>, <code>.predict()</code>, <code>.score()</code> — the "swap the model" pattern from the
+    Beginner level:</p>
+    <pre class="code-block">from sklearn.ensemble import RandomForestClassifier
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9]
+passed = [0,0,0,0,0,1,1,1,1,1,0,0,1,1]
+X = [[h] for h in hours]
+
+model = RandomForestClassifier(n_estimators=50, random_state=42)
+model.fit(X, passed)
+print(model.predict([[6]]))   # [1]</pre>
+    <p>Under the hood, it's actually training MANY decision trees (<code>n_estimators</code> of them) on different
+    random slices of the data, then having them vote on the final answer — hence "forest."</p>
+    <h3>Let's break down what's different from a single tree</h3>
+    <ul>
+      <li><code>n_estimators=50</code> — how many individual trees to build and combine. More trees generally
+        means a steadier, less quirky prediction (at the cost of more computation).</li>
+      <li><code>random_state=42</code> — fixes the randomness used to build those trees, so the same code always
+        produces the same forest — useful for reproducible results while learning.</li>
+      <li><code>model.estimators_</code> — after fitting, this holds the actual list of individual trees that were
+        built; <code>len(model.estimators_)</code> equals <code>n_estimators</code>.</li>
+      <li><code>model.feature_importances_</code> — one number per input feature, showing roughly how much each
+        one contributed to the forest's decisions (used more deeply in the Advanced level).</li>
+    </ul>`,
+  sandboxStarter:`from sklearn.ensemble import RandomForestClassifier
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9]
+passed = [0,0,0,0,0,1,1,1,1,1,0,0,1,1]
+X = [[h] for h in hours]
+model = RandomForestClassifier(n_estimators=50, random_state=42)
+model.fit(X, passed)
+print(model.predict([[6]]))
+`,
+  sandboxStarter2:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9]
+passed = [0,0,0,0,0,1,1,1,1,1,0,0,1,1]
+X = [[h] for h in hours]
+Xtr, Xte, ytr, yte = train_test_split(X, passed, test_size=0.3, random_state=42)
+model = RandomForestClassifier(n_estimators=50, random_state=42)
+model.fit(Xtr, ytr)
+print(round(model.score(Xte, yte), 2))
+`,
+  exercises:[
+    {
+      title:'Train and predict with a random forest',
+      desc:`Create hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9] and passed = [0,0,0,0,0,1,1,1,1,1,0,0,1,1]. Create
+        X = [[h] for h in hours]. Create model = RandomForestClassifier(n_estimators=50, random_state=42), fit it
+        on X/passed, then create pred = int(model.predict([[6]])[0]). Assert that pred == 1.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+# Create hours, passed, X, model and pred below
+`,
+      tests:[{type:'assert', expr:'pred == 1', label:'The forest correctly predicts a pass for 6 hours studied'}]
+    },
+    {
+      title:'Score on a held-out split',
+      desc:`Using the same hours/passed/X, split with
+        Xtr, Xte, ytr, yte = train_test_split(X, passed, test_size=0.3, random_state=42). Create
+        model = RandomForestClassifier(n_estimators=50, random_state=42), fit it on Xtr/ytr, then create
+        score = round(model.score(Xte, yte), 2). Assert that score == 0.8.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9]
+passed = [0,0,0,0,0,1,1,1,1,1,0,0,1,1]
+X = [[h] for h in hours]
+# Create the split, model and score below
+`,
+      tests:[{type:'assert', expr:'score == 0.8', label:'The held-out score is correctly computed (0.8)'}]
+    },
+    {
+      title:'Swap the model, keep the pattern',
+      desc:`Using the same hours/passed/X, create model = RandomForestClassifier(n_estimators=50, random_state=42)
+        and fit it. Create model_type = type(model).__name__. Assert that model_type == "RandomForestClassifier"
+        — the exact same fit/predict pattern as DecisionTreeClassifier, just a different class.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9]
+passed = [0,0,0,0,0,1,1,1,1,1,0,0,1,1]
+X = [[h] for h in hours]
+# Create model and model_type below
+`,
+      tests:[{type:'assert', expr:'model_type == "RandomForestClassifier"', label:'The model is correctly a RandomForestClassifier'}]
+    },
+    {
+      title:'Check a perfect training score',
+      desc:`Using the same hours/passed/X, create model = RandomForestClassifier(n_estimators=50, random_state=42)
+        and fit it on X/passed. Assert that model.score(X, passed) == 1.0 — a forest fit and scored on the SAME
+        data it trained on should classify every training example correctly.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9]
+passed = [0,0,0,0,0,1,1,1,1,1,0,0,1,1]
+X = [[h] for h in hours]
+# Create model below
+`,
+      tests:[{type:'assert', expr:'model.score(X, passed) == 1.0', label:"The forest correctly scores 1.0 on its own training data"}]
+    },
+    {
+      title:'Count how many trees were built',
+      desc:`Using the same hours/passed/X, create model = RandomForestClassifier(n_estimators=50, random_state=42)
+        and fit it. Create tree_count = len(model.estimators_). Assert that tree_count == 50.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9]
+passed = [0,0,0,0,0,1,1,1,1,1,0,0,1,1]
+X = [[h] for h in hours]
+# Create model and tree_count below
+`,
+      tests:[{type:'assert', expr:'tree_count == 50', label:'The forest correctly built 50 trees'}]
+    },
+    {
+      title:'Check feature importances exist for every feature',
+      desc:`Create hours = [1,2,3,4,5,6,7,8,9,10], attendance = [50,55,60,65,70,80,85,90,95,98], and
+        passed = [0,0,0,0,0,1,1,1,1,1]. Create X = list(zip(hours, attendance)). Create
+        model = RandomForestClassifier(n_estimators=50, random_state=42), fit it on X/passed, then create
+        num_features = len(model.feature_importances_). Assert that num_features == 2.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+# Create hours, attendance, passed, X, model and num_features below
+`,
+      tests:[{type:'assert', expr:'num_features == 2', label:'The forest correctly reports importances for both features'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does RandomForestClassifier actually build internally?',
+      options:['A single, very large decision tree','Many individual decision trees, trained on different random slices of the data, that vote on the answer','A neural network','Nothing different from a single DecisionTreeClassifier'],
+      correct:1,
+      explain:'A random forest is an "ensemble" of many decision trees, each trained slightly differently, combined by voting.'
+    },
+    {
+      q:'What does n_estimators control?',
+      options:['How accurate the model is guaranteed to be','How many individual trees are built and combined','The maximum depth of each tree','The number of features used'],
+      correct:1,
+      explain:'n_estimators sets how many trees the forest builds — more trees generally means steadier predictions.'
+    },
+    {
+      q:'Why is RandomForestClassifier considered "swapping the model, keeping the pattern"?',
+      options:['It requires a totally different training process','It uses the exact same .fit()/.predict()/.score() interface as every other scikit-learn classifier','It only works with regression problems','It cannot be used with train_test_split'],
+      correct:1,
+      explain:'Every scikit-learn model shares the same fit/predict/score interface, so switching model classes barely changes your code.'
+    },
+    {
+      q:'What does model.estimators_ hold after fitting a random forest?',
+      options:['The predicted labels','The list of individual trees that make up the forest','The original training data','The feature names'],
+      correct:1,
+      explain:'.estimators_ is the actual collection of individual decision trees the forest trained — len() of it equals n_estimators.'
+    }
+  ],
+  sandboxStarter3:`from sklearn.ensemble import RandomForestClassifier
+hours = [1,2,3,4,5,6,7,8,9,10]
+attendance = [50,55,60,65,70,80,85,90,95,98]
+passed = [0,0,0,0,0,1,1,1,1,1]
+X = list(zip(hours, attendance))
+model = RandomForestClassifier(n_estimators=50, random_state=42)
+model.fit(X, passed)
+print(model.feature_importances_)
+`,
+  stretchChallenge:{
+    title:'Score a random forest on two features',
+    desc:`Create hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7],
+      attendance = [50,55,60,62,68,72,85,90,95,98,52,58,92,88,61,64,75,80], and
+      passed = [0,0,0,0,0,1,1,1,1,1,0,0,1,1,0,0,1,1]. Create X = list(zip(hours, attendance)). Split with
+      Xtr, Xte, ytr, yte = train_test_split(X, passed, test_size=0.3, random_state=7). Create
+      model = RandomForestClassifier(n_estimators=100, random_state=42), fit it on Xtr/ytr, then create
+      score = round(model.score(Xte, yte), 2). Assert that score == 0.83.`,
+    starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+# Create hours, attendance, passed, X, the split, model and score below
+`,
+    tests:[
+      {type:'assert', expr:'score == 0.83', label:'The two-feature forest correctly achieves the expected held-out score (0.83)'}
+    ]
+  }
 }
 ];
 
