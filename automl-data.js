@@ -2106,9 +2106,200 @@ df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method, "
   ]
 };
 
+/* =========================================================================
+   AutoML Academy — Intermediate level
+   Focus: making models more robust — feature scaling, stronger model types
+   (RandomForest), handling missing data automatically, fair evaluation with
+   cross-validation, mixed numeric/categorical preprocessing, detailed
+   evaluation reports, basic hyperparameter search, systematic model
+   comparison, and cleaner end-to-end pipelines.
+   ========================================================================= */
+
+const ML_INTERMEDIATE_WEEKS = [
+{
+  key:'week1', num:1, title:'Scaling Features: StandardScaler',
+  scenarioTag:'Real world: attendance percentage is quietly drowning out hours studied',
+  scenario:`A model uses two clues to predict pass/fail: hours studied (roughly 1-10) and attendance percentage
+    (roughly 50-98). Distance-based models like KNeighborsClassifier measure "closeness" using raw numbers — and a
+    difference of 40 in attendance looks far bigger than a difference of 8 in hours, even though both matter.
+    StandardScaler puts every feature on the same footing before the model ever sees it.`,
+  objectives:[
+    'Scale features with StandardScaler',
+    'Read a scaler\'s learned mean_ and scale_ attributes',
+    'Fit a scaler on training data only, then transform test data with the SAME scaler',
+    'Combine a scaler and a model in one Pipeline'
+  ],
+  conceptHtml:`
+    <p><strong>StandardScaler</strong> rescales each feature so it has a mean of 0 and a standard deviation of 1 —
+    "how many standard deviations from average" instead of raw units:</p>
+    <pre class="code-block">from sklearn.preprocessing import StandardScaler
+
+X = [[1, 50], [2, 55], [3, 60], [7, 90], [8, 95], [9, 98]]
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+print(scaler.mean_)    # [5.0, 74.67] — the average of each column
+print(scaler.scale_)   # [3.11, 20.01] — the spread of each column</pre>
+    <p>Once fitted, <code>scaler.transform()</code> (not <code>fit_transform</code>) applies that SAME learned
+    scale to new data — critical when scaling test data, so the test set is judged against the training set's
+    scale, not its own:</p>
+    <pre class="code-block">new_sample = [[5, 75]]
+print(scaler.transform(new_sample))   # [[0.0, 0.017]] — 5 hours is exactly average, so it scales to 0</pre>
+    <h3>Let's break down the key distinction, line by line</h3>
+    <ul>
+      <li><code>fit_transform(X)</code> — learns the mean/spread FROM X, then immediately scales X using what it
+        just learned. Use this ONCE, on training data.</li>
+      <li><code>transform(new_data)</code> — applies an ALREADY-LEARNED scale to new data, without re-learning
+        anything. Use this for test data or any new sample — re-fitting on test data would let the test set's own
+        statistics leak into the process, which isn't a fair test.</li>
+      <li><code>scaler.mean_</code> / <code>scaler.scale_</code> — read back exactly what the scaler learned, one
+        value per feature column.</li>
+      <li>A <code>Pipeline</code> chains a scaler and a model together as one object — call <code>.fit()</code>
+        once, and both fitting steps happen in the right order automatically.</li>
+    </ul>`,
+  sandboxStarter:`from sklearn.preprocessing import StandardScaler
+X = [[1, 50], [2, 55], [3, 60], [7, 90], [8, 95], [9, 98]]
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+print(scaler.mean_)
+print(scaler.scale_)
+`,
+  sandboxStarter2:`from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.pipeline import Pipeline
+
+hours = [1,2,3,4,5,6,7,8,9,2,3,8]
+attendance = [50,55,60,65,70,60,90,95,98,52,58,92]
+passed = [0,0,0,0,0,0,1,1,1,0,0,1]
+X = list(zip(hours, attendance))
+
+pipe = Pipeline([("scaler", StandardScaler()), ("knn", KNeighborsClassifier(n_neighbors=3))])
+pipe.fit(X, passed)
+print(pipe.predict([[1, 90]]))
+`,
+  exercises:[
+    {
+      title:'Check the learned mean',
+      desc:`Create X = [[1, 50], [2, 55], [3, 60], [7, 90], [8, 95], [9, 98]]. Create scaler = StandardScaler(),
+        then X_scaled = scaler.fit_transform(X). Print round(scaler.mean_[0], 1). It should print 5.0.`,
+      starter:`from sklearn.preprocessing import StandardScaler
+# Create X, scaler and X_scaled below
+`,
+      tests:[{type:'output', contains:['5.0'], label:"Prints the correctly learned mean for the first feature (5.0)"}]
+    },
+    {
+      title:'Check the learned spread',
+      desc:`Using the same X and scaler, print round(scaler.scale_[0], 2). It should print 3.11.`,
+      starter:`from sklearn.preprocessing import StandardScaler
+X = [[1, 50], [2, 55], [3, 60], [7, 90], [8, 95], [9, 98]]
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+# Print round(scaler.scale_[0], 2) below
+`,
+      tests:[{type:'output', contains:['3.11'], label:"Prints the correctly learned spread for the first feature (3.11)"}]
+    },
+    {
+      title:'Transform a brand new sample',
+      desc:`Using the same X, create scaler = StandardScaler() and scaler.fit(X) (fit only, no transform yet).
+        Create new_sample = [[5, 75]] and scaled_new = scaler.transform(new_sample). Assert that
+        round(float(scaled_new[0][0]), 2) == 0.0 — 5 hours is exactly the training average, so it scales to 0.`,
+      starter:`from sklearn.preprocessing import StandardScaler
+X = [[1, 50], [2, 55], [3, 60], [7, 90], [8, 95], [9, 98]]
+# Create scaler, new_sample and scaled_new below
+`,
+      tests:[{type:'assert', expr:'round(float(scaled_new[0][0]), 2) == 0.0', label:'The new sample scales correctly to 0.0 (exactly average)'}]
+    },
+    {
+      title:'Fit on train, transform test',
+      desc:`Create Xtr = [[1,50],[2,55],[7,90],[8,95]] and Xte = [[3,60],[9,98]]. Create scaler = StandardScaler()
+        and scaler.fit(Xtr) (fit on TRAIN only). Create Xte_scaled = scaler.transform(Xte). Assert that
+        round(float(Xte_scaled[0][0]), 2) == -0.49.`,
+      starter:`from sklearn.preprocessing import StandardScaler
+# Create Xtr, Xte, scaler and Xte_scaled below
+`,
+      tests:[{type:'assert', expr:'round(float(Xte_scaled[0][0]), 2) == -0.49', label:'The test set is correctly scaled using the training set\'s learned scale'}]
+    },
+    {
+      title:'Use fit_transform then transform, not two separate fits',
+      desc:`Create Xtr = [[1,50],[2,55],[7,90],[8,95]] and Xte = [[3,60],[9,98]]. Create scaler = StandardScaler(),
+        then Xtr_scaled = scaler.fit_transform(Xtr) and Xte_scaled = scaler.transform(Xte) — the SAME scaler
+        object for both, not a new one for Xte. Assert that round(float(Xte_scaled[0][0]), 2) == -0.49.`,
+      starter:`from sklearn.preprocessing import StandardScaler
+# Create Xtr, Xte, scaler, Xtr_scaled and Xte_scaled below
+`,
+      tests:[{type:'assert', expr:'round(float(Xte_scaled[0][0]), 2) == -0.49', label:'Test data is correctly scaled with the training scaler, not a freshly-fit one'}]
+    },
+    {
+      title:'Prove scaling changes the prediction',
+      desc:`Create hours = [1,2,3,4,5,6,7,8,9,2,3,8], attendance = [50,55,60,65,70,60,90,95,98,52,58,92], and
+        passed = [0,0,0,0,0,0,1,1,1,0,0,1]. Create X = list(zip(hours, attendance)). Build
+        pipe = Pipeline([("scaler", StandardScaler()), ("knn", KNeighborsClassifier(n_neighbors=3))]), fit it on
+        X/passed, then create pred = int(pipe.predict([[1, 90]])[0]) — a student with only 1 hour studied but 90%
+        attendance. Assert that pred == 0 — scaling correctly lets low hours outweigh high attendance, predicting
+        a fail.`,
+      starter:`from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.pipeline import Pipeline
+# Create hours, attendance, passed, X, pipe and pred below
+`,
+      tests:[{type:'assert', expr:'pred == 0', label:'Scaling correctly lets hours studied outweigh attendance for this student'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does StandardScaler do to a feature?',
+      options:['Deletes it','Rescales it to have a mean of 0 and a standard deviation of 1','Rounds it to the nearest integer','Sorts the data'],
+      correct:1,
+      explain:'StandardScaler transforms each feature onto a common "how many standard deviations from average" scale.'
+    },
+    {
+      q:'Why do distance-based models like KNeighborsClassifier need scaled features?',
+      options:['They don\'t, scaling never matters','A feature with a naturally larger numeric range can dominate the distance calculation even if it isn\'t actually more important','Scaling makes the model train faster, nothing else','Only true for regression models'],
+      correct:1,
+      explain:'Without scaling, a feature like attendance (50-98) can swamp a feature like hours (1-10) purely due to its larger raw numbers.'
+    },
+    {
+      q:'What is the difference between fit_transform() and transform()?',
+      options:['No difference, they do the same thing','fit_transform() learns AND applies the scale in one step; transform() applies an already-learned scale without re-learning','transform() is only for training data','fit_transform() is deprecated'],
+      correct:1,
+      explain:'fit_transform() is for training data (learn + apply); transform() reuses an existing fit on new data (like test data), avoiding data leakage.'
+    },
+    {
+      q:'Why fit a scaler on training data only, not on the full dataset (train + test)?',
+      options:['It\'s not actually necessary','Fitting on the full dataset lets test-set statistics leak into training, making evaluation unfairly optimistic','It\'s faster to fit on less data','Test data doesn\'t need scaling at all'],
+      correct:1,
+      explain:'The test set is supposed to represent unseen data — if its own statistics helped shape the scaler, the evaluation is no longer a fair test.'
+    }
+  ],
+  sandboxStarter3:`from sklearn.preprocessing import StandardScaler
+Xtr = [[1,50],[2,55],[7,90],[8,95]]
+Xte = [[3,60],[9,98]]
+scaler = StandardScaler()
+Xtr_scaled = scaler.fit_transform(Xtr)
+Xte_scaled = scaler.transform(Xte)
+print(Xte_scaled)
+`,
+  stretchChallenge:{
+    title:'Scale, train, and score end to end',
+    desc:`Create hours = [1,2,3,4,5,6,7,8,9,2,3,8], attendance = [50,55,60,65,70,60,90,95,98,52,58,92], and
+      passed = [0,0,0,0,0,0,1,1,1,0,0,1]. Create X = list(zip(hours, attendance)). Split it manually:
+      Xtr = X[:9], ytr = passed[:9], Xte = X[9:], yte = passed[9:]. Create scaler = StandardScaler(),
+      Xtr_scaled = scaler.fit_transform(Xtr), and Xte_scaled = scaler.transform(Xte). Create
+      model = KNeighborsClassifier(n_neighbors=3), fit it on Xtr_scaled/ytr, then create
+      score = model.score(Xte_scaled, yte). Assert that score == 1.0.`,
+    starter:`from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
+# Create hours, attendance, passed, X, the train/test split, scaler, model and score below
+`,
+    tests:[
+      {type:'assert', expr:'score == 1.0', label:'The full scale-train-score pipeline correctly achieves a perfect held-out score'}
+    ]
+  }
+}
+];
+
 window.SUBJECT_DATA = window.SUBJECT_DATA || {};
 window.SUBJECT_DATA.ml = {
   b: {weeks: ML_WEEKS, mp1: ML_MP1, mp2: ML_MP2},
-  i: {weeks: ML_WEEKS, mp1: ML_MP1, mp2: ML_MP2},
+  i: {weeks: ML_INTERMEDIATE_WEEKS, mp1: ML_MP1, mp2: ML_MP2},
   a: {weeks: ML_WEEKS, mp1: ML_MP1, mp2: ML_MP2}
 };
