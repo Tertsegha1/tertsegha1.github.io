@@ -2668,6 +2668,220 @@ from sklearn.model_selection import train_test_split
       {type:'assert', expr:'score == 1.0', label:'The full impute-scale-train-score pipeline correctly achieves a perfect held-out score'}
     ]
   }
+},
+{
+  key:'week4', num:4, title:'Fair Evaluation: cross_val_score',
+  scenarioTag:'Real world: what if the one test split you happened to pick was a lucky (or unlucky) one?',
+  scenario:`A single train_test_split gives ONE score — but which rows randomly land in the test set can make a
+    model look better or worse than it really is. cross_val_score splits the data several different ways, scores
+    the model on each split, and reports all of them — a far more trustworthy picture of real performance.`,
+  objectives:[
+    'Evaluate a model fairly with cross_val_score',
+    'Read how many fold scores come back for a given cv value',
+    'See how a single lucky/unlucky split can mislead, compared to cross-validation',
+    'Cross-validate a full Pipeline, not just a bare model'
+  ],
+  conceptHtml:`
+    <p><code>cross_val_score</code> handles the entire "split, train, score" cycle several times automatically,
+    each time using a different slice of the data as the test set:</p>
+    <pre class="code-block">from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
+
+model = RandomForestClassifier(n_estimators=50, random_state=42)
+scores = cross_val_score(model, X, y, cv=5)
+print(scores)          # [1.0, 1.0, 1.0, 1.0, 1.0] — one score per fold
+print(scores.mean())   # 1.0 — the average, a fairer overall estimate</pre>
+    <p>Compare that to a SINGLE train/test split — depending on which rows randomly land in the test set, the
+    score you get can look much better or much worse than the model's true performance:</p>
+    <pre class="code-block">Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, random_state=6)
+model.fit(Xtr, ytr)
+print(model.score(Xte, yte))   # 0.62 — a misleadingly low score, just from bad luck in this one split</pre>
+    <h3>Let's break down cross_val_score, line by line</h3>
+    <ul>
+      <li><code>cv=5</code> — splits the data into 5 roughly equal chunks ("folds"). Each fold takes a turn being
+        the test set, while the model trains on the other 4.</li>
+      <li>The function handles the fitting and scoring for you internally — you don't call <code>.fit()</code>
+        yourself first.</li>
+      <li>The RETURNED array has one score per fold (so <code>cv=5</code> returns 5 numbers) — reading the spread
+        of these numbers tells you how CONSISTENT the model's performance is, not just its average.</li>
+      <li>You can pass a whole <code>Pipeline</code> (scaler + model, imputer + model, etc.) to
+        <code>cross_val_score</code> exactly like a bare model — every step gets refit correctly on each fold.</li>
+    </ul>`,
+  sandboxStarter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10]
+passed = [0,0,0,0,0,1,1,1,1,1,0,0,1,1,0,0,1,1,0,1,0,1,0,1]
+X = [[h] for h in hours]
+
+model = RandomForestClassifier(n_estimators=50, random_state=42)
+scores = cross_val_score(model, X, passed, cv=5)
+print(scores)
+print(scores.mean())
+`,
+  sandboxStarter2:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10]
+passed = [0,0,0,0,0,1,1,1,1,1,0,0,1,1,0,0,1,1,0,1,0,1,0,1]
+X = [[h] for h in hours]
+
+Xtr, Xte, ytr, yte = train_test_split(X, passed, test_size=0.3, random_state=6)
+model = RandomForestClassifier(n_estimators=50, random_state=42)
+model.fit(Xtr, ytr)
+print(model.score(Xte, yte))
+`,
+  exercises:[
+    {
+      title:'Cross-validate a model',
+      desc:`Create hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10] and
+        passed = [0,0,0,0,0,1,1,1,1,1,0,0,1,1,0,0,1,1,0,1,0,1,0,1]. Create X = [[h] for h in hours]. Create
+        model = RandomForestClassifier(n_estimators=50, random_state=42), then
+        scores = cross_val_score(model, X, passed, cv=5). Create cv_mean = round(float(scores.mean()), 2). Assert
+        that cv_mean == 1.0.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
+# Create hours, passed, X, model, scores and cv_mean below
+`,
+      tests:[{type:'assert', expr:'cv_mean == 1.0', label:'The cross-validated mean score is correctly computed (1.0)'}]
+    },
+    {
+      title:'Count the folds',
+      desc:`Using the same hours/passed/X and model, create scores = cross_val_score(model, X, passed, cv=5).
+        Create fold_count = len(scores). Assert that fold_count == 5.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10]
+passed = [0,0,0,0,0,1,1,1,1,1,0,0,1,1,0,0,1,1,0,1,0,1,0,1]
+X = [[h] for h in hours]
+model = RandomForestClassifier(n_estimators=50, random_state=42)
+# Create scores and fold_count below
+`,
+      tests:[{type:'assert', expr:'fold_count == 5', label:'cv=5 correctly produces 5 fold scores'}]
+    },
+    {
+      title:'See a misleading single split',
+      desc:`Using the same hours/passed/X, create Xtr, Xte, ytr, yte = train_test_split(X, passed, test_size=0.3,
+        random_state=6). Create model1 = RandomForestClassifier(n_estimators=50, random_state=42), fit it on
+        Xtr/ytr, then single_score = round(model1.score(Xte, yte), 2). Separately, create
+        model2 = RandomForestClassifier(n_estimators=50, random_state=42) and
+        cv_mean = round(float(cross_val_score(model2, X, passed, cv=5).mean()), 2). Assert that
+        single_score == 0.62 and cv_mean == 1.0 — this ONE split happened to look much worse than the model
+        truly performs.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split, cross_val_score
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10]
+passed = [0,0,0,0,0,1,1,1,1,1,0,0,1,1,0,0,1,1,0,1,0,1,0,1]
+X = [[h] for h in hours]
+# Create the split, model1, single_score, model2 and cv_mean below
+`,
+      tests:[{type:'assert', expr:'single_score == 0.62 and cv_mean == 1.0', label:'The single misleading split and the fairer cross-validated mean are both correct'}]
+    },
+    {
+      title:'Check the weakest fold',
+      desc:`Using the same hours/passed/X and model, create scores = cross_val_score(model, X, passed, cv=5).
+        Create weakest = round(float(scores.min()), 2). Assert that weakest == 1.0 — even the WORST fold still
+        scored perfectly here.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10]
+passed = [0,0,0,0,0,1,1,1,1,1,0,0,1,1,0,0,1,1,0,1,0,1,0,1]
+X = [[h] for h in hours]
+model = RandomForestClassifier(n_estimators=50, random_state=42)
+# Create scores and weakest below
+`,
+      tests:[{type:'assert', expr:'weakest == 1.0', label:"The weakest fold's score is correctly read (1.0)"}]
+    },
+    {
+      title:'Try 3 folds instead of 5',
+      desc:`Using the same hours/passed/X and model, create scores = cross_val_score(model, X, passed, cv=3).
+        Create fold_count = len(scores). Assert that fold_count == 3.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10]
+passed = [0,0,0,0,0,1,1,1,1,1,0,0,1,1,0,0,1,1,0,1,0,1,0,1]
+X = [[h] for h in hours]
+model = RandomForestClassifier(n_estimators=50, random_state=42)
+# Create scores and fold_count below
+`,
+      tests:[{type:'assert', expr:'fold_count == 3', label:'cv=3 correctly produces 3 fold scores'}]
+    },
+    {
+      title:'Cross-validate a whole pipeline',
+      desc:`Create hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10],
+        attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99], and
+        passed = [0,0,0,0,0,1,1,1,1,1,0,0,1,1,0,0,1,1,0,1,0,1,0,1]. Create X = list(zip(hours, attendance)). Build
+        pipe = Pipeline([("scaler", StandardScaler()), ("rf", RandomForestClassifier(n_estimators=50,
+        random_state=42))]). Create scores = cross_val_score(pipe, X, passed, cv=5). Create
+        cv_mean = round(float(scores.mean()), 2). Assert that cv_mean == 1.0.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_score
+# Create hours, attendance, passed, X, pipe, scores and cv_mean below
+`,
+      tests:[{type:'assert', expr:'cv_mean == 1.0', label:'The full pipeline is correctly cross-validated (1.0)'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why can a single train_test_split give a misleading score?',
+      options:['It never can, single splits are always accurate','Which rows randomly land in the test set can make the model look better or worse than its true performance','Splitting always gives the same result every time','Only true for regression, never classification'],
+      correct:1,
+      explain:'A single split is really just one sample of "how did this happen to go" — cross-validation averages over several such samples for a fairer picture.'
+    },
+    {
+      q:'What does cv=5 mean in cross_val_score?',
+      options:['Train the model 5 times on the same data','Split the data into 5 folds, each taking a turn as the test set while training on the rest','Only use 5 rows of data','Run the model for 5 seconds'],
+      correct:1,
+      explain:'cv=5 creates 5 folds; each one is held out as a test set once, while the model trains on the remaining folds.'
+    },
+    {
+      q:'What does cross_val_score return?',
+      options:['A single number','An array of scores, one per fold','The trained model itself','The original dataset'],
+      correct:1,
+      explain:'It returns one score per fold, letting you see both the average AND how consistent performance is across different splits.'
+    },
+    {
+      q:'Can you pass a whole Pipeline (not just a bare model) into cross_val_score?',
+      options:['No, only single models are supported','Yes — every step in the pipeline gets correctly refit on each fold','Only if the pipeline has no preprocessing steps','Pipelines must be cross-validated manually, one fold at a time'],
+      correct:1,
+      explain:'cross_val_score works with any scikit-learn estimator, including a full Pipeline — each fold gets its own properly-refit copy of every step.'
+    }
+  ],
+  sandboxStarter3:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_score
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99]
+passed = [0,0,0,0,0,1,1,1,1,1,0,0,1,1,0,0,1,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+
+pipe = Pipeline([("scaler", StandardScaler()), ("rf", RandomForestClassifier(n_estimators=50, random_state=42))])
+scores = cross_val_score(pipe, X, passed, cv=5)
+print(scores)
+print(round(scores.mean(), 2))
+`,
+  stretchChallenge:{
+    title:'Cross-validate two different models',
+    desc:`Create hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10],
+      attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99], and
+      passed = [0,0,0,0,0,1,1,1,1,1,0,0,1,1,0,0,1,1,0,1,0,1,0,1]. Create X = list(zip(hours, attendance)). Create
+      rf = RandomForestClassifier(n_estimators=50, random_state=42) and
+      knn = KNeighborsClassifier(n_neighbors=3). Create rf_mean = round(float(cross_val_score(rf, X, passed,
+      cv=5).mean()), 2) and knn_mean = round(float(cross_val_score(knn, X, passed, cv=5).mean()), 2). Assert that
+      rf_mean == 1.0 and knn_mean == 1.0 — both model types perform equally well on this clean dataset.`,
+    starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import cross_val_score
+# Create hours, attendance, passed, X, rf, knn, rf_mean and knn_mean below
+`,
+    tests:[
+      {type:'assert', expr:'rf_mean == 1.0 and knn_mean == 1.0', label:'Both models are correctly cross-validated and compared'}
+    ]
+  }
 }
 ];
 
