@@ -122,6 +122,18 @@
     .msg-reply-form{display:flex;gap:8px;align-items:flex-end;margin-top:8px;}
     .msg-reply-form textarea{flex:1;background:#0f0c3a;border:1px solid #2c2470;border-radius:6px;color:#e2e8f0;font-family:inherit;font-size:0.8rem;padding:6px 10px;resize:vertical;}
     .msg-reply-form .toggle-btn{white-space:nowrap;align-self:flex-end;padding:7px 12px;}
+    .seen-indicator{font-size:0.65rem;font-weight:700;white-space:nowrap;}
+    .seen-indicator.seen{color:#4ade80;}
+    .seen-indicator.unseen{color:#8b85c4;}
+    .msg-opening-label{font-size:0.62rem;font-weight:700;color:#8b85c4;margin-bottom:2px;}
+    .msg-compose{background:#181454;border:1px solid #2c2470;border-radius:10px;padding:14px 18px;margin-bottom:16px;}
+    .msg-compose-title{font-weight:700;font-size:0.9rem;color:#e2e8f0;margin-bottom:8px;}
+    .msg-compose select, .msg-compose input[type=text], .msg-compose textarea{
+      width:100%;background:#0f0c3a;border:1px solid #2c2470;border-radius:6px;color:#e2e8f0;
+      font-family:inherit;font-size:0.83rem;padding:8px 10px;margin-top:8px;box-sizing:border-box;
+    }
+    .msg-compose textarea{resize:vertical;}
+    .msg-compose .toggle-btn{margin-top:10px;}
 
     /* ── Feedback ── */
     #panel-body-feedback{padding:16px 24px;}
@@ -334,10 +346,18 @@
 
 <!-- ============ MESSAGES TAB ============ -->
 <div class="tab-panel" id="tabpanel-messages">
+  <div class="msg-compose">
+    <div class="msg-compose-title">✉️ Send a new message to a student</div>
+    <select id="compose-student"><option value="">Select a student...</option></select>
+    <input type="text" id="compose-subject" placeholder="Subject (optional)">
+    <textarea id="compose-message" rows="3" placeholder="Write your message..."></textarea>
+    <button class="toggle-btn" onclick="sendNewMessage()">Send Message</button>
+    <div id="compose-status" style="font-size:0.75rem;margin-top:6px;color:#8b85c4;"></div>
+  </div>
   <div class="empty" id="empty-messages">
     <div class="icon">✉️</div>
     <div>No messages yet</div>
-    <div style="font-size:0.75rem;margin-top:6px;color:#5b5490;">Messages students send from the Contact / Help page will show up here.</div>
+    <div style="font-size:0.75rem;margin-top:6px;color:#5b5490;">Messages students send from the Contact / Help page — or that you send above — will show up here.</div>
   </div>
   <div id="panel-body-messages"></div>
 </div>
@@ -913,6 +933,20 @@ setInterval(async function(){
     return entries;
   }
 
+  // The root `message` field is the STUDENT'S opening message for a normal
+  // conversation, but for one you started yourself (see sendNewMessage()) it
+  // holds YOUR opening text instead, tagged with originator:'instructor'.
+  // This finds the most recent activity across the whole conversation so the
+  // seen-receipt indicator below can compare against the right timestamp.
+  function latestActivity(m, entries){
+    var all=entries.slice();
+    if((m.originator||'student')==='instructor' && m.message){
+      all.push({from:'instructor', text:m.message, at:m.createdAt});
+    }
+    all.sort(function(a,b){ return new Date(a.at||0) - new Date(b.at||0); });
+    return all.length ? all[all.length-1] : null;
+  }
+
   // Rebuilding the whole message list wipes out any reply box currently
   // being typed into (loses focus, cursor position and unsent text) — this
   // captures that state before the rebuild and restores it after, so a poll
@@ -932,6 +966,7 @@ setInterval(async function(){
   }
 
   function renderMessages(){
+    renderComposeStudentList();
     var subjectMessages=messages[progressSubject]||{};
     var subjectUsers=users[progressSubject]||{};
     var keys=Object.keys(subjectMessages).sort(function(a,b){
@@ -955,14 +990,25 @@ setInterval(async function(){
     body.innerHTML=keys.map(function(k){
       var m=subjectMessages[k];
       var resolved=m.status==='resolved';
+      var fromInstructor=(m.originator||'student')==='instructor';
       var entries=threadEntries(m);
-      var hasReply=entries.some(function(e){ return e.from==='instructor'; });
+      var hasReply=fromInstructor || entries.some(function(e){ return e.from==='instructor'; });
       var badgeClass = resolved ? 'resolved' : (hasReply ? 'read' : 'pending');
-      var badgeText = resolved ? 'Resolved' : (hasReply ? 'Read' : 'Pending');
+      var badgeText = resolved ? 'Resolved' : (hasReply ? 'Replied' : 'Pending');
       var isReset=m.type==='password_reset';
       var meta=[m.displayName||'Unknown student', m.username?('· @'+m.username):'', m.classCode?('· '+m.classCode):'', m.createdAt?('· '+relTime(m.createdAt)):''].filter(Boolean).join(' ');
       var resetBtn=(isReset && !resolved && m.username && subjectUsers[m.username]) ?
         '<button class="reset-btn" onclick="resetPassword(\''+m.username.replace(/'/g,"\\'")+'\')">🔑 Reset Password</button>' : '';
+      // Read receipt: only meaningful once you've said something (root
+      // message or a thread reply) — compares your latest activity's
+      // timestamp against when the student's browser last actually rendered
+      // this conversation (see renderMyMessages() in the student app).
+      var last=latestActivity(m, entries);
+      var seenHtml='';
+      if(last && last.from==='instructor'){
+        var seen = m.lastSeenByStudentAt && new Date(m.lastSeenByStudentAt) >= new Date(last.at||0);
+        seenHtml = '<span class="seen-indicator '+(seen?'seen':'unseen')+'">'+(seen?('✓✓ Seen '+relTime(m.lastSeenByStudentAt)):'Sent · not seen yet')+'</span>';
+      }
       var threadHtml = entries.map(function(e){
         var who = e.from==='student' ? esc(m.displayName||'Student') : 'You';
         return '<div class="msg-bubble '+(e.from==='student'?'student':'instructor')+'">'+
@@ -971,15 +1017,18 @@ setInterval(async function(){
         '</div>';
       }).join('');
       var kEsc = k.replace(/'/g,"\\'");
+      var openingLabel = fromInstructor ? '<div class="msg-opening-label">📨 You wrote:</div>' : '';
       return '<div class="msg-card'+(resolved?' resolved':'')+(isReset?' reset-request':'')+'">'+
         '<div class="msg-top">'+
           '<div><div class="msg-subject">'+esc(m.subject||'(no subject)')+'</div><div class="msg-meta">'+esc(meta)+'</div></div>'+
           '<div style="display:flex;align-items:center;gap:8px;">'+
             resetBtn+
+            seenHtml+
             '<span class="status-badge '+badgeClass+'">'+badgeText+'</span>'+
             '<button class="toggle-btn" onclick="toggleMessage(\''+kEsc+'\',\''+(resolved?'open':'resolved')+'\')">Mark '+(resolved?'pending':'resolved')+'</button>'+
           '</div>'+
         '</div>'+
+        openingLabel+
         '<div class="msg-body">'+esc(m.message||'')+'</div>'+
         (threadHtml ? '<div class="msg-thread">'+threadHtml+'</div>' : '')+
         '<div class="msg-reply-form">'+
@@ -1006,6 +1055,71 @@ setInterval(async function(){
       method:'POST', body:JSON.stringify({from:'instructor', text:text, at:new Date().toISOString()})
     }).then(function(){ if(ta){ ta.value=''; ta.disabled=false; } fullPoll(); })
       .catch(function(){ if(ta) ta.disabled=false; });
+  };
+
+  // Every message key — whether the student started the conversation or you
+  // did — is written into BOTH /messages/<key> (the conversation record) AND
+  // /users/<username>/messageKeys/<key> (a per-student registry the student's
+  // own browser reads to find their conversations). That second write is
+  // what makes a message visible to the student in the first place — see the
+  // matching serverMessageKeys()/registerMessageKeyServerSide() in the
+  // student-facing app.js.
+  function registerMessageKeyForStudent(subject, username, key){
+    return fetch(DB+fbBaseFor(subject)+'/users/'+encodeURIComponent(username)+'/messageKeys/'+key+'.json'+window.authUrlSuffix(), {method:'PUT', body:'true'});
+  }
+
+  function renderComposeStudentList(){
+    var sel=document.getElementById('compose-student');
+    if(!sel) return;
+    var subjectUsers=users[progressSubject]||{};
+    var current=sel.value;
+    var names=Object.keys(subjectUsers).filter(function(u){ return !subjectUsers[u].isGuest; }).sort(function(a,b){
+      var da=subjectUsers[a].displayName||a, db=subjectUsers[b].displayName||b;
+      return da.localeCompare(db);
+    });
+    sel.innerHTML='<option value="">Select a student...</option>'+names.map(function(u){
+      var disp=subjectUsers[u].displayName||u;
+      return '<option value="'+esc(u)+'">'+esc(disp)+' (@'+esc(u)+')</option>';
+    }).join('');
+    if(names.indexOf(current)!==-1) sel.value=current;
+  }
+
+  window.sendNewMessage = async function(){
+    var sel=document.getElementById('compose-student');
+    var subjInput=document.getElementById('compose-subject');
+    var msgInput=document.getElementById('compose-message');
+    var statusEl=document.getElementById('compose-status');
+    var username = sel ? sel.value : '';
+    var text = msgInput ? msgInput.value.trim() : '';
+    if(!username){ statusEl.style.color='#f87171'; statusEl.textContent='Please choose a student.'; return; }
+    if(!text){ statusEl.style.color='#f87171'; statusEl.textContent='Please write a message.'; return; }
+    var subjectUsers=users[progressSubject]||{};
+    var student=subjectUsers[username]||{};
+    statusEl.style.color='#8b85c4'; statusEl.textContent='Sending...';
+    var payload={
+      username: username,
+      displayName: student.displayName || username,
+      classCode: student.classCode || '',
+      subject: (subjInput && subjInput.value.trim()) || '(no subject)',
+      message: text,
+      originator: 'instructor',
+      status: 'open',
+      createdAt: new Date().toISOString()
+    };
+    try{
+      var res=await fetch(DB+fbBaseFor(progressSubject)+'/messages.json'+window.authUrlSuffix(), {method:'POST', body:JSON.stringify(payload)});
+      if(!res.ok) throw new Error('failed');
+      var data=await res.json();
+      if(data && data.name){
+        await registerMessageKeyForStudent(progressSubject, username, data.name);
+      }
+      statusEl.style.color='#4ade80'; statusEl.textContent='✅ Sent — '+ (student.displayName||username) +' will see it next time they open Contact / Help.';
+      if(msgInput) msgInput.value='';
+      if(subjInput) subjInput.value='';
+      fullPoll();
+    }catch(e){
+      statusEl.style.color='#f87171'; statusEl.textContent='Could not send — please check your connection and try again.';
+    }
   };
 
   /* ── Feedback tab ── */

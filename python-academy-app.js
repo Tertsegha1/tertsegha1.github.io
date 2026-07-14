@@ -564,7 +564,10 @@ async function submitContactMessage(){
     const res = await fetch(fbUrl(fbBase()+'/messages.json'), {method:'POST', body: JSON.stringify(payload)});
     if(!res.ok) throw new Error('failed');
     const data = await res.json();
-    if(data && data.name) saveMyMessageKey(data.name);
+    if(data && data.name){
+      saveMyMessageKey(data.name);
+      registerMessageKeyServerSide(payload.username, data.name);
+    }
     statusEl.style.color = 'var(--success)';
     statusEl.textContent = '✅ Message sent — your instructor will get back to you.';
     document.getElementById('contact-subject').value = '';
@@ -576,16 +579,38 @@ async function submitContactMessage(){
   }
 }
 
-// Tracks which /messages keys belong to this student (on this browser), so
-// they can look up their own message's status/reply via the per-record-open
-// Firebase read rule (mirrors the users/certificates precedent) without
-// needing list-level read access or a new indexed-query pattern.
+// Tracks which /messages keys belong to this student. Historically this was
+// ONLY a localStorage list on the device that sent the message — which meant
+// a reply (or an instructor-initiated message) was invisible the moment the
+// student opened a different device/browser or cleared their cache, since
+// nothing server-side remembered which messages were theirs. Fixed by ALSO
+// writing each key into /users/<username>/messageKeys/<key> (readable by the
+// student via the same open per-username read rule used for login), which
+// survives across devices. localStorage is kept too, purely as a fast local
+// cache merged with the server list on render (see renderMyMessages()).
 function myMessageKeys(){
   try{ return JSON.parse(localStorage.getItem(sk('msg_keys')) || '[]'); }catch(e){ return []; }
 }
 function saveMyMessageKey(key){
   const keys = myMessageKeys();
   if(keys.indexOf(key) === -1){ keys.push(key); localStorage.setItem(sk('msg_keys'), JSON.stringify(keys)); }
+}
+// Anonymous senders (no account) have no username to key a server-side
+// record against — for them this silently no-ops and they stay on the
+// localStorage-only behavior, which is the best that's possible without a
+// login.
+function registerMessageKeyServerSide(username, key){
+  if(!username || !key || !fbOk()) return;
+  fetch(fbUrl(fbBase()+'/users/'+encodeURIComponent(username)+'/messageKeys/'+key+'.json'), {method:'PUT', body:'true'}).catch(()=>{});
+}
+async function serverMessageKeys(username){
+  if(!username || !fbOk()) return [];
+  try{
+    const r = await fetch(fbUrl(fbBase()+'/users/'+encodeURIComponent(username)+'/messageKeys.json'));
+    if(!r.ok) return [];
+    const data = await r.json();
+    return (data && typeof data === 'object') ? Object.keys(data) : [];
+  }catch(e){ return []; }
 }
 
 // Same shape/logic as the instructor dashboard's threadEntries() — a
@@ -602,6 +627,21 @@ function threadEntriesFor(m){
   });
   entries.sort((a,b)=> new Date(a.at||0) - new Date(b.at||0));
   return entries;
+}
+
+// The root `message` field is normally the STUDENT'S opening message, but an
+// instructor-initiated conversation (see sendNewMessage() in the instructor
+// dashboard) stores the instructor's opening text there instead, tagged
+// with originator:'instructor'. This finds the most recent activity in the
+// WHOLE conversation (root message + thread) so the "seen" receipt below can
+// tell whether the student has caught up on everything, not just the thread.
+function latestActivityFor(m){
+  const entries = threadEntriesFor(m).slice();
+  if((m.originator||'student') === 'instructor' && m.message){
+    entries.push({from:'instructor', text:m.message, at:m.createdAt});
+  }
+  entries.sort((a,b)=> new Date(a.at||0) - new Date(b.at||0));
+  return entries.length ? entries[entries.length-1] : null;
 }
 
 // Rebuilding the message list on every refresh would otherwise wipe out
@@ -636,7 +676,16 @@ async function renderMyMessages(){
     page.appendChild(wrap);
   }
   const list = document.getElementById('my-messages-list');
-  const keys = myMessageKeys();
+  const username = localStorage.getItem(sk('username')) || '';
+  const localKeys = myMessageKeys();
+  const remoteKeys = await serverMessageKeys(username);
+  // Self-heal both directions: any server key not yet cached locally gets
+  // cached (fast offline-ish access next time); any local-only key (from
+  // before this server-side registry existed) gets pushed up to the server
+  // so it starts surviving device switches too.
+  remoteKeys.forEach(saveMyMessageKey);
+  if(username) localKeys.filter(k => remoteKeys.indexOf(k) === -1).forEach(k => registerMessageKeyServerSide(username, k));
+  const keys = Array.from(new Set(localKeys.concat(remoteKeys)));
   if(!keys.length){ wrap.style.display = 'none'; return; }
   wrap.style.display = 'block';
   if(!fbOk()){ list.textContent = 'Cannot load messages right now — no connection to the server.'; return; }
@@ -649,6 +698,7 @@ async function renderMyMessages(){
     const draft = captureMyReplyDraft();
     list.innerHTML = rows.map(({k, m}) => {
       const resolved = m.status === 'resolved';
+      const fromInstructor = (m.originator||'student') === 'instructor';
       const entries = threadEntriesFor(m);
       const threadHtml = entries.map(e=>{
         const mine = e.from === 'student';
@@ -657,12 +707,16 @@ async function renderMyMessages(){
           '<div style="white-space:pre-wrap;font-size:0.85rem;">'+escapeHtml(e.text)+'</div>'+
         '</div>';
       }).join('');
+      const openingLabel = fromInstructor
+        ? '<div style="font-size:0.68rem;font-weight:700;color:var(--text-muted);margin-top:8px;">📨 Your instructor wrote:</div>'
+        : '';
       return '<div style="border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:10px;">'+
         '<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;">'+
           '<div style="font-weight:700;">'+escapeHtml(m.subject||'(no subject)')+'</div>'+
           '<span style="font-size:0.7rem;font-weight:700;padding:2px 9px;border-radius:999px;'+(resolved?'background:#dcfce7;color:#166534;':'background:#fef3c7;color:#92400e;')+'">'+(resolved?'Resolved':'Open')+'</span>'+
         '</div>'+
-        '<div style="white-space:pre-wrap;margin-top:6px;color:var(--text-muted);">'+escapeHtml(m.message||'')+'</div>'+
+        openingLabel+
+        '<div style="white-space:pre-wrap;margin-top:2px;color:var(--text-muted);">'+escapeHtml(m.message||'')+'</div>'+
         (threadHtml ? '<div style="margin-top:4px;">'+threadHtml+'</div>' : '')+
         '<div style="display:flex;gap:8px;align-items:flex-end;margin-top:8px;">'+
           '<textarea id="my-reply-input-'+k+'" rows="2" placeholder="Reply..." style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.85rem;resize:vertical;"></textarea>'+
@@ -671,6 +725,16 @@ async function renderMyMessages(){
       '</div>';
     }).join('');
     restoreMyReplyDraft(draft);
+    // Read receipt: mark "seen" once the student has actually had this
+    // rendered in front of them, but only write when there's genuinely new
+    // instructor activity to acknowledge (avoids a write on every 15s poll).
+    const nowIso = new Date().toISOString();
+    rows.forEach(({k, m}) => {
+      const last = latestActivityFor(m);
+      if(!last || last.from !== 'instructor') return;
+      if(m.lastSeenByStudentAt && new Date(m.lastSeenByStudentAt) >= new Date(last.at||0)) return;
+      fetch(fbUrl(fbBase()+'/messages/'+k+'/lastSeenByStudentAt.json'), {method:'PUT', body: JSON.stringify(nowIso)}).catch(()=>{});
+    });
   }catch(e){
     list.textContent = 'Could not load your messages — please try again.';
   }
