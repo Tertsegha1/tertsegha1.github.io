@@ -2478,6 +2478,196 @@ from sklearn.model_selection import train_test_split
       {type:'assert', expr:'score == 0.83', label:'The two-feature forest correctly achieves the expected held-out score (0.83)'}
     ]
   }
+},
+{
+  key:'week3', num:3, title:'Filling Gaps Automatically: SimpleImputer',
+  scenarioTag:'Real world: not every student\'s attendance got recorded',
+  scenario:`Real data is never perfectly complete — a few students are missing an attendance percentage because a
+    register wasn't submitted that week. Most scikit-learn models can't handle missing values (NaN) at all —
+    SimpleImputer fills the gaps automatically with a sensible value, computed FROM the data itself.`,
+  objectives:[
+    'Fill missing values with SimpleImputer using the "mean" strategy',
+    'Read back what value a fitted imputer learned via .statistics_',
+    'Compare the "mean" and "median" strategies',
+    'Fit an imputer on training data only, then transform test data with it'
+  ],
+  conceptHtml:`
+    <p><code>SimpleImputer</code> replaces missing values (<code>NaN</code>) with a value computed from the rest
+    of that column — by default, the column's mean:</p>
+    <pre class="code-block">import numpy as np
+from sklearn.impute import SimpleImputer
+
+X = [[1, 50], [2, np.nan], [3, 60], [4, 70], [5, np.nan]]
+imputer = SimpleImputer(strategy="mean")
+X_filled = imputer.fit_transform(X)
+print(X_filled[1][1])   # 60.0 — the average of 50, 60, 70</pre>
+    <p>The <code>strategy</code> parameter controls HOW the fill value is chosen — <code>"mean"</code> (average),
+    <code>"median"</code> (middle value, less swayed by outliers), <code>"most_frequent"</code>, or
+    <code>"constant"</code>:</p>
+    <pre class="code-block">imputer_median = SimpleImputer(strategy="median")</pre>
+    <h3>Let's break down the key ideas, line by line</h3>
+    <ul>
+      <li><code>np.nan</code> — the standard "missing value" marker used throughout pandas/scikit-learn code.</li>
+      <li><code>imputer.fit_transform(X)</code> — learns the fill value(s) FROM X (one per column), then
+        immediately fills X's own gaps — same "fit once, on training data" idea as StandardScaler.</li>
+      <li><code>imputer.statistics_</code> — after fitting, holds the actual learned fill value for each column,
+        readable just like a scaler's <code>.mean_</code>.</li>
+      <li>Just like StandardScaler, use <code>imputer.transform(new_data)</code> (not <code>fit_transform</code>)
+        on test data, so the SAME learned fill values are reused — never let test-set gaps influence what "typical"
+        looks like.</li>
+    </ul>`,
+  sandboxStarter:`import numpy as np
+from sklearn.impute import SimpleImputer
+X = [[1, 50], [2, np.nan], [3, 60], [4, 70], [5, np.nan]]
+imputer = SimpleImputer(strategy="mean")
+X_filled = imputer.fit_transform(X)
+print(X_filled)
+`,
+  sandboxStarter2:`import numpy as np
+from sklearn.impute import SimpleImputer
+X = [[1, 50], [2, np.nan], [3, 60], [4, 200]]
+imputer_mean = SimpleImputer(strategy="mean")
+imputer_median = SimpleImputer(strategy="median")
+print(imputer_mean.fit_transform(X)[1][1])
+print(imputer_median.fit_transform(X)[1][1])
+`,
+  exercises:[
+    {
+      title:'Fill a missing value with the mean',
+      desc:`Create X = [[1, 50], [2, np.nan], [3, 60], [4, 70], [5, np.nan]]. Create
+        imputer = SimpleImputer(strategy="mean"), then X_filled = imputer.fit_transform(X). Create
+        filled_value = round(float(X_filled[1][1]), 1). Assert that filled_value == 60.0 — the average of 50, 60,
+        and 70.`,
+      starter:`import numpy as np
+from sklearn.impute import SimpleImputer
+# Create X, imputer, X_filled and filled_value below
+`,
+      tests:[{type:'assert', expr:'filled_value == 60.0', label:'The missing value is correctly filled with the mean (60.0)'}]
+    },
+    {
+      title:'Read the learned fill value',
+      desc:`Using the same X, create imputer = SimpleImputer(strategy="mean") and imputer.fit(X). Create
+        learned_value = round(float(imputer.statistics_[1]), 1). Assert that learned_value == 60.0.`,
+      starter:`import numpy as np
+from sklearn.impute import SimpleImputer
+X = [[1, 50], [2, np.nan], [3, 60], [4, 70], [5, np.nan]]
+# Create imputer and learned_value below
+`,
+      tests:[{type:'assert', expr:'learned_value == 60.0', label:"The imputer's learned fill value is correctly read (60.0)"}]
+    },
+    {
+      title:'Compare mean vs median',
+      desc:`Create X = [[1, 50], [2, np.nan], [3, 60], [4, 200]] — 200 is an outlier. Create
+        imputer = SimpleImputer(strategy="median"), then X_filled = imputer.fit_transform(X). Create
+        filled_value = round(float(X_filled[1][1]), 1). Assert that filled_value == 60.0 — the median (60) isn't
+        dragged up by the 200 outlier the way a mean would be.`,
+      starter:`import numpy as np
+from sklearn.impute import SimpleImputer
+# Create X, imputer, X_filled and filled_value below
+`,
+      tests:[{type:'assert', expr:'filled_value == 60.0', label:'The median-based fill correctly avoids being skewed by the outlier'}]
+    },
+    {
+      title:'Confirm every gap is filled',
+      desc:`Using X = [[1, 50], [2, np.nan], [3, 60], [4, 70], [5, np.nan]], create
+        imputer = SimpleImputer(strategy="mean") and X_filled = imputer.fit_transform(X). Create
+        has_missing = bool(np.isnan(X_filled).any()). Assert that has_missing == False — no NaN values remain.`,
+      starter:`import numpy as np
+from sklearn.impute import SimpleImputer
+X = [[1, 50], [2, np.nan], [3, 60], [4, 70], [5, np.nan]]
+# Create imputer, X_filled and has_missing below
+`,
+      tests:[{type:'assert', expr:'has_missing == False', label:'No missing values remain after imputation'}]
+    },
+    {
+      title:'Fit on train, transform test',
+      desc:`Create Xtr = [[1, 50], [2, np.nan], [3, 60]] and Xte = [[4, np.nan]]. Create
+        imputer = SimpleImputer(strategy="mean") and imputer.fit(Xtr) (fit on TRAIN only). Create
+        Xte_filled = imputer.transform(Xte). Create filled_value = round(float(Xte_filled[0][1]), 1). Assert that
+        filled_value == 55.0 — the training set's average (50 and 60), reused for the test row.`,
+      starter:`import numpy as np
+from sklearn.impute import SimpleImputer
+# Create Xtr, Xte, imputer, Xte_filled and filled_value below
+`,
+      tests:[{type:'assert', expr:'filled_value == 55.0', label:"The test row is correctly filled using the training set's learned average"}]
+    },
+    {
+      title:'Combine an imputer with a model',
+      desc:`Create hours = [1,2,3,4,5,6,7,8,9,10], attendance = [50, np.nan, 60, 65, 70, 80, 85, np.nan, 95, 98], and
+        passed = [0,0,0,0,0,1,1,1,1,1]. Create X = list(zip(hours, attendance)). Build
+        pipe = Pipeline([("imputer", SimpleImputer(strategy="mean")), ("rf", RandomForestClassifier(n_estimators=50,
+        random_state=42))]), fit it on X/passed, then create pred = int(pipe.predict([[6, 75]])[0]). Assert that
+        pred == 1.`,
+      starter:`import numpy as np
+from sklearn.impute import SimpleImputer
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.pipeline import Pipeline
+# Create hours, attendance, passed, X, pipe and pred below
+`,
+      tests:[{type:'assert', expr:'pred == 1', label:'The imputer+model pipeline correctly handles the missing attendance values'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does SimpleImputer do?',
+      options:['Deletes rows with missing values','Fills in missing values with a value computed from the rest of that column','Deletes columns with any missing data','Rounds all numbers'],
+      correct:1,
+      explain:'SimpleImputer replaces NaN values with a computed fill value (mean, median, etc.), keeping every row.'
+    },
+    {
+      q:'When might "median" be a better strategy than "mean" for filling gaps?',
+      options:['Never, mean is always better','When the column has outliers that would skew the mean upward or downward','Median only works on text columns','They always produce the same result'],
+      correct:1,
+      explain:'The median is the middle value, so it isn\'t dragged toward extreme outliers the way an average can be.'
+    },
+    {
+      q:'What does imputer.statistics_ hold after fitting?',
+      options:['The original data with gaps','The learned fill value for each column','A count of missing values','Nothing, this attribute doesn\'t exist'],
+      correct:1,
+      explain:'.statistics_ stores the actual value (e.g. the mean) that was learned and will be used to fill gaps in each column.'
+    },
+    {
+      q:'Why fit an imputer on training data only, then use .transform() on test data?',
+      options:['It doesn\'t matter which data you fit on','Fitting on test data would let the test set\'s own values leak into what counts as "typical", making evaluation unfair','.transform() is faster than fit_transform()','Test data never has missing values'],
+      correct:1,
+      explain:'Same data-leakage principle as StandardScaler — the test set should be treated as genuinely unseen when computing fill values.'
+    }
+  ],
+  sandboxStarter3:`import numpy as np
+from sklearn.impute import SimpleImputer
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.pipeline import Pipeline
+
+hours = [1,2,3,4,5,6,7,8,9,10]
+attendance = [50, np.nan, 60, 65, 70, 80, 85, np.nan, 95, 98]
+passed = [0,0,0,0,0,1,1,1,1,1]
+X = list(zip(hours, attendance))
+
+pipe = Pipeline([("imputer", SimpleImputer(strategy="mean")), ("rf", RandomForestClassifier(n_estimators=50, random_state=42))])
+pipe.fit(X, passed)
+print(pipe.predict([[6, 75]]))
+`,
+  stretchChallenge:{
+    title:'Impute, scale, train, and score end to end',
+    desc:`Create hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9] and
+      attendance = [50, np.nan, 60, 65, 70, 80, 85, np.nan, 95, 98, 52, 58, 92, 88], and
+      passed = [0,0,0,0,0,1,1,1,1,1,0,0,1,1]. Create X = list(zip(hours, attendance)). Split with
+      Xtr, Xte, ytr, yte = train_test_split(X, passed, test_size=0.3, random_state=42). Build
+      pipe = Pipeline([("imputer", SimpleImputer(strategy="mean")), ("scaler", StandardScaler()),
+      ("knn", KNeighborsClassifier(n_neighbors=3))]), fit it on Xtr/ytr, then create
+      score = round(pipe.score(Xte, yte), 2). Assert that score == 1.0.`,
+    starter:`import numpy as np
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import train_test_split
+# Create hours, attendance, passed, X, the split, pipe and score below
+`,
+    tests:[
+      {type:'assert', expr:'score == 1.0', label:'The full impute-scale-train-score pipeline correctly achieves a perfect held-out score'}
+    ]
+  }
 }
 ];
 
