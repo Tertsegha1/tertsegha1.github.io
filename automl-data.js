@@ -4536,6 +4536,232 @@ X = list(zip(hours, attendance))
       {type:'assert', expr:'n_coefs == 2', label:'The linear SVC\'s coefficients are correctly read (one per feature)'}
     ]
   }
+},
+{
+  key:'week2', num:2, title:'Which Features Matter? Feature Importance',
+  scenarioTag:'Real world: does shoe size actually help predict who passes? Let the model tell you.',
+  scenario:`Someone on the school data team jokingly added shoe size to the resit dataset as a "feature" — clearly
+    irrelevant to whether a student passes. A RandomForest can tell you exactly how much it actually used each
+    feature, confirming (or busting) assumptions about what matters.`,
+  objectives:[
+    'Read a trained RandomForest\'s feature_importances_',
+    'Identify which feature mattered most, and which mattered least',
+    'Confirm importances always sum to 1.0',
+    'Rank every feature from most to least useful'
+  ],
+  conceptHtml:`
+    <p>Every fitted <code>RandomForestClassifier</code> can tell you how much it actually relied on each feature
+    to make its decisions:</p>
+    <pre class="code-block">from sklearn.ensemble import RandomForestClassifier
+
+rf = RandomForestClassifier(n_estimators=50, random_state=42)
+rf.fit(X, y)
+print(rf.feature_importances_)   # [0.344 0.532 0.124] — one value per feature, in column order</pre>
+    <h3>Let's break down feature_importances_</h3>
+    <ul>
+      <li><code>feature_importances_</code> is a NumPy array with one number per feature, in the SAME column
+        order as <code>X</code> — the first value corresponds to your first feature, and so on.</li>
+      <li>Every value is between 0 and 1, and the WHOLE array always sums to exactly 1.0 — importance is a
+        relative "share," not an absolute score.</li>
+      <li>A LOW importance doesn't mean the feature is wrong or broken — it means the trees rarely found it useful
+        for splitting the data, which is exactly what you'd expect from an irrelevant feature like shoe size.</li>
+      <li><code>importances.argmax()</code>/<code>.argmin()</code> give you the INDEX of the highest/lowest value
+        — pair that index with your feature name list to read which feature it refers to.</li>
+    </ul>`,
+  sandboxStarter:`from sklearn.ensemble import RandomForestClassifier
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+shoe_size = [7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance, shoe_size))
+
+rf = RandomForestClassifier(n_estimators=50, random_state=42)
+rf.fit(X, passed)
+print(rf.feature_importances_.round(3))
+`,
+  sandboxStarter2:`from sklearn.ensemble import RandomForestClassifier
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+shoe_size = [7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance, shoe_size))
+
+rf = RandomForestClassifier(n_estimators=50, random_state=42)
+rf.fit(X, passed)
+importances = rf.feature_importances_
+names = ["hours", "attendance", "shoe_size"]
+for name, value in zip(names, importances):
+    print(name, round(float(value), 3))
+`,
+  exercises:[
+    {
+      title:'Find the most important feature',
+      desc:`Create hours, attendance, shoe_size and passed exactly as in the concept box (30 values each). Create
+        X = list(zip(hours, attendance, shoe_size)). Create rf = RandomForestClassifier(n_estimators=50,
+        random_state=42), fit it on X/passed, then importances = rf.feature_importances_. Create
+        most_important = int(importances.argmax()). Assert that most_important == 1 — attendance (column index
+        1) mattered most.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+shoe_size = [7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+# Create X, rf, importances and most_important below
+`,
+      tests:[{type:'assert', expr:'most_important == 1', label:'Attendance is correctly identified as the most important feature'}]
+    },
+    {
+      title:'Find the least important feature',
+      desc:`Using importances from before, create least_important = int(importances.argmin()). Assert that
+        least_important == 2 — shoe size (column index 2), exactly as you'd expect, mattered least.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+shoe_size = [7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance, shoe_size))
+rf = RandomForestClassifier(n_estimators=50, random_state=42)
+rf.fit(X, passed)
+importances = rf.feature_importances_
+# Create least_important below
+`,
+      tests:[{type:'assert', expr:'least_important == 2', label:'Shoe size is correctly identified as the least important feature'}]
+    },
+    {
+      title:'Confirm the importances sum to 1',
+      desc:`Using importances from before, create importance_sum = round(float(importances.sum()), 2). Assert
+        that importance_sum == 1.0.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+shoe_size = [7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance, shoe_size))
+rf = RandomForestClassifier(n_estimators=50, random_state=42)
+rf.fit(X, passed)
+importances = rf.feature_importances_
+# Create importance_sum below
+`,
+      tests:[{type:'assert', expr:'importance_sum == 1.0', label:'The importances correctly sum to 1.0'}]
+    },
+    {
+      title:'Read the exact attendance importance',
+      desc:`Using importances from before, create attendance_importance = round(float(importances[1]), 3). Assert
+        that attendance_importance == 0.532.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+shoe_size = [7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance, shoe_size))
+rf = RandomForestClassifier(n_estimators=50, random_state=42)
+rf.fit(X, passed)
+importances = rf.feature_importances_
+# Create attendance_importance below
+`,
+      tests:[{type:'assert', expr:'attendance_importance == 0.532', label:'The exact attendance importance value is correctly read'}]
+    },
+    {
+      title:'Rank every feature',
+      desc:`Using importances from before, create ranked = sorted(range(len(importances)), key=lambda i:
+        -importances[i]). Assert that ranked == [1, 0, 2] — attendance first, hours second, shoe size last.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+shoe_size = [7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance, shoe_size))
+rf = RandomForestClassifier(n_estimators=50, random_state=42)
+rf.fit(X, passed)
+importances = rf.feature_importances_
+# Create ranked below
+`,
+      tests:[{type:'assert', expr:'ranked == [1, 0, 2]', label:'All three features are correctly ranked by importance'}]
+    },
+    {
+      title:'Read the exact hours importance',
+      desc:`Using importances from before, create hours_importance = round(float(importances[0]), 3). Assert
+        that hours_importance == 0.344.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+shoe_size = [7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance, shoe_size))
+rf = RandomForestClassifier(n_estimators=50, random_state=42)
+rf.fit(X, passed)
+importances = rf.feature_importances_
+# Create hours_importance below
+`,
+      tests:[{type:'assert', expr:'hours_importance == 0.344', label:'The exact hours importance value is correctly read'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does a LOW feature_importances_ value mean?',
+      options:['The feature is broken and should be removed from the dataset','The trees rarely found that feature useful for splitting the data — it didn\'t help much','The model failed to train','The feature has too few decimal places'],
+      correct:1,
+      explain:'Low importance simply reflects how often (and how usefully) the trees split on that feature — exactly what you\'d expect from something genuinely irrelevant, like shoe size.'
+    },
+    {
+      q:'What do all the values in feature_importances_ always add up to?',
+      options:['100','The number of features','1.0 — importance is a relative share, not an absolute score','It varies randomly each time'],
+      correct:2,
+      explain:'Importances are normalized to sum to 1.0, so each value represents that feature\'s SHARE of the total "credit" for the model\'s decisions.'
+    },
+    {
+      q:'What does importances.argmax() return?',
+      options:['The highest importance value itself','The INDEX (column position) of the feature with the highest importance','The feature\'s name as a string','Always 0'],
+      correct:1,
+      explain:'argmax() returns a position, not a value — you pair that index with your feature name list (in the same column order as X) to find out which feature it refers to.'
+    },
+    {
+      q:'Why is it useful to add an obviously irrelevant feature like shoe_size to a test dataset?',
+      options:['It never is, it just wastes memory','It is a sanity check — if the model correctly gives it low importance, that builds confidence the importance numbers are trustworthy','It always improves accuracy','Random Forests require an odd number of features'],
+      correct:1,
+      explain:'A feature you already KNOW is irrelevant is a great sanity check — if the model correctly ranks it lowest, that\'s good evidence the importance values for your real features are meaningful too.'
+    }
+  ],
+  sandboxStarter3:`from sklearn.ensemble import RandomForestClassifier
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+shoe_size = [7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance, shoe_size))
+
+rf = RandomForestClassifier(n_estimators=50, random_state=42)
+rf.fit(X, passed)
+importances = rf.feature_importances_
+names = ["hours", "attendance", "shoe_size"]
+ranked = sorted(zip(names, importances), key=lambda pair: -pair[1])
+for name, value in ranked:
+    print(name, round(float(value), 3))
+`,
+  stretchChallenge:{
+    title:'Build a named importance report',
+    desc:`Using importances from before, create names = ["hours", "attendance", "shoe_size"] and
+      importance_dict = {name: round(float(value), 3) for name, value in zip(names, importances)}. Assert that
+      importance_dict["shoe_size"] < 0.15 and importance_dict["attendance"] > importance_dict["hours"] and
+      importance_dict["hours"] > importance_dict["shoe_size"] — a clean, named summary confirming the exact
+      ranking by hand.`,
+    starter:`from sklearn.ensemble import RandomForestClassifier
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+shoe_size = [7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8,6,9,7,8]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance, shoe_size))
+rf = RandomForestClassifier(n_estimators=50, random_state=42)
+rf.fit(X, passed)
+importances = rf.feature_importances_
+# Create names and importance_dict below
+`,
+    tests:[
+      {type:'assert', expr:'importance_dict["shoe_size"] < 0.15 and importance_dict["attendance"] > importance_dict["hours"] and importance_dict["hours"] > importance_dict["shoe_size"]', label:'The named importance report correctly confirms the full ranking'}
+    ]
+  }
 }
 ];
 
