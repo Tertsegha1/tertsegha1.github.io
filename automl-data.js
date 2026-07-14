@@ -3146,6 +3146,192 @@ passed = [0,0,0,0,0,1,1,1,1,1,0,0,1,1,0,0,1,1,0,1,0,1,0,1]
       {type:'assert', expr:'cat_only_score == 0.67 and full_score == 1.0', label:'Both the category-only and full-feature scores are correctly compared'}
     ]
   }
+},
+{
+  key:'week6', num:6, title:'Reading the Full Report: classification_report',
+  scenarioTag:'Real world: accuracy alone can hide a model that\'s bad at catching one specific class.',
+  scenario:`The resit predictor ran on this term's group. Overall accuracy looks okay — but is it equally good at
+    catching students who WILL pass as it is at catching students who WON'T? classification_report and
+    confusion_matrix break a single accuracy number into the full picture.`,
+  objectives:[
+    'Read a confusion matrix\'s true/false positives and negatives',
+    'Pull precision, recall, and f1-score for a specific class out of a classification_report',
+    'Read support (how many actual examples of each class there were)',
+    'Use precision_score directly and confirm it matches the report'
+  ],
+  conceptHtml:`
+    <p><code>confusion_matrix</code> and <code>classification_report</code> both compare a model's predictions to
+    what actually happened, but break it down far more than a single accuracy number:</p>
+    <pre class="code-block">from sklearn.metrics import confusion_matrix, classification_report
+
+cm = confusion_matrix(y_true, y_pred)
+print(cm)
+# [[5 1]
+#  [3 5]]
+
+report = classification_report(y_true, y_pred, output_dict=True)
+print(report["1"]["precision"])   # 0.83 — of everyone predicted to pass, 83% actually did
+print(report["1"]["recall"])      # 0.62 — of everyone who actually passed, only 62% were caught</pre>
+    <h3>Let's break down what each piece means</h3>
+    <ul>
+      <li>In the confusion matrix, row = the ACTUAL class, column = the PREDICTED class. So
+        <code>cm[1][1]</code> (bottom-right) is true positives — actually passed AND predicted to pass.</li>
+      <li><code>cm[0][1]</code> is a false positive — actually failed, but predicted to pass (a false alarm).
+        <code>cm[1][0]</code> is a false negative — actually passed, but predicted to fail (a miss).</li>
+      <li><code>classification_report(..., output_dict=True)</code> returns a nested dictionary, keyed by class
+        label as a STRING (<code>"0"</code>, <code>"1"</code>), then by metric name.</li>
+      <li><b>precision</b> answers "of everyone I predicted positive, how many actually were?" — high precision
+        means few false alarms. <b>recall</b> answers "of everyone actually positive, how many did I catch?" —
+        high recall means few misses. A model can be strong on one and weak on the other.</li>
+      <li><code>report["1"]["support"]</code> tells you how many students in the data actually belonged to class
+        1 — useful context for whether a percentage is based on a handful of students or hundreds.</li>
+    </ul>`,
+  sandboxStarter:`from sklearn.metrics import confusion_matrix
+
+y_true = [1,1,1,1,1,1,1,1, 0,0,0,0,0,0]
+y_pred = [1,1,1,1,1,0,0,0, 1,0,0,0,0,0]
+
+cm = confusion_matrix(y_true, y_pred)
+print(cm)
+`,
+  sandboxStarter2:`from sklearn.metrics import classification_report
+
+y_true = [1,1,1,1,1,1,1,1, 0,0,0,0,0,0]
+y_pred = [1,1,1,1,1,0,0,0, 1,0,0,0,0,0]
+
+print(classification_report(y_true, y_pred))
+`,
+  exercises:[
+    {
+      title:'Read the confusion matrix',
+      desc:`Create y_true = [1,1,1,1,1,1,1,1,0,0,0,0,0,0] and y_pred = [1,1,1,1,1,0,0,0,1,0,0,0,0,0]. Create
+        cm = confusion_matrix(y_true, y_pred). Create tp = int(cm[1][1]), fp = int(cm[0][1]), and
+        fn = int(cm[1][0]). Assert that tp == 5 and fp == 1 and fn == 3.`,
+      starter:`from sklearn.metrics import confusion_matrix
+y_true = [1,1,1,1,1,1,1,1,0,0,0,0,0,0]
+y_pred = [1,1,1,1,1,0,0,0,1,0,0,0,0,0]
+# Create cm, tp, fp and fn below
+`,
+      tests:[{type:'assert', expr:'tp == 5 and fp == 1 and fn == 3', label:'True/false positives and negatives are correctly read from the confusion matrix'}]
+    },
+    {
+      title:'Get the overall accuracy from the report',
+      desc:`Using y_true and y_pred from before, create report = classification_report(y_true, y_pred,
+        output_dict=True). Create accuracy = round(report["accuracy"], 2). Assert that accuracy == 0.71.`,
+      starter:`from sklearn.metrics import classification_report
+y_true = [1,1,1,1,1,1,1,1,0,0,0,0,0,0]
+y_pred = [1,1,1,1,1,0,0,0,1,0,0,0,0,0]
+# Create report and accuracy below
+`,
+      tests:[{type:'assert', expr:'accuracy == 0.71', label:'The overall accuracy is correctly read from the report'}]
+    },
+    {
+      title:'Compare precision and recall for one class',
+      desc:`Using report from before, create precision_1 = round(report["1"]["precision"], 2) and
+        recall_1 = round(report["1"]["recall"], 2). Assert that precision_1 == 0.83 and recall_1 == 0.62 — the
+        model is more trustworthy when it predicts a pass than it is at catching every actual pass.`,
+      starter:`from sklearn.metrics import classification_report
+y_true = [1,1,1,1,1,1,1,1,0,0,0,0,0,0]
+y_pred = [1,1,1,1,1,0,0,0,1,0,0,0,0,0]
+report = classification_report(y_true, y_pred, output_dict=True)
+# Create precision_1 and recall_1 below
+`,
+      tests:[{type:'assert', expr:'precision_1 == 0.83 and recall_1 == 0.62', label:'precision and recall for class 1 are correctly told apart'}]
+    },
+    {
+      title:'Read the support for each class',
+      desc:`Using report from before, create support_0 = int(report["0"]["support"]) and
+        support_1 = int(report["1"]["support"]). Assert that support_0 == 6 and support_1 == 8.`,
+      starter:`from sklearn.metrics import classification_report
+y_true = [1,1,1,1,1,1,1,1,0,0,0,0,0,0]
+y_pred = [1,1,1,1,1,0,0,0,1,0,0,0,0,0]
+report = classification_report(y_true, y_pred, output_dict=True)
+# Create support_0 and support_1 below
+`,
+      tests:[{type:'assert', expr:'support_0 == 6 and support_1 == 8', label:'The number of actual examples in each class is correctly read'}]
+    },
+    {
+      title:'Use precision_score directly',
+      desc:`Using y_true and y_pred from before, create precision_score_0 = round(precision_score(y_true, y_pred,
+        pos_label=0), 2). Assert that precision_score_0 == 0.62 — the same number classification_report gives
+        for class 0's precision, just called directly.`,
+      starter:`from sklearn.metrics import precision_score
+y_true = [1,1,1,1,1,1,1,1,0,0,0,0,0,0]
+y_pred = [1,1,1,1,1,0,0,0,1,0,0,0,0,0]
+# Create precision_score_0 below
+`,
+      tests:[{type:'assert', expr:'precision_score_0 == 0.62', label:'precision_score() directly matches class 0\'s precision from the report'}]
+    },
+    {
+      title:'Read the macro-averaged f1-score',
+      desc:`Using report from before, create macro_f1 = round(report["macro avg"]["f1-score"], 2). Assert that
+        macro_f1 == 0.71 — the plain, unweighted average of both classes' f1-scores.`,
+      starter:`from sklearn.metrics import classification_report
+y_true = [1,1,1,1,1,1,1,1,0,0,0,0,0,0]
+y_pred = [1,1,1,1,1,0,0,0,1,0,0,0,0,0]
+report = classification_report(y_true, y_pred, output_dict=True)
+# Create macro_f1 below
+`,
+      tests:[{type:'assert', expr:'macro_f1 == 0.71', label:'The macro-averaged f1-score is correctly read'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'In a confusion matrix, what does cm[0][1] represent?',
+      options:['A true positive','A false positive — actually class 0, but predicted class 1','A true negative','The overall accuracy'],
+      correct:1,
+      explain:'Row = actual class, column = predicted class, so cm[0][1] means "actually 0, but the model predicted 1" — a false alarm.'
+    },
+    {
+      q:'What is the difference between precision and recall?',
+      options:['They are always the same number','Precision asks "of my positive predictions, how many were right?"; recall asks "of all the actual positives, how many did I catch?"','Precision only applies to regression','Recall is just another name for accuracy'],
+      correct:1,
+      explain:'They measure different kinds of mistakes — precision is about false alarms, recall is about missed cases — and a model can be strong on one while weak on the other.'
+    },
+    {
+      q:'What does classification_report(..., output_dict=True) return for report["1"]["support"]?',
+      options:['The model\'s accuracy','How many actual examples of class 1 were in the data','The number of correct predictions','The precision for class 1'],
+      correct:1,
+      explain:'support is simply a count — how many rows in y_true actually belonged to that class — useful context for judging the other metrics.'
+    },
+    {
+      q:'Does precision_score(y_true, y_pred, pos_label=0) give the same number as classification_report(...)["0"]["precision"]?',
+      options:['No, they measure completely different things','Yes — classification_report is built from the same underlying metric functions','Only if pos_label is left out','Only for recall, never precision'],
+      correct:1,
+      explain:'classification_report is really a convenient bundle of precision_score, recall_score, and f1_score computed for every class at once.'
+    }
+  ],
+  sandboxStarter3:`from sklearn.metrics import classification_report, confusion_matrix
+
+y_true = [1,1,1,1,1,1,1,1, 0,0,0,0,0,0]
+y_pred = [1,1,1,1,1,0,0,0, 1,0,0,0,0,0]
+
+report = classification_report(y_true, y_pred, output_dict=True)
+print("Class 1 precision:", round(report["1"]["precision"], 2))
+print("Class 1 recall:", round(report["1"]["recall"], 2))
+print("Confusion matrix:")
+print(confusion_matrix(y_true, y_pred))
+`,
+  stretchChallenge:{
+    title:'Two models, two different trade-offs',
+    desc:`Create y_true = [1,1,1,1,1,1,1,1,0,0,0,0,0,0] (8 actual passes, 6 actual fails). Model A's predictions:
+      y_pred_a = [1,1,1,1,1,1,1,1,1,1,1,0,0,0] (it catches every actual pass, but wrongly flags 3 failing
+      students too). Model B's predictions: y_pred_b = [1,1,1,1,1,0,0,0,0,0,0,0,0,0] (it never wrongly flags a
+      failing student, but misses 3 actual passes). Create recall_a = round(recall_score(y_true, y_pred_a), 2),
+      precision_a = round(precision_score(y_true, y_pred_a), 2), recall_b = round(recall_score(y_true, y_pred_b),
+      2), and precision_b = round(precision_score(y_true, y_pred_b), 2). Assert that recall_a == 1.0 and
+      precision_a == 0.73 and recall_b == 0.62 and precision_b == 1.0 — Model A never misses a pass but cries
+      wolf sometimes; Model B is never wrong when it predicts a pass, but misses some.`,
+    starter:`from sklearn.metrics import precision_score, recall_score
+y_true = [1,1,1,1,1,1,1,1,0,0,0,0,0,0]
+y_pred_a = [1,1,1,1,1,1,1,1,1,1,1,0,0,0]
+y_pred_b = [1,1,1,1,1,0,0,0,0,0,0,0,0,0]
+# Create recall_a, precision_a, recall_b and precision_b below
+`,
+    tests:[
+      {type:'assert', expr:'recall_a == 1.0 and precision_a == 0.73 and recall_b == 0.62 and precision_b == 1.0', label:'Both models\' precision/recall trade-off is correctly measured'}
+    ]
+  }
 }
 ];
 
