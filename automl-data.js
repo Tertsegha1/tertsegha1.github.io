@@ -2885,9 +2885,75 @@ from sklearn.model_selection import cross_val_score
 }
 ];
 
+const ML_INTERMEDIATE_MP1 = {
+  key:'mp1',
+  title:'Mini Project 1 — Build a Robust Resit Predictor',
+  intro:`The resit records for this class of 24 students are realistically messy — a couple of students are
+    missing an hours-revised value. You'll build a genuinely ROBUST pipeline: fill the gaps, scale the features,
+    train a stronger model, then prove it with fair, cross-validated evaluation — combining everything from
+    Weeks 1-4.`,
+  newTrick:`Chaining every Week 1-4 skill into ONE pipeline that can handle real, imperfect data end to end —
+    impute, scale, train, and fairly evaluate — rather than treating each skill as a one-off trick.`,
+  stages:[
+    {
+      key:'a', title:'Stage A — Fill the missing hours',
+      desc:`Create hours_raw = [1,2,3,None,5,6,7,8,9,10,1,2,8,9,3,4,6,None,2,9,5,6,1,10] (two students are missing
+        their hours value). Create hours_2d = [[h] for h in hours_raw]. Create
+        imputer = SimpleImputer(strategy="median"), then hours_filled = imputer.fit_transform(hours_2d). Create
+        median_hours = round(float(imputer.statistics_[0]), 1). Assert that median_hours == 5.5.`,
+      starter:`from sklearn.impute import SimpleImputer
+hours_raw = [1,2,3,None,5,6,7,8,9,10,1,2,8,9,3,4,6,None,2,9,5,6,1,10]
+# Create hours_2d, imputer, hours_filled and median_hours below
+`,
+      tests:[{type:'assert', expr:'median_hours == 5.5', label:'The missing hours are correctly filled with the median (5.5)'}]
+    },
+    {
+      key:'b', title:'Stage B — Scale the features and train a stronger model',
+      desc:`Using hours_filled from Stage A, create attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,
+        75,80,56,96,72,78,53,99] and passed = [0,0,0,0,0,1,1,1,1,1,0,0,1,1,0,0,1,1,0,1,0,1,0,1]. Create
+        X = list(zip(hours_filled.ravel().tolist(), attendance)). Create scaler = StandardScaler(), then
+        Xs = scaler.fit_transform(X). Create model = RandomForestClassifier(n_estimators=50, random_state=42), fit
+        it on Xs/passed, then train_score = round(model.score(Xs, passed), 2) and
+        first_scaled_hour = round(float(Xs[0][0]), 2). Assert that train_score == 1.0 and
+        first_scaled_hour == -1.48 — proving the features were genuinely scaled, not just fed in raw.`,
+      starter:`from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestClassifier
+hours_raw = [1,2,3,None,5,6,7,8,9,10,1,2,8,9,3,4,6,None,2,9,5,6,1,10]
+hours_2d = [[h] for h in hours_raw]
+imputer = SimpleImputer(strategy="median")
+hours_filled = imputer.fit_transform(hours_2d)
+# Create attendance, passed, X, scaler, Xs, model, train_score and first_scaled_hour below
+`,
+      tests:[{type:'assert', expr:'train_score == 1.0 and first_scaled_hour == -1.48', label:'The model is correctly trained on genuinely scaled features'}]
+    },
+    {
+      key:'c', title:'Stage C — Cross-validate the full pipeline',
+      desc:`Using hours_raw (the ORIGINAL list, still with the two missing values), attendance and passed from
+        before, create X_raw = list(zip(hours_raw, attendance)). Build pipe = Pipeline([("imputer",
+        SimpleImputer(strategy="median")), ("scaler", StandardScaler()), ("rf",
+        RandomForestClassifier(n_estimators=50, random_state=42))]). Create
+        scores = cross_val_score(pipe, X_raw, passed, cv=5). Create cv_mean = round(float(scores.mean()), 2) and
+        fold2 = round(float(scores[1]), 2). Assert that cv_mean == 0.96 and fold2 == 0.8 — even a robust pipeline
+        isn't always a perfect 1.0, and that's a fair, honest result.`,
+      starter:`from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_score
+hours_raw = [1,2,3,None,5,6,7,8,9,10,1,2,8,9,3,4,6,None,2,9,5,6,1,10]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99]
+passed = [0,0,0,0,0,1,1,1,1,1,0,0,1,1,0,0,1,1,0,1,0,1,0,1]
+# Create X_raw, pipe, scores, cv_mean and fold2 below
+`,
+      tests:[{type:'assert', expr:'cv_mean == 0.96 and fold2 == 0.8', label:'The full pipeline is correctly cross-validated end to end'}]
+    }
+  ]
+};
+
 window.SUBJECT_DATA = window.SUBJECT_DATA || {};
 window.SUBJECT_DATA.ml = {
   b: {weeks: ML_WEEKS, mp1: ML_MP1, mp2: ML_MP2},
-  i: {weeks: ML_INTERMEDIATE_WEEKS, mp1: ML_MP1, mp2: ML_MP2},
+  i: {weeks: ML_INTERMEDIATE_WEEKS, mp1: ML_INTERMEDIATE_MP1, mp2: ML_MP2},
   a: {weeks: ML_WEEKS, mp1: ML_MP1, mp2: ML_MP2}
 };
