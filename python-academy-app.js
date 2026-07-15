@@ -735,6 +735,7 @@ async function renderMyMessages(){
       if(m.lastSeenByStudentAt && new Date(m.lastSeenByStudentAt) >= new Date(last.at||0)) return;
       fetch(fbUrl(fbBase()+'/messages/'+k+'/lastSeenByStudentAt.json'), {method:'PUT', body: JSON.stringify(nowIso)}).catch(()=>{});
     });
+    setContactBadge(false);
   }catch(e){
     list.textContent = 'Could not load your messages — please try again.';
   }
@@ -770,6 +771,52 @@ function relTimeStudent(iso){
     if(diff<86400) return Math.floor(diff/3600)+'h ago';
     return Math.floor(diff/86400)+'d ago';
   }catch(e){ return ''; }
+}
+
+// A message existing server-side isn't enough if nothing tells the student
+// to go look — the Contact/Help page is buried in the sidebar and nothing
+// else in the app pointed at it. This runs independently of whether the
+// student is currently on the Contact page (unlike renderMyMessages()'s own
+// 15s poll, which only runs while that page is open) so the notification
+// dot appears no matter where in the site the student currently is.
+let _unreadMsgPollTimer = null;
+function setContactBadge(show){
+  const nav = document.getElementById('nav-contact');
+  if(!nav) return;
+  let dot = document.getElementById('contact-notify-dot');
+  if(show && !dot){
+    dot = document.createElement('span');
+    dot.id = 'contact-notify-dot';
+    dot.className = 'contact-notify-dot';
+    dot.title = 'New message from your instructor';
+    nav.appendChild(dot);
+  } else if(!show && dot){
+    dot.remove();
+  }
+}
+async function checkUnreadMessages(){
+  const username = localStorage.getItem(sk('username')) || '';
+  if(!username || !fbOk()){ setContactBadge(false); return; }
+  try{
+    const localKeys = myMessageKeys();
+    const remoteKeys = await serverMessageKeys(username);
+    const keys = Array.from(new Set(localKeys.concat(remoteKeys)));
+    if(!keys.length){ setContactBadge(false); return; }
+    const recs = await Promise.all(keys.map(k =>
+      fetch(fbUrl(fbBase()+'/messages/'+k+'.json')).then(r => r.ok ? r.json() : null).catch(()=>null)
+    ));
+    const hasUnread = recs.some(m => {
+      if(!m) return false;
+      const last = latestActivityFor(m);
+      if(!last || last.from !== 'instructor') return false;
+      return !(m.lastSeenByStudentAt && new Date(m.lastSeenByStudentAt) >= new Date(last.at||0));
+    });
+    setContactBadge(hasUnread);
+  }catch(e){}
+}
+function startUnreadMessagesPolling(){
+  checkUnreadMessages();
+  if(!_unreadMsgPollTimer) _unreadMsgPollTimer = setInterval(checkUnreadMessages, 20000);
 }
 
 /* ---------------------------------------------------------------------
@@ -2079,6 +2126,7 @@ function initApp(){
   } else {
     showPage('hub');
   }
+  if(!INSTRUCTOR_PREVIEW && localStorage.getItem(sk('username'))) startUnreadMessagesPolling();
 }
 document.addEventListener('DOMContentLoaded', initApp);
 
