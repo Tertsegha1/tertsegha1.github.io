@@ -4996,6 +4996,234 @@ grid.fit(X, passed)
       {type:'assert', expr:'n_tied == 28', label:'The number of tied-for-best candidates is correctly counted'}
     ]
   }
+},
+{
+  key:'week4', num:4, title:'Spotting Overfitting with Real Scores',
+  scenarioTag:'Real world: a model that scores 1.0 on its OWN training data isn\'t automatically a good model.',
+  scenario:`A model trained with no limits can memorize the exact students in your training data — every quirk,
+    every coincidence — rather than learning the real pattern. It'll then score perfectly on data it has already
+    seen, while performing much worse on anyone new. Comparing a model's score on its OWN training data against
+    its cross-validated score is how you catch this before it fools you.`,
+  objectives:[
+    'Compute a model\'s score on the exact data it was trained on',
+    'Compare that training score against its cross-validated score',
+    'Recognize a large gap between the two as a sign of overfitting',
+    'See how limiting max_depth can shrink that gap'
+  ],
+  conceptHtml:`
+    <p>Calling <code>.score()</code> on the SAME data a model was trained on tells you how well it fits data it has
+    already memorized — not how well it will do on anyone new:</p>
+    <pre class="code-block">from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
+
+model = RandomForestClassifier(random_state=42)
+model.fit(X, y)
+train_score = model.score(X, y)          # 1.0 — scored on data it already saw
+cv_score = cross_val_score(model, X, y, cv=5).mean()   # 0.77 — scored on held-out folds
+print(train_score, cv_score)
+print(round(train_score - cv_score, 2))  # 0.23 — a big gap</pre>
+    <h3>Let's break down what this gap means</h3>
+    <ul>
+      <li><code>model.score(X, y)</code> on the TRAINING data can look artificially perfect — an unrestricted tree
+        can grow deep enough to carve out a rule for every single training example, including its noise.</li>
+      <li><code>cross_val_score(...).mean()</code> always scores on data the model did NOT see while fitting that
+        fold — a far more honest estimate of how the model performs on students it has never met.</li>
+      <li>A LARGE gap between the two (train much higher than cross-validated) is the classic sign of
+        overfitting — the model learned the training rows by heart instead of the underlying pattern.</li>
+      <li>Limiting <code>max_depth</code> stops individual trees from growing complex enough to memorize every
+        row, which usually shrinks the gap — sometimes without hurting the cross-validated score at all.</li>
+    </ul>`,
+  sandboxStarter:`from sklearn.ensemble import RandomForestClassifier
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+
+model = RandomForestClassifier(random_state=42)
+model.fit(X, passed)
+print("Training score:", model.score(X, passed))
+`,
+  sandboxStarter2:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+
+model = RandomForestClassifier(random_state=42)
+model.fit(X, passed)
+train_score = round(model.score(X, passed), 2)
+cv_score = round(cross_val_score(model, X, passed, cv=5).mean(), 2)
+print("Training score:", train_score)
+print("Cross-validated score:", cv_score)
+print("Gap:", round(train_score - cv_score, 2))
+`,
+  exercises:[
+    {
+      title:'Score a model on its own training data',
+      desc:`Create hours, attendance and passed exactly as in the concept box (30 values each). Create
+        X = list(zip(hours, attendance)). Build model = RandomForestClassifier(random_state=42) and
+        model.fit(X, passed). Create train_score = round(model.score(X, passed), 2). Assert that
+        train_score == 1.0 — a perfect score, on data it has already seen.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+# Create X, model and train_score below
+`,
+      tests:[{type:'assert', expr:'train_score == 1.0', label:'The training score is correctly computed'}]
+    },
+    {
+      title:'Now score the SAME model fairly',
+      desc:`Using the same model from before, create cv_score = round(cross_val_score(model, X, passed,
+        cv=5).mean(), 2) (import cross_val_score from sklearn.model_selection). Assert that cv_score == 0.77 —
+        noticeably lower than the training score.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+model = RandomForestClassifier(random_state=42)
+model.fit(X, passed)
+train_score = round(model.score(X, passed), 2)
+# Create cv_score below
+`,
+      tests:[{type:'assert', expr:'cv_score == 0.77', label:'The cross-validated score is correctly computed'}]
+    },
+    {
+      title:'Train a shallower, regularized model',
+      desc:`Create model2 = RandomForestClassifier(max_depth=2, random_state=42) and model2.fit(X, passed). Create
+        train_score_shallow = round(model2.score(X, passed), 2). Assert that train_score_shallow == 0.93 — lower
+        than the unrestricted model's perfect training score.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+# Create model2 and train_score_shallow below
+`,
+      tests:[{type:'assert', expr:'train_score_shallow == 0.93', label:'The shallow model\'s training score is correctly computed'}]
+    },
+    {
+      title:'Cross-validate the shallow model too',
+      desc:`Using model2 from before, create cv_score_shallow = round(cross_val_score(model2, X, passed,
+        cv=5).mean(), 2). Assert that cv_score_shallow == 0.87 — much closer to its training score than the
+        unrestricted model was.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+model2 = RandomForestClassifier(max_depth=2, random_state=42)
+model2.fit(X, passed)
+train_score_shallow = round(model2.score(X, passed), 2)
+# Create cv_score_shallow below
+`,
+      tests:[{type:'assert', expr:'cv_score_shallow == 0.87', label:'The shallow model\'s cross-validated score is correctly computed'}]
+    },
+    {
+      title:'Measure the unrestricted model\'s overfitting gap',
+      desc:`Using train_score and cv_score from the unrestricted model (fit exactly as in the concept box,
+        model = RandomForestClassifier(random_state=42)), create gap = round(train_score - cv_score, 2). Assert
+        that gap == 0.23.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+model = RandomForestClassifier(random_state=42)
+model.fit(X, passed)
+train_score = round(model.score(X, passed), 2)
+cv_score = round(cross_val_score(model, X, passed, cv=5).mean(), 2)
+# Create gap below
+`,
+      tests:[{type:'assert', expr:'gap == 0.23', label:'The unrestricted model\'s overfitting gap is correctly measured'}]
+    },
+    {
+      title:'Measure the shallow model\'s gap and compare',
+      desc:`Using train_score_shallow and cv_score_shallow from the max_depth=2 model, create
+        gap_shallow = round(train_score_shallow - cv_score_shallow, 2). Assert that gap_shallow == 0.06 — a much
+        smaller gap than the unrestricted model's 0.23, showing the shallower model generalizes more honestly.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+model2 = RandomForestClassifier(max_depth=2, random_state=42)
+model2.fit(X, passed)
+train_score_shallow = round(model2.score(X, passed), 2)
+cv_score_shallow = round(cross_val_score(model2, X, passed, cv=5).mean(), 2)
+# Create gap_shallow below
+`,
+      tests:[{type:'assert', expr:'gap_shallow == 0.06', label:'The shallow model\'s overfitting gap is correctly measured'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'A model scores 1.0 on its own training data but only 0.77 when cross-validated. What does this suggest?',
+      options:['The model is definitely the best possible choice','Overfitting — the model memorized the training rows instead of learning a generalizable pattern','The cross-validated score must be a bug','Nothing — training score is all that matters'],
+      correct:1,
+      explain:'A big gap between a near-perfect training score and a much lower cross-validated score is the classic signature of overfitting.'
+    },
+    {
+      q:'Why is a model\'s score on its OWN training data potentially misleading?',
+      options:['It isn\'t misleading, it\'s the most important number','The model has already seen every one of those exact examples while fitting, so a high score there doesn\'t prove it will work on anyone new','Training scores are always artificially low','It only applies to linear models'],
+      correct:1,
+      explain:'Training score measures fit to data the model has already memorized, not how well it generalizes to new, unseen students.'
+    },
+    {
+      q:'What tends to happen to the overfitting gap when you limit max_depth on a RandomForest?',
+      options:['The gap always grows larger','The gap can shrink, since shallower trees can\'t carve out a rule for every single training row','max_depth has no effect on overfitting at all','The training score always becomes 0'],
+      correct:1,
+      explain:'Limiting tree depth is a form of regularization — it prevents the model from growing complex enough to memorize noise in the training data.'
+    },
+    {
+      q:'Which score should you trust more to estimate real-world performance?',
+      options:['The training score, since it uses more data','The cross-validated score, since it\'s always measured on data the model didn\'t train on for that fold','Whichever score is higher','They are always identical, so it doesn\'t matter'],
+      correct:1,
+      explain:'Cross-validated score reflects performance on held-out data — a far more honest estimate of how the model will do on students it has never seen.'
+    }
+  ],
+  sandboxStarter3:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+
+model2 = RandomForestClassifier(max_depth=2, random_state=42)
+model2.fit(X, passed)
+train_score_shallow = round(model2.score(X, passed), 2)
+cv_score_shallow = round(cross_val_score(model2, X, passed, cv=5).mean(), 2)
+print("Shallow model — training:", train_score_shallow, "cross-validated:", cv_score_shallow)
+print("Shallow gap:", round(train_score_shallow - cv_score_shallow, 2), "vs unrestricted gap: 0.23")
+`,
+  stretchChallenge:{
+    title:'Is a middle-depth model any better?',
+    desc:`Create model3 = RandomForestClassifier(max_depth=3, random_state=42) and model3.fit(X, passed). Create
+      train_score_mid = round(model3.score(X, passed), 2), cv_score_mid = round(cross_val_score(model3, X, passed,
+      cv=5).mean(), 2), and gap_mid = round(train_score_mid - cv_score_mid, 2). Assert that gap_mid == 0.16 — worse
+      than max_depth=2's gap of 0.06, even though its cross-validated score (0.77) is no better than the fully
+      unrestricted model's — depth 3 gets the worst of both here, not a smooth middle ground.`,
+    starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+# Create model3, train_score_mid, cv_score_mid and gap_mid below
+`,
+    tests:[
+      {type:'assert', expr:'gap_mid == 0.16', label:'The middle-depth model\'s overfitting gap is correctly measured'}
+    ]
+  }
 }
 ];
 
