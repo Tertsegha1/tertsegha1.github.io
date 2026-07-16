@@ -5224,6 +5224,339 @@ X = list(zip(hours, attendance))
       {type:'assert', expr:'gap_mid == 0.16', label:'The middle-depth model\'s overfitting gap is correctly measured'}
     ]
   }
+},
+{
+  key:'week5', num:5, title:'The Full Preprocessing + Tuning Pipeline',
+  scenarioTag:'Real world: real settings never come one at a time — tune the whole pipeline, all its dials, at once.',
+  scenario:`Real school data mixes numeric columns (hours, attendance) with a categorical one (method: solo or
+    group) — and a real model has SEVERAL settings worth tuning at once. Combining a ColumnTransformer, a model,
+    and a multi-parameter GridSearchCV into one Pipeline lets every dial — preprocessing included — get searched
+    together, as a single object.`,
+  objectives:[
+    'Build a Pipeline combining a ColumnTransformer and a model',
+    'Tune more than one model setting INSIDE that pipeline at once',
+    'Read every winning setting from best_params_',
+    'Reach into the winning pipeline\'s own fitted model step'
+  ],
+  conceptHtml:`
+    <p>A <code>param_grid</code> can tune SEVERAL settings that all belong to a pipeline step — combine that with a
+    ColumnTransformer handling mixed data, and everything searches together as one object:</p>
+    <pre class="code-block">from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+
+pipe = Pipeline([
+    ("prep", ColumnTransformer([
+        ("num", StandardScaler(), ["hours", "attendance"]),
+        ("cat", OneHotEncoder(), ["method"])
+    ])),
+    ("rf", RandomForestClassifier(random_state=42))
+])
+param_grid = {
+    "rf__max_depth": [1, 2, 3, 4],
+    "rf__n_estimators": [10, 50, 100],
+    "rf__min_samples_leaf": [1, 2, 4]
+}
+grid = GridSearchCV(pipe, param_grid, cv=5)
+grid.fit(X, y)
+print(grid.best_params_)
+# {'rf__max_depth': 2, 'rf__min_samples_leaf': 2, 'rf__n_estimators': 10}</pre>
+    <h3>Let's break down tuning several settings inside a full pipeline</h3>
+    <ul>
+      <li>Every key in <code>param_grid</code> still needs the <code>"rf__"</code> prefix — GridSearchCV has no
+        other way to know which pipeline step a setting belongs to.</li>
+      <li>The candidate count multiplies exactly like tuning a bare model (Week 3): 4 depths &times; 3 estimator
+        counts &times; 3 leaf sizes = 36 candidates — the ColumnTransformer doesn't add any extra candidates, it
+        just runs fresh on every one.</li>
+      <li><code>grid.best_estimator_</code> is the WHOLE winning pipeline — preprocessing and model together,
+        already fitted and ready to use directly.</li>
+      <li><code>grid.best_estimator_.named_steps["rf"]</code> lets you reach into the winning pipeline and read the
+        exact settings its model step ended up with — confirming, for example, how many trees the best combination
+        actually used.</li>
+    </ul>`,
+  sandboxStarter:`import pandas as pd
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+method = ["solo","group"] * 15
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method, "passed": passed})
+X = df[["hours", "attendance", "method"]]
+y = df["passed"]
+
+pipe = Pipeline([
+    ("prep", ColumnTransformer([("num", StandardScaler(), ["hours", "attendance"]), ("cat", OneHotEncoder(), ["method"])])),
+    ("rf", RandomForestClassifier(random_state=42))
+])
+pipe.fit(X, y)
+print("Untuned pipeline score:", round(pipe.score(X, y), 2))
+`,
+  sandboxStarter2:`import pandas as pd
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+method = ["solo","group"] * 15
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method, "passed": passed})
+X = df[["hours", "attendance", "method"]]
+y = df["passed"]
+
+pipe = Pipeline([
+    ("prep", ColumnTransformer([("num", StandardScaler(), ["hours", "attendance"]), ("cat", OneHotEncoder(), ["method"])])),
+    ("rf", RandomForestClassifier(random_state=42))
+])
+param_grid = {"rf__max_depth": [1, 2, 3, 4], "rf__n_estimators": [10, 50, 100], "rf__min_samples_leaf": [1, 2, 4]}
+grid = GridSearchCV(pipe, param_grid, cv=5)
+grid.fit(X, y)
+print("Best settings:", grid.best_params_)
+print("Best cross-validated score:", round(grid.best_score_, 2))
+`,
+  exercises:[
+    {
+      title:'Build and tune the full pipeline',
+      desc:`Create hours, attendance, method and passed exactly as in the concept box (30 values each), then build
+        df with all four as columns. Create X = df[["hours", "attendance", "method"]] and y = df["passed"]. Build
+        pipe = Pipeline([("prep", ColumnTransformer([("num", StandardScaler(), ["hours", "attendance"]), ("cat",
+        OneHotEncoder(), ["method"])])), ("rf", RandomForestClassifier(random_state=42))]). Build
+        param_grid = {"rf__max_depth": [1, 2, 3, 4], "rf__n_estimators": [10, 50, 100], "rf__min_samples_leaf":
+        [1, 2, 4]} and grid = GridSearchCV(pipe, param_grid, cv=5), then grid.fit(X, y). Create
+        best_depth = grid.best_params_["rf__max_depth"]. Assert that best_depth == 2.`,
+      starter:`import pandas as pd
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+method = ["solo","group"] * 15
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+# Create df, X, y, pipe, param_grid, grid and best_depth below
+`,
+      tests:[{type:'assert', expr:'best_depth == 2', label:'The best rf__max_depth from the full pipeline search is correctly read'}]
+    },
+    {
+      title:'Read the best n_estimators too',
+      desc:`Using grid from before, create best_n = grid.best_params_["rf__n_estimators"]. Assert that
+        best_n == 10.`,
+      starter:`import pandas as pd
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+method = ["solo","group"] * 15
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method, "passed": passed})
+X = df[["hours", "attendance", "method"]]
+y = df["passed"]
+pipe = Pipeline([("prep", ColumnTransformer([("num", StandardScaler(), ["hours", "attendance"]), ("cat", OneHotEncoder(), ["method"])])), ("rf", RandomForestClassifier(random_state=42))])
+param_grid = {"rf__max_depth": [1, 2, 3, 4], "rf__n_estimators": [10, 50, 100], "rf__min_samples_leaf": [1, 2, 4]}
+grid = GridSearchCV(pipe, param_grid, cv=5)
+grid.fit(X, y)
+# Create best_n below
+`,
+      tests:[{type:'assert', expr:'best_n == 10', label:'The best rf__n_estimators from the SAME winning combination is correctly read'}]
+    },
+    {
+      title:'Read the best cross-validated score',
+      desc:`Using grid from before, create best_score = round(grid.best_score_, 2). Assert that
+        best_score == 0.9.`,
+      starter:`import pandas as pd
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+method = ["solo","group"] * 15
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method, "passed": passed})
+X = df[["hours", "attendance", "method"]]
+y = df["passed"]
+pipe = Pipeline([("prep", ColumnTransformer([("num", StandardScaler(), ["hours", "attendance"]), ("cat", OneHotEncoder(), ["method"])])), ("rf", RandomForestClassifier(random_state=42))])
+param_grid = {"rf__max_depth": [1, 2, 3, 4], "rf__n_estimators": [10, 50, 100], "rf__min_samples_leaf": [1, 2, 4]}
+grid = GridSearchCV(pipe, param_grid, cv=5)
+grid.fit(X, y)
+# Create best_score below
+`,
+      tests:[{type:'assert', expr:'best_score == 0.9', label:'The winning cross-validated score is correctly read'}]
+    },
+    {
+      title:'Count every candidate the pipeline search tried',
+      desc:`Using grid from before, create n_candidates = len(grid.cv_results_["params"]). Assert that
+        n_candidates == 36 — the ColumnTransformer doesn't change the candidate count, only the model's three
+        settings do (4 &times; 3 &times; 3).`,
+      starter:`import pandas as pd
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+method = ["solo","group"] * 15
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method, "passed": passed})
+X = df[["hours", "attendance", "method"]]
+y = df["passed"]
+pipe = Pipeline([("prep", ColumnTransformer([("num", StandardScaler(), ["hours", "attendance"]), ("cat", OneHotEncoder(), ["method"])])), ("rf", RandomForestClassifier(random_state=42))])
+param_grid = {"rf__max_depth": [1, 2, 3, 4], "rf__n_estimators": [10, 50, 100], "rf__min_samples_leaf": [1, 2, 4]}
+grid = GridSearchCV(pipe, param_grid, cv=5)
+grid.fit(X, y)
+# Create n_candidates below
+`,
+      tests:[{type:'assert', expr:'n_candidates == 36', label:'All 36 candidate combinations are correctly counted'}]
+    },
+    {
+      title:'Read the third winning setting',
+      desc:`Using grid from before, create best_leaf = grid.best_params_["rf__min_samples_leaf"]. Assert that
+        best_leaf == 2 — all three winning values (depth, estimators, leaf size) came from the SAME combination,
+        found together.`,
+      starter:`import pandas as pd
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+method = ["solo","group"] * 15
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method, "passed": passed})
+X = df[["hours", "attendance", "method"]]
+y = df["passed"]
+pipe = Pipeline([("prep", ColumnTransformer([("num", StandardScaler(), ["hours", "attendance"]), ("cat", OneHotEncoder(), ["method"])])), ("rf", RandomForestClassifier(random_state=42))])
+param_grid = {"rf__max_depth": [1, 2, 3, 4], "rf__n_estimators": [10, 50, 100], "rf__min_samples_leaf": [1, 2, 4]}
+grid = GridSearchCV(pipe, param_grid, cv=5)
+grid.fit(X, y)
+# Create best_leaf below
+`,
+      tests:[{type:'assert', expr:'best_leaf == 2', label:'The best rf__min_samples_leaf from the winning combination is correctly read'}]
+    },
+    {
+      title:'Reach into the winning pipeline\'s own model step',
+      desc:`Using grid from before, create best_pipe = grid.best_estimator_. Create
+        winning_n_estimators = best_pipe.named_steps["rf"].n_estimators. Assert that winning_n_estimators == 10 —
+        confirming, directly from the winning pipeline itself, the exact setting its model step ended up with.`,
+      starter:`import pandas as pd
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+method = ["solo","group"] * 15
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method, "passed": passed})
+X = df[["hours", "attendance", "method"]]
+y = df["passed"]
+pipe = Pipeline([("prep", ColumnTransformer([("num", StandardScaler(), ["hours", "attendance"]), ("cat", OneHotEncoder(), ["method"])])), ("rf", RandomForestClassifier(random_state=42))])
+param_grid = {"rf__max_depth": [1, 2, 3, 4], "rf__n_estimators": [10, 50, 100], "rf__min_samples_leaf": [1, 2, 4]}
+grid = GridSearchCV(pipe, param_grid, cv=5)
+grid.fit(X, y)
+# Create best_pipe and winning_n_estimators below
+`,
+      tests:[{type:'assert', expr:'winning_n_estimators == 10', label:'The winning pipeline\'s own model step is correctly reached into'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'When param_grid = {"rf__max_depth": [...], "rf__n_estimators": [...], "rf__min_samples_leaf": [...]} is used with a pipeline, does the ColumnTransformer step add any extra candidates?',
+      options:['Yes, it multiplies the candidate count further','No — only the settings actually listed in param_grid affect the candidate count, the preprocessing step just runs fresh on each one','Yes, it always doubles the candidates','It depends on how many columns the ColumnTransformer has'],
+      correct:1,
+      explain:'The candidate count only depends on the settings listed in param_grid — 4 \\u00d7 3 \\u00d7 3 = 36 here — the ColumnTransformer is refit consistently on every candidate but doesn\'t add candidates of its own.'
+    },
+    {
+      q:'What is grid.best_estimator_ when grid was built from a Pipeline?',
+      options:['Just the winning model, with preprocessing discarded','The ENTIRE winning pipeline — preprocessing and model together — already fitted and ready to use','A blank, unfitted copy of the pipeline','The original param_grid'],
+      correct:1,
+      explain:'best_estimator_ is the full pipeline object, refit with the winning settings — you can call .predict() on it directly, with preprocessing already built in.'
+    },
+    {
+      q:'What does best_pipe.named_steps["rf"].n_estimators let you check?',
+      options:['Nothing, named_steps only works on unfitted pipelines','The exact n_estimators setting the WINNING model ended up with, read directly from the fitted pipeline','The number of features used','The cross-validated score'],
+      correct:1,
+      explain:'named_steps reaches into the fitted pipeline\'s actual steps — letting you confirm precisely which setting a search landed on, straight from the object itself.'
+    },
+    {
+      q:'Why tune the "rf__" settings together with the ColumnTransformer in ONE pipeline, rather than tuning the model separately afterward?',
+      options:['It is not possible to tune them separately','Every candidate then gets IDENTICAL preprocessing, and the whole pipeline can be reused directly afterward with no risk of mismatched steps','It always produces a higher score','It removes the need for cross-validation'],
+      correct:1,
+      explain:'Bundling preprocessing and tuning into one pipeline guarantees consistency — every candidate is compared fairly, and the winning pipeline is immediately usable as a single, complete object.'
+    }
+  ],
+  sandboxStarter3:`import pandas as pd
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+method = ["solo","group"] * 15
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method, "passed": passed})
+X = df[["hours", "attendance", "method"]]
+y = df["passed"]
+
+pipe = Pipeline([
+    ("prep", ColumnTransformer([("num", StandardScaler(), ["hours", "attendance"]), ("cat", OneHotEncoder(), ["method"])])),
+    ("rf", RandomForestClassifier(random_state=42))
+])
+param_grid = {"rf__max_depth": [1, 2, 3, 4], "rf__n_estimators": [10, 50, 100], "rf__min_samples_leaf": [1, 2, 4]}
+grid = GridSearchCV(pipe, param_grid, cv=5)
+grid.fit(X, y)
+
+best_pipe = grid.best_estimator_
+print("Winning settings:", grid.best_params_)
+print("Winning model's n_estimators, read directly:", best_pipe.named_steps["rf"].n_estimators)
+`,
+  stretchChallenge:{
+    title:'Confirm both feature types survived tuning',
+    desc:`Using grid from before, create best_pipe = grid.best_estimator_. Create
+      n_features = best_pipe.named_steps["prep"].transform(X).shape[1]. Assert that n_features == 4 — proving the
+      WINNING pipeline still correctly includes both numeric columns and the one-hot-encoded categorical column,
+      not just whichever model settings happened to score best.`,
+    starter:`import pandas as pd
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+method = ["solo","group"] * 15
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method, "passed": passed})
+X = df[["hours", "attendance", "method"]]
+y = df["passed"]
+pipe = Pipeline([("prep", ColumnTransformer([("num", StandardScaler(), ["hours", "attendance"]), ("cat", OneHotEncoder(), ["method"])])), ("rf", RandomForestClassifier(random_state=42))])
+param_grid = {"rf__max_depth": [1, 2, 3, 4], "rf__n_estimators": [10, 50, 100], "rf__min_samples_leaf": [1, 2, 4]}
+grid = GridSearchCV(pipe, param_grid, cv=5)
+grid.fit(X, y)
+# Create best_pipe and n_features below
+`,
+    tests:[
+      {type:'assert', expr:'n_features == 4', label:'Both numeric and categorical features are confirmed present in the winning pipeline'}
+    ]
+  }
 }
 ];
 
