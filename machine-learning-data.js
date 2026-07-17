@@ -2562,6 +2562,246 @@ new_hours, new_score = 8, 130
       {type:'assert', expr:"scaled_label == 'pass'", label:'scaled_label is correctly identified (pass)'}
     ]
   }
+},
+{
+  key:'week3', num:3, title:'Splitting K Ways: Cross-Validation by Hand',
+  scenarioTag:'Real world: one lucky (or unlucky) test split can mislead you',
+  scenario:`Week 3's (Beginner) train/test split held back just ONE chunk of students to test on — but what if
+    that particular chunk happened to be easy (or hard) to predict, just by luck? k-fold cross-validation fixes
+    this by splitting the class into k equal chunks ("folds"), and testing on EVERY fold in turn — so every
+    single student gets used as a test case exactly once, and the final error estimate is an average across all
+    of them, not just one lucky slice.`,
+  objectives:[
+    'Split a dataset into k equal folds',
+    'For one fold, build its train set (every OTHER fold) and test set (that fold)',
+    'Fit and score a model on a single fold, the same way as a normal train/test split',
+    'Average the error across all k folds into one cross-validated score'
+  ],
+  conceptHtml:`
+    <p><strong>k-fold cross-validation</strong> splits the data into k equal-sized folds. For EACH fold in turn,
+    that fold becomes the test set, and every OTHER fold combined becomes the training set:</p>
+    <pre class="code-block">hours = [1,2,3,4,5,6,7,8,9]
+scores = [50,54,60,63,68,74,77,82,88]
+k = 3
+fold_size = len(hours) // k   # 3
+
+folds_hours = [hours[i*fold_size:(i+1)*fold_size] for i in range(k)]
+print(folds_hours)   # [[1,2,3], [4,5,6], [7,8,9]]</pre>
+    <p>For fold <code>i</code>, the test set is that fold, and the training set is everything BEFORE it plus
+    everything AFTER it, joined together:</p>
+    <pre class="code-block">i = 1
+test_start = i*fold_size
+test_end = test_start + fold_size
+test_hours = hours[test_start:test_end]              # [4, 5, 6]
+train_hours = hours[:test_start] + hours[test_end:]   # [1,2,3,7,8,9]</pre>
+    <p>Fit and score that fold exactly like a normal train/test split (Week 3, Beginner) — but do this k times,
+    once per fold, and average the k resulting MAE values into one <strong>cross-validated MAE</strong>. Because
+    EVERY student ends up in a test fold exactly once, the final average reflects the WHOLE dataset, not just
+    whichever 20% happened to be held back.</p>
+    <h3>Let's break down why this is more trustworthy than one split</h3>
+    <ul>
+      <li><code>hours[:test_start] + hours[test_end:]</code> — list concatenation (<code>+</code>) joins
+        everything BEFORE the test fold with everything AFTER it, which is exactly "every other fold" without
+        needing to loop over the other folds individually.</li>
+      <li>A single 80/20 split only ever tests on 20% of the students — with k=3 folds, by the time all 3 folds
+        have taken a turn as the test set, EVERY student has been tested on exactly once.</li>
+      <li>Averaging <code>fold_maes</code> gives one number that reflects performance across the WHOLE dataset,
+        smoothing out the "what if that one held-back chunk happened to be unusually easy or hard" risk that a
+        single split carries.</li>
+    </ul>`,
+  sandboxStarter:`hours = [1,2,3,4,5,6,7,8,9]
+scores = [50,54,60,63,68,74,77,82,88]
+k = 3
+fold_size = len(hours) // k
+
+folds_hours = [hours[i*fold_size:(i+1)*fold_size] for i in range(k)]
+folds_scores = [scores[i*fold_size:(i+1)*fold_size] for i in range(k)]
+for i in range(k):
+    print("fold", i, ":", folds_hours[i], folds_scores[i])
+`,
+  sandboxStarter2:`def predict(x, m, b):
+    return m*x + b
+
+hours = [1,2,3,4,5,6,7,8,9]
+scores = [50,54,60,63,68,74,77,82,88]
+fold_size = 3
+
+i = 1
+test_start = i*fold_size
+test_end = test_start + fold_size
+test_hours = hours[test_start:test_end]
+test_scores = scores[test_start:test_end]
+train_hours = hours[:test_start] + hours[test_end:]
+train_scores = scores[:test_start] + scores[test_end:]
+
+mean_x = sum(train_hours)/len(train_hours)
+mean_y = sum(train_scores)/len(train_scores)
+numerator = sum((train_hours[j]-mean_x)*(train_scores[j]-mean_y) for j in range(len(train_hours)))
+denominator = sum((train_hours[j]-mean_x)**2 for j in range(len(train_hours)))
+m = numerator/denominator
+b = mean_y - m*mean_x
+
+preds = [predict(x, m, b) for x in test_hours]
+fold_mae = sum(abs(test_scores[j]-preds[j]) for j in range(len(test_scores)))/len(test_scores)
+print("fold", i, "test:", test_hours, "fold_mae:", round(fold_mae, 2))
+`,
+  exercises:[
+    {
+      title:'Build the folds',
+      desc:`Using hours = [1,2,3,4,5,6,7,8,9] and k = 3, calculate fold_size = len(hours) // k, then build
+        folds_hours = [hours[i*fold_size:(i+1)*fold_size] for i in range(k)]. Assert that
+        folds_hours == [[1,2,3],[4,5,6],[7,8,9]].`,
+      starter:`hours = [1,2,3,4,5,6,7,8,9]
+k = 3
+# Calculate fold_size, then build folds_hours, below
+`,
+      tests:[{type:'assert', expr:'folds_hours == [[1,2,3],[4,5,6],[7,8,9]]', label:'folds_hours is correctly calculated'}]
+    },
+    {
+      title:'Build fold 1\'s train/test split',
+      desc:`Using hours = [1,2,3,4,5,6,7,8,9], scores = [50,54,60,63,68,74,77,82,88], fold_size = 3, and i = 1,
+        calculate test_start = i*fold_size, test_end = test_start+fold_size, then build test_hours, test_scores
+        (that fold) and train_hours, train_scores (every OTHER fold, joined). Assert that
+        test_hours == [4,5,6] and train_hours == [1,2,3,7,8,9].`,
+      starter:`hours = [1,2,3,4,5,6,7,8,9]
+scores = [50,54,60,63,68,74,77,82,88]
+fold_size = 3
+i = 1
+# Build test_hours, test_scores, train_hours, train_scores below
+`,
+      tests:[
+        {type:'assert', expr:'test_hours == [4,5,6]', label:'test_hours is correctly calculated'},
+        {type:'assert', expr:'train_hours == [1,2,3,7,8,9]', label:'train_hours is correctly calculated'}
+      ]
+    },
+    {
+      title:'Fit and score fold 1',
+      desc:`Using train_hours = [1,2,3,7,8,9], train_scores = [50,54,60,77,82,88], test_hours = [4,5,6], and
+        test_scores = [63,68,74], fit m and b on the training portion (Week 1's least-squares formulas), predict
+        on test_hours, then calculate fold_mae. Assert that round(m, 2) == 4.66 and round(fold_mae, 2) == 0.73.`,
+      starter:`def predict(x, m, b):
+    return m*x + b
+
+train_hours = [1,2,3,7,8,9]
+train_scores = [50,54,60,77,82,88]
+test_hours = [4,5,6]
+test_scores = [63,68,74]
+# Fit m and b on the training portion, predict on test_hours, then calculate fold_mae
+`,
+      tests:[
+        {type:'assert', expr:'round(m, 2) == 4.66', label:'m is correctly calculated (4.66)'},
+        {type:'assert', expr:'round(fold_mae, 2) == 0.73', label:'fold_mae is correctly calculated (0.73)'}
+      ]
+    },
+    {
+      title:'Average the fold errors',
+      desc:`Using fold_maes = [1.1905, 0.7299, 0.7619] (fold 0, 1 and 2's exact errors), calculate
+        cv_mae = sum(fold_maes) / len(fold_maes) — the cross-validated error, averaged across every fold. Assert
+        that round(cv_mae, 2) == 0.89.`,
+      starter:`fold_maes = [1.1905, 0.7299, 0.7619]
+# Calculate cv_mae below
+`,
+      tests:[{type:'assert', expr:'round(cv_mae, 2) == 0.89', label:'cv_mae is correctly calculated (0.89)'}]
+    },
+    {
+      title:'Compare to a single train/test split',
+      desc:`A normal 80/20 split on this same data only tests on hours = [8, 9] — just 2 students out of 9. Using
+        cv_mae_students_tested = 9 (every student, across all 3 folds) and
+        single_split_students_tested = 2, assert that cv_mae_students_tested > single_split_students_tested —
+        cross-validation gets its more trustworthy estimate by testing on EVERY student, not just a lucky (or
+        unlucky) held-back 20%.`,
+      starter:`cv_mae_students_tested = 9
+single_split_students_tested = 2
+# Add your assert below
+`,
+      tests:[{type:'assert', expr:'cv_mae_students_tested > single_split_students_tested', label:'cv_mae_students_tested is correctly greater'}]
+    },
+    {
+      title:'Taking it to the extreme: leave-one-out',
+      desc:`If k equals the TOTAL number of students, fold_size = len(hours) // k works out to exactly 1 — every
+        single student becomes their own test fold, one at a time. This is called "leave-one-out"
+        cross-validation. Using hours = [1,2,3,4,5,6,7,8,9] and k = 9, calculate fold_size = len(hours) // k and
+        n_folds = k. Assert that fold_size == 1 and n_folds == 9.`,
+      starter:`hours = [1,2,3,4,5,6,7,8,9]
+k = 9
+# Calculate fold_size and n_folds below
+`,
+      tests:[
+        {type:'assert', expr:'fold_size == 1', label:'fold_size is correctly calculated (1)'},
+        {type:'assert', expr:'n_folds == 9', label:'n_folds is correctly calculated (9)'}
+      ]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does k-fold cross-validation do differently from a single train/test split?',
+      options:['It fits the model twice as fast','It tests on EVERY data point exactly once (each fold takes a turn as the test set), then averages the error across all folds','It only uses half the data','It removes the need for a test set entirely'],
+      correct:1,
+      explain:'Instead of holding back just one chunk, k-fold CV rotates which chunk is held back, so every point contributes to the final error estimate exactly once.'
+    },
+    {
+      q:'In train_hours = hours[:test_start] + hours[test_end:], what does the + do?',
+      options:['Adds the numbers in the two lists together','Concatenates (joins) the part before the test fold with the part after it, into one combined training list','Multiplies the lists','Deletes the test fold from hours'],
+      correct:1,
+      explain:'For lists, + joins them end-to-end — everything before the test fold followed by everything after it, which together is every OTHER fold.'
+    },
+    {
+      q:'Why might a single 80/20 train/test split give a misleading error estimate?',
+      options:['It never can','The held-back 20% might happen to be unusually easy or unusually hard to predict, just by chance — a single split only tells you about that one slice','80/20 splits are mathematically impossible','It always overestimates the error'],
+      correct:1,
+      explain:'Whichever students happen to land in the test slice determine the whole error estimate — if that slice is unusual, the single-split estimate can be misleading.'
+    },
+    {
+      q:'If k equals the total number of students (leave-one-out cross-validation), how many students are in EACH test fold?',
+      options:['Exactly 1','Half the dataset','It depends on k','Zero'],
+      correct:0,
+      explain:'With k folds and fold_size = len(data) // k, setting k to the total count makes fold_size exactly 1 — each student gets tested completely on their own.'
+    }
+  ],
+  sandboxStarter3:`def predict(x, m, b):
+    return m*x + b
+
+hours = [1,2,3,4,5,6,7,8,9]
+scores = [50,54,60,63,68,74,77,82,88]
+k = 3
+fold_size = len(hours) // k
+
+fold_maes = []
+for i in range(k):
+    test_start = i*fold_size
+    test_end = test_start + fold_size
+    test_hours = hours[test_start:test_end]
+    test_scores = scores[test_start:test_end]
+    train_hours = hours[:test_start] + hours[test_end:]
+    train_scores = scores[:test_start] + scores[test_end:]
+
+    mean_x = sum(train_hours)/len(train_hours)
+    mean_y = sum(train_scores)/len(train_scores)
+    numerator = sum((train_hours[j]-mean_x)*(train_scores[j]-mean_y) for j in range(len(train_hours)))
+    denominator = sum((train_hours[j]-mean_x)**2 for j in range(len(train_hours)))
+    m = numerator/denominator
+    b = mean_y - m*mean_x
+
+    preds = [predict(x, m, b) for x in test_hours]
+    fold_mae = sum(abs(test_scores[j]-preds[j]) for j in range(len(test_scores)))/len(test_scores)
+    print("fold", i, "fold_mae:", round(fold_mae, 2))
+    fold_maes.append(fold_mae)
+
+cv_mae = sum(fold_maes) / len(fold_maes)
+print("Cross-validated MAE:", round(cv_mae, 2))
+`,
+  stretchChallenge:{
+    title:'Average a fresh set of fold errors',
+    desc:`A different class of 8 students was cross-validated with k = 4, giving
+      fold_maes = [0.46, 0.9561, 0.962, 0.9267]. Calculate cv_mae = sum(fold_maes) / len(fold_maes). Assert that
+      round(cv_mae, 2) == 0.83.`,
+    starter:`fold_maes = [0.46, 0.9561, 0.962, 0.9267]
+# Calculate cv_mae below
+`,
+    tests:[
+      {type:'assert', expr:'round(cv_mae, 2) == 0.83', label:'cv_mae is correctly calculated (0.83)'}
+    ]
+  }
 }
 ];
 
