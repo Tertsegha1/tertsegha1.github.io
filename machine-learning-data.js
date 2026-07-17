@@ -3017,6 +3017,245 @@ k = 0.2
       {type:'assert', expr:'classified == [False, False, True, True]', label:'classified is correctly calculated'}
     ]
   }
+},
+{
+  key:'week5', num:5, title:'Splitting the Data: Decision Tree Logic by Hand',
+  scenarioTag:'Real world: which cutoff actually separates pass from fail BEST?',
+  scenario:`Beginner Week 4 picked threshold = 5 somewhat by trial and error, then just measured its accuracy. A
+    <strong>decision tree</strong> does this SYSTEMATICALLY: try several candidate split points, predict the
+    MAJORITY label on each side of the split, count how many students that split gets wrong, and pick whichever
+    split has the FEWEST errors. That systematic search is exactly what you'll do by hand this week.`,
+  objectives:[
+    'Split a dataset into "left" (below a candidate split) and "right" (at or above it) groups',
+    'Find the majority label within a group',
+    'Count how many predictions a given split gets wrong',
+    'Try several candidate splits and pick the one with the fewest errors'
+  ],
+  conceptHtml:`
+    <p>For ONE candidate split value, a decision tree predicts the MAJORITY label for everyone on each side:</p>
+    <pre class="code-block">def majority(labels):
+    return labels.count(True) >= labels.count(False)
+
+hours = [1,2,3,4,5,6,7,8,9,10]
+passed = [False, False, False, False, True, True, False, True, True, True]
+split = 5
+
+left_idx = [i for i in range(len(hours)) if hours[i] < split]
+right_idx = [i for i in range(len(hours)) if hours[i] >= split]
+left_maj = majority([passed[i] for i in left_idx])
+right_maj = majority([passed[i] for i in right_idx])</pre>
+    <p>Then count how many students that split gets WRONG, by comparing the predicted label (left_maj or
+    right_maj, depending which side each student falls on) to their real label:</p>
+    <pre class="code-block">preds = [left_maj if hours[i] < split else right_maj for i in range(len(hours))]
+errors = sum(1 for i in range(len(hours)) if preds[i] != passed[i])
+print(errors)   # 1 — only ONE student is misclassified by this split</pre>
+    <h3>Let's break down why trying MULTIPLE splits matters</h3>
+    <ul>
+      <li><code>left_idx</code>/<code>right_idx</code> — the same list-comprehension filtering pattern used
+        throughout this project, just filtering on "which side of the split" instead of a fixed condition.</li>
+      <li><code>majority(labels)</code> is the SAME idea as Beginner Week 4's threshold classifier — predict
+        whichever label wins by count — just computed separately for each side of the split.</li>
+      <li>A decision tree doesn't just try ONE split — it tries several CANDIDATES (e.g. 3, 4, 5, 6, 7), counts
+        errors for each, and picks whichever candidate has the FEWEST errors as "the best split."</li>
+    </ul>`,
+  sandboxStarter:`def majority(labels):
+    return labels.count(True) >= labels.count(False)
+
+print(majority([True, True, False]))
+print(majority([False, False, True]))
+`,
+  sandboxStarter2:`def majority(labels):
+    return labels.count(True) >= labels.count(False)
+
+hours = [1,2,3,4,5,6,7,8,9,10]
+passed = [False, False, False, False, True, True, False, True, True, True]
+split = 5
+
+left_idx = [i for i in range(len(hours)) if hours[i] < split]
+right_idx = [i for i in range(len(hours)) if hours[i] >= split]
+left_maj = majority([passed[i] for i in left_idx])
+right_maj = majority([passed[i] for i in right_idx])
+
+preds = [left_maj if hours[i] < split else right_maj for i in range(len(hours))]
+errors = sum(1 for i in range(len(hours)) if preds[i] != passed[i])
+print("split", split, "-> errors:", errors)
+`,
+  exercises:[
+    {
+      title:'Find the majority label',
+      desc:`Write majority(labels) returning labels.count(True) >= labels.count(False). Assert that
+        majority([True, True, False]) == True and majority([False, False, True]) == False.`,
+      starter:`def majority(labels):
+    # TODO: return labels.count(True) >= labels.count(False)
+    pass
+`,
+      tests:[
+        {type:'assert', expr:'majority([True, True, False]) == True', label:'majority([True, True, False]) correctly equals True'},
+        {type:'assert', expr:'majority([False, False, True]) == False', label:'majority([False, False, True]) correctly equals False'}
+      ]
+    },
+    {
+      title:'Split into left and right groups',
+      desc:`Using hours = [1,2,3,4,5,6,7,8,9,10] and split = 5, build left_idx (indices where hours[i] < split)
+        and right_idx (indices where hours[i] >= split). Assert that left_idx == [0,1,2,3] and
+        right_idx == [4,5,6,7,8,9].`,
+      starter:`hours = [1,2,3,4,5,6,7,8,9,10]
+split = 5
+# Build left_idx and right_idx below
+`,
+      tests:[
+        {type:'assert', expr:'left_idx == [0,1,2,3]', label:'left_idx is correctly calculated'},
+        {type:'assert', expr:'right_idx == [4,5,6,7,8,9]', label:'right_idx is correctly calculated'}
+      ]
+    },
+    {
+      title:'Find each side\'s majority label',
+      desc:`Using passed = [False, False, False, False, True, True, False, True, True, True], left_idx =
+        [0,1,2,3], and right_idx = [4,5,6,7,8,9], build left_labels, right_labels, then left_maj = majority(
+        left_labels) and right_maj = majority(right_labels). Assert that left_maj == False and
+        right_maj == True.`,
+      starter:`def majority(labels):
+    return labels.count(True) >= labels.count(False)
+
+passed = [False, False, False, False, True, True, False, True, True, True]
+left_idx = [0,1,2,3]
+right_idx = [4,5,6,7,8,9]
+# Build left_labels, right_labels, left_maj and right_maj below
+`,
+      tests:[
+        {type:'assert', expr:'left_maj == False', label:'left_maj correctly equals False'},
+        {type:'assert', expr:'right_maj == True', label:'right_maj correctly equals True'}
+      ]
+    },
+    {
+      title:'Count the errors for split = 5',
+      desc:`Using hours = [1,2,3,4,5,6,7,8,9,10], passed = [False, False, False, False, True, True, False, True,
+        True, True], split = 5, left_maj = False, and right_maj = True, build preds = [left_maj if hours[i] <
+        split else right_maj for i in range(len(hours))], then errors: how many preds don't match passed. Assert
+        that errors == 1.`,
+      starter:`hours = [1,2,3,4,5,6,7,8,9,10]
+passed = [False, False, False, False, True, True, False, True, True, True]
+split = 5
+left_maj = False
+right_maj = True
+# Build preds, then errors, below
+`,
+      tests:[{type:'assert', expr:'errors == 1', label:'errors correctly equals 1'}]
+    },
+    {
+      title:'Try a worse split',
+      desc:`Using hours and passed from before, but split = 3 this time (both left_maj and right_maj come out
+        False and True respectively, same as split=5), rebuild left_idx/right_idx, left_maj/right_maj, preds and
+        errors for split = 3. Assert that errors == 3 — noticeably worse than split=5's error of 1.`,
+      starter:`def majority(labels):
+    return labels.count(True) >= labels.count(False)
+
+hours = [1,2,3,4,5,6,7,8,9,10]
+passed = [False, False, False, False, True, True, False, True, True, True]
+split = 3
+# Build left_idx, right_idx, left_maj, right_maj, preds and errors below
+`,
+      tests:[{type:'assert', expr:'errors == 3', label:'errors correctly equals 3'}]
+    },
+    {
+      title:'Search all candidate splits for the best one',
+      desc:`Using errors_for_split(s) (provided below — do not modify it) and
+        candidates = [3, 4, 5, 6, 7, 8], build errors_by_split = {s: errors_for_split(s) for s in candidates},
+        then best_split = min(errors_by_split, key=errors_by_split.get). Assert that
+        errors_by_split[5] == 1 and best_split == 5 — the systematic search lands on the SAME split Beginner
+        Week 4 found by trial and error.`,
+      starter:`def majority(labels):
+    return labels.count(True) >= labels.count(False)
+
+hours = [1,2,3,4,5,6,7,8,9,10]
+passed = [False, False, False, False, True, True, False, True, True, True]
+
+def errors_for_split(s):
+    left_idx = [i for i in range(len(hours)) if hours[i] < s]
+    right_idx = [i for i in range(len(hours)) if hours[i] >= s]
+    left_maj = majority([passed[i] for i in left_idx])
+    right_maj = majority([passed[i] for i in right_idx])
+    preds = [left_maj if hours[i] < s else right_maj for i in range(len(hours))]
+    return sum(1 for i in range(len(hours)) if preds[i] != passed[i])
+
+candidates = [3, 4, 5, 6, 7, 8]
+# Build errors_by_split, then best_split, below
+`,
+      tests:[
+        {type:'assert', expr:'errors_by_split[5] == 1', label:'errors_by_split[5] correctly equals 1'},
+        {type:'assert', expr:'best_split == 5', label:'best_split correctly equals 5'}
+      ]
+    }
+  ],
+  quiz:[
+    {
+      q:'What is a decision tree doing when it searches for the "best split" on one feature?',
+      options:['Randomly guessing a cutoff','Trying several candidate threshold values, and picking whichever one produces the fewest misclassifications','Averaging every value in the feature','Sorting the data alphabetically'],
+      correct:1,
+      explain:'The tree systematically compares candidate splits by counting errors, and keeps the one that separates the classes best.'
+    },
+    {
+      q:'When predicting a label for everyone in a group (left or right of a split), why use the MAJORITY label?',
+      options:['It is always 100% correct','The majority label is the one choice that gets the FEWEST students in that group wrong','Majority label is chosen at random','It ignores the labels entirely'],
+      correct:1,
+      explain:'Predicting the majority label minimizes mistakes within that specific group — any other choice would get more of that group wrong.'
+    },
+    {
+      q:'Why did split = 5 win over split = 3 in this week\'s exercises?',
+      options:['It was chosen arbitrarily','It produced fewer total misclassifications (1) than split = 3 did (3)','split = 5 is always the correct answer for any dataset','Because 5 is the middle of the range'],
+      correct:1,
+      explain:'The "best" split is whichever candidate minimizes errors on THIS specific dataset — here, that happened to be 5.'
+    },
+    {
+      q:'How does this week\'s systematic split search connect to Beginner Week 4\'s threshold classifier?',
+      options:['They are unrelated ideas','It is the exact same "predict by cutoff" idea — this week just tries several candidates and picks the best one systematically, instead of picking one threshold by trial and error','Decision trees never use thresholds','Week 4\'s classifier ignores accuracy'],
+      correct:1,
+      explain:'Both use a cutoff on one feature to predict a category — the decision tree approach just formalizes HOW that cutoff gets chosen.'
+    }
+  ],
+  sandboxStarter3:`def majority(labels):
+    return labels.count(True) >= labels.count(False)
+
+hours = [1,2,3,4,5,6,7,8,9,10]
+passed = [False, False, False, False, True, True, False, True, True, True]
+
+def errors_for_split(s):
+    left_idx = [i for i in range(len(hours)) if hours[i] < s]
+    right_idx = [i for i in range(len(hours)) if hours[i] >= s]
+    left_maj = majority([passed[i] for i in left_idx])
+    right_maj = majority([passed[i] for i in right_idx])
+    preds = [left_maj if hours[i] < s else right_maj for i in range(len(hours))]
+    return sum(1 for i in range(len(hours)) if preds[i] != passed[i])
+
+for s in [3, 4, 5, 6, 7, 8]:
+    print("split", s, "-> errors:", errors_for_split(s))
+`,
+  stretchChallenge:{
+    title:'Find the best split for a new class',
+    desc:`Using attendance = [10, 20, 30, 40, 50, 60, 70, 80], passed = [False, False, False, True, False, True,
+      True, True], and errors_for_split(s) adapted for this data (provided below), find the best split among
+      candidates = [25, 35, 45, 55]. Assert that best_split == 35.`,
+    starter:`def majority(labels):
+    return labels.count(True) >= labels.count(False)
+
+attendance = [10, 20, 30, 40, 50, 60, 70, 80]
+passed = [False, False, False, True, False, True, True, True]
+
+def errors_for_split(s):
+    left_idx = [i for i in range(len(attendance)) if attendance[i] < s]
+    right_idx = [i for i in range(len(attendance)) if attendance[i] >= s]
+    left_maj = majority([passed[i] for i in left_idx])
+    right_maj = majority([passed[i] for i in right_idx])
+    preds = [left_maj if attendance[i] < s else right_maj for i in range(len(attendance))]
+    return sum(1 for i in range(len(attendance)) if preds[i] != passed[i])
+
+candidates = [25, 35, 45, 55]
+# Build errors_by_split, then best_split, below
+`,
+    tests:[
+      {type:'assert', expr:'best_split == 35', label:'best_split is correctly calculated (35)'}
+    ]
+  }
 }
 ];
 
