@@ -3020,5 +3020,74 @@ k = 0.2
 }
 ];
 
+const MLR_INTERMEDIATE_MP1 = {
+  key:'mp1',
+  title:'Mini Project 1 — Build a Fairer Pass/Fail Predictor',
+  intro:`A class of 8 students has hours studied and practice tests taken on record. Three stages: predict each
+    student's score using both clues (Week 1), scale the features and cross-validate the model's honest error
+    across folds (Weeks 2-3), then convert predicted scores into pass-probability confidence numbers (Week 4).`,
+  newTrick:`Cross-validating a model that uses GIVEN weights (rather than weights re-fitted per fold) — proving
+    the SAME fixed formula holds up consistently across different slices of students, connecting Week 3's folding
+    technique to Week 1's multi-feature predictions for the first time.`,
+  stages:[
+    {
+      key:'a', title:'Stage A — Predict with two clues',
+      desc:`Using hours = [2, 3, 4, 6, 7, 8, 9, 10], tests = [0, 1, 1, 2, 3, 3, 4, 4], and w1 = 5, w2 = 10, b = 30,
+        build predicted = [predict2(h, t, w1, w2, b) for h, t in zip(hours, tests)] (Week 1's predict2). Assert
+        that predicted == [40, 55, 60, 80, 95, 100, 115, 120].`,
+      starter:`def predict2(hours, tests, w1, w2, b):
+    return w1*hours + w2*tests + b
+
+hours = [2, 3, 4, 6, 7, 8, 9, 10]
+tests = [0, 1, 1, 2, 3, 3, 4, 4]
+w1, w2, b = 5, 10, 30
+# Build predicted below
+`,
+      tests:[{type:'assert', expr:'predicted == [40, 55, 60, 80, 95, 100, 115, 120]', label:'predicted is correctly calculated'}]
+    },
+    {
+      key:'b', title:'Stage B — Scale, then cross-validate the model',
+      desc:`Using hours = [2, 3, 4, 6, 7, 8, 9, 10], build scaled_hours = [scale(h, min(hours), max(hours)) for h
+        in hours] (Week 2). Assert that [round(x, 3) for x in scaled_hours] == [0.0, 0.125, 0.25, 0.5, 0.625,
+        0.75, 0.875, 1.0]. Then, using predicted = [40, 55, 60, 80, 95, 100, 115, 120] and
+        actual = [42, 53, 61, 79, 99, 97, 117, 117], cross-validate with k = 2 folds (Week 3): for each fold,
+        calculate that fold's MAE using the SAME predicted/actual values (no re-fitting — the weights are fixed),
+        then average into cv_mae. Assert that round(cv_mae, 2) == 2.25.`,
+      starter:`def scale(x, xmin, xmax):
+    return (x - xmin) / (xmax - xmin)
+
+hours = [2, 3, 4, 6, 7, 8, 9, 10]
+predicted = [40, 55, 60, 80, 95, 100, 115, 120]
+actual = [42, 53, 61, 79, 99, 97, 117, 117]
+k = 2
+fold_size = len(hours) // k
+# Build scaled_hours below, then compute fold_maes and cv_mae for k=2 folds
+`,
+      tests:[
+        {type:'assert', expr:'[round(x, 3) for x in scaled_hours] == [0.0, 0.125, 0.25, 0.5, 0.625, 0.75, 0.875, 1.0]', label:'scaled_hours is correctly calculated'},
+        {type:'assert', expr:'round(cv_mae, 2) == 2.25', label:'cv_mae is correctly calculated (2.25)'}
+      ]
+    },
+    {
+      key:'c', title:'Stage C — Convert predictions into pass probabilities',
+      desc:`Using predicted = [40, 55, 60, 80, 95, 100, 115, 120], threshold = 70, and k = 0.1, build
+        zs = [k*(p-threshold) for p in predicted], then probs = [sigmoid(z) for z in zs] (Week 4), then
+        classified = [p >= 0.5 for p in probs]. Assert that
+        classified == [False, False, False, True, True, True, True, True].`,
+      starter:`import math
+
+def sigmoid(z):
+    return 1 / (1 + math.exp(-z))
+
+predicted = [40, 55, 60, 80, 95, 100, 115, 120]
+threshold = 70
+k = 0.1
+# Build zs, probs and classified below
+`,
+      tests:[{type:'assert', expr:'classified == [False, False, False, True, True, True, True, True]', label:'classified is correctly calculated'}]
+    }
+  ]
+};
+
 window.SUBJECT_DATA = window.SUBJECT_DATA || {};
 window.SUBJECT_DATA.mlr = { b: {weeks: MLR_WEEKS, mp1: MLR_MP1, mp2: MLR_MP2}, i: {weeks: MLR_WEEKS, mp1: MLR_MP1, mp2: MLR_MP2}, a: {weeks: MLR_WEEKS, mp1: MLR_MP1, mp2: MLR_MP2} };
