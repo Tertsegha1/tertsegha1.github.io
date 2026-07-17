@@ -6130,6 +6130,258 @@ model.fit(Xs, passed)
       {type:'assert', expr:'decision_0 == -2.84', label:'A very different student\'s decision score is correctly explained'}
     ]
   }
+},
+{
+  key:'week8', num:8, title:'Capstone — Build and Tune',
+  scenarioTag:'Real world: a brand-new dataset lands on your desk — the school wants a mock-exam predictor, today.',
+  scenario:`Everything from Weeks 1-7 comes together here, on a genuinely NEW dataset: predicting whether a
+    student passes an upcoming mock exam from their revision hours and practice tests taken. Build an honest
+    baseline first, check it for overfitting, then scale and tune a real improvement — the full workflow, start to
+    finish.`,
+  objectives:[
+    'Build a baseline model on a brand-new dataset',
+    'Check the baseline for overfitting using train vs cross-validated score',
+    'Scale features and tune a model with GridSearchCV',
+    'Confirm tuning produced a genuine, cross-validated improvement'
+  ],
+  conceptHtml:`
+    <p>A real workflow never jumps straight to tuning — it starts with an honest BASELINE, checked for
+    overfitting, before trying to improve on it:</p>
+    <pre class="code-block">from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
+
+baseline = RandomForestClassifier(random_state=42)
+baseline.fit(X, y)
+baseline_train = baseline.score(X, y)                        # 1.0 — could be overfitting
+baseline_cv = cross_val_score(baseline, X, y, cv=5).mean()    # 0.93 — the honest number
+print(baseline_train, baseline_cv)</pre>
+    <h3>Let's break down the capstone workflow</h3>
+    <ul>
+      <li>Step 1 — fit an untouched BASELINE model first (Week 3\'s pattern), so later steps have something honest
+        to compare against.</li>
+      <li>Step 2 — compare its training score against its cross-validated score (Week 4) to check whether it\'s
+        overfitting before trusting it.</li>
+      <li>Step 3 — scale the features and tune with <code>GridSearchCV</code> (Weeks 1 and 5) to search for a
+        genuinely better setting.</li>
+      <li>Step 4 — compare the TUNED cross-validated score against the baseline\'s cross-validated score — never
+        the training scores — to confirm tuning actually helped.</li>
+    </ul>`,
+  sandboxStarter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
+
+revision_hours = [6, 7, 1, 9, 6, 1, 4, 2, 7, 4, 9, 1, 10, 4, 11, 1, 10, 1, 1, 3, 7, 9, 10, 9, 11, 2, 10, 4, 2, 12]
+practice_tests = [1, 5, 0, 0, 4, 4, 0, 3, 0, 0, 3, 6, 0, 5, 4, 4, 3, 1, 4, 2, 1, 0, 2, 6, 1, 4, 5, 2, 4, 0]
+mock_passed = [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1]
+X = list(zip(revision_hours, practice_tests))
+
+baseline = RandomForestClassifier(random_state=42)
+baseline.fit(X, mock_passed)
+print("Baseline training score:", round(baseline.score(X, mock_passed), 2))
+print("Baseline cross-validated score:", round(cross_val_score(baseline, X, mock_passed, cv=5).mean(), 2))
+`,
+  sandboxStarter2:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import GridSearchCV
+
+revision_hours = [6, 7, 1, 9, 6, 1, 4, 2, 7, 4, 9, 1, 10, 4, 11, 1, 10, 1, 1, 3, 7, 9, 10, 9, 11, 2, 10, 4, 2, 12]
+practice_tests = [1, 5, 0, 0, 4, 4, 0, 3, 0, 0, 3, 6, 0, 5, 4, 4, 3, 1, 4, 2, 1, 0, 2, 6, 1, 4, 5, 2, 4, 0]
+mock_passed = [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1]
+X = list(zip(revision_hours, practice_tests))
+
+scaler = StandardScaler()
+Xs = scaler.fit_transform(X)
+param_grid = {"max_depth": [1, 2, 3, 4], "n_estimators": [10, 50, 100]}
+grid = GridSearchCV(RandomForestClassifier(random_state=42), param_grid, cv=5)
+grid.fit(Xs, mock_passed)
+print("Best settings:", grid.best_params_)
+print("Best cross-validated score:", round(grid.best_score_, 2))
+`,
+  exercises:[
+    {
+      title:'Build the baseline model',
+      desc:`Create revision_hours, practice_tests and mock_passed exactly as in the concept box (30 values each).
+        Create X = list(zip(revision_hours, practice_tests)). Build baseline = RandomForestClassifier(random_state=42)
+        and fit it on X/mock_passed. Create baseline_train = round(baseline.score(X, mock_passed), 2). Assert that
+        baseline_train == 1.0.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+revision_hours = [6, 7, 1, 9, 6, 1, 4, 2, 7, 4, 9, 1, 10, 4, 11, 1, 10, 1, 1, 3, 7, 9, 10, 9, 11, 2, 10, 4, 2, 12]
+practice_tests = [1, 5, 0, 0, 4, 4, 0, 3, 0, 0, 3, 6, 0, 5, 4, 4, 3, 1, 4, 2, 1, 0, 2, 6, 1, 4, 5, 2, 4, 0]
+mock_passed = [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1]
+# Create X, baseline and baseline_train below
+`,
+      tests:[{type:'assert', expr:'baseline_train == 1.0', label:'The baseline model\'s training score is correctly computed'}]
+    },
+    {
+      title:'Check the baseline honestly',
+      desc:`Using X, mock_passed and baseline from before, create
+        baseline_cv = round(cross_val_score(baseline, X, mock_passed, cv=5).mean(), 2) (import cross_val_score
+        from sklearn.model_selection). Assert that baseline_cv == 0.93 — noticeably lower than the training
+        score.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
+revision_hours = [6, 7, 1, 9, 6, 1, 4, 2, 7, 4, 9, 1, 10, 4, 11, 1, 10, 1, 1, 3, 7, 9, 10, 9, 11, 2, 10, 4, 2, 12]
+practice_tests = [1, 5, 0, 0, 4, 4, 0, 3, 0, 0, 3, 6, 0, 5, 4, 4, 3, 1, 4, 2, 1, 0, 2, 6, 1, 4, 5, 2, 4, 0]
+mock_passed = [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1]
+X = list(zip(revision_hours, practice_tests))
+baseline = RandomForestClassifier(random_state=42)
+baseline.fit(X, mock_passed)
+baseline_train = round(baseline.score(X, mock_passed), 2)
+# Create baseline_cv below
+`,
+      tests:[{type:'assert', expr:'baseline_cv == 0.93', label:'The baseline\'s cross-validated score is correctly computed'}]
+    },
+    {
+      title:'Read the best tuned depth',
+      desc:`Create scaler = StandardScaler() and Xs = scaler.fit_transform(X). Build
+        param_grid = {"max_depth": [1, 2, 3, 4], "n_estimators": [10, 50, 100]} and
+        grid = GridSearchCV(RandomForestClassifier(random_state=42), param_grid, cv=5), then grid.fit(Xs,
+        mock_passed). Create best_depth = grid.best_params_["max_depth"]. Assert that best_depth == 3.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import GridSearchCV
+revision_hours = [6, 7, 1, 9, 6, 1, 4, 2, 7, 4, 9, 1, 10, 4, 11, 1, 10, 1, 1, 3, 7, 9, 10, 9, 11, 2, 10, 4, 2, 12]
+practice_tests = [1, 5, 0, 0, 4, 4, 0, 3, 0, 0, 3, 6, 0, 5, 4, 4, 3, 1, 4, 2, 1, 0, 2, 6, 1, 4, 5, 2, 4, 0]
+mock_passed = [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1]
+X = list(zip(revision_hours, practice_tests))
+# Create scaler, Xs, param_grid, grid and best_depth below
+`,
+      tests:[{type:'assert', expr:'best_depth == 3', label:'The best max_depth from the tuned search is correctly read'}]
+    },
+    {
+      title:'Read the best tuned n_estimators',
+      desc:`Using grid from before, create best_n = grid.best_params_["n_estimators"]. Assert that best_n == 50.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import GridSearchCV
+revision_hours = [6, 7, 1, 9, 6, 1, 4, 2, 7, 4, 9, 1, 10, 4, 11, 1, 10, 1, 1, 3, 7, 9, 10, 9, 11, 2, 10, 4, 2, 12]
+practice_tests = [1, 5, 0, 0, 4, 4, 0, 3, 0, 0, 3, 6, 0, 5, 4, 4, 3, 1, 4, 2, 1, 0, 2, 6, 1, 4, 5, 2, 4, 0]
+mock_passed = [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1]
+X = list(zip(revision_hours, practice_tests))
+scaler = StandardScaler()
+Xs = scaler.fit_transform(X)
+param_grid = {"max_depth": [1, 2, 3, 4], "n_estimators": [10, 50, 100]}
+grid = GridSearchCV(RandomForestClassifier(random_state=42), param_grid, cv=5)
+grid.fit(Xs, mock_passed)
+# Create best_n below
+`,
+      tests:[{type:'assert', expr:'best_n == 50', label:'The best n_estimators from the tuned search is correctly read'}]
+    },
+    {
+      title:'Measure the overfitting gap in the baseline',
+      desc:`Using baseline_train and baseline_cv from before, create
+        baseline_gap = round(baseline_train - baseline_cv, 2). Assert that baseline_gap == 0.07 — a small but real
+        gap, worth knowing about before trusting the baseline.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
+revision_hours = [6, 7, 1, 9, 6, 1, 4, 2, 7, 4, 9, 1, 10, 4, 11, 1, 10, 1, 1, 3, 7, 9, 10, 9, 11, 2, 10, 4, 2, 12]
+practice_tests = [1, 5, 0, 0, 4, 4, 0, 3, 0, 0, 3, 6, 0, 5, 4, 4, 3, 1, 4, 2, 1, 0, 2, 6, 1, 4, 5, 2, 4, 0]
+mock_passed = [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1]
+X = list(zip(revision_hours, practice_tests))
+baseline = RandomForestClassifier(random_state=42)
+baseline.fit(X, mock_passed)
+baseline_train = round(baseline.score(X, mock_passed), 2)
+baseline_cv = round(cross_val_score(baseline, X, mock_passed, cv=5).mean(), 2)
+# Create baseline_gap below
+`,
+      tests:[{type:'assert', expr:'baseline_gap == 0.07', label:'The baseline\'s overfitting gap is correctly measured'}]
+    },
+    {
+      title:'Confirm tuning genuinely helped',
+      desc:`Using grid and baseline_cv from before, create best_cv = round(grid.best_score_, 2). Create
+        improved = best_cv > baseline_cv. Assert that best_cv == 0.97 and improved == True — proving tuning
+        produced a REAL improvement, measured fairly against the honest baseline cross-validated score.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import GridSearchCV, cross_val_score
+revision_hours = [6, 7, 1, 9, 6, 1, 4, 2, 7, 4, 9, 1, 10, 4, 11, 1, 10, 1, 1, 3, 7, 9, 10, 9, 11, 2, 10, 4, 2, 12]
+practice_tests = [1, 5, 0, 0, 4, 4, 0, 3, 0, 0, 3, 6, 0, 5, 4, 4, 3, 1, 4, 2, 1, 0, 2, 6, 1, 4, 5, 2, 4, 0]
+mock_passed = [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1]
+X = list(zip(revision_hours, practice_tests))
+baseline = RandomForestClassifier(random_state=42)
+baseline.fit(X, mock_passed)
+baseline_cv = round(cross_val_score(baseline, X, mock_passed, cv=5).mean(), 2)
+scaler = StandardScaler()
+Xs = scaler.fit_transform(X)
+param_grid = {"max_depth": [1, 2, 3, 4], "n_estimators": [10, 50, 100]}
+grid = GridSearchCV(RandomForestClassifier(random_state=42), param_grid, cv=5)
+grid.fit(Xs, mock_passed)
+# Create best_cv and improved below
+`,
+      tests:[{type:'assert', expr:'best_cv == 0.97 and improved == True', label:'Tuning is confirmed to genuinely improve on the honest baseline'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why build a baseline model FIRST, before scaling or tuning anything?',
+      options:['It is not necessary, tuning first is fine','Without an honest reference point, you can\'t tell whether later steps (scaling, tuning) actually helped, or by how much','Baselines always score higher than tuned models','A baseline is only needed for RandomForest'],
+      correct:1,
+      explain:'A baseline gives you a fair "before" number — without it, an improvement from tuning can\'t be measured or trusted.'
+    },
+    {
+      q:'The baseline scores 1.0 on training data but 0.93 cross-validated. What should you do?',
+      options:['Trust the 1.0 and ship it','Trust the cross-validated 0.93 as the honest estimate, and keep the gap in mind — it hints at some overfitting','Ignore both numbers','Retrain until training score drops to 0.93'],
+      correct:1,
+      explain:'The cross-validated score reflects performance on data the model didn\'t train on for that fold — always the more trustworthy number for judging real-world performance.'
+    },
+    {
+      q:'RandomForest\'s predictions aren\'t actually affected by feature scaling — so why scale before tuning here anyway?',
+      options:['It is pointless and should be skipped','Building a scale-then-tune habit means the SAME workflow works for any model type, including ones like SVC or k-NN that genuinely need scaling','Scaling always improves RandomForest\'s accuracy','Scaling is required by GridSearchCV itself'],
+      correct:1,
+      explain:'Scaling doesn\'t hurt RandomForest and costs nothing here — but keeping it as a standard workflow step means you don\'t have to remember it later for models where it truly matters.'
+    },
+    {
+      q:'Why compare the TUNED cross-validated score against the BASELINE cross-validated score, not the training scores?',
+      options:['Training scores are more reliable','Both scores need to be measured the same, fair way (cross-validated) for the comparison to mean anything — comparing a training score to a cross-validated score would be misleading','It doesn\'t matter which scores are compared','Training scores can\'t be computed for a GridSearchCV'],
+      correct:1,
+      explain:'A fair "did this help?" comparison requires measuring both models the same way — cross-validated score versus cross-validated score, never mixing in a training score.'
+    }
+  ],
+  sandboxStarter3:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import GridSearchCV, cross_val_score
+
+revision_hours = [6, 7, 1, 9, 6, 1, 4, 2, 7, 4, 9, 1, 10, 4, 11, 1, 10, 1, 1, 3, 7, 9, 10, 9, 11, 2, 10, 4, 2, 12]
+practice_tests = [1, 5, 0, 0, 4, 4, 0, 3, 0, 0, 3, 6, 0, 5, 4, 4, 3, 1, 4, 2, 1, 0, 2, 6, 1, 4, 5, 2, 4, 0]
+mock_passed = [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1]
+X = list(zip(revision_hours, practice_tests))
+
+baseline = RandomForestClassifier(random_state=42)
+baseline.fit(X, mock_passed)
+baseline_cv = round(cross_val_score(baseline, X, mock_passed, cv=5).mean(), 2)
+
+scaler = StandardScaler()
+Xs = scaler.fit_transform(X)
+param_grid = {"max_depth": [1, 2, 3, 4], "n_estimators": [10, 50, 100]}
+grid = GridSearchCV(RandomForestClassifier(random_state=42), param_grid, cv=5)
+grid.fit(Xs, mock_passed)
+best_cv = round(grid.best_score_, 2)
+
+print("Baseline cross-validated:", baseline_cv)
+print("Tuned cross-validated:", best_cv)
+print("Genuine improvement:", best_cv > baseline_cv)
+`,
+  stretchChallenge:{
+    title:'Try a completely different model type',
+    desc:`Using scaler and Xs from before, create knn = KNeighborsClassifier() (import from sklearn.neighbors).
+      Create knn_cv = round(cross_val_score(knn, Xs, mock_passed, cv=5).mean(), 2). Assert that knn_cv == 0.8 —
+      lower than the tuned RandomForest's 0.97, a preview of comparing several model types fairly (next week's
+      focus).`,
+    starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import cross_val_score
+revision_hours = [6, 7, 1, 9, 6, 1, 4, 2, 7, 4, 9, 1, 10, 4, 11, 1, 10, 1, 1, 3, 7, 9, 10, 9, 11, 2, 10, 4, 2, 12]
+practice_tests = [1, 5, 0, 0, 4, 4, 0, 3, 0, 0, 3, 6, 0, 5, 4, 4, 3, 1, 4, 2, 1, 0, 2, 6, 1, 4, 5, 2, 4, 0]
+mock_passed = [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1]
+X = list(zip(revision_hours, practice_tests))
+scaler = StandardScaler()
+Xs = scaler.fit_transform(X)
+# Create knn and knn_cv below
+`,
+    tests:[
+      {type:'assert', expr:'knn_cv == 0.8', label:'A different model type\'s fairly-measured score is correctly compared'}
+    ]
+  }
 }
 ];
 
