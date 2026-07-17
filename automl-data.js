@@ -5870,6 +5870,266 @@ loaded = joblib.load("pipe.joblib")
       {type:'assert', expr:'importances_match == True', label:'feature_importances_ are confirmed identical after saving and reloading'}
     ]
   }
+},
+{
+  key:'week7', num:7, title:'Explaining a Prediction',
+  scenarioTag:'Real world: knowing a model is 90% accurate overall doesn\'t explain why it flagged THIS student.',
+  scenario:`Week 2's feature_importances_ told you what mattered MOST across the whole class — but a worried
+    student asking "why did it predict I'll fail?" needs an answer about THEM specifically. A LogisticRegression's
+    coefficients let you break a single prediction down into exactly how much each feature pushed it, one student
+    at a time.`,
+  objectives:[
+    'Train a LogisticRegression on scaled features',
+    'Break one specific prediction down into per-feature contributions',
+    'Confirm the contributions and intercept sum to exactly the model\'s decision score',
+    'Identify which feature mattered most for ONE student, not the whole class'
+  ],
+  conceptHtml:`
+    <p>A <code>LogisticRegression</code>'s decision score for any ONE student is just its scaled features
+    multiplied by their coefficients, added up, plus the intercept:</p>
+    <pre class="code-block">from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+
+scaler = StandardScaler()
+Xs = scaler.fit_transform(X)
+model = LogisticRegression()
+model.fit(Xs, y)
+
+student_scaled = Xs[5]
+decision = model.decision_function([student_scaled])[0]
+contributions = model.coef_[0] * student_scaled
+print(contributions)          # one number per feature, for THIS student only
+print(contributions.sum() + model.intercept_[0])   # equals decision, exactly</pre>
+    <h3>Let's break down explaining ONE prediction</h3>
+    <ul>
+      <li>Features must be SCALED first — coefficients are only fairly comparable in size once every feature is on
+        the same scale (Week 1's StandardScaler).</li>
+      <li><code>model.coef_[0] * student_scaled</code> multiplies each coefficient by THIS student's own scaled
+        value — a completely different number for every student, unlike Week 2's dataset-wide
+        feature_importances_.</li>
+      <li>Every contribution, summed with the intercept, adds up to EXACTLY <code>decision_function</code>'s
+        value for that student — nothing is approximate here.</li>
+      <li>The feature with the largest contribution (by size, ignoring sign) is the one that mattered most for
+        THAT student's specific prediction — it can be a completely different feature for a different student.</li>
+    </ul>`,
+  sandboxStarter:`from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+
+scaler = StandardScaler()
+Xs = scaler.fit_transform(X)
+model = LogisticRegression()
+model.fit(Xs, passed)
+
+student_scaled = Xs[5]
+print("Decision score for this student:", round(model.decision_function([student_scaled])[0], 2))
+`,
+  sandboxStarter2:`from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+
+scaler = StandardScaler()
+Xs = scaler.fit_transform(X)
+model = LogisticRegression()
+model.fit(Xs, passed)
+
+student_scaled = Xs[5]
+contributions = model.coef_[0] * student_scaled
+print("hours contribution:", round(contributions[0], 2))
+print("attendance contribution:", round(contributions[1], 2))
+print("sum + intercept:", round(contributions.sum() + model.intercept_[0], 2))
+`,
+  exercises:[
+    {
+      title:'Train the model on scaled features',
+      desc:`Create hours, attendance and passed exactly as in the concept box (30 values each). Create
+        X = list(zip(hours, attendance)). Create scaler = StandardScaler(), then Xs = scaler.fit_transform(X).
+        Create model = LogisticRegression(), fit it on Xs/passed, then score = round(model.score(Xs, passed), 2).
+        Assert that score == 0.9.`,
+      starter:`from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+# Create X, scaler, Xs, model and score below
+`,
+      tests:[{type:'assert', expr:'score == 0.9', label:'The LogisticRegression is correctly trained on scaled features'}]
+    },
+    {
+      title:'Read one student\'s decision score',
+      desc:`Using scaler, Xs and model from before, create student_scaled = Xs[5]. Create
+        decision = round(float(model.decision_function([student_scaled])[0]), 2). Assert that decision == 1.87.`,
+      starter:`from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+scaler = StandardScaler()
+Xs = scaler.fit_transform(X)
+model = LogisticRegression()
+model.fit(Xs, passed)
+# Create student_scaled and decision below
+`,
+      tests:[{type:'assert', expr:'decision == 1.87', label:'This student\'s decision score is correctly read'}]
+    },
+    {
+      title:'Break the prediction down: attendance\'s contribution',
+      desc:`Using student_scaled and model from before, create contributions = model.coef_[0] * student_scaled.
+        Create attendance_contribution = round(float(contributions[1]), 2). Assert that
+        attendance_contribution == 0.57.`,
+      starter:`from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+scaler = StandardScaler()
+Xs = scaler.fit_transform(X)
+model = LogisticRegression()
+model.fit(Xs, passed)
+student_scaled = Xs[5]
+# Create contributions and attendance_contribution below
+`,
+      tests:[{type:'assert', expr:'attendance_contribution == 0.57', label:'The attendance contribution for this student is correctly measured'}]
+    },
+    {
+      title:'Confirm the contributions sum to the decision score',
+      desc:`Using contributions and model from before, create
+        total = round(float(contributions.sum() + model.intercept_[0]), 2). Assert that total == 1.87 — exactly
+        matching the decision score, proving the breakdown accounts for every part of the prediction.`,
+      starter:`from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+scaler = StandardScaler()
+Xs = scaler.fit_transform(X)
+model = LogisticRegression()
+model.fit(Xs, passed)
+student_scaled = Xs[5]
+contributions = model.coef_[0] * student_scaled
+# Create total below
+`,
+      tests:[{type:'assert', expr:'total == 1.87', label:'The per-feature contributions plus intercept exactly reconstruct the decision score'}]
+    },
+    {
+      title:'Read hours\' contribution too',
+      desc:`Using contributions from before, create hours_contribution = round(float(contributions[0]), 2).
+        Assert that hours_contribution == 0.3.`,
+      starter:`from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+scaler = StandardScaler()
+Xs = scaler.fit_transform(X)
+model = LogisticRegression()
+model.fit(Xs, passed)
+student_scaled = Xs[5]
+contributions = model.coef_[0] * student_scaled
+# Create hours_contribution below
+`,
+      tests:[{type:'assert', expr:'hours_contribution == 0.3', label:'The hours contribution for this student is correctly measured'}]
+    },
+    {
+      title:'Identify the strongest contributor for THIS student',
+      desc:`Using contributions from before, create
+        strongest = "attendance" if abs(contributions[1]) > abs(contributions[0]) else "hours". Assert that
+        strongest == "attendance" — the feature that mattered most for THIS specific student's prediction.`,
+      starter:`from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+scaler = StandardScaler()
+Xs = scaler.fit_transform(X)
+model = LogisticRegression()
+model.fit(Xs, passed)
+student_scaled = Xs[5]
+contributions = model.coef_[0] * student_scaled
+# Create strongest below
+`,
+      tests:[{type:'assert', expr:'strongest == "attendance"', label:'The strongest contributor for this student is correctly identified'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'How is explaining ONE prediction (this week) different from Week 2\'s feature_importances_?',
+      options:['They are exactly the same thing','feature_importances_ ranks what mattered across the WHOLE dataset; a per-instance contribution explains what mattered for ONE specific student\'s prediction','Explaining one prediction only works for RandomForest, not LogisticRegression','feature_importances_ only works on one student at a time'],
+      correct:1,
+      explain:'feature_importances_ is a global, dataset-wide ranking. Per-instance contributions are computed fresh for each individual student and can point at a completely different feature.'
+    },
+    {
+      q:'Why must features be scaled before comparing LogisticRegression coefficients?',
+      options:['Scaling is not actually necessary here','Coefficients are only fairly comparable in size once every feature is on the same scale — otherwise a feature with naturally larger raw values could look more important just from its units','Scaling makes the model train faster','Scaling is only needed for RandomForest, not LogisticRegression'],
+      correct:1,
+      explain:'Without scaling, a feature measured in the hundreds could get a small coefficient purely because of its units, while a 0-10 feature gets a large one — making coefficients misleading to compare directly.'
+    },
+    {
+      q:'What do a student\'s per-feature contributions plus the intercept add up to?',
+      options:['Nothing meaningful','Exactly that student\'s decision_function score — no approximation','Always exactly 1.0','The overall accuracy of the model'],
+      correct:1,
+      explain:'The breakdown is exact by construction: decision_function is defined as the sum of coefficient times scaled value, across all features, plus the intercept.'
+    },
+    {
+      q:'If attendance has the largest contribution for one student but hours has the largest for another, what does that mean?',
+      options:['One of the two calculations must be wrong','Different features can matter most for different individual students, even though the model\'s coefficients themselves never change','The model is broken','feature_importances_ would show the same thing'],
+      correct:1,
+      explain:'The coefficients are fixed for the whole model, but each student\'s own scaled feature VALUES differ — so the same fixed coefficients can produce a different "strongest contributor" for each person.'
+    }
+  ],
+  sandboxStarter3:`from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+
+scaler = StandardScaler()
+Xs = scaler.fit_transform(X)
+model = LogisticRegression()
+model.fit(Xs, passed)
+
+student_scaled = Xs[5]
+contributions = model.coef_[0] * student_scaled
+strongest = "attendance" if abs(contributions[1]) > abs(contributions[0]) else "hours"
+print("This student's strongest contributor:", strongest)
+`,
+  stretchChallenge:{
+    title:'Explain a very different student',
+    desc:`Using scaler and model from before, create student_scaled_0 = Xs[0] (a student who actually failed).
+      Create decision_0 = round(float(model.decision_function([student_scaled_0])[0]), 2). Assert that
+      decision_0 == -2.84 — a strongly negative score, correctly pointing toward a fail, for a student with far
+      less revision and attendance than the class average.`,
+    starter:`from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+scaler = StandardScaler()
+Xs = scaler.fit_transform(X)
+model = LogisticRegression()
+model.fit(Xs, passed)
+# Create student_scaled_0 and decision_0 below
+`,
+    tests:[
+      {type:'assert', expr:'decision_0 == -2.84', label:'A very different student\'s decision score is correctly explained'}
+    ]
+  }
 }
 ];
 
