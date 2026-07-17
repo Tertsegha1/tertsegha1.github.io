@@ -6721,9 +6721,98 @@ Xs = scaler.fit_transform(X)
   ]
 };
 
+const ML_ADVANCED_MP2 = {
+  key:'mp2',
+  title:'Mini Project 2 — The AutoML Lab, Tuned and Justified',
+  intro:`The mock-exam predictor from Weeks 8-9 deserves one final, complete pass: preprocess and fairly compare
+    THREE model types (tuning the strongest one properly), pick and justify a winner with the evidence, then save
+    that winner so it's ready to use immediately — the full AutoML workflow, start to finish, in one project.`,
+  fixtureNote:`All three doors build on this same class of 30 students preparing for a mock exam:`,
+  fixtureCode:`revision_hours = [6, 7, 1, 9, 6, 1, 4, 2, 7, 4, 9, 1, 10, 4, 11, 1, 10, 1, 1, 3, 7, 9, 10, 9, 11, 2, 10, 4, 2, 12]
+practice_tests = [1, 5, 0, 0, 4, 4, 0, 3, 0, 0, 3, 6, 0, 5, 4, 4, 3, 1, 4, 2, 1, 0, 2, 6, 1, 4, 5, 2, 4, 0]
+mock_passed = [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1]`,
+  doors:[
+    {
+      key:'a', title:'Door 1 — Compare 3 models fairly, tuning the strongest one',
+      desc:`Using revision_hours, practice_tests and mock_passed above, create X = list(zip(revision_hours,
+        practice_tests)). Create scaler = StandardScaler() and Xs = scaler.fit_transform(X). Create
+        svc_cv = round(cross_val_score(SVC(), Xs, mock_passed, cv=5).mean(), 2) and
+        knn_cv = round(cross_val_score(KNeighborsClassifier(), Xs, mock_passed, cv=5).mean(), 2). Build
+        param_grid = {"max_depth": [1, 2, 3, 4], "n_estimators": [10, 50, 100]} and
+        grid = GridSearchCV(RandomForestClassifier(random_state=42), param_grid, cv=5), then grid.fit(Xs,
+        mock_passed). Create rf_cv = round(grid.best_score_, 2). Create scores = {"random_forest": rf_cv, "svc":
+        svc_cv, "knn": knn_cv}. Assert that scores == {"random_forest": 0.97, "svc": 0.87, "knn": 0.8} — all three
+        model types, measured the SAME fair way.`,
+      starter:`from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import cross_val_score, GridSearchCV
+revision_hours = [6, 7, 1, 9, 6, 1, 4, 2, 7, 4, 9, 1, 10, 4, 11, 1, 10, 1, 1, 3, 7, 9, 10, 9, 11, 2, 10, 4, 2, 12]
+practice_tests = [1, 5, 0, 0, 4, 4, 0, 3, 0, 0, 3, 6, 0, 5, 4, 4, 3, 1, 4, 2, 1, 0, 2, 6, 1, 4, 5, 2, 4, 0]
+mock_passed = [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1]
+# Create X, scaler, Xs, svc_cv, knn_cv, param_grid, grid, rf_cv and scores below
+`,
+      tests:[{type:'assert', expr:'scores == {"random_forest": 0.97, "svc": 0.87, "knn": 0.8}', label:'All three model types are correctly compared, with the RandomForest properly tuned'}]
+    },
+    {
+      key:'b', title:'Door 2 — Pick and justify the winner',
+      desc:`Using scores from Door 1, create best_model = max(scores, key=scores.get). Create
+        ranked = [name for name, score in sorted(scores.items(), key=lambda item: item[1], reverse=True)]. Create
+        margin = round(scores[ranked[0]] - scores[ranked[1]], 2) — the gap between the winner and the runner-up.
+        Assert that best_model == "random_forest" and ranked == ["random_forest", "svc", "knn"] and margin == 0.1.`,
+      starter:`from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import cross_val_score, GridSearchCV
+revision_hours = [6, 7, 1, 9, 6, 1, 4, 2, 7, 4, 9, 1, 10, 4, 11, 1, 10, 1, 1, 3, 7, 9, 10, 9, 11, 2, 10, 4, 2, 12]
+practice_tests = [1, 5, 0, 0, 4, 4, 0, 3, 0, 0, 3, 6, 0, 5, 4, 4, 3, 1, 4, 2, 1, 0, 2, 6, 1, 4, 5, 2, 4, 0]
+mock_passed = [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1]
+X = list(zip(revision_hours, practice_tests))
+scaler = StandardScaler()
+Xs = scaler.fit_transform(X)
+svc_cv = round(cross_val_score(SVC(), Xs, mock_passed, cv=5).mean(), 2)
+knn_cv = round(cross_val_score(KNeighborsClassifier(), Xs, mock_passed, cv=5).mean(), 2)
+param_grid = {"max_depth": [1, 2, 3, 4], "n_estimators": [10, 50, 100]}
+grid = GridSearchCV(RandomForestClassifier(random_state=42), param_grid, cv=5)
+grid.fit(Xs, mock_passed)
+rf_cv = round(grid.best_score_, 2)
+scores = {"random_forest": rf_cv, "svc": svc_cv, "knn": knn_cv}
+# Create best_model, ranked and margin below
+`,
+      tests:[{type:'assert', expr:'best_model == "random_forest" and ranked == ["random_forest", "svc", "knn"] and margin == 0.1', label:'The winner is correctly picked and justified with the evidence'}]
+    },
+    {
+      key:'c', title:'Door 3 — Save the justified winner',
+      desc:`Using grid and Xs from before, create winner = RandomForestClassifier(max_depth=grid.best_params_[
+        "max_depth"], n_estimators=grid.best_params_["n_estimators"], random_state=42), then fit it on Xs and
+        mock_passed. Create joblib.dump(winner, "mp2_winner.joblib") (import joblib) and
+        loaded = joblib.load("mp2_winner.joblib"). Create loaded_score = round(loaded.score(Xs, mock_passed), 2).
+        Assert that loaded_score == 1.0 — the justified winner, tuned, saved and ready to use immediately.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import GridSearchCV
+import joblib
+revision_hours = [6, 7, 1, 9, 6, 1, 4, 2, 7, 4, 9, 1, 10, 4, 11, 1, 10, 1, 1, 3, 7, 9, 10, 9, 11, 2, 10, 4, 2, 12]
+practice_tests = [1, 5, 0, 0, 4, 4, 0, 3, 0, 0, 3, 6, 0, 5, 4, 4, 3, 1, 4, 2, 1, 0, 2, 6, 1, 4, 5, 2, 4, 0]
+mock_passed = [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1]
+X = list(zip(revision_hours, practice_tests))
+scaler = StandardScaler()
+Xs = scaler.fit_transform(X)
+param_grid = {"max_depth": [1, 2, 3, 4], "n_estimators": [10, 50, 100]}
+grid = GridSearchCV(RandomForestClassifier(random_state=42), param_grid, cv=5)
+grid.fit(Xs, mock_passed)
+# Create winner, joblib dump/load and loaded_score below
+`,
+      tests:[{type:'assert', expr:'loaded_score == 1.0', label:'The justified winning model is correctly saved and reloaded'}]
+    }
+  ]
+};
+
 window.SUBJECT_DATA = window.SUBJECT_DATA || {};
 window.SUBJECT_DATA.ml = {
   b: {weeks: ML_WEEKS, mp1: ML_MP1, mp2: ML_MP2},
   i: {weeks: ML_INTERMEDIATE_WEEKS, mp1: ML_INTERMEDIATE_MP1, mp2: ML_INTERMEDIATE_MP2},
-  a: {weeks: ML_ADVANCED_WEEKS, mp1: ML_ADVANCED_MP1, mp2: ML_MP2}
+  a: {weeks: ML_ADVANCED_WEEKS, mp1: ML_ADVANCED_MP1, mp2: ML_ADVANCED_MP2}
 };
