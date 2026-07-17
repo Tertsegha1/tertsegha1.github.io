@@ -6382,6 +6382,277 @@ Xs = scaler.fit_transform(X)
       {type:'assert', expr:'knn_cv == 0.8', label:'A different model type\'s fairly-measured score is correctly compared'}
     ]
   }
+},
+{
+  key:'week9', num:9, title:'Capstone — Justify the Winner',
+  scenarioTag:'Real world: "which model is best?" needs an answer backed by numbers, not a guess.',
+  scenario:`Week 8 tuned a RandomForest to 0.97 and tried a KNeighborsClassifier that only reached 0.8. Before
+    declaring a winner, a THIRD model type — SVC — deserves a fair shot too. Comparing all three the SAME way,
+    then picking (and justifying) a winner with the actual evidence, is how a real model-selection decision gets
+    made.`,
+  objectives:[
+    'Cross-validate a third model type (SVC) on the same scaled data',
+    'Compare three models fairly, all cross-validated the same way',
+    'Rank the models and justify the winner using the evidence',
+    'Explain why every model must be measured under identical conditions'
+  ],
+  conceptHtml:`
+    <p>Comparing model types fairly means giving every one the SAME scaled data and the SAME cross-validation —
+    then just reading off the evidence:</p>
+    <pre class="code-block">from sklearn.svm import SVC
+from sklearn.model_selection import cross_val_score
+
+svc = SVC()
+svc_cv = cross_val_score(svc, Xs, y, cv=5).mean()
+
+scores = {"random_forest": rf_cv, "knn": knn_cv, "svc": svc_cv}
+best_model = max(scores, key=scores.get)
+print(best_model, scores[best_model])</pre>
+    <h3>Let's break down justifying a winner</h3>
+    <ul>
+      <li>Every candidate model is scored with <code>cross_val_score</code> on the SAME scaled features — no
+        model gets an easier or harder version of the data.</li>
+      <li>Collecting every score into one dictionary, keyed by model name, makes comparing and ranking them a
+        simple, honest lookup — not a guess.</li>
+      <li><code>max(scores, key=scores.get)</code> reads off the winner directly from the evidence — the SAME
+        technique works for finding the weakest model with <code>min(...)</code>.</li>
+      <li>"Justifying" a winner means being able to point at the actual number that makes it the best choice — not
+        just picking whichever model felt more familiar to build.</li>
+    </ul>`,
+  sandboxStarter:`from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import cross_val_score
+
+revision_hours = [6, 7, 1, 9, 6, 1, 4, 2, 7, 4, 9, 1, 10, 4, 11, 1, 10, 1, 1, 3, 7, 9, 10, 9, 11, 2, 10, 4, 2, 12]
+practice_tests = [1, 5, 0, 0, 4, 4, 0, 3, 0, 0, 3, 6, 0, 5, 4, 4, 3, 1, 4, 2, 1, 0, 2, 6, 1, 4, 5, 2, 4, 0]
+mock_passed = [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1]
+X = list(zip(revision_hours, practice_tests))
+
+scaler = StandardScaler()
+Xs = scaler.fit_transform(X)
+svc = SVC()
+print("SVC cross-validated score:", round(cross_val_score(svc, Xs, mock_passed, cv=5).mean(), 2))
+`,
+  sandboxStarter2:`from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import cross_val_score, GridSearchCV
+
+revision_hours = [6, 7, 1, 9, 6, 1, 4, 2, 7, 4, 9, 1, 10, 4, 11, 1, 10, 1, 1, 3, 7, 9, 10, 9, 11, 2, 10, 4, 2, 12]
+practice_tests = [1, 5, 0, 0, 4, 4, 0, 3, 0, 0, 3, 6, 0, 5, 4, 4, 3, 1, 4, 2, 1, 0, 2, 6, 1, 4, 5, 2, 4, 0]
+mock_passed = [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1]
+X = list(zip(revision_hours, practice_tests))
+scaler = StandardScaler()
+Xs = scaler.fit_transform(X)
+
+svc_cv = round(cross_val_score(SVC(), Xs, mock_passed, cv=5).mean(), 2)
+knn_cv = round(cross_val_score(KNeighborsClassifier(), Xs, mock_passed, cv=5).mean(), 2)
+param_grid = {"max_depth": [1, 2, 3, 4], "n_estimators": [10, 50, 100]}
+grid = GridSearchCV(RandomForestClassifier(random_state=42), param_grid, cv=5)
+grid.fit(Xs, mock_passed)
+rf_cv = round(grid.best_score_, 2)
+
+scores = {"random_forest": rf_cv, "knn": knn_cv, "svc": svc_cv}
+print(scores)
+print("Winner:", max(scores, key=scores.get))
+`,
+  exercises:[
+    {
+      title:'Cross-validate a third model type',
+      desc:`Create revision_hours, practice_tests and mock_passed exactly as in the concept box (30 values each).
+        Create X = list(zip(revision_hours, practice_tests)). Create scaler = StandardScaler() and
+        Xs = scaler.fit_transform(X). Create svc = SVC() and svc_cv = round(cross_val_score(svc, Xs, mock_passed,
+        cv=5).mean(), 2). Assert that svc_cv == 0.87.`,
+      starter:`from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import cross_val_score
+revision_hours = [6, 7, 1, 9, 6, 1, 4, 2, 7, 4, 9, 1, 10, 4, 11, 1, 10, 1, 1, 3, 7, 9, 10, 9, 11, 2, 10, 4, 2, 12]
+practice_tests = [1, 5, 0, 0, 4, 4, 0, 3, 0, 0, 3, 6, 0, 5, 4, 4, 3, 1, 4, 2, 1, 0, 2, 6, 1, 4, 5, 2, 4, 0]
+mock_passed = [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1]
+# Create X, scaler, Xs, svc and svc_cv below
+`,
+      tests:[{type:'assert', expr:'svc_cv == 0.87', label:'The SVC model\'s cross-validated score is correctly measured'}]
+    },
+    {
+      title:'Re-confirm the KNN score, fairly measured',
+      desc:`Using Xs and mock_passed from before, create knn = KNeighborsClassifier() (import from
+        sklearn.neighbors) and knn_cv = round(cross_val_score(knn, Xs, mock_passed, cv=5).mean(), 2). Assert that
+        knn_cv == 0.8.`,
+      starter:`from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import cross_val_score
+revision_hours = [6, 7, 1, 9, 6, 1, 4, 2, 7, 4, 9, 1, 10, 4, 11, 1, 10, 1, 1, 3, 7, 9, 10, 9, 11, 2, 10, 4, 2, 12]
+practice_tests = [1, 5, 0, 0, 4, 4, 0, 3, 0, 0, 3, 6, 0, 5, 4, 4, 3, 1, 4, 2, 1, 0, 2, 6, 1, 4, 5, 2, 4, 0]
+mock_passed = [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1]
+X = list(zip(revision_hours, practice_tests))
+scaler = StandardScaler()
+Xs = scaler.fit_transform(X)
+# Create knn and knn_cv below
+`,
+      tests:[{type:'assert', expr:'knn_cv == 0.8', label:'The KNN model\'s cross-validated score is correctly measured'}]
+    },
+    {
+      title:'Rank all three models and find the winner',
+      desc:`Using svc_cv, knn_cv from before, and rf_cv = 0.97 (Week 8's tuned RandomForest score), create
+        scores = {"random_forest": rf_cv, "knn": knn_cv, "svc": svc_cv}. Create
+        best_model = max(scores, key=scores.get). Assert that best_model == "random_forest".`,
+      starter:`from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import cross_val_score
+revision_hours = [6, 7, 1, 9, 6, 1, 4, 2, 7, 4, 9, 1, 10, 4, 11, 1, 10, 1, 1, 3, 7, 9, 10, 9, 11, 2, 10, 4, 2, 12]
+practice_tests = [1, 5, 0, 0, 4, 4, 0, 3, 0, 0, 3, 6, 0, 5, 4, 4, 3, 1, 4, 2, 1, 0, 2, 6, 1, 4, 5, 2, 4, 0]
+mock_passed = [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1]
+X = list(zip(revision_hours, practice_tests))
+scaler = StandardScaler()
+Xs = scaler.fit_transform(X)
+svc_cv = round(cross_val_score(SVC(), Xs, mock_passed, cv=5).mean(), 2)
+knn_cv = round(cross_val_score(KNeighborsClassifier(), Xs, mock_passed, cv=5).mean(), 2)
+rf_cv = 0.97
+# Create scores and best_model below
+`,
+      tests:[{type:'assert', expr:'best_model == "random_forest"', label:'The winning model is correctly identified from the evidence'}]
+    },
+    {
+      title:'Measure the winning margin',
+      desc:`Using scores from before, create margin = round(scores["random_forest"] - scores["svc"], 2) — the gap
+        between the winner and the second-best model. Assert that margin == 0.1.`,
+      starter:`from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import cross_val_score
+revision_hours = [6, 7, 1, 9, 6, 1, 4, 2, 7, 4, 9, 1, 10, 4, 11, 1, 10, 1, 1, 3, 7, 9, 10, 9, 11, 2, 10, 4, 2, 12]
+practice_tests = [1, 5, 0, 0, 4, 4, 0, 3, 0, 0, 3, 6, 0, 5, 4, 4, 3, 1, 4, 2, 1, 0, 2, 6, 1, 4, 5, 2, 4, 0]
+mock_passed = [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1]
+X = list(zip(revision_hours, practice_tests))
+scaler = StandardScaler()
+Xs = scaler.fit_transform(X)
+svc_cv = round(cross_val_score(SVC(), Xs, mock_passed, cv=5).mean(), 2)
+knn_cv = round(cross_val_score(KNeighborsClassifier(), Xs, mock_passed, cv=5).mean(), 2)
+rf_cv = 0.97
+scores = {"random_forest": rf_cv, "knn": knn_cv, "svc": svc_cv}
+# Create margin below
+`,
+      tests:[{type:'assert', expr:'margin == 0.1', label:'The winning margin over the runner-up is correctly measured'}]
+    },
+    {
+      title:'Identify the weakest model too',
+      desc:`Using scores from before, create worst_model = min(scores, key=scores.get). Assert that
+        worst_model == "knn".`,
+      starter:`from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import cross_val_score
+revision_hours = [6, 7, 1, 9, 6, 1, 4, 2, 7, 4, 9, 1, 10, 4, 11, 1, 10, 1, 1, 3, 7, 9, 10, 9, 11, 2, 10, 4, 2, 12]
+practice_tests = [1, 5, 0, 0, 4, 4, 0, 3, 0, 0, 3, 6, 0, 5, 4, 4, 3, 1, 4, 2, 1, 0, 2, 6, 1, 4, 5, 2, 4, 0]
+mock_passed = [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1]
+X = list(zip(revision_hours, practice_tests))
+scaler = StandardScaler()
+Xs = scaler.fit_transform(X)
+svc_cv = round(cross_val_score(SVC(), Xs, mock_passed, cv=5).mean(), 2)
+knn_cv = round(cross_val_score(KNeighborsClassifier(), Xs, mock_passed, cv=5).mean(), 2)
+rf_cv = 0.97
+scores = {"random_forest": rf_cv, "knn": knn_cv, "svc": svc_cv}
+# Create worst_model below
+`,
+      tests:[{type:'assert', expr:'worst_model == "knn"', label:'The weakest model is correctly identified from the same evidence'}]
+    },
+    {
+      title:'Rank all three, best to worst',
+      desc:`Using scores from before, create
+        ranked = [name for name, score in sorted(scores.items(), key=lambda item: item[1], reverse=True)]. Assert
+        that ranked == ["random_forest", "svc", "knn"] — the complete, evidence-backed ranking.`,
+      starter:`from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import cross_val_score
+revision_hours = [6, 7, 1, 9, 6, 1, 4, 2, 7, 4, 9, 1, 10, 4, 11, 1, 10, 1, 1, 3, 7, 9, 10, 9, 11, 2, 10, 4, 2, 12]
+practice_tests = [1, 5, 0, 0, 4, 4, 0, 3, 0, 0, 3, 6, 0, 5, 4, 4, 3, 1, 4, 2, 1, 0, 2, 6, 1, 4, 5, 2, 4, 0]
+mock_passed = [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1]
+X = list(zip(revision_hours, practice_tests))
+scaler = StandardScaler()
+Xs = scaler.fit_transform(X)
+svc_cv = round(cross_val_score(SVC(), Xs, mock_passed, cv=5).mean(), 2)
+knn_cv = round(cross_val_score(KNeighborsClassifier(), Xs, mock_passed, cv=5).mean(), 2)
+rf_cv = 0.97
+scores = {"random_forest": rf_cv, "knn": knn_cv, "svc": svc_cv}
+# Create ranked below
+`,
+      tests:[{type:'assert', expr:'ranked == ["random_forest", "svc", "knn"]', label:'All three models are correctly ranked from the evidence'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why must all three models be compared using cross_val_score, not their raw training score?',
+      options:['Training score is always more accurate','Training score can be inflated or misleading (Week 4) — cross-validated score is the only fair basis for comparing different models','Only cross_val_score works with SVC','It doesn\'t matter which score is used'],
+      correct:1,
+      explain:'A training score reflects fit to data already seen — cross_val_score is the honest, comparable number across every model type.'
+    },
+    {
+      q:'Why must every model see the SAME scaled data before comparing them?',
+      options:['It is not actually necessary','A fair comparison requires identical conditions for every candidate — giving one model easier or different data would make the comparison meaningless','Scaling changes the target labels','Only SVC requires scaled data'],
+      correct:1,
+      explain:'Comparing models fairly means removing every variable except the model itself — same data, same preprocessing, same cross-validation.'
+    },
+    {
+      q:'With rf_cv=0.97, svc_cv=0.87, and knn_cv=0.8, what makes RandomForest the justified winner here?',
+      options:['It was tried first','It has the highest cross-validated score, by a clear, measured margin over both alternatives','It is always the best model for any dataset','Random chance'],
+      correct:1,
+      explain:'"Justifying" a winner means pointing at the actual number that makes it best — here, RandomForest\'s 0.97 clearly beats both alternatives under identical conditions.'
+    },
+    {
+      q:'What does "justifying" a model choice mean, in this context?',
+      options:['Picking whichever model was easiest to code','Picking the best model based on fairly-measured evidence, and being able to point to the specific numbers that support it','Always picking the most complex model available','Picking a model at random'],
+      correct:1,
+      explain:'Justification means the choice is backed by comparable, honest evidence — not familiarity, complexity, or guesswork.'
+    }
+  ],
+  sandboxStarter3:`from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import cross_val_score, GridSearchCV
+
+revision_hours = [6, 7, 1, 9, 6, 1, 4, 2, 7, 4, 9, 1, 10, 4, 11, 1, 10, 1, 1, 3, 7, 9, 10, 9, 11, 2, 10, 4, 2, 12]
+practice_tests = [1, 5, 0, 0, 4, 4, 0, 3, 0, 0, 3, 6, 0, 5, 4, 4, 3, 1, 4, 2, 1, 0, 2, 6, 1, 4, 5, 2, 4, 0]
+mock_passed = [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1]
+X = list(zip(revision_hours, practice_tests))
+scaler = StandardScaler()
+Xs = scaler.fit_transform(X)
+
+svc_cv = round(cross_val_score(SVC(), Xs, mock_passed, cv=5).mean(), 2)
+knn_cv = round(cross_val_score(KNeighborsClassifier(), Xs, mock_passed, cv=5).mean(), 2)
+rf_cv = 0.97
+
+scores = {"random_forest": rf_cv, "knn": knn_cv, "svc": svc_cv}
+ranked = sorted(scores.items(), key=lambda item: item[1], reverse=True)
+print("Full ranking, best to worst:")
+for name, score in ranked:
+    print(f"  {name}: {score}")
+`,
+  stretchChallenge:{
+    title:'Save the winning model for later use',
+    desc:`Create winner = RandomForestClassifier(max_depth=3, n_estimators=50, random_state=42) (Week 8's tuned
+      settings) and fit it on Xs/mock_passed. Create joblib.dump(winner, "winner.joblib") (import joblib) and
+      loaded = joblib.load("winner.joblib"). Create loaded_score = round(loaded.score(Xs, mock_passed), 2). Assert
+      that loaded_score == 1.0 — the justified winner, saved and ready to use immediately, exactly like Week 6.`,
+    starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
+import joblib
+revision_hours = [6, 7, 1, 9, 6, 1, 4, 2, 7, 4, 9, 1, 10, 4, 11, 1, 10, 1, 1, 3, 7, 9, 10, 9, 11, 2, 10, 4, 2, 12]
+practice_tests = [1, 5, 0, 0, 4, 4, 0, 3, 0, 0, 3, 6, 0, 5, 4, 4, 3, 1, 4, 2, 1, 0, 2, 6, 1, 4, 5, 2, 4, 0]
+mock_passed = [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1]
+X = list(zip(revision_hours, practice_tests))
+scaler = StandardScaler()
+Xs = scaler.fit_transform(X)
+# Create winner, joblib dump/load and loaded_score below
+`,
+    tests:[
+      {type:'assert', expr:'loaded_score == 1.0', label:'The justified winning model is correctly saved and reloaded'}
+    ]
+  }
 }
 ];
 
