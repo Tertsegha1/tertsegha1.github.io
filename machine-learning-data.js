@@ -3256,6 +3256,205 @@ candidates = [25, 35, 45, 55]
       {type:'assert', expr:'best_split == 35', label:'best_split is correctly calculated (35)'}
     ]
   }
+},
+{
+  key:'week6', num:6, title:'Wisdom of the Crowd: Voting by Hand',
+  scenarioTag:'Real world: three imperfect classifiers can combine into a perfect one',
+  scenario:`Three simple classifiers — voter_a, voter_b and voter_c — each get exactly ONE student wrong, but a
+    DIFFERENT student each. On their own, none of them is perfect. But combine their predictions with a
+    <strong>majority vote</strong>, and for every single student at least 2 of the 3 voters are still correct — so
+    the combined vote matches the true answer every time.`,
+  objectives:[
+    'Count how many votes are True vs False for a group of predictions',
+    'Combine multiple classifiers\' predictions into one via majority vote',
+    'Measure each individual voter\'s accuracy AND the combined vote\'s accuracy',
+    'See how combining models can outperform every single one of them'
+  ],
+  conceptHtml:`
+    <p><strong>Majority voting</strong> combines several classifiers' predictions for the SAME student into one
+    final answer — whichever label the majority of them picked:</p>
+    <pre class="code-block">votes = [True, True, False]   # 3 voters' predictions for one student
+true_votes = votes.count(True)
+false_votes = votes.count(False)
+combined = true_votes > false_votes
+print(combined)   # True - 2 out of 3 voters said True</pre>
+    <p>Doing this for every student, one at a time, combines three separate prediction lists into ONE combined
+    prediction list:</p>
+    <pre class="code-block">voter_a = [False, False, True,  False, True, True, False, True, True, True]
+voter_b = [False, False, False, False, True, False, False, True, True, True]
+voter_c = [False, False, False, False, True, True, False, True, False, True]
+
+combined = []
+for i in range(len(voter_a)):
+    votes = [voter_a[i], voter_b[i], voter_c[i]]
+    combined.append(votes.count(True) > votes.count(False))</pre>
+    <h3>Let's break down why the combined vote can beat every individual voter</h3>
+    <ul>
+      <li>Each voter above is wrong about exactly ONE student — but a DIFFERENT one each (voter_a is wrong at
+        index 2, voter_b at index 5, voter_c at index 8).</li>
+      <li>For ANY given student, at most ONE of the three voters is wrong about them — so the other TWO still
+        agree on the correct answer, and majority vote picks up on that.</li>
+      <li>This only works because the voters' MISTAKES don't overlap. If two voters were wrong about the SAME
+        student, the vote would repeat their mistake instead of fixing it.</li>
+    </ul>`,
+  sandboxStarter:`votes = [True, True, False]
+true_votes = votes.count(True)
+false_votes = votes.count(False)
+combined = true_votes > false_votes
+print("true_votes:", true_votes, "false_votes:", false_votes, "-> combined:", combined)
+`,
+  sandboxStarter2:`voter_a = [False, False, True,  False, True, True, False, True, True, True]
+voter_b = [False, False, False, False, True, False, False, True, True, True]
+voter_c = [False, False, False, False, True, True, False, True, False, True]
+
+combined = []
+for i in range(len(voter_a)):
+    votes = [voter_a[i], voter_b[i], voter_c[i]]
+    combined.append(votes.count(True) > votes.count(False))
+print(combined)
+`,
+  exercises:[
+    {
+      title:'Count the votes for one student',
+      desc:`Using votes = [True, True, False], count true_votes and false_votes with .count(), then
+        combined = true_votes > false_votes. Assert that combined == True. Then, using
+        votes2 = [False, False, True], build combined2 the same way. Assert that combined2 == False.`,
+      starter:`votes = [True, True, False]
+# Build true_votes, false_votes and combined below
+votes2 = [False, False, True]
+# Build combined2 below
+`,
+      tests:[
+        {type:'assert', expr:'combined == True', label:'combined correctly equals True'},
+        {type:'assert', expr:'combined2 == False', label:'combined2 correctly equals False'}
+      ]
+    },
+    {
+      title:'Combine 3 voters for one student',
+      desc:`Using voter_a = [False, False, True, False, True, True, False, True, True, True],
+        voter_b = [False, False, False, False, True, False, False, True, True, True], and
+        voter_c = [False, False, False, False, True, True, False, True, False, True], build
+        votes_2 = [voter_a[2], voter_b[2], voter_c[2]] (student index 2, where voter_a alone is wrong), then
+        combined_2 = votes_2.count(True) > votes_2.count(False). Assert that votes_2 == [True, False, False] and
+        combined_2 == False — the majority (2 of 3) correctly overrides voter_a's mistake.`,
+      starter:`voter_a = [False, False, True, False, True, True, False, True, True, True]
+voter_b = [False, False, False, False, True, False, False, True, True, True]
+voter_c = [False, False, False, False, True, True, False, True, False, True]
+# Build votes_2 and combined_2 below
+`,
+      tests:[
+        {type:'assert', expr:'votes_2 == [True, False, False]', label:'votes_2 is correctly calculated'},
+        {type:'assert', expr:'combined_2 == False', label:'combined_2 correctly equals False'}
+      ]
+    },
+    {
+      title:'Combine for the whole class',
+      desc:`Using voter_a, voter_b and voter_c from before, build combined: a list where each entry is the
+        majority vote (votes.count(True) > votes.count(False)) of the three voters at that same index. Assert
+        that combined == [False, False, False, False, True, True, False, True, True, True].`,
+      starter:`voter_a = [False, False, True, False, True, True, False, True, True, True]
+voter_b = [False, False, False, False, True, False, False, True, True, True]
+voter_c = [False, False, False, False, True, True, False, True, False, True]
+# Build combined below
+`,
+      tests:[{type:'assert', expr:'combined == [False, False, False, False, True, True, False, True, True, True]', label:'combined is correctly calculated'}]
+    },
+    {
+      title:'Measure each voter\'s own accuracy',
+      desc:`Using voter_a = [False, False, True, False, True, True, False, True, True, True] and
+        actual = [False, False, False, False, True, True, False, True, True, True], calculate acc_a: how many of
+        voter_a's predictions match actual, divided by the total. Assert that acc_a == 0.9.`,
+      starter:`voter_a = [False, False, True, False, True, True, False, True, True, True]
+actual = [False, False, False, False, True, True, False, True, True, True]
+# Calculate acc_a below
+`,
+      tests:[{type:'assert', expr:'acc_a == 0.9', label:'acc_a correctly equals 0.9'}]
+    },
+    {
+      title:'Measure the combined vote\'s accuracy',
+      desc:`Using combined = [False, False, False, False, True, True, False, True, True, True] and
+        actual = [False, False, False, False, True, True, False, True, True, True], calculate acc_combined, then
+        combined_better = acc_combined > 0.9 (acc_a from the previous exercise). Assert that acc_combined == 1.0
+        and combined_better == True.`,
+      starter:`combined = [False, False, False, False, True, True, False, True, True, True]
+actual = [False, False, False, False, True, True, False, True, True, True]
+# Calculate acc_combined and combined_better below
+`,
+      tests:[
+        {type:'assert', expr:'acc_combined == 1.0', label:'acc_combined correctly equals 1.0'},
+        {type:'assert', expr:'combined_better == True', label:'combined_better correctly equals True'}
+      ]
+    },
+    {
+      title:'Confirm every voter alone is imperfect',
+      desc:`Using acc_a = 0.9, acc_b = 0.9, acc_c = 0.9 (each voter's own accuracy) and
+        acc_combined = 1.0, assert that acc_a < 1.0 and acc_b < 1.0 and acc_c < 1.0 and acc_combined == 1.0 — no
+        single voter reached perfect accuracy, but the combined crowd did.`,
+      starter:`acc_a = 0.9
+acc_b = 0.9
+acc_c = 0.9
+acc_combined = 1.0
+# Add your assert below
+`,
+      tests:[{type:'assert', expr:'acc_a < 1.0 and acc_b < 1.0 and acc_c < 1.0 and acc_combined == 1.0', label:'Every voter is correctly confirmed imperfect while the combined vote is not'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does "majority vote" mean when combining several classifiers\' predictions?',
+      options:['Always trust the first classifier','Take whichever label the MAJORITY of the individual classifiers predicted for that student','Average the classifiers\' accuracy scores','Pick a classifier at random each time'],
+      correct:1,
+      explain:'Majority voting looks at what each voter predicted for the SAME student and goes with whichever answer most of them agree on.'
+    },
+    {
+      q:'Why can majority vote fix ONE classifier\'s mistake about a specific student?',
+      options:['It cannot — mistakes always carry through','As long as fewer than half of the voters are wrong about that student, the other voters still outnumber the mistake and the correct answer wins','Voting always guarantees 100% accuracy','Only the newest classifier\'s vote counts'],
+      correct:1,
+      explain:'A single wrong voter is outvoted by the other, correct voters — the mistake gets outnumbered rather than passed through.'
+    },
+    {
+      q:'In this week\'s data, why does the combined vote reach 100% accuracy when NO individual voter does?',
+      options:['It is a coincidence with no explanation','Each voter\'s single mistake happens to be about a DIFFERENT student, so for every student at least 2 of the 3 voters are correct','The combined vote always beats every individual voter, for any data','acc_combined was calculated incorrectly'],
+      correct:1,
+      explain:'Because the three voters\' mistakes don\'t overlap, every student has at least 2 correct voters backing them — enough to always win the majority.'
+    },
+    {
+      q:'When would majority voting NOT help fix a mistake?',
+      options:['It always helps, no matter what','If most of the voters make the SAME mistake about the same student, the vote will repeat that mistake instead of fixing it','When there are exactly 3 voters','When accuracy is already 100%'],
+      correct:1,
+      explain:'Voting only helps when mistakes are spread out across different voters — if the majority of voters share the same blind spot, the vote inherits it.'
+    }
+  ],
+  sandboxStarter3:`voter_a = [False, False, True,  False, True, True, False, True, True, True]
+voter_b = [False, False, False, False, True, False, False, True, True, True]
+voter_c = [False, False, False, False, True, True, False, True, False, True]
+actual  = [False, False, False, False, True, True, False, True, True, True]
+
+combined = []
+for i in range(len(voter_a)):
+    votes = [voter_a[i], voter_b[i], voter_c[i]]
+    combined.append(votes.count(True) > votes.count(False))
+
+for name, preds in [("voter_a", voter_a), ("voter_b", voter_b), ("voter_c", voter_c), ("combined", combined)]:
+    acc = sum(1 for i in range(len(actual)) if preds[i] == actual[i]) / len(actual)
+    print(name, "accuracy:", acc)
+`,
+  stretchChallenge:{
+    title:'Combine a fresh trio of voters',
+    desc:`Using va = [False, True, False, False, True], vb = [True, True, False, True, True], and
+      vc = [True, True, False, False, False] (each wrong about exactly one DIFFERENT student, compared to
+      actual = [True, True, False, False, True]), build combined: the majority vote at each index. Assert that
+      combined == actual.`,
+    starter:`va = [False, True, False, False, True]
+vb = [True, True, False, True, True]
+vc = [True, True, False, False, False]
+actual = [True, True, False, False, True]
+# Build combined below
+`,
+    tests:[
+      {type:'assert', expr:'combined == actual', label:'combined correctly matches actual'}
+    ]
+  }
 }
 ];
 
