@@ -5557,6 +5557,319 @@ grid.fit(X, y)
       {type:'assert', expr:'n_features == 4', label:'Both numeric and categorical features are confirmed present in the winning pipeline'}
     ]
   }
+},
+{
+  key:'week6', num:6, title:'Saving Your Work: joblib',
+  scenarioTag:'Real world: nobody wants to re-run last week\'s search every time they need a prediction.',
+  scenario:`Week 5's search found a genuinely good pipeline — max_depth 2, 10 trees, min_samples_leaf 2, scoring
+    0.9. Re-running that whole GridSearchCV every single time you want one prediction would be slow and pointless.
+    joblib lets you save the EXACT fitted pipeline to a file once, then load it back instantly, ready to predict —
+    no retraining required.`,
+  objectives:[
+    'Save a fitted model or pipeline to disk with joblib.dump',
+    'Load it back with joblib.load, ready to use immediately',
+    'Confirm a loaded object predicts identically to the original',
+    'Explain why saving a fitted model matters for real use'
+  ],
+  conceptHtml:`
+    <p><code>joblib.dump</code> saves a fitted object exactly as it is — <code>joblib.load</code> brings it back,
+    fully ready, with no re-fitting needed:</p>
+    <pre class="code-block">import joblib
+from sklearn.ensemble import RandomForestClassifier
+
+model = RandomForestClassifier(max_depth=2, random_state=42)
+model.fit(X, y)
+
+joblib.dump(model, "model.joblib")     # save the FITTED model to a file
+loaded = joblib.load("model.joblib")   # load it back later — no .fit() needed!
+
+print(list(model.predict(X)) == list(loaded.predict(X)))   # True — identical predictions</pre>
+    <h3>Let's break down saving and loading a fitted model</h3>
+    <ul>
+      <li><code>joblib.dump(obj, "file.joblib")</code> writes the object EXACTLY as it currently is — every
+        learned setting, every tree, every fitted preprocessing step — to a file.</li>
+      <li><code>joblib.load("file.joblib")</code> reads that file back into a brand-new variable that behaves
+        IDENTICALLY to the original — you can call <code>.predict()</code> on it immediately.</li>
+      <li>Saving a whole <code>Pipeline</code> (not just the bare model) saves EVERY step together — preprocessing
+        and model — so the loaded object is just as complete and ready-to-use as the original.</li>
+      <li>This matters because real training can take real time (and real data) — saving once and loading many
+        times means a prediction is instant, and you always get the SAME model, not a freshly-retrained one that
+        might come out slightly different.</li>
+    </ul>`,
+  sandboxStarter:`import joblib
+from sklearn.ensemble import RandomForestClassifier
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+
+model = RandomForestClassifier(max_depth=2, random_state=42)
+model.fit(X, passed)
+joblib.dump(model, "model.joblib")
+loaded = joblib.load("model.joblib")
+print("Predictions match:", list(model.predict(X)) == list(loaded.predict(X)))
+`,
+  sandboxStarter2:`import pandas as pd
+import joblib
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+method = ["solo","group"] * 15
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method, "passed": passed})
+X = df[["hours", "attendance", "method"]]
+y = df["passed"]
+
+pipe = Pipeline([
+    ("prep", ColumnTransformer([("num", StandardScaler(), ["hours", "attendance"]), ("cat", OneHotEncoder(), ["method"])])),
+    ("rf", RandomForestClassifier(max_depth=2, n_estimators=10, min_samples_leaf=2, random_state=42))
+])
+pipe.fit(X, y)
+joblib.dump(pipe, "pipe.joblib")
+loaded_pipe = joblib.load("pipe.joblib")
+print("Original score:", round(pipe.score(X, y), 2))
+print("Loaded score:", round(loaded_pipe.score(X, y), 2))
+`,
+  exercises:[
+    {
+      title:'Save and reload a fitted pipeline',
+      desc:`Create hours, attendance, method and passed exactly as in the concept box (30 values each), then build
+        df, X and y exactly as in Week 5. Build
+        pipe = Pipeline([("prep", ColumnTransformer([("num", StandardScaler(), ["hours", "attendance"]), ("cat",
+        OneHotEncoder(), ["method"])])), ("rf", RandomForestClassifier(max_depth=2, n_estimators=10,
+        min_samples_leaf=2, random_state=42))]) — this is Week 5's actual winning combination. Fit it on X/y, then
+        joblib.dump(pipe, "pipe.joblib") and loaded = joblib.load("pipe.joblib"). Create
+        loaded_score = round(loaded.score(X, y), 2). Assert that loaded_score == 0.9.`,
+      starter:`import pandas as pd
+import joblib
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+method = ["solo","group"] * 15
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+# Create df, X, y, pipe, loaded and loaded_score below
+`,
+      tests:[{type:'assert', expr:'loaded_score == 0.9', label:'The reloaded pipeline scores identically to the original'}]
+    },
+    {
+      title:'Confirm predictions match exactly',
+      desc:`Using pipe and loaded from before, create
+        predictions_match = (list(pipe.predict(X)) == list(loaded.predict(X))). Assert that
+        predictions_match == True — the loaded pipeline predicts EXACTLY like the original, with zero retraining.`,
+      starter:`import pandas as pd
+import joblib
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+method = ["solo","group"] * 15
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method, "passed": passed})
+X = df[["hours", "attendance", "method"]]
+y = df["passed"]
+pipe = Pipeline([("prep", ColumnTransformer([("num", StandardScaler(), ["hours", "attendance"]), ("cat", OneHotEncoder(), ["method"])])), ("rf", RandomForestClassifier(max_depth=2, n_estimators=10, min_samples_leaf=2, random_state=42))])
+pipe.fit(X, y)
+joblib.dump(pipe, "pipe.joblib")
+loaded = joblib.load("pipe.joblib")
+# Create predictions_match below
+`,
+      tests:[{type:'assert', expr:'predictions_match == True', label:'The loaded pipeline\'s predictions exactly match the original\'s'}]
+    },
+    {
+      title:'Read a tuned setting from the reloaded pipeline',
+      desc:`Using loaded from before, create loaded_n = loaded.named_steps["rf"].n_estimators. Assert that
+        loaded_n == 10 — the exact tuned setting, still intact after saving and reloading.`,
+      starter:`import pandas as pd
+import joblib
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+method = ["solo","group"] * 15
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method, "passed": passed})
+X = df[["hours", "attendance", "method"]]
+y = df["passed"]
+pipe = Pipeline([("prep", ColumnTransformer([("num", StandardScaler(), ["hours", "attendance"]), ("cat", OneHotEncoder(), ["method"])])), ("rf", RandomForestClassifier(max_depth=2, n_estimators=10, min_samples_leaf=2, random_state=42))])
+pipe.fit(X, y)
+joblib.dump(pipe, "pipe.joblib")
+loaded = joblib.load("pipe.joblib")
+# Create loaded_n below
+`,
+      tests:[{type:'assert', expr:'loaded_n == 10', label:'The tuned n_estimators setting survives saving and reloading'}]
+    },
+    {
+      title:'Read a second tuned setting',
+      desc:`Using loaded from before, create loaded_leaf = loaded.named_steps["rf"].min_samples_leaf. Assert that
+        loaded_leaf == 2.`,
+      starter:`import pandas as pd
+import joblib
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+method = ["solo","group"] * 15
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method, "passed": passed})
+X = df[["hours", "attendance", "method"]]
+y = df["passed"]
+pipe = Pipeline([("prep", ColumnTransformer([("num", StandardScaler(), ["hours", "attendance"]), ("cat", OneHotEncoder(), ["method"])])), ("rf", RandomForestClassifier(max_depth=2, n_estimators=10, min_samples_leaf=2, random_state=42))])
+pipe.fit(X, y)
+joblib.dump(pipe, "pipe.joblib")
+loaded = joblib.load("pipe.joblib")
+# Create loaded_leaf below
+`,
+      tests:[{type:'assert', expr:'loaded_leaf == 2', label:'The tuned min_samples_leaf setting survives saving and reloading'}]
+    },
+    {
+      title:'Confirm no retraining happened',
+      desc:`Using loaded from before, create loaded_depth = loaded.named_steps["rf"].max_depth. Assert that
+        loaded_depth == 2 — all three of Week 5's winning settings (depth, estimators, leaf size) came back
+        exactly as saved, with no re-fitting.`,
+      starter:`import pandas as pd
+import joblib
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+method = ["solo","group"] * 15
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method, "passed": passed})
+X = df[["hours", "attendance", "method"]]
+y = df["passed"]
+pipe = Pipeline([("prep", ColumnTransformer([("num", StandardScaler(), ["hours", "attendance"]), ("cat", OneHotEncoder(), ["method"])])), ("rf", RandomForestClassifier(max_depth=2, n_estimators=10, min_samples_leaf=2, random_state=42))])
+pipe.fit(X, y)
+joblib.dump(pipe, "pipe.joblib")
+loaded = joblib.load("pipe.joblib")
+# Create loaded_depth below
+`,
+      tests:[{type:'assert', expr:'loaded_depth == 2', label:'The tuned max_depth setting survives saving and reloading'}]
+    },
+    {
+      title:'Predict on a brand-new student with the loaded pipeline',
+      desc:`Using loaded from before, create new_student = pd.DataFrame({"hours": [6], "attendance": [80],
+        "method": ["group"]}). Create new_prediction = int(loaded.predict(new_student)[0]). Assert that
+        new_prediction == 1 — a brand-new prediction, made with zero retraining, straight from the file you saved.`,
+      starter:`import pandas as pd
+import joblib
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+method = ["solo","group"] * 15
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method, "passed": passed})
+X = df[["hours", "attendance", "method"]]
+y = df["passed"]
+pipe = Pipeline([("prep", ColumnTransformer([("num", StandardScaler(), ["hours", "attendance"]), ("cat", OneHotEncoder(), ["method"])])), ("rf", RandomForestClassifier(max_depth=2, n_estimators=10, min_samples_leaf=2, random_state=42))])
+pipe.fit(X, y)
+joblib.dump(pipe, "pipe.joblib")
+loaded = joblib.load("pipe.joblib")
+# Create new_student and new_prediction below
+`,
+      tests:[{type:'assert', expr:'new_prediction == 1', label:'The loaded pipeline correctly predicts on brand-new data'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why save a fitted model with joblib instead of just re-running the training code every time you need a prediction?',
+      options:['There is no reason, retraining is always instant','Training can take real time — saving once and loading many times is far faster, and guarantees you get the SAME model every time, not a freshly-retrained one','joblib makes the model more accurate','It is required by scikit-learn'],
+      correct:1,
+      explain:'Saving a fitted model avoids repeated training cost AND guarantees consistency — the loaded model is bit-for-bit the one you saved.'
+    },
+    {
+      q:'After loaded = joblib.load("model.joblib"), do you need to call loaded.fit(...) before using it?',
+      options:['Yes, every time','No — the loaded object is already fully fitted and ready to call .predict() on immediately','Only if the data changed','Only for pipelines, not bare models'],
+      correct:1,
+      explain:'joblib.load() restores the object in its already-fitted state — no re-fitting is needed or expected.'
+    },
+    {
+      q:'When you joblib.dump() a whole Pipeline rather than just the bare model, what gets saved?',
+      options:['Only the final model step','Only the preprocessing step','EVERY step together — preprocessing and model — so loading it back gives the same complete, ready-to-use pipeline','Nothing, pipelines cannot be saved'],
+      correct:2,
+      explain:'The whole pipeline object is serialized as one unit — every fitted step travels together, exactly like it does when using the pipeline normally.'
+    },
+    {
+      q:'What does joblib.dump(pipe, "pipe.joblib") actually do?',
+      options:['Deletes the pipeline from memory','Prints the pipeline\'s settings','Serializes the exact fitted pipeline object to a file, so it can be reloaded later without recomputation','Retrains the pipeline on a saved copy of the data'],
+      correct:2,
+      explain:'dump() writes the object\'s exact current state to a file — nothing is retrained, and nothing is lost.'
+    }
+  ],
+  sandboxStarter3:`import pandas as pd
+import joblib
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+method = ["solo","group"] * 15
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method, "passed": passed})
+X = df[["hours", "attendance", "method"]]
+y = df["passed"]
+
+pipe = Pipeline([
+    ("prep", ColumnTransformer([("num", StandardScaler(), ["hours", "attendance"]), ("cat", OneHotEncoder(), ["method"])])),
+    ("rf", RandomForestClassifier(max_depth=2, n_estimators=10, min_samples_leaf=2, random_state=42))
+])
+pipe.fit(X, y)
+joblib.dump(pipe, "pipe.joblib")
+loaded = joblib.load("pipe.joblib")
+
+new_student = pd.DataFrame({"hours": [6], "attendance": [80], "method": ["group"]})
+print("Prediction for a brand-new student, zero retraining:", int(loaded.predict(new_student)[0]))
+`,
+  stretchChallenge:{
+    title:'Confirm feature importances survive too',
+    desc:`Using pipe and loaded from before, create
+      orig_importances = list(pipe.named_steps["rf"].feature_importances_.round(3)),
+      loaded_importances = list(loaded.named_steps["rf"].feature_importances_.round(3)), and
+      importances_match = (orig_importances == loaded_importances). Assert that importances_match == True —
+      even the exact feature_importances_ from Week 2 survive saving and reloading, unchanged.`,
+    starter:`import pandas as pd
+import joblib
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+method = ["solo","group"] * 15
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+df = pd.DataFrame({"hours": hours, "attendance": attendance, "method": method, "passed": passed})
+X = df[["hours", "attendance", "method"]]
+y = df["passed"]
+pipe = Pipeline([("prep", ColumnTransformer([("num", StandardScaler(), ["hours", "attendance"]), ("cat", OneHotEncoder(), ["method"])])), ("rf", RandomForestClassifier(max_depth=2, n_estimators=10, min_samples_leaf=2, random_state=42))])
+pipe.fit(X, y)
+joblib.dump(pipe, "pipe.joblib")
+loaded = joblib.load("pipe.joblib")
+# Create orig_importances, loaded_importances and importances_match below
+`,
+    tests:[
+      {type:'assert', expr:'importances_match == True', label:'feature_importances_ are confirmed identical after saving and reloading'}
+    ]
+  }
 }
 ];
 
