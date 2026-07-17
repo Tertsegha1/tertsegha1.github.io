@@ -2124,5 +2124,446 @@ center_B = 10
   ]
 };
 
+const MLR_INTERMEDIATE_WEEKS = [
+{
+  key:'week1', num:1, title:'More Than One Clue: Multi-Feature Regression by Hand',
+  scenarioTag:'Real world: hours studied AND practice tests taken — two clues beat one',
+  scenario:`Week 1's model used a single clue: hours studied. But a teacher also has practice-test counts on
+    record, and scores clearly depend on BOTH. Instead of fitting brand-new weights by hand (that needs more
+    algebra than we'll do here), you'll be GIVEN a weighted-sum formula and see, very concretely, how using two
+    clues instead of one can dramatically cut down prediction error.`,
+  objectives:[
+    'Extend a single-feature model into a weighted sum of two features',
+    'Compute predictions using two weights and an intercept',
+    'Measure mean absolute error for a multi-feature model',
+    'Compare a two-feature model against a one-feature model on the SAME data'
+  ],
+  conceptHtml:`
+    <p>Week 1's model was <code>score = m &times; hours + b</code> — one input, one weight. A
+    <strong>multi-feature</strong> model just adds more weighted inputs to the same sum:</p>
+    <pre class="code-block">def predict2(hours, tests, w1, w2, b):
+    return w1*hours + w2*tests + b
+
+w1, w2, b = 6, 8, 38
+print(predict2(5, 2, w1, w2, b))</pre>
+    <p>Each weight tells you how much THAT feature contributes: <code>w1</code> is hours' weight, <code>w2</code>
+    is tests' weight, and <code>b</code> is still the intercept — the starting point when every feature is 0.
+    Fitting these weights by hand from scratch needs more algebra than Week 1's single-feature formulas (it's
+    exactly what <code>LinearRegression</code> does automatically in the AutoML track) — here, the weights are
+    GIVEN, and the focus is on what using two clues together actually buys you.</p>
+    <h3>Let's break down why two clues can beat one</h3>
+    <ul>
+      <li><code>w1*hours + w2*tests + b</code> — the SAME weighted-sum idea as Week 1, just with a second term
+        added. Nothing new mechanically: multiply each feature by its own weight, add them all up, add
+        <code>b</code>.</li>
+      <li>If two students study the SAME number of hours but took a different number of practice tests, a
+        single-feature (hours-only) model predicts the exact SAME score for both — it has no way to tell them
+        apart. A two-feature model can, because <code>tests</code> is doing real work in the formula.</li>
+      <li>The error-measuring idea from Week 1 (mean absolute error, or MAE) doesn't change at all — you still
+        compare <code>predicted</code> against <code>actual</code> and average the absolute differences. What
+        changes is how <code>predicted</code> gets built in the first place.</li>
+    </ul>`,
+  sandboxStarter:`def predict2(hours, tests, w1, w2, b):
+    return w1*hours + w2*tests + b
+
+w1, w2, b = 6, 8, 38
+print("Student A (5 hours, 2 tests):", predict2(5, 2, w1, w2, b))
+print("Student B (5 hours, 0 tests):", predict2(5, 0, w1, w2, b))
+`,
+  sandboxStarter2:`def predict2(hours, tests, w1, w2, b):
+    return w1*hours + w2*tests + b
+
+hours = [1, 2, 3, 4]
+tests = [0, 4, 0, 4]
+w1, w2, b = 6, 8, 38
+predicted = [predict2(h, t, w1, w2, b) for h, t in zip(hours, tests)]
+print(predicted)
+`,
+  exercises:[
+    {
+      title:'Predict with two clues',
+      desc:`Write a function predict2(hours, tests, w1, w2, b) that returns w1*hours + w2*tests + b. Using
+        w1 = 6, w2 = 8, b = 38, assert that predict2(5, 2, w1, w2, b) equals 84.`,
+      starter:`def predict2(hours, tests, w1, w2, b):
+    # TODO: return the weighted-sum prediction
+    pass
+
+w1, w2, b = 6, 8, 38
+`,
+      tests:[{type:'assert', expr:'predict2(5, 2, w1, w2, b) == 84', label:'predict2(5, 2, w1, w2, b) correctly equals 84'}]
+    },
+    {
+      title:'Predict for the whole class',
+      desc:`Using hours = [1,2,3,4,5,6,7,8], tests = [0,4,0,4,0,4,0,4] and w1 = 6, w2 = 8, b = 38, build
+        predicted = [predict2(h, t, w1, w2, b) for h, t in zip(hours, tests)]. Assert that
+        predicted == [44, 82, 56, 94, 68, 106, 80, 118].`,
+      starter:`def predict2(hours, tests, w1, w2, b):
+    return w1*hours + w2*tests + b
+
+hours = [1, 2, 3, 4, 5, 6, 7, 8]
+tests = [0, 4, 0, 4, 0, 4, 0, 4]
+w1, w2, b = 6, 8, 38
+# Build predicted below
+`,
+      tests:[{type:'assert', expr:'predicted == [44, 82, 56, 94, 68, 106, 80, 118]', label:'predicted is correctly calculated for the whole class'}]
+    },
+    {
+      title:'Measure one student\'s error',
+      desc:`Using actual = [45, 81, 57, 93, 69, 105, 81, 117] and predicted from before, calculate
+        error = actual[3] - predicted[3] (student index 3: 4 hours, 4 tests). Assert that error == -1.`,
+      starter:`def predict2(hours, tests, w1, w2, b):
+    return w1*hours + w2*tests + b
+
+hours = [1, 2, 3, 4, 5, 6, 7, 8]
+tests = [0, 4, 0, 4, 0, 4, 0, 4]
+w1, w2, b = 6, 8, 38
+predicted = [predict2(h, t, w1, w2, b) for h, t in zip(hours, tests)]
+actual = [45, 81, 57, 93, 69, 105, 81, 117]
+# Calculate error below
+`,
+      tests:[{type:'assert', expr:'error == -1', label:'error is correctly calculated (-1)'}]
+    },
+    {
+      title:'Measure the whole class\'s error',
+      desc:`Using actual and predicted from before, calculate errors = [actual[i] - predicted[i] for i in
+        range(len(actual))], then mae = sum(abs(e) for e in errors) / len(errors) (Week 1's MAE idea, applied to
+        the two-feature model). Assert that mae == 1.0.`,
+      starter:`def predict2(hours, tests, w1, w2, b):
+    return w1*hours + w2*tests + b
+
+hours = [1, 2, 3, 4, 5, 6, 7, 8]
+tests = [0, 4, 0, 4, 0, 4, 0, 4]
+w1, w2, b = 6, 8, 38
+predicted = [predict2(h, t, w1, w2, b) for h, t in zip(hours, tests)]
+actual = [45, 81, 57, 93, 69, 105, 81, 117]
+# Calculate errors, then mae, below
+`,
+      tests:[{type:'assert', expr:'mae == 1.0', label:'mae is correctly calculated (1.0)'}]
+    },
+    {
+      title:'Fit a one-feature model on the SAME data',
+      desc:`Using hours and actual from before, fit m and b using Week 1's least-squares formulas (ignoring tests
+        completely, just like Week 1). Assert that round(m, 2) == 7.43 and round(b, 2) == 47.57.`,
+      starter:`hours = [1, 2, 3, 4, 5, 6, 7, 8]
+actual = [45, 81, 57, 93, 69, 105, 81, 117]
+# Calculate m and b below, using Week 1's least-squares steps
+`,
+      tests:[
+        {type:'assert', expr:'round(m, 2) == 7.43', label:'m is correctly calculated (7.43)'},
+        {type:'assert', expr:'round(b, 2) == 47.57', label:'b is correctly calculated (47.57)'}
+      ]
+    },
+    {
+      title:'Compare the two models',
+      desc:`Using m = 7.428571428571429, b = 47.57142857142857 (fitted in the previous exercise) and hours,
+        actual from before, build pred1 = [m*h + b for h in hours], then
+        errors1 = [actual[i] - pred1[i] for i in range(len(actual))], then
+        mae1 = sum(abs(e) for e in errors1) / len(errors1). Assert that round(mae1, 2) == 14.29 and
+        two_features_better = mae1 > 1.0 (Week 1's mae for the two-feature model). Assert that
+        two_features_better == True — ignoring the tests clue makes the model MUCH worse on this exact data.`,
+      starter:`hours = [1, 2, 3, 4, 5, 6, 7, 8]
+actual = [45, 81, 57, 93, 69, 105, 81, 117]
+m = 7.428571428571429
+b = 47.57142857142857
+# Build pred1, errors1, mae1 and two_features_better below
+`,
+      tests:[
+        {type:'assert', expr:'round(mae1, 2) == 14.29', label:'mae1 (one-feature model) is correctly calculated (14.29)'},
+        {type:'assert', expr:'two_features_better == True', label:'The two-feature model is confirmed to be far more accurate'}
+      ]
+    }
+  ],
+  quiz:[
+    {
+      q:'In predict2(hours, tests, w1, w2, b) = w1*hours + w2*tests + b, what does w2 represent?',
+      options:['The total number of students','How much the "tests" feature contributes to the prediction','The intercept','The mean absolute error'],
+      correct:1,
+      explain:'Each weight scales its OWN feature — w2 is specifically how much practice-test count contributes to the predicted score.'
+    },
+    {
+      q:'Two students studied the exact same number of hours but took a different number of practice tests. What does a HOURS-ONLY model predict for them?',
+      options:['Two different scores, based on their tests count','The exact same score for both — it has no way to use the tests information at all','It refuses to make a prediction','It always predicts 0'],
+      correct:1,
+      explain:'A model that never looks at a feature can never use it to tell two students apart, no matter how different that feature actually is.'
+    },
+    {
+      q:'Why is mae1 (14.29, hours-only) so much worse than mae (1.0, two-feature) on the SAME class in this week\'s exercises?',
+      options:['The hours-only model has a bug','Practice-test count carries real, useful signal that the hours-only model has no way to use','The two-feature model was just lucky','mae1 was measured incorrectly'],
+      correct:1,
+      explain:'When a second feature genuinely predicts the target, ignoring it throws away real information — and the model\'s error grows accordingly.'
+    },
+    {
+      q:'Why were the weights (w1, w2, b) GIVEN this week instead of fitted by hand from scratch, like Week 1\'s m and b were?',
+      options:['Multi-feature weights can never be fitted','Fitting multiple weights by hand needs more algebra than a simple formula — real tools like AutoML\'s LinearRegression do this automatically','It is not possible to have two weights','The weights don\'t actually matter'],
+      correct:1,
+      explain:'Week 1\'s single-feature formula has a direct algebraic solution; fitting several weights at once needs more machinery — exactly the job scikit-learn\'s LinearRegression does under the hood in the AutoML track.'
+    }
+  ],
+  sandboxStarter3:`def predict2(hours, tests, w1, w2, b):
+    return w1*hours + w2*tests + b
+
+hours = [1, 2, 3, 4, 5, 6, 7, 8]
+tests = [0, 4, 0, 4, 0, 4, 0, 4]
+actual = [45, 81, 57, 93, 69, 105, 81, 117]
+w1, w2, b = 6, 8, 38
+
+predicted = [predict2(h, t, w1, w2, b) for h, t in zip(hours, tests)]
+errors = [actual[i] - predicted[i] for i in range(len(actual))]
+mae = sum(abs(e) for e in errors) / len(errors)
+print("Two-feature MAE:", mae)
+
+m, b1 = 7.428571428571429, 47.57142857142857
+pred1 = [m*h + b1 for h in hours]
+errors1 = [actual[i] - pred1[i] for i in range(len(actual))]
+mae1 = sum(abs(e) for e in errors1) / len(errors1)
+print("One-feature MAE:", round(mae1, 2))
+`,
+  stretchChallenge:{
+    title:'A different class, different weights',
+    desc:`Using hours = [2, 4, 6, 8], tests = [1, 3, 1, 3], w1 = 5, w2 = 10, b = 30, build
+      predicted = [predict2(h, t, w1, w2, b) for h, t in zip(hours, tests)]. Using
+      actual = [52, 78, 72, 98], calculate errors = [actual[i] - predicted[i] for i in range(len(actual))], then
+      mae = sum(abs(e) for e in errors) / len(errors). Assert that mae == 2.0.`,
+    starter:`def predict2(hours, tests, w1, w2, b):
+    return w1*hours + w2*tests + b
+
+hours = [2, 4, 6, 8]
+tests = [1, 3, 1, 3]
+w1, w2, b = 5, 10, 30
+actual = [52, 78, 72, 98]
+# Build predicted, errors and mae below
+`,
+    tests:[
+      {type:'assert', expr:'mae == 2.0', label:'mae is correctly calculated for the new class (2.0)'}
+    ]
+  }
+},
+{
+  key:'week2', num:2, title:'Making It Fair: Feature Scaling by Hand',
+  scenarioTag:'Real world: hours studied (0-10) vs total assignment score (0-500) — unscaled distance lies',
+  scenario:`Week 7's k-NN (Beginner) compared students using squared distance across two features. But what if
+    one feature is measured 0-10 (hours studied) and the other 0-500 (total assignment score)? Raw squared
+    distance ends up almost entirely decided by whichever feature has the BIGGER numbers, even when that's not
+    actually the more important clue. This week fixes that with min-max scaling, by hand.`,
+  objectives:[
+    'Explain why features on very different scales distort a distance calculation',
+    'Apply the min-max scaling formula: (x - min) / (max - min)',
+    'Scale both a training set AND a new point using the SAME min/max',
+    'See a nearest-neighbor answer actually change once scaling is applied'
+  ],
+  conceptHtml:`
+    <p><strong>Min-max scaling</strong> squashes every value in a feature into the range 0 to 1, using the
+    feature's own minimum and maximum:</p>
+    <pre class="code-block">def scale(x, xmin, xmax):
+    return (x - xmin) / (xmax - xmin)
+
+hours = [8, 2, 6, 4]
+hmin, hmax = min(hours), max(hours)
+scaled_hours = [scale(h, hmin, hmax) for h in hours]
+print(scaled_hours)</pre>
+    <p>The smallest value always scales to 0.0, the largest always scales to 1.0, and everything else lands
+    proportionally in between. Crucially, the SAME <code>xmin</code>/<code>xmax</code> (taken from the training
+    data) must be reused to scale any NEW point too — otherwise the new point isn't being compared on the same
+    footing as everyone else.</p>
+    <p>Why does this matter for distance? Squared distance adds up <code>(difference)**2</code> for EACH feature.
+    If one feature's raw differences are routinely in the hundreds (like a 0-500 score) and another's are just
+    single digits (like 0-10 hours), the big-numbered feature completely swamps the squared-distance total — the
+    small-numbered feature barely matters at all, even if it's actually the more meaningful clue.</p>
+    <h3>Let's break down why scaling fixes this</h3>
+    <ul>
+      <li><code>scale(x, xmin, xmax)</code> — the exact same idea for every feature: how far is this value from
+        the minimum, as a FRACTION of the whole range? A value equal to the minimum scores 0.0, a value equal to
+        the maximum scores 1.0.</li>
+      <li>After scaling, EVERY feature's values live in the same 0-to-1 range — so no single feature can dominate
+        a distance calculation just because its raw numbers happened to be bigger.</li>
+      <li>The new point must be scaled using the TRAINING data's min/max, not its own — otherwise you'd be
+        comparing two differently-scaled rulers.</li>
+    </ul>`,
+  sandboxStarter:`def scale(x, xmin, xmax):
+    return (x - xmin) / (xmax - xmin)
+
+hours = [8, 2, 6, 4]
+scores = [400, 140, 200, 300]
+
+hmin, hmax = min(hours), max(hours)
+smin, smax = min(scores), max(scores)
+
+scaled_hours = [scale(h, hmin, hmax) for h in hours]
+scaled_scores = [scale(s, smin, smax) for s in scores]
+print("scaled hours:", [round(x, 4) for x in scaled_hours])
+print("scaled scores:", [round(x, 4) for x in scaled_scores])
+`,
+  sandboxStarter2:`def scale(x, xmin, xmax):
+    return (x - xmin) / (xmax - xmin)
+
+hours = [8, 2, 6, 4]
+scores = [400, 140, 200, 300]
+new_hours, new_score = 7, 150
+
+raw_sq = [(hours[i]-new_hours)**2 + (scores[i]-new_score)**2 for i in range(len(hours))]
+print("raw squared distances:", raw_sq)
+nearest_raw = min(range(len(hours)), key=lambda i: raw_sq[i])
+print("nearest (raw):", nearest_raw)
+`,
+  exercises:[
+    {
+      title:'Scale one feature',
+      desc:`Write scale(x, xmin, xmax) returning (x - xmin) / (xmax - xmin). Using hours = [8, 2, 6, 4], build
+        scaled_hours = [scale(h, min(hours), max(hours)) for h in hours]. Assert that
+        [round(x, 4) for x in scaled_hours] == [1.0, 0.0, 0.6667, 0.3333].`,
+      starter:`def scale(x, xmin, xmax):
+    # TODO: return the min-max scaled value
+    pass
+
+hours = [8, 2, 6, 4]
+# Build scaled_hours below
+`,
+      tests:[{type:'assert', expr:'[round(x, 4) for x in scaled_hours] == [1.0, 0.0, 0.6667, 0.3333]', label:'scaled_hours is correctly calculated'}]
+    },
+    {
+      title:'Scale the second feature',
+      desc:`Using scores = [400, 140, 200, 300], build scaled_scores = [scale(s, min(scores), max(scores)) for s
+        in scores]. Assert that [round(x, 4) for x in scaled_scores] == [1.0, 0.0, 0.2308, 0.6154].`,
+      starter:`def scale(x, xmin, xmax):
+    return (x - xmin) / (xmax - xmin)
+
+scores = [400, 140, 200, 300]
+# Build scaled_scores below
+`,
+      tests:[{type:'assert', expr:'[round(x, 4) for x in scaled_scores] == [1.0, 0.0, 0.2308, 0.6154]', label:'scaled_scores is correctly calculated'}]
+    },
+    {
+      title:'Scale the new student, using the SAME min/max',
+      desc:`Using hours = [8, 2, 6, 4], scores = [400, 140, 200, 300], and new_hours = 7, new_score = 150,
+        calculate new_h_scaled = scale(new_hours, min(hours), max(hours)) and
+        new_s_scaled = scale(new_score, min(scores), max(scores)). Assert that round(new_h_scaled, 4) == 0.8333
+        and round(new_s_scaled, 4) == 0.0385 — the SAME training min/max used to scale the new point, not its
+        own.`,
+      starter:`def scale(x, xmin, xmax):
+    return (x - xmin) / (xmax - xmin)
+
+hours = [8, 2, 6, 4]
+scores = [400, 140, 200, 300]
+new_hours, new_score = 7, 150
+# Calculate new_h_scaled and new_s_scaled below
+`,
+      tests:[
+        {type:'assert', expr:'round(new_h_scaled, 4) == 0.8333', label:'new_h_scaled is correctly calculated (0.8333)'},
+        {type:'assert', expr:'round(new_s_scaled, 4) == 0.0385', label:'new_s_scaled is correctly calculated (0.0385)'}
+      ]
+    },
+    {
+      title:'Find the nearest neighbor WITHOUT scaling',
+      desc:`Using hours = [8, 2, 6, 4], scores = [400, 140, 200, 300], and new_point = (7, 150), build
+        raw_sq = [(hours[i]-7)**2 + (scores[i]-150)**2 for i in range(4)], then
+        raw_nearest_idx = min(range(4), key=lambda i: raw_sq[i]). Assert that raw_nearest_idx == 1 — the raw
+        distance calculation is dominated by the score feature's much bigger numbers.`,
+      starter:`hours = [8, 2, 6, 4]
+scores = [400, 140, 200, 300]
+# Build raw_sq, then raw_nearest_idx, below
+`,
+      tests:[{type:'assert', expr:'raw_nearest_idx == 1', label:'raw_nearest_idx is correctly calculated (1)'}]
+    },
+    {
+      title:'Find the nearest neighbor WITH scaling',
+      desc:`Using scaled_hours = [1.0, 0.0, 0.6666666666666666, 0.3333333333333333], scaled_scores = [1.0, 0.0,
+        0.23076923076923078, 0.6153846153846154], new_h_scaled = 0.8333333333333334, and
+        new_s_scaled = 0.038461538461538464, build scaled_sq = [(scaled_hours[i]-new_h_scaled)**2 +
+        (scaled_scores[i]-new_s_scaled)**2 for i in range(4)], then
+        scaled_nearest_idx = min(range(4), key=lambda i: scaled_sq[i]). Assert that scaled_nearest_idx == 2 — a
+        DIFFERENT answer from the unscaled version.`,
+      starter:`scaled_hours = [1.0, 0.0, 0.6666666666666666, 0.3333333333333333]
+scaled_scores = [1.0, 0.0, 0.23076923076923078, 0.6153846153846154]
+new_h_scaled = 0.8333333333333334
+new_s_scaled = 0.038461538461538464
+# Build scaled_sq, then scaled_nearest_idx, below
+`,
+      tests:[{type:'assert', expr:'scaled_nearest_idx == 2', label:'scaled_nearest_idx is correctly calculated (2)'}]
+    },
+    {
+      title:'See the label actually flip',
+      desc:`Using labels = ['pass', 'fail', 'pass', 'fail'], raw_nearest_idx = 1, and scaled_nearest_idx = 2, set
+        raw_label = labels[raw_nearest_idx] and scaled_label = labels[scaled_nearest_idx]. Assert that
+        raw_label == 'fail' and scaled_label == 'pass' and raw_label != scaled_label — scaling didn't just change
+        a number, it changed the actual predicted label.`,
+      starter:`labels = ['pass', 'fail', 'pass', 'fail']
+raw_nearest_idx = 1
+scaled_nearest_idx = 2
+# Set raw_label and scaled_label below
+`,
+      tests:[{type:'assert', expr:"raw_label == 'fail' and scaled_label == 'pass' and raw_label != scaled_label", label:'raw_label and scaled_label are correctly identified as different'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does scale(x, xmin, xmax) = (x - xmin) / (xmax - xmin) actually do?',
+      options:['Rounds x to the nearest whole number','Maps x into the range 0 to 1, based on where it falls between the feature\'s own min and max','Multiplies x by a fixed constant','Removes x from the dataset'],
+      correct:1,
+      explain:'The minimum always scales to 0.0, the maximum always scales to 1.0, and everything else lands proportionally between them.'
+    },
+    {
+      q:'Why did the raw (unscaled) squared distance in this week get dominated by the "scores" feature?',
+      options:['Scores were sorted first','Scores have a much bigger numeric range (0-500) than hours (0-10), so score differences contribute far more to the squared-distance total','Python always weighs the second feature more','The hours values were all identical'],
+      correct:1,
+      explain:'Squared distance adds up each feature\'s squared difference — a feature with naturally bigger numbers produces bigger squared differences, and ends up dominating the total.'
+    },
+    {
+      q:'Why must a NEW point be scaled using the TRAINING data\'s min/max, not its own?',
+      options:['It doesn\'t matter which min/max is used','Using a different ruler for the new point would make the comparison unfair — everyone needs to be measured against the SAME reference range','New points can never be scaled','Scaling a new point is optional'],
+      correct:1,
+      explain:'Scaling is only meaningful as a shared reference — the new point has to be placed on the exact same 0-to-1 scale that the training data was measured against.'
+    },
+    {
+      q:'In this week\'s exercises, scaling actually changed which student was the "nearest neighbor." What does that show?',
+      options:['Scaling is just a cosmetic change that never affects real answers','Scaling can genuinely change a model\'s prediction — an unscaled distance-based model can give a MISLEADING answer','The raw calculation was always correct','Scaled and unscaled distances always agree'],
+      correct:1,
+      explain:'This week\'s exact numbers show scaling isn\'t just tidying up — it can flip which neighbor is "closest," and therefore flip the predicted label itself.'
+    }
+  ],
+  sandboxStarter3:`def scale(x, xmin, xmax):
+    return (x - xmin) / (xmax - xmin)
+
+hours = [8, 2, 6, 4]
+scores = [400, 140, 200, 300]
+labels = ['pass', 'fail', 'pass', 'fail']
+new_hours, new_score = 7, 150
+
+hmin, hmax = min(hours), max(hours)
+smin, smax = min(scores), max(scores)
+scaled_hours = [scale(h, hmin, hmax) for h in hours]
+scaled_scores = [scale(s, smin, smax) for s in scores]
+new_h_scaled = scale(new_hours, hmin, hmax)
+new_s_scaled = scale(new_score, smin, smax)
+
+raw_sq = [(hours[i]-new_hours)**2 + (scores[i]-new_score)**2 for i in range(4)]
+scaled_sq = [(scaled_hours[i]-new_h_scaled)**2 + (scaled_scores[i]-new_s_scaled)**2 for i in range(4)]
+
+raw_nearest = min(range(4), key=lambda i: raw_sq[i])
+scaled_nearest = min(range(4), key=lambda i: scaled_sq[i])
+print("Unscaled nearest neighbor:", labels[raw_nearest])
+print("Scaled nearest neighbor:", labels[scaled_nearest])
+`,
+  stretchChallenge:{
+    title:'Scale a completely new pair of students',
+    desc:`Using hours = [3, 9], scores = [500, 120], labels = ['fail', 'pass'], and new_point = (8, 130), scale
+      both features (min-max, using the training min/max), scale the new point the same way, calculate
+      scaled_sq for both students, and find scaled_nearest_idx. Assert that
+      scaled_label = labels[scaled_nearest_idx] equals 'pass'.`,
+    starter:`def scale(x, xmin, xmax):
+    return (x - xmin) / (xmax - xmin)
+
+hours = [3, 9]
+scores = [500, 120]
+labels = ['fail', 'pass']
+new_hours, new_score = 8, 130
+# Scale both features and the new point, calculate scaled_sq, then scaled_nearest_idx and scaled_label
+`,
+    tests:[
+      {type:'assert', expr:"scaled_label == 'pass'", label:'scaled_label is correctly identified (pass)'}
+    ]
+  }
+}
+];
+
 window.SUBJECT_DATA = window.SUBJECT_DATA || {};
 window.SUBJECT_DATA.mlr = { b: {weeks: MLR_WEEKS, mp1: MLR_MP1, mp2: MLR_MP2}, i: {weeks: MLR_WEEKS, mp1: MLR_MP1, mp2: MLR_MP2}, a: {weeks: MLR_WEEKS, mp1: MLR_MP1, mp2: MLR_MP2} };
