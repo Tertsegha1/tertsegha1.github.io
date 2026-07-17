@@ -2802,6 +2802,221 @@ print("Cross-validated MAE:", round(cv_mae, 2))
       {type:'assert', expr:'round(cv_mae, 2) == 0.83', label:'cv_mae is correctly calculated (0.83)'}
     ]
   }
+},
+{
+  key:'week4', num:4, title:'Yes, No, or Maybe: Logistic Thinking by Hand',
+  scenarioTag:'Real world: how CONFIDENT is the model, not just yes or no?',
+  scenario:`Week 4's (Beginner) classifier gave a hard True/False answer — but a student just barely past the
+    threshold feels very different from one way beyond it, even though both get classified "pass." This week
+    introduces the <strong>sigmoid function</strong>, which turns any distance-from-threshold into a smooth
+    probability between 0 and 1 — real confidence, not just a coin-flip yes/no.`,
+  objectives:[
+    'Write the sigmoid function: 1 / (1 + e^-z)',
+    'Turn a raw value into a "distance from threshold" score, then into a probability',
+    'Classify by checking whether the probability is at least 0.5',
+    'Confirm probability-based classification exactly matches Week 4\'s threshold rule'
+  ],
+  conceptHtml:`
+    <p>The <strong>sigmoid function</strong> squashes ANY real number into a value strictly between 0 and 1 —
+    perfect for representing a probability:</p>
+    <pre class="code-block">import math
+
+def sigmoid(z):
+    return 1 / (1 + math.exp(-z))
+
+print(sigmoid(0))    # 0.5 - exactly balanced
+print(sigmoid(2))    # 0.8808 - fairly confident "yes"
+print(sigmoid(-2))   # 0.1192 - fairly confident "no"</pre>
+    <p>To use it for classifying, first turn a raw value into a "distance from threshold" score
+    <code>z = k*(x - threshold)</code>, where <code>k</code> controls how STEEP the transition is. Then
+    <code>probability = sigmoid(z)</code>, and classify "yes" whenever <code>probability >= 0.5</code>:</p>
+    <pre class="code-block">threshold = 5
+k = 1
+x = 7
+z = k*(x - threshold)          # 2
+probability = sigmoid(z)       # 0.8808
+predicted_yes = probability >= 0.5   # True</pre>
+    <h3>Let's break down why this connects to Week 4's threshold classifier</h3>
+    <ul>
+      <li><code>z = k*(x - threshold)</code> is exactly 0 when <code>x</code> equals the threshold — and
+        <code>sigmoid(0) == 0.5</code> exactly, so a student AT the threshold gets a perfectly 50/50 probability.</li>
+      <li>Sigmoid is always increasing: bigger <code>z</code> always gives a bigger probability. So
+        <code>probability >= 0.5</code> happens EXACTLY when <code>z >= 0</code>, which happens EXACTLY when
+        <code>x >= threshold</code> (for a positive <code>k</code>) — the SAME yes/no answer as Week 4's plain
+        <code>x >= threshold</code> rule, just with a confidence number attached.</li>
+      <li><code>k</code> (steepness) doesn't change WHICH side of the threshold wins, only HOW confident the
+        probability gets for a given distance — a bigger <code>k</code> pushes probabilities further toward 0 or
+        1 for the same <code>x - threshold</code> gap.</li>
+    </ul>`,
+  sandboxStarter:`import math
+
+def sigmoid(z):
+    return 1 / (1 + math.exp(-z))
+
+print("sigmoid(0):", sigmoid(0))
+print("sigmoid(2):", round(sigmoid(2), 4))
+print("sigmoid(-2):", round(sigmoid(-2), 4))
+`,
+  sandboxStarter2:`import math
+
+def sigmoid(z):
+    return 1 / (1 + math.exp(-z))
+
+hours = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+threshold = 5
+k = 1
+
+zs = [k*(h-threshold) for h in hours]
+probs = [sigmoid(z) for z in zs]
+for i in range(len(hours)):
+    print(hours[i], "-> probability:", round(probs[i], 4))
+`,
+  exercises:[
+    {
+      title:'Write the sigmoid function',
+      desc:`Write sigmoid(z) returning 1 / (1 + math.exp(-z)) (import math). Assert that round(sigmoid(0), 4) ==
+        0.5 and round(sigmoid(2), 4) == 0.8808.`,
+      starter:`import math
+
+def sigmoid(z):
+    # TODO: return 1 / (1 + math.exp(-z))
+    pass
+`,
+      tests:[
+        {type:'assert', expr:'round(sigmoid(0), 4) == 0.5', label:'sigmoid(0) is correctly calculated (0.5)'},
+        {type:'assert', expr:'round(sigmoid(2), 4) == 0.8808', label:'sigmoid(2) is correctly calculated (0.8808)'}
+      ]
+    },
+    {
+      title:'Turn hours into a score',
+      desc:`Using hours = [1,2,3,4,5,6,7,8,9,10], threshold = 5, and k = 1, build
+        zs = [k*(h-threshold) for h in hours]. Assert that zs == [-4,-3,-2,-1,0,1,2,3,4,5].`,
+      starter:`hours = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+threshold = 5
+k = 1
+# Build zs below
+`,
+      tests:[{type:'assert', expr:'zs == [-4,-3,-2,-1,0,1,2,3,4,5]', label:'zs is correctly calculated'}]
+    },
+    {
+      title:'Convert scores to probabilities',
+      desc:`Using zs = [-4,-3,-2,-1,0,1,2,3,4,5], build probs = [sigmoid(z) for z in zs]. Assert that
+        [round(p, 4) for p in probs] == [0.018, 0.0474, 0.1192, 0.2689, 0.5, 0.7311, 0.8808, 0.9526, 0.982,
+        0.9933].`,
+      starter:`import math
+
+def sigmoid(z):
+    return 1 / (1 + math.exp(-z))
+
+zs = [-4, -3, -2, -1, 0, 1, 2, 3, 4, 5]
+# Build probs below
+`,
+      tests:[{type:'assert', expr:'[round(p, 4) for p in probs] == [0.018, 0.0474, 0.1192, 0.2689, 0.5, 0.7311, 0.8808, 0.9526, 0.982, 0.9933]', label:'probs is correctly calculated'}]
+    },
+    {
+      title:'Classify by probability',
+      desc:`Using probs = [0.018, 0.0474, 0.1192, 0.2689, 0.5, 0.7311, 0.8808, 0.9526, 0.982, 0.9933], build
+        classified = [p >= 0.5 for p in probs]. Assert that
+        classified == [False, False, False, False, True, True, True, True, True, True].`,
+      starter:`probs = [0.018, 0.0474, 0.1192, 0.2689, 0.5, 0.7311, 0.8808, 0.9526, 0.982, 0.9933]
+# Build classified below
+`,
+      tests:[{type:'assert', expr:'classified == [False, False, False, False, True, True, True, True, True, True]', label:'classified is correctly calculated'}]
+    },
+    {
+      title:'Confirm it matches the threshold classifier',
+      desc:`Using classified = [False, False, False, False, True, True, True, True, True, True] and
+        hours = [1,2,3,4,5,6,7,8,9,10] with threshold = 5, build direct = [h >= threshold for h in hours] (Week
+        4, Beginner's plain threshold rule). Assert that classified == direct — the sigmoid-probability
+        classifier agrees EXACTLY with the plain threshold rule.`,
+      starter:`classified = [False, False, False, False, True, True, True, True, True, True]
+hours = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+threshold = 5
+# Build direct below
+`,
+      tests:[{type:'assert', expr:'classified == direct', label:'classified correctly matches direct'}]
+    },
+    {
+      title:'See what steepness (k) changes',
+      desc:`Using threshold = 5 and x = 6 (1 unit past the threshold either way), calculate
+        prob_gentle = sigmoid(0.5*(x-threshold)) and prob_steep = sigmoid(2*(x-threshold)). Assert that
+        round(prob_gentle, 4) == 0.6225 and round(prob_steep, 4) == 0.8808 and prob_steep > prob_gentle — a
+        bigger k makes the model MORE confident for the exact same distance from the threshold.`,
+      starter:`import math
+
+def sigmoid(z):
+    return 1 / (1 + math.exp(-z))
+
+threshold = 5
+x = 6
+# Calculate prob_gentle and prob_steep below
+`,
+      tests:[
+        {type:'assert', expr:'round(prob_gentle, 4) == 0.6225', label:'prob_gentle is correctly calculated (0.6225)'},
+        {type:'assert', expr:'round(prob_steep, 4) == 0.8808', label:'prob_steep is correctly calculated (0.8808)'},
+        {type:'assert', expr:'prob_steep > prob_gentle', label:'prob_steep is correctly greater than prob_gentle'}
+      ]
+    }
+  ],
+  quiz:[
+    {
+      q:'What kind of value does sigmoid(z) = 1 / (1 + e^-z) always produce?',
+      options:['A value strictly between 0 and 1, usable as a probability','A value between -1 and 1','A whole number','A value that can be negative'],
+      correct:0,
+      explain:'No matter how large or small z is, sigmoid squashes it into the open interval (0, 1) — never quite reaching 0 or 1.'
+    },
+    {
+      q:'What is sigmoid(0) exactly, and why does that matter for classification?',
+      options:['1.0 — it always predicts yes','0.5 — right at the threshold, the model is exactly 50/50, maximally uncertain','0.0 — it always predicts no','It is undefined at 0'],
+      correct:1,
+      explain:'z = 0 happens exactly when x equals the threshold, and sigmoid(0) = 0.5 — the model has no lean either way at that exact point.'
+    },
+    {
+      q:'Why does probability >= 0.5 classification give the EXACT same answer as Beginner Week 4\'s x >= threshold rule?',
+      options:['It is a coincidence','Sigmoid is always increasing, so probability >= 0.5 happens exactly when z >= 0, which happens exactly when x >= threshold','It only works for some values of x','sigmoid() ignores the threshold entirely'],
+      correct:1,
+      explain:'Since z = k*(x-threshold) crosses 0 exactly at x = threshold, and sigmoid crosses 0.5 exactly at z = 0, the two classifiers are guaranteed to agree.'
+    },
+    {
+      q:'What does increasing the steepness k do to the predicted probability, for the SAME distance from the threshold?',
+      options:['Nothing changes','Pushes the probability further toward 0 or 1 — the model becomes more confident for the same gap','Always pushes probability toward exactly 0.5','Flips which side of the threshold is predicted'],
+      correct:1,
+      explain:'A bigger k multiplies the same (x - threshold) gap into a bigger z, and sigmoid maps a bigger |z| to a probability closer to the extremes.'
+    }
+  ],
+  sandboxStarter3:`import math
+
+def sigmoid(z):
+    return 1 / (1 + math.exp(-z))
+
+hours = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+threshold = 5
+
+for k in [0.5, 1, 2]:
+    zs = [k*(h-threshold) for h in hours]
+    probs = [round(sigmoid(z), 2) for z in zs]
+    print("k =", k, "->", probs)
+`,
+  stretchChallenge:{
+    title:'Classify by attendance instead',
+    desc:`Using attendance = [40, 55, 70, 85], threshold = 65, and k = 0.2, build
+      zs = [k*(a-threshold) for a in attendance], then probs = [sigmoid(z) for z in zs], then
+      classified = [p >= 0.5 for p in probs]. Assert that
+      classified == [False, False, True, True].`,
+    starter:`import math
+
+def sigmoid(z):
+    return 1 / (1 + math.exp(-z))
+
+attendance = [40, 55, 70, 85]
+threshold = 65
+k = 0.2
+# Build zs, probs and classified below
+`,
+    tests:[
+      {type:'assert', expr:'classified == [False, False, True, True]', label:'classified is correctly calculated'}
+    ]
+  }
 }
 ];
 
