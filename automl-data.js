@@ -6656,9 +6656,74 @@ Xs = scaler.fit_transform(X)
 }
 ];
 
+const ML_ADVANCED_MP1 = {
+  key:'mp1',
+  title:'Mini Project 1 — Tune and Justify a Model',
+  intro:`Back to the resit predictor from Weeks 1-4: try an SVC, check which feature actually matters most, then
+    tune a RandomForest properly AND prove the tuning genuinely helped — all in one project, combining every skill
+    from the first four weeks.`,
+  newTrick:`Combining SVC (Week 1), feature_importances_ (Week 2), multi-parameter GridSearchCV (Week 3) and the
+    overfitting check (Week 4) into ONE connected investigation, rather than four separate, disconnected tricks.`,
+  stages:[
+    {
+      key:'a', title:'Stage A — Try an SVC',
+      desc:`Create hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6],
+        attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+        and passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]. Create
+        X = list(zip(hours, attendance)). Create scaler = StandardScaler(), then Xs = scaler.fit_transform(X).
+        Create svc = SVC() and svc_cv = round(cross_val_score(svc, Xs, passed, cv=5).mean(), 2). Assert that
+        svc_cv == 0.9.`,
+      starter:`from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import cross_val_score
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+# Create X, scaler, Xs, svc and svc_cv below
+`,
+      tests:[{type:'assert', expr:'svc_cv == 0.9', label:'The SVC\'s cross-validated score is correctly measured'}]
+    },
+    {
+      key:'b', title:'Stage B — Check which feature actually matters',
+      desc:`Using X and passed from before, create rf = RandomForestClassifier(random_state=42) and fit it on
+        X/passed. Create attendance_importance = round(float(rf.feature_importances_[1]), 3). Assert that
+        attendance_importance == 0.597 — attendance matters more than hours for THIS RandomForest.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+# Create rf and attendance_importance below
+`,
+      tests:[{type:'assert', expr:'attendance_importance == 0.597', label:'The more important feature is correctly identified'}]
+    },
+    {
+      key:'c', title:'Stage C — Tune it, then prove the tuning helped',
+      desc:`Using X, Xs and passed from before, create baseline = RandomForestClassifier(random_state=42), fit it
+        on X/passed, then baseline_cv = round(cross_val_score(baseline, X, passed, cv=5).mean(), 2). Build
+        param_grid = {"max_depth": [1, 2, 3, 4], "n_estimators": [10, 50, 100]} and
+        grid = GridSearchCV(RandomForestClassifier(random_state=42), param_grid, cv=5), then grid.fit(Xs, passed).
+        Create best_cv = round(grid.best_score_, 2) and improved = best_cv > baseline_cv. Assert that
+        best_cv == 0.9 and improved == True — proving the tuning produced a REAL, fairly-measured improvement.`,
+      starter:`from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import GridSearchCV, cross_val_score
+hours = [1,2,3,4,5,6,7,8,9,10,1,2,8,9,3,4,6,7,2,9,5,6,1,10,3,7,2,9,4,6]
+attendance = [50,55,60,65,70,80,85,90,95,98,52,58,92,88,61,64,75,80,56,96,72,78,53,99,58,83,55,90,63,77]
+passed = [0,0,1,0,0,1,1,1,1,1,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1]
+X = list(zip(hours, attendance))
+scaler = StandardScaler()
+Xs = scaler.fit_transform(X)
+# Create baseline, baseline_cv, param_grid, grid, best_cv and improved below
+`,
+      tests:[{type:'assert', expr:'best_cv == 0.9 and improved == True', label:'Tuning is confirmed to genuinely improve on the honest baseline'}]
+    }
+  ]
+};
+
 window.SUBJECT_DATA = window.SUBJECT_DATA || {};
 window.SUBJECT_DATA.ml = {
   b: {weeks: ML_WEEKS, mp1: ML_MP1, mp2: ML_MP2},
   i: {weeks: ML_INTERMEDIATE_WEEKS, mp1: ML_INTERMEDIATE_MP1, mp2: ML_INTERMEDIATE_MP2},
-  a: {weeks: ML_ADVANCED_WEEKS, mp1: ML_MP1, mp2: ML_MP2}
+  a: {weeks: ML_ADVANCED_WEEKS, mp1: ML_ADVANCED_MP1, mp2: ML_MP2}
 };
