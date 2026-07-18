@@ -2592,6 +2592,211 @@ stretch_filenames = ["photo.jpg", "hack.php", "script.js", "virus.exe", "avatar.
       {type:'assert', expr:'mismatches == ["hack.php", "script.js", "archive.zip"]', label:'mismatches is correctly calculated'}
     ]
   }
+},
+{
+  key:'week2', num:2, title:'Pattern Matching with re',
+  scenarioTag:'Real world: a naive check can be fooled the same way a deny-list can',
+  scenario:`Last week's allow-list vs deny-list lesson showed that a check can LOOK reasonable while still having a
+    gap. This week finds the exact same gap in a different place: Beginner Week 2's simple validation checks (is it
+    blank? does it have an "@"?) can be fooled by input that's the wrong SHAPE in ways those checks never
+    considered. Python's <code>re</code> module lets you describe the exact shape a valid value must have —
+    closing the gap for good.`,
+  objectives:[
+    'Use re.match with ^ and $ anchors to check a value matches an EXACT pattern, start to end',
+    'Build a character-class + quantifier pattern (e.g. "2 letters, then 1-2 digits")',
+    'Compare a naive shape check against a proper regex, and find where the naive one is fooled',
+    'Use re.findall to pull every matching piece out of a longer string'
+  ],
+  conceptHtml:`
+    <p>The student portal accepts class codes like "YR7" or "YR10" (year group letters, then 1 or 2 digits). A
+    NAIVE check might look reasonable:</p>
+    <pre class="code-block">def naive_check(code):
+    return code[:2].isalpha() and code[2:].isdigit()
+
+print(naive_check("YR7"))     # True — correct
+print(naive_check("YR100"))   # True — WRONG, that's not a real class code!</pre>
+    <p>The naive check never limits HOW MANY digits follow — <code>code[2:].isdigit()</code> is happy with any
+    length. A regex can describe the exact shape, digit-count included:</p>
+    <pre class="code-block">import re
+
+def is_valid_class_code(code):
+    return bool(re.match(r"^[A-Z]{2}[0-9]{1,2}$", code))
+
+print(is_valid_class_code("YR7"))     # True
+print(is_valid_class_code("YR100"))   # False — correctly rejected, 3 digits is too many</pre>
+    <h3>Reading the pattern piece by piece</h3>
+    <ul>
+      <li><code>^</code> and <code>$</code> — anchor the match to the very START and very END of the string, so
+        nothing extra can sneak in before or after (leaving either one out is a classic regex mistake).</li>
+      <li><code>[A-Z]{2}</code> — a character class (<code>[A-Z]</code>, any uppercase letter) followed by a
+        quantifier (<code>{2}</code>, exactly 2 of them).</li>
+      <li><code>[0-9]{1,2}</code> — digits only, and <code>{1,2}</code> means "1 OR 2 of them" — no more, no
+        fewer.</li>
+      <li><code>re.match(...)</code> returns a Match object (truthy) if it matches, or <code>None</code> (falsy)
+        if it doesn't — wrapping it in <code>bool(...)</code> turns that into a clean True/False.</li>
+    </ul>
+    <p><code>re.findall(pattern, text)</code> works differently — instead of matching the WHOLE string, it finds
+    every matching piece anywhere inside a longer string and returns them as a list:</p>
+    <pre class="code-block">import re
+print(re.findall(r"\\d+", "Room YR7 Block B12"))   # ['7', '12'] — every run of digits, found anywhere</pre>`,
+  sandboxStarter:`import re
+
+def naive_check(code):
+    return code[:2].isalpha() and code[2:].isdigit()
+
+print(naive_check("YR7"))
+print(naive_check("YR100"))
+`,
+  sandboxStarter2:`import re
+
+def is_valid_class_code(code):
+    return bool(re.match(r"^[A-Z]{2}[0-9]{1,2}$", code))
+
+print(is_valid_class_code("YR7"))
+print(is_valid_class_code("YR100"))
+`,
+  exercises:[
+    {
+      title:'Write the class-code regex check',
+      desc:`Write is_valid_class_code(code) using re.match with the pattern "^[A-Z]{2}[0-9]{1,2}$" (given), wrapped
+        in bool(). Assert that is_valid_class_code("YR7") == True and is_valid_class_code("YR100") == False.`,
+      starter:`import re
+# Write is_valid_class_code(code) below
+`,
+      tests:[
+        {type:'assert', expr:'is_valid_class_code("YR7") == True', label:'"YR7" is correctly accepted'},
+        {type:'assert', expr:'is_valid_class_code("YR100") == False', label:'"YR100" is correctly rejected (too many digits)'}
+      ]
+    },
+    {
+      title:'Find where the naive check gets fooled',
+      desc:`Using naive_check(code) = code[:2].isalpha() and code[2:].isdigit() (given) and is_valid_class_code
+        (given), calculate naive_fooled = (naive_check("YR100") == True and is_valid_class_code("YR100") == False).
+        Assert that naive_fooled == True — the naive check wrongly accepts "YR100", but the regex correctly
+        catches it.`,
+      starter:`import re
+
+def naive_check(code):
+    return code[:2].isalpha() and code[2:].isdigit()
+
+def is_valid_class_code(code):
+    return bool(re.match(r"^[A-Z]{2}[0-9]{1,2}$", code))
+# Calculate naive_fooled below
+`,
+      tests:[{type:'assert', expr:'naive_fooled == True', label:'naive_fooled correctly equals True'}]
+    },
+    {
+      title:'Build a safe-username check',
+      desc:`Write is_safe_username(username) using re.match with the pattern "^[A-Za-z0-9_]{3,20}$" (letters,
+        digits, or underscore only, 3 to 20 characters). Assert that is_safe_username("ada_2010") == True and
+        is_safe_username("ada!2010") == False.`,
+      starter:`import re
+# Write is_safe_username(username) below
+`,
+      tests:[
+        {type:'assert', expr:'is_safe_username("ada_2010") == True', label:'"ada_2010" is correctly accepted'},
+        {type:'assert', expr:'is_safe_username("ada!2010") == False', label:'"ada!2010" is correctly rejected (contains "!")'}
+      ]
+    },
+    {
+      title:'Extract every number from a longer string',
+      desc:`Write extract_digits(text) using re.findall(r"\\d+", text) to return every run of digits found in
+        text, as a list. Assert that extract_digits("Room YR7 Block B12") == ["7", "12"].`,
+      starter:`import re
+# Write extract_digits(text) below
+`,
+      tests:[{type:'assert', expr:'extract_digits("Room YR7 Block B12") == ["7", "12"]', label:'extract_digits correctly finds both numbers'}]
+    },
+    {
+      title:'Check a whole batch of proposed usernames',
+      desc:`Using is_safe_username (given) and usernames = ["ada_2010", "ada!2010", "ab", "bob_smith",
+        "x"*25, "sam99"], calculate safe_count, the number of usernames that pass is_safe_username. Assert that
+        safe_count == 3.`,
+      starter:`import re
+
+def is_safe_username(username):
+    return bool(re.match(r"^[A-Za-z0-9_]{3,20}$", username))
+
+usernames = ["ada_2010", "ada!2010", "ab", "bob_smith", "x"*25, "sam99"]
+# Calculate safe_count below
+`,
+      tests:[{type:'assert', expr:'safe_count == 3', label:'safe_count correctly equals 3'}]
+    },
+    {
+      title:'Write the combined sign-up validator',
+      desc:`Using is_valid_class_code and is_safe_username (given), write validate_signup(class_code, username)
+        returning "accepted" only if BOTH checks pass, else "rejected". Assert that
+        validate_signup("YR7", "ada_2010") == "accepted" and validate_signup("YR100", "ada_2010") == "rejected".`,
+      starter:`import re
+
+def is_valid_class_code(code):
+    return bool(re.match(r"^[A-Z]{2}[0-9]{1,2}$", code))
+
+def is_safe_username(username):
+    return bool(re.match(r"^[A-Za-z0-9_]{3,20}$", username))
+# Write validate_signup(class_code, username) below
+`,
+      tests:[
+        {type:'assert', expr:'validate_signup("YR7", "ada_2010") == "accepted"', label:'A valid class code + safe username is correctly accepted'},
+        {type:'assert', expr:'validate_signup("YR100", "ada_2010") == "rejected"', label:'An invalid class code correctly rejects the whole sign-up'}
+      ]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why did naive_check("YR100") wrongly return True?',
+      options:['isdigit() doesn\'t work on numbers','code[2:].isdigit() accepts ANY number of digits — it never limits the count, so 3 digits pass just as easily as 1 or 2','Python has a bug in string slicing','"YR100" is actually a valid class code'],
+      correct:1,
+      explain:'The naive check only asks "is this part all digits?" — it never asks "how MANY digits?", which is exactly the gap the regex closes.'
+    },
+    {
+      q:'What do the ^ and $ symbols do in a regex pattern?',
+      options:['They are optional decoration with no effect','They anchor the match to the very start and very end of the string, so nothing extra can sneak in before or after','They mean "any character"','They escape special characters'],
+      correct:1,
+      explain:'Without anchors, a pattern can match just PART of a string — anchors force the WHOLE string to fit the pattern.'
+    },
+    {
+      q:'What does {1,2} mean in the pattern [0-9]{1,2}?',
+      options:['Exactly 1.2 digits','1 OR 2 digits — no more, no fewer','At least 12 digits','Digits 1 through 2 only (never 0)'],
+      correct:1,
+      explain:'{min,max} is a quantifier range — {1,2} means the preceding pattern must repeat 1 or 2 times, nothing outside that range.'
+    },
+    {
+      q:'How is re.findall different from re.match?',
+      options:['They are identical','re.match checks if the WHOLE string fits a pattern from the start; re.findall searches anywhere inside a string and returns every match it finds as a list','re.findall only works on numbers','re.match is always faster'],
+      correct:1,
+      explain:'re.match anchors at the start and checks the whole shape; re.findall scans the entire string for every occurrence, wherever it appears.'
+    }
+  ],
+  sandboxStarter3:`import re
+
+def is_valid_class_code(code):
+    return bool(re.match(r"^[A-Z]{2}[0-9]{1,2}$", code))
+
+def is_safe_username(username):
+    return bool(re.match(r"^[A-Za-z0-9_]{3,20}$", username))
+
+def validate_signup(class_code, username):
+    return "accepted" if is_valid_class_code(class_code) and is_safe_username(username) else "rejected"
+
+for code, user in [("YR7", "ada_2010"), ("YR100", "ada_2010"), ("YR7", "ada!2010")]:
+    print(code, user, "->", validate_signup(code, user))
+`,
+  stretchChallenge:{
+    title:'Extract and validate every class code in a roster line',
+    desc:`Using re.findall(r"[A-Z]{2}[0-9]{1,2}\\b", text) (given, matches a full class-code SHAPE anywhere in the
+      text — \\b marks a word boundary so it can't grab part of a longer word) on
+      roster_line = "Students in YR7, YR8 and YR100X need to re-register", calculate found_codes. Assert that
+      found_codes == ["YR7", "YR8"] — "YR100X" is correctly NOT matched (too many digits before the boundary).`,
+    starter:`import re
+
+roster_line = "Students in YR7, YR8 and YR100X need to re-register"
+# Calculate found_codes below, using re.findall(r"[A-Z]{2}[0-9]{1,2}\\b", roster_line)
+`,
+    tests:[
+      {type:'assert', expr:'found_codes == ["YR7", "YR8"]', label:'found_codes correctly equals ["YR7", "YR8"]'}
+    ]
+  }
 }
 ];
 
