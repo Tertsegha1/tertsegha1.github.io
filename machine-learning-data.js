@@ -5730,6 +5730,233 @@ test_scores2  = [50]
       {type:'assert', expr:'stretch_gap == 45.0', label:'stretch_gap correctly equals 45.0'}
     ]
   }
+},
+{
+  key:'week7', num:7, title:'Designing Your Own Features',
+  scenarioTag:'Real world: sometimes the missing ingredient isn\'t a NEW feature — it\'s a smarter COMBINATION of the ones you already have',
+  scenario:`Intermediate Week 1 fit a model using several raw features at once. But sometimes raw features alone
+    can't capture the true shape of a relationship — no matter how you weight hours studied on its own, a
+    genuinely CURVED relationship stays stubbornly under- or over-predicted at the extremes. This week you'll
+    engineer a brand-new feature — computed FROM the features you already have — that captures exactly the
+    pattern the raw features were missing.`,
+  objectives:[
+    'Measure a raw, features-only model\'s fit and see where it systematically misses',
+    'Engineer a new feature by combining existing ones (e.g. squaring, multiplying) rather than collecting new data',
+    'Confirm the engineered feature captures the missing pattern by comparing MAE before and after',
+    'Write a reusable check for whether an engineered feature is actually worth keeping'
+  ],
+  conceptHtml:`
+    <p>Eight students' exam scores actually follow a CURVED relationship with hours studied — each extra hour
+    helps a little more than the last (a real "snowball" effect), not a straight line:</p>
+    <pre class="code-block">def mae(preds, actual):
+    return sum(abs(p-a) for p,a in zip(preds,actual))/len(actual)
+
+hours  = [1,2,3,4,5,6,7,8]
+scores = [45.5,52.0,59.5,68.0,77.5,88.0,99.5,112.0]   # a curved relationship
+
+def predict_raw(h):
+    return 8*h + 40   # a straight-line model — a reasonable-looking guess
+
+raw_preds = [predict_raw(h) for h in hours]
+print(mae(raw_preds, scores))   # 3.625  <- consistently off, worse at the extremes</pre>
+    <p>The straight-line model can't fix this no matter how its weights are tuned — a straight line simply
+    cannot bend. The fix isn't a NEW measurement, it's a new FEATURE computed from the one we already have:</p>
+    <pre class="code-block">hours_squared = [h*h for h in hours]   # ENGINEERED feature: hours, squared
+
+def predict_engineered(h, hsq):
+    return 5*h + 0.5*hsq + 40   # now includes the engineered curvature term
+
+eng_preds = [predict_engineered(h, hsq) for h, hsq in zip(hours, hours_squared)]
+print(mae(eng_preds, scores))   # 0.0  <- captures the curve exactly!</pre>
+    <h3>Why this counts as "designing a feature"</h3>
+    <ul>
+      <li><strong>hours_squared</strong> isn't new data collected from anywhere — it's the SAME hours number,
+        transformed by a simple calculation (squaring it), that happens to match the true shape of the
+        relationship.</li>
+      <li>The general pattern: if a model's errors look SYSTEMATIC (not random) — always under-predicting at
+        one end, always over-predicting at the other — that's a clue the raw features are missing some shape the
+        model can't express on its own. Try a transformation (squaring, a ratio, a product of two features) that
+        might supply that missing shape.</li>
+      <li>Always confirm with the SAME check used all along: does MAE go down? An engineered feature that
+        doesn't reduce error isn't worth the extra complexity.</li>
+    </ul>`,
+  sandboxStarter:`def mae(preds, actual):
+    return sum(abs(p-a) for p,a in zip(preds,actual))/len(actual)
+
+hours  = [1,2,3,4,5,6,7,8]
+scores = [45.5,52.0,59.5,68.0,77.5,88.0,99.5,112.0]
+
+def predict_raw(h):
+    return 8*h + 40
+
+raw_preds = [predict_raw(h) for h in hours]
+print("raw MAE:", mae(raw_preds, scores))
+`,
+  sandboxStarter2:`def mae(preds, actual):
+    return sum(abs(p-a) for p,a in zip(preds,actual))/len(actual)
+
+hours  = [1,2,3,4,5,6,7,8]
+scores = [45.5,52.0,59.5,68.0,77.5,88.0,99.5,112.0]
+
+hours_squared = [h*h for h in hours]
+
+def predict_engineered(h, hsq):
+    return 5*h + 0.5*hsq + 40
+
+eng_preds = [predict_engineered(h, hsq) for h, hsq in zip(hours, hours_squared)]
+print("engineered MAE:", mae(eng_preds, scores))
+`,
+  exercises:[
+    {
+      title:'Measure the raw (straight-line) model',
+      desc:`Using predict_raw(h) (given), hours = [1..8], scores = [45.5,52.0,59.5,68.0,77.5,88.0,99.5,112.0],
+        calculate raw_preds and raw_mae. Assert that raw_mae == 3.625.`,
+      starter:`def mae(preds, actual):
+    return sum(abs(p-a) for p,a in zip(preds,actual))/len(actual)
+
+hours  = [1,2,3,4,5,6,7,8]
+scores = [45.5,52.0,59.5,68.0,77.5,88.0,99.5,112.0]
+
+def predict_raw(h):
+    return 8*h + 40
+# Calculate raw_preds and raw_mae below
+`,
+      tests:[{type:'assert', expr:'raw_mae == 3.625', label:'raw_mae correctly equals 3.625'}]
+    },
+    {
+      title:'Engineer the hours_squared feature',
+      desc:`Using hours = [1..8], calculate hours_squared, a new list where each value is the corresponding
+        hours value squared. Assert that hours_squared == [1, 4, 9, 16, 25, 36, 49, 64].`,
+      starter:`hours = [1,2,3,4,5,6,7,8]
+# Calculate hours_squared below
+`,
+      tests:[{type:'assert', expr:'hours_squared == [1, 4, 9, 16, 25, 36, 49, 64]', label:'hours_squared is correctly calculated'}]
+    },
+    {
+      title:'Measure the engineered model',
+      desc:`Using predict_engineered(h, hsq) (given), hours, hours_squared, and scores, calculate eng_preds and
+        eng_mae. Assert that eng_mae == 0.0 — the engineered feature captures the curve exactly.`,
+      starter:`def mae(preds, actual):
+    return sum(abs(p-a) for p,a in zip(preds,actual))/len(actual)
+
+hours  = [1,2,3,4,5,6,7,8]
+scores = [45.5,52.0,59.5,68.0,77.5,88.0,99.5,112.0]
+hours_squared = [h*h for h in hours]
+
+def predict_engineered(h, hsq):
+    return 5*h + 0.5*hsq + 40
+# Calculate eng_preds and eng_mae below
+`,
+      tests:[{type:'assert', expr:'eng_mae == 0.0', label:'eng_mae correctly equals 0.0'}]
+    },
+    {
+      title:'Calculate the improvement',
+      desc:`Using raw_mae = 3.625 and eng_mae = 0.0, calculate improvement = raw_mae - eng_mae. Assert that
+        improvement == 3.625.`,
+      starter:`raw_mae = 3.625
+eng_mae = 0.0
+# Calculate improvement below
+`,
+      tests:[{type:'assert', expr:'improvement == 3.625', label:'improvement correctly equals 3.625'}]
+    },
+    {
+      title:'Write is_useful_feature',
+      desc:`Write is_useful_feature(raw_mae, eng_mae) returning True if eng_mae < raw_mae, else False. Assert
+        that is_useful_feature(3.625, 0.0) == True and is_useful_feature(1.0, 2.0) == False.`,
+      starter:`# Write is_useful_feature(raw_mae, eng_mae) below
+`,
+      tests:[
+        {type:'assert', expr:'is_useful_feature(3.625, 0.0) == True', label:'is_useful_feature correctly returns True when the engineered model has lower error'},
+        {type:'assert', expr:'is_useful_feature(1.0, 2.0) == False', label:'is_useful_feature correctly returns False when the engineered model does NOT help'}
+      ]
+    },
+    {
+      title:'Write choose_better_model',
+      desc:`Write choose_better_model(raw_mae, eng_mae) returning "engineered" if eng_mae < raw_mae, else "raw".
+        Assert that choose_better_model(3.625, 0.0) == "engineered" and choose_better_model(2.0, 2.0) == "raw".`,
+      starter:`# Write choose_better_model(raw_mae, eng_mae) below
+`,
+      tests:[
+        {type:'assert', expr:'choose_better_model(3.625, 0.0) == "engineered"', label:'choose_better_model correctly picks "engineered" when it has lower error'},
+        {type:'assert', expr:'choose_better_model(2.0, 2.0) == "raw"', label:'choose_better_model correctly picks "raw" on a tie'}
+      ]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why couldn\'t the raw straight-line model fit this week\'s data well, no matter how its weights were tuned?',
+      options:['The weights were random','The true relationship was CURVED, and a straight line can never bend to match a curve, regardless of its weights','There wasn\'t enough data','Straight-line models always have zero error'],
+      correct:1,
+      explain:'A linear model can only ever draw a straight line — if the true pattern curves, no amount of weight-tuning can fix that; the fix has to come from the features themselves.'
+    },
+    {
+      q:'What does "engineering a feature" mean in this week\'s example?',
+      options:['Collecting a brand-new measurement not previously recorded','Computing a NEW value FROM existing features (like squaring hours) that better captures the true relationship','Deleting a feature that seems unhelpful','Always using every feature you can think of'],
+      correct:1,
+      explain:'hours_squared is not new data — it\'s the exact same hours value, transformed with a simple calculation, computed entirely from data you already had.'
+    },
+    {
+      q:'What is the clue that a raw feature set might be missing something, and a new engineered feature could help?',
+      options:['The model runs too slowly','Errors look SYSTEMATIC — consistently under-predicting at one end and over-predicting at the other, rather than random scatter','The dataset has fewer than 10 rows','Every model always benefits from more features'],
+      correct:1,
+      explain:'A systematic (non-random) error pattern is the signal that the model\'s inputs can\'t express some real shape in the data — exactly what an engineered feature can supply.'
+    },
+    {
+      q:'How do you confirm an engineered feature was actually worth adding?',
+      options:['If it "feels" like it should help','Check whether MAE actually goes DOWN after adding it — the same measurement used to evaluate every model so far','Always keep every engineered feature regardless of its effect','Engineered features never need to be checked'],
+      correct:1,
+      explain:'The bar for a new feature is the same as for any model change: does it measurably reduce error? If not, it just adds complexity for nothing.'
+    }
+  ],
+  sandboxStarter3:`def mae(preds, actual):
+    return sum(abs(p-a) for p,a in zip(preds,actual))/len(actual)
+
+hours  = [1,2,3,4,5,6,7,8]
+scores = [45.5,52.0,59.5,68.0,77.5,88.0,99.5,112.0]
+
+def predict_raw(h):
+    return 8*h + 40
+
+hours_squared = [h*h for h in hours]
+
+def predict_engineered(h, hsq):
+    return 5*h + 0.5*hsq + 40
+
+raw_preds = [predict_raw(h) for h in hours]
+eng_preds = [predict_engineered(h, hsq) for h, hsq in zip(hours, hours_squared)]
+
+raw_mae = mae(raw_preds, scores)
+eng_mae = mae(eng_preds, scores)
+
+print("raw MAE:", raw_mae, "-> engineered MAE:", eng_mae, "-> improvement:", raw_mae - eng_mae)
+`,
+  stretchChallenge:{
+    title:'Engineer an interaction feature for a fresh scenario',
+    desc:`A different class's scores depend on hours studied AND attendance percentage TOGETHER, not separately
+      — using hours2 = [2,4,6,8,10], attendance2 = [50,60,70,90,100], scores2 = [64.0,124.0,200.0,324.0,440.0],
+      and predict_raw2(h, a) = 3*h + 0.5*a + 20 (given), calculate raw_preds2 and raw_mae2. Then engineer
+      effort2 = [h*a for h,a in zip(hours2, attendance2)] (an interaction feature — hours MULTIPLIED by
+      attendance), and using predict_eng2(h, a, eff) = 2*h + 0.4*eff + 20 (given), calculate eng_preds2 and
+      eng_mae2. Assert that raw_mae2 == 155.4 and eng_mae2 == 0.0.`,
+    starter:`def mae(preds, actual):
+    return sum(abs(p-a) for p,a in zip(preds,actual))/len(actual)
+
+hours2 = [2,4,6,8,10]
+attendance2 = [50,60,70,90,100]
+scores2 = [64.0,124.0,200.0,324.0,440.0]
+
+def predict_raw2(h, a):
+    return 3*h + 0.5*a + 20
+
+def predict_eng2(h, a, eff):
+    return 2*h + 0.4*eff + 20
+# Calculate raw_preds2, raw_mae2, then effort2, eng_preds2, eng_mae2, below
+`,
+    tests:[
+      {type:'assert', expr:'raw_mae2 == 155.4', label:'raw_mae2 correctly equals 155.4'},
+      {type:'assert', expr:'eng_mae2 == 0.0', label:'eng_mae2 correctly equals 0.0'}
+    ]
+  }
 }
 ];
 
