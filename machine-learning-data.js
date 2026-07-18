@@ -6520,9 +6520,100 @@ weights = [3, 1, 1]
   ]
 };
 
+const MLR_ADVANCED_MP2 = {
+  key:'mp2',
+  title:'Mini Project 2 — The Complete Hand-Built ML System',
+  intro:`The full system, end to end: tune a blend between a raw and an engineered regression model, evaluate the
+    winner as a PASS/FAIL classifier against a simpler model, then build a weighted ensemble that combines the
+    winning classifier with an independent k-NN classifier — recovering accuracy that k-NN alone missed.`,
+  fixtureNote:`All three doors build on this same class of 10 students (hours studied, sleep hours, exam score):`,
+  fixtureCode:`hours  = [1,2,3,4,5,6,7,8,9,10]
+sleep  = [4,5,6,7,8,7,6,8,9,8]
+scores = [27.2,32.0,37.4,43.4,50.0,51.6,52.6,63.2,71.3,72.0]
+train/test split: first 8 train, last 2 test (same split as Week 8)`,
+  doors:[
+    {
+      key:'a', title:'Door 1 — Tune the blend weight between raw and engineered',
+      desc:`Using predict_raw(h,s), predict_engineered(h,s,eff) (Week 7/8), and blended_predict(h,s,eff,w) =
+        w*predict_engineered(h,s,eff) + (1-w)*predict_raw(h,s), calculate the TEST set MAE for w = 0.5, 0.8, and
+        1.0, storing them in blend_maes = {0.5: ..., 0.8: ..., 1.0: ...}. Then set
+        best_w = min(blend_maes, key=blend_maes.get). Assert that blend_maes[1.0] == 0.0 and best_w == 1.0.`,
+      starter:`def mae(preds, actual):
+    return sum(abs(p-a) for p,a in zip(preds,actual))/len(actual)
+
+test_hours, test_sleep = [9, 10], [9, 8]
+test_scores = [71.3, 72.0]
+test_effort = [h*s for h, s in zip(test_hours, test_sleep)]
+
+def predict_raw(h, s):
+    return 3*h + 1.5*s + 20
+
+def predict_engineered(h, s, eff):
+    return 2*h + 1*s + 0.3*eff + 20
+
+def blended_predict(h, s, eff, w):
+    return w*predict_engineered(h,s,eff) + (1-w)*predict_raw(h,s)
+# Calculate blend_maes for w = 0.5, 0.8, 1.0, then best_w, below
+`,
+      tests:[
+        {type:'assert', expr:'blend_maes[1.0] == 0.0', label:'blend_maes[1.0] correctly equals 0.0'},
+        {type:'assert', expr:'best_w == 1.0', label:'best_w correctly equals 1.0'}
+      ]
+    },
+    {
+      key:'b', title:'Door 2 — Evaluate the winner as a classifier, against a simpler model',
+      desc:`Using threshold = 60 (pass if score >= 60), actual_pass (given, from the real scores), and BOTH
+        eng_preds (from predict_engineered, best_w=1.0) and raw_preds (from predict_raw) for ALL 10 students,
+        build eng_pred_pass and raw_pred_pass, then eng_accuracy and raw_accuracy (fraction of students whose
+        pass/fail prediction matches actual_pass). Assert that eng_accuracy == 1.0 and raw_accuracy == 0.9 — a
+        model with ZERO regression error is naturally a PERFECT classifier too, while the simpler model's small
+        regression errors are enough to flip one student's prediction.`,
+      starter:`hours  = [1,2,3,4,5,6,7,8,9,10]
+sleep  = [4,5,6,7,8,7,6,8,9,8]
+effort = [h*s for h, s in zip(hours, sleep)]
+actual_pass = [False, False, False, False, False, False, False, True, True, True]
+
+def predict_raw(h, s):
+    return 3*h + 1.5*s + 20
+
+def predict_engineered(h, s, eff):
+    return 2*h + 1*s + 0.3*eff + 20
+
+eng_preds = [predict_engineered(h,s,e) for h,s,e in zip(hours,sleep,effort)]
+raw_preds = [predict_raw(h,s) for h,s in zip(hours,sleep)]
+threshold = 60
+# Build eng_pred_pass, raw_pred_pass, then eng_accuracy, raw_accuracy, below
+`,
+      tests:[
+        {type:'assert', expr:'eng_accuracy == 1.0', label:'eng_accuracy correctly equals 1.0'},
+        {type:'assert', expr:'raw_accuracy == 0.9', label:'raw_accuracy correctly equals 0.9'}
+      ]
+    },
+    {
+      key:'c', title:'Door 3 — Build the final weighted ensemble',
+      desc:`knn_preds (given, an independent k-NN classifier using ONLY hours, accuracy 0.9 — it misses student
+        index 7) and eng_pred_pass (given, from Door 2, accuracy 1.0) are combined with weighted_vote (Week 4)
+        using weights = [3, 1] (trusting the engineered-model classifier 3x as much). For each student i,
+        calculate ensemble_preds[i] = weighted_vote([int(eng_pred_pass[i]), int(knn_preds[i])], weights) >= 0.5,
+        then ensemble_accuracy against actual_pass. Assert that ensemble_accuracy == 1.0 — the weighted ensemble
+        recovers the full accuracy that k-NN alone was missing, because it trusts the better classifier more.`,
+      starter:`def weighted_vote(votes, weights):
+    return sum(w*v for w, v in zip(weights, votes)) / sum(weights)
+
+actual_pass    = [False, False, False, False, False, False, False, True,  True, True]
+eng_pred_pass  = [False, False, False, False, False, False, False, True,  True, True]
+knn_preds      = [False, False, False, False, False, False, False, False, True, True]
+weights = [3, 1]
+# Build ensemble_preds below, then ensemble_accuracy
+`,
+      tests:[{type:'assert', expr:'ensemble_accuracy == 1.0', label:'ensemble_accuracy correctly equals 1.0'}]
+    }
+  ]
+};
+
 window.SUBJECT_DATA = window.SUBJECT_DATA || {};
 window.SUBJECT_DATA.mlr = {
   b: {weeks: MLR_WEEKS, mp1: MLR_MP1, mp2: MLR_MP2},
   i: {weeks: MLR_INTERMEDIATE_WEEKS, mp1: MLR_INTERMEDIATE_MP1, mp2: MLR_INTERMEDIATE_MP2},
-  a: {weeks: MLR_WEEKS, mp1: MLR_MP1, mp2: MLR_MP2}
+  a: {weeks: MLR_ADVANCED_WEEKS, mp1: MLR_ADVANCED_MP1, mp2: MLR_ADVANCED_MP2}
 };
