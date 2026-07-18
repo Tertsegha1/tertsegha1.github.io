@@ -2363,6 +2363,238 @@ def caesar_decode(text, shift):
   ]
 };
 
+const CY_INTERMEDIATE_WEEKS = [
+{
+  key:'week1', num:1, title:'Allow-Lists vs Deny-Lists',
+  scenarioTag:'Real world: the student portal now accepts profile picture uploads — how do you decide what\'s safe?',
+  scenario:`Beginner Week 2 rejected obviously bad input (blank, wrong shape). This week asks a sharper question:
+    when checking whether a FILE is safe to accept, should you list what's ALLOWED, or list what's BLOCKED? A
+    <strong>deny-list</strong> tries to name every dangerous thing and block it. An <strong>allow-list</strong>
+    instead names every SAFE thing and blocks everything else by default. One of these has a serious blind spot.`,
+  objectives:[
+    'Extract a file extension safely, ignoring case',
+    'Build an allow-list check that only accepts known-safe extensions',
+    'Build a naive deny-list check that only blocks known-bad extensions',
+    'Demonstrate the exact gap where a deny-list wrongly accepts something dangerous'
+  ],
+  conceptHtml:`
+    <p>Two ways to decide if a file upload is safe:</p>
+    <pre class="code-block">ALLOWED_EXTENSIONS = {"jpg", "png", "gif"}
+DENIED_EXTENSIONS  = {"exe", "bat", "sh"}
+
+def get_extension(filename):
+    return filename.split(".")[-1].lower()
+
+def is_allowed(filename):          # ALLOW-LIST: only these are OK, everything else is blocked
+    return get_extension(filename) in ALLOWED_EXTENSIONS
+
+def is_denied_naive(filename):     # DENY-LIST: only these are blocked, everything else passes
+    return get_extension(filename) not in DENIED_EXTENSIONS</pre>
+    <p>Now try a file with a <code>.php</code> extension — not a picture, and not on anyone's mind when the deny
+    list was written:</p>
+    <pre class="code-block">print(is_allowed("hack.php"))         # False — correctly rejected, php was never on the safe list
+print(is_denied_naive("hack.php"))    # True  — WRONGLY accepted! php was never added to the danger list either</pre>
+    <h3>Why the deny-list has a blind spot the allow-list doesn't</h3>
+    <ul>
+      <li>A deny-list is only as good as the list of dangers someone thought to write down. New, unusual, or
+        simply forgotten-about extensions slip straight through, because the default behaviour is "accept unless
+        I recognize this as bad."</li>
+      <li>An allow-list flips the default: "reject unless I recognize this as safe." Anything unexpected —
+        including something nobody thought to block — is rejected automatically, with zero extra effort.</li>
+      <li>This is why real systems almost always prefer allow-lists for anything security-sensitive: file
+        uploads, accepted input formats, permitted characters. Deny-lists are easier to write at first, but they
+        require you to correctly predict every future danger — which is exactly the kind of guarantee security
+        work can't rely on.</li>
+    </ul>`,
+  sandboxStarter:`def get_extension(filename):
+    return filename.split(".")[-1].lower()
+
+print(get_extension("photo.JPG"))
+print(get_extension("report.PDF"))
+`,
+  sandboxStarter2:`ALLOWED_EXTENSIONS = {"jpg", "png", "gif"}
+
+def get_extension(filename):
+    return filename.split(".")[-1].lower()
+
+def is_allowed(filename):
+    return get_extension(filename) in ALLOWED_EXTENSIONS
+
+print(is_allowed("photo.jpg"))
+print(is_allowed("hack.php"))
+`,
+  exercises:[
+    {
+      title:'Extract the extension safely',
+      desc:`Write get_extension(filename) that returns the part after the last "." in filename, in lowercase.
+        Assert that get_extension("photo.JPG") == "jpg" and get_extension("notes.txt") == "txt".`,
+      starter:`# Write get_extension(filename) below
+`,
+      tests:[
+        {type:'assert', expr:'get_extension("photo.JPG") == "jpg"', label:'get_extension correctly lowercases "photo.JPG" to "jpg"'},
+        {type:'assert', expr:'get_extension("notes.txt") == "txt"', label:'get_extension correctly returns "txt" for "notes.txt"'}
+      ]
+    },
+    {
+      title:'Build the allow-list check',
+      desc:`Using ALLOWED_EXTENSIONS = {"jpg", "png", "gif"} and get_extension (given), write is_allowed(filename)
+        returning True only if the extension is in ALLOWED_EXTENSIONS. Assert that is_allowed("photo.jpg") == True
+        and is_allowed("hack.php") == False.`,
+      starter:`ALLOWED_EXTENSIONS = {"jpg", "png", "gif"}
+
+def get_extension(filename):
+    return filename.split(".")[-1].lower()
+# Write is_allowed(filename) below
+`,
+      tests:[
+        {type:'assert', expr:'is_allowed("photo.jpg") == True', label:'"photo.jpg" is correctly allowed'},
+        {type:'assert', expr:'is_allowed("hack.php") == False', label:'"hack.php" is correctly rejected'}
+      ]
+    },
+    {
+      title:'Build the naive deny-list check',
+      desc:`Using DENIED_EXTENSIONS = {"exe", "bat", "sh"} and get_extension (given), write is_denied_naive(filename)
+        returning True if the extension is NOT in DENIED_EXTENSIONS (i.e. it "passes" the deny-list). Assert that
+        is_denied_naive("hack.exe") == False (correctly blocked) and is_denied_naive("hack.php") == True (the gap —
+        php was never on the danger list, so it wrongly passes).`,
+      starter:`DENIED_EXTENSIONS = {"exe", "bat", "sh"}
+
+def get_extension(filename):
+    return filename.split(".")[-1].lower()
+# Write is_denied_naive(filename) below
+`,
+      tests:[
+        {type:'assert', expr:'is_denied_naive("hack.exe") == False', label:'"hack.exe" is correctly blocked by the deny-list'},
+        {type:'assert', expr:'is_denied_naive("hack.php") == True', label:'"hack.php" incorrectly passes the deny-list (the blind spot)'}
+      ]
+    },
+    {
+      title:'Confirm the exact gap',
+      desc:`Using is_allowed and is_denied_naive (given) on "hack.php", calculate gap_shown = (is_allowed("hack.php")
+        != is_denied_naive("hack.php")). Assert that gap_shown == True — the allow-list and the naive deny-list
+        disagree on this exact file, and the allow-list is the one that got it right.`,
+      starter:`ALLOWED_EXTENSIONS = {"jpg", "png", "gif"}
+DENIED_EXTENSIONS = {"exe", "bat", "sh"}
+
+def get_extension(filename):
+    return filename.split(".")[-1].lower()
+
+def is_allowed(filename):
+    return get_extension(filename) in ALLOWED_EXTENSIONS
+
+def is_denied_naive(filename):
+    return get_extension(filename) not in DENIED_EXTENSIONS
+# Calculate gap_shown below
+`,
+      tests:[{type:'assert', expr:'gap_shown == True', label:'gap_shown correctly equals True'}]
+    },
+    {
+      title:'Check a whole batch of uploads',
+      desc:`Using is_allowed (given) and filenames = ["photo.jpg", "hack.php", "notes.txt", "avatar.png",
+        "virus.exe", "picture.gif"], calculate allowed_count, the number of filenames that pass is_allowed.
+        Assert that allowed_count == 3.`,
+      starter:`ALLOWED_EXTENSIONS = {"jpg", "png", "gif"}
+
+def get_extension(filename):
+    return filename.split(".")[-1].lower()
+
+def is_allowed(filename):
+    return get_extension(filename) in ALLOWED_EXTENSIONS
+
+filenames = ["photo.jpg", "hack.php", "notes.txt", "avatar.png", "virus.exe", "picture.gif"]
+# Calculate allowed_count below
+`,
+      tests:[{type:'assert', expr:'allowed_count == 3', label:'allowed_count correctly equals 3'}]
+    },
+    {
+      title:'Write the final upload validator',
+      desc:`Using is_allowed (given), write validate_upload(filename) returning "accepted" if is_allowed(filename)
+        else "rejected". Assert that validate_upload("avatar.png") == "accepted" and
+        validate_upload("hack.php") == "rejected".`,
+      starter:`ALLOWED_EXTENSIONS = {"jpg", "png", "gif"}
+
+def get_extension(filename):
+    return filename.split(".")[-1].lower()
+
+def is_allowed(filename):
+    return get_extension(filename) in ALLOWED_EXTENSIONS
+# Write validate_upload(filename) below
+`,
+      tests:[
+        {type:'assert', expr:'validate_upload("avatar.png") == "accepted"', label:'validate_upload correctly accepts "avatar.png"'},
+        {type:'assert', expr:'validate_upload("hack.php") == "rejected"', label:'validate_upload correctly rejects "hack.php"'}
+      ]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does an ALLOW-LIST do by default with something unexpected?',
+      options:['Accepts it, since it wasn\'t explicitly blocked','Rejects it, since it wasn\'t explicitly named as safe','Crashes the program','Asks the user to confirm'],
+      correct:1,
+      explain:'An allow-list flips the default to "reject unless known-safe" — anything unexpected is automatically blocked.'
+    },
+    {
+      q:'Why did is_denied_naive("hack.php") wrongly return True in this week\'s example?',
+      options:['php files are always safe','"php" was never added to the DENIED_EXTENSIONS list, so the naive deny-list had no reason to block it','The function has a bug unrelated to the list contents','php files can\'t be uploaded'],
+      correct:1,
+      explain:'A deny-list only blocks what someone thought to write down — anything not on that list passes through by default.'
+    },
+    {
+      q:'Why do security-sensitive checks (file uploads, accepted formats) usually prefer allow-lists?',
+      options:['Allow-lists are always faster to run','A deny-list requires correctly predicting every future danger in advance, which isn\'t a safe guarantee to rely on','Deny-lists don\'t work in Python','Allow-lists never need updating'],
+      correct:1,
+      explain:'An allow-list only needs to know what\'s safe — it doesn\'t need to anticipate every possible bad case the way a deny-list does.'
+    },
+    {
+      q:'In gap_shown = (is_allowed("hack.php") != is_denied_naive("hack.php")), why does this evaluate to True?',
+      options:['Because both functions returned the same value','Because is_allowed correctly returned False while is_denied_naive incorrectly returned True for the same file','Because "hack.php" is not a valid filename','Because DENIED_EXTENSIONS is empty'],
+      correct:1,
+      explain:'The two functions disagree on this exact file — that disagreement IS the blind spot the allow-list avoids.'
+    }
+  ],
+  sandboxStarter3:`ALLOWED_EXTENSIONS = {"jpg", "png", "gif"}
+DENIED_EXTENSIONS = {"exe", "bat", "sh"}
+
+def get_extension(filename):
+    return filename.split(".")[-1].lower()
+
+def is_allowed(filename):
+    return get_extension(filename) in ALLOWED_EXTENSIONS
+
+def is_denied_naive(filename):
+    return get_extension(filename) not in DENIED_EXTENSIONS
+
+for f in ["photo.jpg", "hack.php", "virus.exe", "avatar.png"]:
+    print(f, "-> allow-list:", is_allowed(f), " naive deny-list:", is_denied_naive(f))
+`,
+  stretchChallenge:{
+    title:'Find every file the deny-list gets wrong',
+    desc:`Using is_allowed and is_denied_naive (given) and stretch_filenames = ["photo.jpg", "hack.php",
+      "script.js", "virus.exe", "avatar.png", "archive.zip"], calculate mismatches, a list of filenames where
+      is_allowed(f) != is_denied_naive(f). Assert that mismatches == ["hack.php", "script.js", "archive.zip"] —
+      every one of these is correctly rejected by the allow-list, but wrongly waved through by the naive deny-list.`,
+    starter:`ALLOWED_EXTENSIONS = {"jpg", "png", "gif"}
+DENIED_EXTENSIONS = {"exe", "bat", "sh"}
+
+def get_extension(filename):
+    return filename.split(".")[-1].lower()
+
+def is_allowed(filename):
+    return get_extension(filename) in ALLOWED_EXTENSIONS
+
+def is_denied_naive(filename):
+    return get_extension(filename) not in DENIED_EXTENSIONS
+
+stretch_filenames = ["photo.jpg", "hack.php", "script.js", "virus.exe", "avatar.png", "archive.zip"]
+# Calculate mismatches below
+`,
+    tests:[
+      {type:'assert', expr:'mismatches == ["hack.php", "script.js", "archive.zip"]', label:'mismatches is correctly calculated'}
+    ]
+  }
+}
+];
+
 window.SUBJECT_DATA = window.SUBJECT_DATA || {};
 window.SUBJECT_DATA.cy = {
   b: {weeks: CY_WEEKS, mp1: CY_MP1, mp2: CY_MP2},
