@@ -4187,5 +4187,94 @@ k = 0.1
   ]
 };
 
+const MLR_INTERMEDIATE_MP2 = {
+  key:'mp2',
+  title:'Mini Project 2 — The Fairer Predictor: Multi-Model Comparison',
+  intro:`One last class of 10 students, the same familiar hours/pass-fail data from throughout this level. Three
+    doors: scale the feature and cross-validate a classifier's accuracy across folds, compare THREE different
+    classifiers (decision-tree split, sigmoid threshold, and majority vote) to find the best one, then confirm
+    with unlabeled clustering whether grouping ALONE would have found the same answer.`,
+  fixtureNote:`All three doors build on this same class of 10 students:`,
+  fixtureCode:`hours = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+passed = [False, False, False, False, True, True, False, True, True, True]`,
+  doors:[
+    {
+      key:'a', title:'Door 1 — Scale the feature, then cross-validate',
+      desc:`Using hours = [1..10], build scaled_hours = [scale(h, min(hours), max(hours)) for h in hours] (Week
+        2). Assert that [round(x, 4) for x in scaled_hours] == [0.0, 0.1111, 0.2222, 0.3333, 0.4444, 0.5556,
+        0.6667, 0.7778, 0.8889, 1.0]. Then, using classify(x, 5) (Beginner Week 4), cross-validate with k = 2
+        folds (Week 3): for each fold, calculate that fold's ACCURACY (not MAE this time) using the FIXED
+        threshold = 5, then average into cv_accuracy. Assert that cv_accuracy == 0.9.`,
+      starter:`def scale(x, xmin, xmax):
+    return (x - xmin) / (xmax - xmin)
+
+def classify(x, threshold):
+    return x >= threshold
+
+hours = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+passed = [False, False, False, False, True, True, False, True, True, True]
+k = 2
+fold_size = len(hours) // k
+# Build scaled_hours below, then compute fold_accs and cv_accuracy for k=2 folds
+`,
+      tests:[
+        {type:'assert', expr:'[round(x, 4) for x in scaled_hours] == [0.0, 0.1111, 0.2222, 0.3333, 0.4444, 0.5556, 0.6667, 0.7778, 0.8889, 1.0]', label:'scaled_hours is correctly calculated'},
+        {type:'assert', expr:'cv_accuracy == 0.9', label:'cv_accuracy is correctly calculated (0.9)'}
+      ]
+    },
+    {
+      key:'b', title:'Door 2 — Compare three classifiers, and pick the best',
+      desc:`Using hours, passed from before, build three classifiers: tree_preds using a decision-tree split at
+        6 (Week 5), sigmoid_preds using classify(x, 5) directly (Week 4), and vote_preds combining classify at
+        thresholds 3, 5 and 7 via majority vote (Week 6). Calculate each one's accuracy, then build
+        scores = {"decision_tree": tree_acc, "sigmoid": sigmoid_acc, "voting": vote_acc} and
+        best_model = max(scores, key=scores.get). Assert that scores == {"decision_tree": 0.8, "sigmoid": 0.9,
+        "voting": 0.9} and best_model == "sigmoid".`,
+      starter:`def classify(x, threshold):
+    return x >= threshold
+
+def majority(labels):
+    return labels.count(True) >= labels.count(False)
+
+hours = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+passed = [False, False, False, False, True, True, False, True, True, True]
+
+def accuracy(preds):
+    return sum(1 for i in range(len(hours)) if preds[i] == passed[i]) / len(hours)
+
+# Build tree_preds (split=6), sigmoid_preds (threshold=5), and vote_preds (majority of thresholds 3,5,7) below
+# Then calculate tree_acc, sigmoid_acc, vote_acc, scores and best_model
+`,
+      tests:[
+        {type:'assert', expr:'scores == {"decision_tree": 0.8, "sigmoid": 0.9, "voting": 0.9}', label:'scores is correctly calculated'},
+        {type:'assert', expr:'best_model == "sigmoid"', label:'best_model is correctly identified (sigmoid)'}
+      ]
+    },
+    {
+      key:'c', title:'Door 3 — Confirm with clustering: would grouping alone have found this?',
+      desc:`Using hours = [1..10] ONLY (ignore passed completely), cluster with center_A = 1 and center_B = 10
+        (Week 8, one-dimensional squared distance), building assignments. Then treat cluster "B" as a predicted
+        pass and cluster "A" as a predicted fail, and calculate cluster_accuracy against the real passed labels.
+        Assert that assignments == ['A', 'A', 'A', 'A', 'A', 'B', 'B', 'B', 'B', 'B'] and
+        cluster_accuracy == 0.8 — clustering, with NO labels at all, still gets 8 of 10 students right, though
+        not as well as Door 2's best supervised classifier (0.9).`,
+      starter:`hours = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+passed = [False, False, False, False, True, True, False, True, True, True]
+center_A = 1
+center_B = 10
+# Build assignments below, then cluster_accuracy (treating 'B' as predicted-pass)
+`,
+      tests:[
+        {type:'assert', expr:"assignments == ['A', 'A', 'A', 'A', 'A', 'B', 'B', 'B', 'B', 'B']", label:'assignments is correctly calculated'},
+        {type:'assert', expr:'cluster_accuracy == 0.8', label:'cluster_accuracy correctly equals 0.8'}
+      ]
+    }
+  ]
+};
+
 window.SUBJECT_DATA = window.SUBJECT_DATA || {};
-window.SUBJECT_DATA.mlr = { b: {weeks: MLR_WEEKS, mp1: MLR_MP1, mp2: MLR_MP2}, i: {weeks: MLR_WEEKS, mp1: MLR_MP1, mp2: MLR_MP2}, a: {weeks: MLR_WEEKS, mp1: MLR_MP1, mp2: MLR_MP2} };
+window.SUBJECT_DATA.mlr = {
+  b: {weeks: MLR_WEEKS, mp1: MLR_MP1, mp2: MLR_MP2},
+  i: {weeks: MLR_INTERMEDIATE_WEEKS, mp1: MLR_INTERMEDIATE_MP1, mp2: MLR_INTERMEDIATE_MP2},
+  a: {weeks: MLR_WEEKS, mp1: MLR_MP1, mp2: MLR_MP2}
+};
