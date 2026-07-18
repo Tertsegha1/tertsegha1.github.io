@@ -4482,6 +4482,240 @@ learning_rate = 0.05
       {type:'assert', expr:'abs(m - 3) < 0.0001', label:'m is correctly close to 3 after 10 steps with learning_rate=0.05'}
     ]
   }
+},
+{
+  key:'week2', num:2, title:'The Overfitting Trap, By Hand',
+  scenarioTag:'Real world: a model with ZERO training error that fails badly on new data',
+  scenario:`A k-nearest-neighbor REGRESSION model predicts a number by averaging the k nearest training points'
+    scores — Beginner Week 7's k-NN idea, but for predicting a number instead of a category. With k = 1, the
+    model just "memorizes": for a training point, its own nearest neighbor is itself, so training error is
+    always exactly 0. But if one training point has noisy, wrong-looking data, a k = 1 model memorizes that noise
+    too — and pays for it badly the moment it's asked about genuinely new data.`,
+  objectives:[
+    'Predict a value using k-nearest-neighbor averaging (the regression version of k-NN)',
+    'Calculate training error for a given k',
+    'Calculate test error, on genuinely new data, for the same k',
+    'Compare the train/test GAP across different k values, and recognize a big gap as an overfitting warning sign'
+  ],
+  conceptHtml:`
+    <p><strong>k-NN regression</strong> predicts a number by averaging the k CLOSEST training points'
+    values:</p>
+    <pre class="code-block">def knn_predict(x, k, xs, ys):
+    idx = sorted(range(len(xs)), key=lambda i: abs(xs[i]-x))[:k]
+    return sum(ys[i] for i in idx) / k
+
+train_hours = [1, 2, 3, 4, 5]
+train_scores = [50, 90, 70, 80, 90]   # hours=2's score of 90 is a noisy outlier
+
+print(knn_predict(2, 1, train_hours, train_scores))   # 90.0 - just returns the (noisy!) training answer
+print(knn_predict(2, 5, train_hours, train_scores))   # 76.0 - averages ALL 5 points, smoothing the noise out</pre>
+    <p>Comparing TRAINING error (on points the model has already seen) against TEST error (on genuinely new
+    points) reveals whether a model actually learned the pattern, or just memorized the data it was given:</p>
+    <pre class="code-block">test_hours = [2]
+test_scores = [60]   # the TRUE score at hours=2, without the noise
+
+k1_test_error = abs(test_scores[0] - knn_predict(2, 1, train_hours, train_scores))   # 30.0 - terrible!
+k5_test_error = abs(test_scores[0] - knn_predict(2, 5, train_hours, train_scores))   # 16.0 - much better</pre>
+    <h3>Let's break down why "perfect" training performance can be misleading</h3>
+    <ul>
+      <li>k = 1's training error is ALWAYS exactly 0 — for any training point, its nearest neighbor (at distance
+        0) is itself, so it trivially "predicts" back whatever answer it was given, noise included.</li>
+      <li>k = 5's training error is WORSE (12.8) because it averages over every point, including ones that
+        disagree with each other — it never fits any single point exactly.</li>
+      <li>Yet on the genuinely new test point, k = 5's error (16.0) is dramatically BETTER than k = 1's (30.0) —
+        because averaging smoothed out the noisy point, while k = 1 memorized it faithfully.</li>
+      <li>The GAP between training error and test error is the real warning sign: k = 1's gap is huge (30.0),
+        k = 5's gap is small (3.2) — a big gap means "looks great on paper, fails in practice."</li>
+    </ul>`,
+  sandboxStarter:`def knn_predict(x, k, xs, ys):
+    idx = sorted(range(len(xs)), key=lambda i: abs(xs[i]-x))[:k]
+    return sum(ys[i] for i in idx) / k
+
+train_hours = [1, 2, 3, 4, 5]
+train_scores = [50, 90, 70, 80, 90]
+
+print("k=1 prediction at x=2:", knn_predict(2, 1, train_hours, train_scores))
+print("k=5 prediction at x=2:", knn_predict(2, 5, train_hours, train_scores))
+`,
+  sandboxStarter2:`def knn_predict(x, k, xs, ys):
+    idx = sorted(range(len(xs)), key=lambda i: abs(xs[i]-x))[:k]
+    return sum(ys[i] for i in idx) / k
+
+train_hours = [1, 2, 3, 4, 5]
+train_scores = [50, 90, 70, 80, 90]
+test_hours = [2]
+test_scores = [60]
+
+for k in [1, 5]:
+    train_preds = [knn_predict(x, k, train_hours, train_scores) for x in train_hours]
+    train_error = sum(abs(train_scores[i]-train_preds[i]) for i in range(5)) / 5
+    test_preds = [knn_predict(x, k, train_hours, train_scores) for x in test_hours]
+    test_error = sum(abs(test_scores[i]-test_preds[i]) for i in range(1)) / 1
+    print("k =", k, "-> train_error:", train_error, "test_error:", test_error)
+`,
+  exercises:[
+    {
+      title:'Predict with k = 1 (nearest neighbor)',
+      desc:`Write knn_predict(x, k, xs, ys) returning the average of the k nearest ys, using
+        idx = sorted(range(len(xs)), key=lambda i: abs(xs[i]-x))[:k]. Using train_hours = [1,2,3,4,5] and
+        train_scores = [50,90,70,80,90], assert that knn_predict(2, 1, train_hours, train_scores) == 90.0 — it
+        just returns the (noisy!) training answer for hours=2.`,
+      starter:`def knn_predict(x, k, xs, ys):
+    # TODO: return the average of the k nearest ys
+    pass
+
+train_hours = [1, 2, 3, 4, 5]
+train_scores = [50, 90, 70, 80, 90]
+`,
+      tests:[{type:'assert', expr:'knn_predict(2, 1, train_hours, train_scores) == 90.0', label:'knn_predict(2, 1, ...) correctly equals 90.0'}]
+    },
+    {
+      title:'Calculate k = 1\'s training error',
+      desc:`Using train_hours, train_scores, and knn_predict(x, k, xs, ys) from before, build
+        train_preds = [knn_predict(x, 1, train_hours, train_scores) for x in train_hours], then train_error_k1:
+        the mean absolute difference between train_scores and train_preds. Assert that train_error_k1 == 0.0.`,
+      starter:`def knn_predict(x, k, xs, ys):
+    idx = sorted(range(len(xs)), key=lambda i: abs(xs[i]-x))[:k]
+    return sum(ys[i] for i in idx) / k
+
+train_hours = [1, 2, 3, 4, 5]
+train_scores = [50, 90, 70, 80, 90]
+# Build train_preds, then train_error_k1, below
+`,
+      tests:[{type:'assert', expr:'train_error_k1 == 0.0', label:'train_error_k1 correctly equals 0.0'}]
+    },
+    {
+      title:'Test k = 1 on genuinely new data',
+      desc:`Using test_hours = [2] and test_scores = [60] (the TRUE, uncorrupted score at hours=2), build
+        test_preds = [knn_predict(x, 1, train_hours, train_scores) for x in test_hours], then test_error_k1: the
+        mean absolute difference between test_scores and test_preds. Assert that test_error_k1 == 30.0 — a model
+        with 0 training error, catastrophically wrong on new data.`,
+      starter:`def knn_predict(x, k, xs, ys):
+    idx = sorted(range(len(xs)), key=lambda i: abs(xs[i]-x))[:k]
+    return sum(ys[i] for i in idx) / k
+
+train_hours = [1, 2, 3, 4, 5]
+train_scores = [50, 90, 70, 80, 90]
+test_hours = [2]
+test_scores = [60]
+# Build test_preds, then test_error_k1, below
+`,
+      tests:[{type:'assert', expr:'test_error_k1 == 30.0', label:'test_error_k1 correctly equals 30.0'}]
+    },
+    {
+      title:'Calculate k = 5\'s training error',
+      desc:`Using train_hours, train_scores, build train_preds_5 = [knn_predict(x, 5, train_hours, train_scores)
+        for x in train_hours], then train_error_k5. Assert that train_error_k5 == 12.8 — WORSE than k=1's
+        training error.`,
+      starter:`def knn_predict(x, k, xs, ys):
+    idx = sorted(range(len(xs)), key=lambda i: abs(xs[i]-x))[:k]
+    return sum(ys[i] for i in idx) / k
+
+train_hours = [1, 2, 3, 4, 5]
+train_scores = [50, 90, 70, 80, 90]
+# Build train_preds_5, then train_error_k5, below
+`,
+      tests:[{type:'assert', expr:'train_error_k5 == 12.8', label:'train_error_k5 correctly equals 12.8'}]
+    },
+    {
+      title:'Test k = 5 on the same new data',
+      desc:`Using test_hours = [2] and test_scores = [60], build test_preds_5 = [knn_predict(x, 5, train_hours,
+        train_scores) for x in test_hours], then test_error_k5. Assert that test_error_k5 == 16.0 — WORSE-looking
+        training error than k=1, but a MUCH better test result.`,
+      starter:`def knn_predict(x, k, xs, ys):
+    idx = sorted(range(len(xs)), key=lambda i: abs(xs[i]-x))[:k]
+    return sum(ys[i] for i in idx) / k
+
+train_hours = [1, 2, 3, 4, 5]
+train_scores = [50, 90, 70, 80, 90]
+test_hours = [2]
+test_scores = [60]
+# Build test_preds_5, then test_error_k5, below
+`,
+      tests:[{type:'assert', expr:'test_error_k5 == 16.0', label:'test_error_k5 correctly equals 16.0'}]
+    },
+    {
+      title:'Measure the overfitting gap',
+      desc:`Using train_error_k1 = 0.0, test_error_k1 = 30.0, train_error_k5 = 12.8, and test_error_k5 = 16.0,
+        calculate gap_k1 = test_error_k1 - train_error_k1 and gap_k5 = test_error_k5 - train_error_k5. Assert
+        that gap_k1 == 30.0 and round(gap_k5, 1) == 3.2 and gap_k1 > gap_k5 — k=1's ENORMOUS train/test gap is
+        the red flag, even though its training error looked perfect.`,
+      starter:`train_error_k1 = 0.0
+test_error_k1 = 30.0
+train_error_k5 = 12.8
+test_error_k5 = 16.0
+# Calculate gap_k1 and gap_k5 below
+`,
+      tests:[
+        {type:'assert', expr:'gap_k1 == 30.0', label:'gap_k1 correctly equals 30.0'},
+        {type:'assert', expr:'round(gap_k5, 1) == 3.2', label:'gap_k5 correctly rounds to 3.2'},
+        {type:'assert', expr:'gap_k1 > gap_k5', label:'gap_k1 is correctly greater than gap_k5'}
+      ]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why is training error for k = 1 ALWAYS exactly 0?',
+      options:['It is a coincidence specific to this dataset','For any training point, its own nearest neighbor (at distance 0) is itself, so k=1 trivially predicts back the exact answer it was given, noise included','k=1 always uses the mean of all points','Training error is never calculated for k=1'],
+      correct:1,
+      explain:'When you ask k=1 about a point already in the training set, the "nearest" point is that same point — it simply echoes back its own label.'
+    },
+    {
+      q:'Why is train_error == 0.0 for k=1 NOT actually good news on its own?',
+      options:['It IS good news, and always means the model is great','It just proves the model memorized the training data exactly — it says nothing about whether it learned the real underlying pattern, which is what test error reveals','Zero training error is impossible','It means k=1 is the correct choice for every dataset'],
+      correct:1,
+      explain:'A training error of 0 only tells you the model can reproduce data it has already seen — the real test is whether it works on data it HASN\'T seen.'
+    },
+    {
+      q:'Why did k=5 (worse training error, 12.8) generalize far better than k=1 (0 training error) on the test point?',
+      options:['It was random luck','k=5 averages over every training point, so a single noisy value gets diluted by the other 4 points instead of being memorized outright','k=5 always beats k=1, for any dataset','Test error does not depend on k'],
+      correct:1,
+      explain:'Averaging smooths out noise — one bad data point can\'t dominate the prediction when it\'s combined with 4 other, more typical points.'
+    },
+    {
+      q:'What is the "overfitting trap" this week\'s title refers to?',
+      options:['Choosing too large a k value','Trusting a model because its TRAINING error looks great, without checking whether a big train/test GAP reveals it has just memorized noise instead of learning the real pattern','A bug that only happens with k-NN','Overfitting only affects classification, never regression'],
+      correct:1,
+      explain:'The "trap" is judging a model purely by how well it fits data it was trained on — the train/test gap is what actually reveals whether it generalizes.'
+    }
+  ],
+  sandboxStarter3:`def knn_predict(x, k, xs, ys):
+    idx = sorted(range(len(xs)), key=lambda i: abs(xs[i]-x))[:k]
+    return sum(ys[i] for i in idx) / k
+
+train_hours = [1, 2, 3, 4, 5]
+train_scores = [50, 90, 70, 80, 90]
+test_hours = [2]
+test_scores = [60]
+
+for k in [1, 5]:
+    train_preds = [knn_predict(x, k, train_hours, train_scores) for x in train_hours]
+    train_error = sum(abs(train_scores[i]-train_preds[i]) for i in range(5)) / 5
+    test_preds = [knn_predict(x, k, train_hours, train_scores) for x in test_hours]
+    test_error = sum(abs(test_scores[i]-test_preds[i]) for i in range(1)) / 1
+    gap = test_error - train_error
+    print("k =", k, "-> train_error:", round(train_error,2), "test_error:", round(test_error,2), "gap:", round(gap,2))
+`,
+  stretchChallenge:{
+    title:'Spot the same trap in a fresh class',
+    desc:`Using train_hours = [1,2,3,4,5], train_scores = [20,30,80,50,60] (hours=3's score of 80 is the noisy
+      outlier this time), test_hours = [3], and test_scores = [42] (the TRUE score), calculate test_error_k1
+      (using k=1) and test_error_k5 (using k=5). Assert that test_error_k1 > test_error_k5 — the memorizing
+      model is worse on new data yet again.`,
+    starter:`def knn_predict(x, k, xs, ys):
+    idx = sorted(range(len(xs)), key=lambda i: abs(xs[i]-x))[:k]
+    return sum(ys[i] for i in idx) / k
+
+train_hours = [1, 2, 3, 4, 5]
+train_scores = [20, 30, 80, 50, 60]
+test_hours = [3]
+test_scores = [42]
+# Calculate test_error_k1 and test_error_k5 below
+`,
+    tests:[
+      {type:'assert', expr:'test_error_k1 > test_error_k5', label:'test_error_k1 is correctly greater than test_error_k5'}
+    ]
+  }
 }
 ];
 
