@@ -5957,6 +5957,490 @@ def predict_eng2(h, a, eff):
       {type:'assert', expr:'eng_mae2 == 0.0', label:'eng_mae2 correctly equals 0.0'}
     ]
   }
+},
+{
+  key:'week8', num:8, title:'Capstone — Design the Full Pipeline',
+  scenarioTag:'Real world: every skill this level built, chained into one connected workflow, on a brand-new dataset',
+  scenario:`Ten students' exam scores actually depend on BOTH hours studied AND sleep hours TOGETHER (a combined
+    effort effect), not either alone. This week chains everything Weeks 1-7 built into one connected pipeline on
+    this fresh dataset: split the data fairly, engineer a feature that captures the combined effect, evaluate
+    both a raw and an engineered model on genuinely held-out data, and check the overfitting gap for each.`,
+  objectives:[
+    'Split a fresh dataset fairly into train and test sets',
+    'Engineer a feature that captures a combined (interaction) effect between two raw features',
+    'Evaluate both a raw and an engineered model with train AND test MAE',
+    'Check the train/test gap for each model, then pick a winner using the same comparison pattern from Week 7'
+  ],
+  conceptHtml:`
+    <p>This week's pipeline chains four separate skills from this level into one connected workflow, using the
+    SAME functions you've already written:</p>
+    <pre class="code-block">hours  = [1,2,3,4,5,6,7,8,9,10]
+sleep  = [4,5,6,7,8,7,6,8,9,8]
+scores = [27.2,32.0,37.4,43.4,50.0,51.6,52.6,63.2,71.3,72.0]
+
+# STEP 1 (Int. Week 3 skill): split fairly, first 8 train, last 2 test
+train_hours, test_hours = hours[:8], hours[8:]
+train_sleep, test_sleep = sleep[:8], sleep[8:]
+train_scores, test_scores = scores[:8], scores[8:]</pre>
+    <pre class="code-block"># STEP 2 (Week 7 skill): engineer a feature that captures hours AND sleep TOGETHER
+train_effort = [h*s for h, s in zip(train_hours, train_sleep)]
+test_effort  = [h*s for h, s in zip(test_hours, test_sleep)]</pre>
+    <pre class="code-block"># STEP 3 (Week 2 skill): evaluate a RAW model (ignores the combined effect) and an
+# ENGINEERED model (uses it) on BOTH train and test
+def predict_raw(h, s):
+    return 3*h + 1.5*s + 20
+
+def predict_engineered(h, s, eff):
+    return 2*h + 1*s + 0.3*eff + 20
+
+raw_test_mae = mae([predict_raw(h,s) for h,s in zip(test_hours,test_sleep)], test_scores)      # 10.4
+eng_test_mae = mae([predict_engineered(h,s,e) for h,s,e in zip(test_hours,test_sleep,test_effort)], test_scores)  # 0.0</pre>
+    <p>The raw model's test error (10.4) is much worse than its train error (2.5875) — a real gap (Week 6 skill)
+    — because it's missing the one feature that actually explains the pattern. The engineered model fits BOTH
+    train and test essentially perfectly, because <code>effort</code> supplies exactly the missing piece.</p>`,
+  sandboxStarter:`def mae(preds, actual):
+    return sum(abs(p-a) for p,a in zip(preds,actual))/len(actual)
+
+hours  = [1,2,3,4,5,6,7,8,9,10]
+sleep  = [4,5,6,7,8,7,6,8,9,8]
+scores = [27.2,32.0,37.4,43.4,50.0,51.6,52.6,63.2,71.3,72.0]
+
+train_hours, test_hours = hours[:8], hours[8:]
+train_sleep, test_sleep = sleep[:8], sleep[8:]
+train_scores, test_scores = scores[:8], scores[8:]
+print("train scores:", train_scores)
+print("test scores:", test_scores)
+`,
+  sandboxStarter2:`def mae(preds, actual):
+    return sum(abs(p-a) for p,a in zip(preds,actual))/len(actual)
+
+hours  = [1,2,3,4,5,6,7,8,9,10]
+sleep  = [4,5,6,7,8,7,6,8,9,8]
+scores = [27.2,32.0,37.4,43.4,50.0,51.6,52.6,63.2,71.3,72.0]
+
+train_hours, test_hours = hours[:8], hours[8:]
+train_sleep, test_sleep = sleep[:8], sleep[8:]
+train_scores, test_scores = scores[:8], scores[8:]
+
+def predict_raw(h, s):
+    return 3*h + 1.5*s + 20
+
+raw_train_mae = mae([predict_raw(h,s) for h,s in zip(train_hours,train_sleep)], train_scores)
+raw_test_mae = mae([predict_raw(h,s) for h,s in zip(test_hours,test_sleep)], test_scores)
+print("raw train MAE:", raw_train_mae, "raw test MAE:", raw_test_mae)
+`,
+  exercises:[
+    {
+      title:'Step 1 — split the data fairly',
+      desc:`Using hours, sleep, scores (given, 10 students), split each into the first 8 (train) and last 2
+        (test): train_hours/test_hours, train_sleep/test_sleep, train_scores/test_scores. Assert that
+        test_scores == [71.3, 72.0].`,
+      starter:`hours  = [1,2,3,4,5,6,7,8,9,10]
+sleep  = [4,5,6,7,8,7,6,8,9,8]
+scores = [27.2,32.0,37.4,43.4,50.0,51.6,52.6,63.2,71.3,72.0]
+# Split into train_hours/test_hours, train_sleep/test_sleep, train_scores/test_scores below
+`,
+      tests:[{type:'assert', expr:'test_scores == [71.3, 72.0]', label:'test_scores is correctly split off (last 2 students)'}]
+    },
+    {
+      title:'Step 2 — engineer the effort feature',
+      desc:`Using train_hours/train_sleep and test_hours/test_sleep (given), calculate train_effort and
+        test_effort, each hours multiplied by sleep. Assert that train_effort == [4,10,18,28,40,42,42,64] and
+        test_effort == [81, 80].`,
+      starter:`train_hours, test_hours = [1,2,3,4,5,6,7,8], [9,10]
+train_sleep, test_sleep = [4,5,6,7,8,7,6,8], [9,8]
+# Calculate train_effort and test_effort below
+`,
+      tests:[
+        {type:'assert', expr:'train_effort == [4,10,18,28,40,42,42,64]', label:'train_effort is correctly calculated'},
+        {type:'assert', expr:'test_effort == [81, 80]', label:'test_effort is correctly calculated'}
+      ]
+    },
+    {
+      title:'Step 3a — evaluate the raw model',
+      desc:`Using predict_raw(h, s) (given) and the train/test splits, calculate raw_train_mae and raw_test_mae.
+        Assert that round(raw_train_mae, 4) == 2.5875 and round(raw_test_mae, 4) == 10.4.`,
+      starter:`def mae(preds, actual):
+    return sum(abs(p-a) for p,a in zip(preds,actual))/len(actual)
+
+train_hours, test_hours = [1,2,3,4,5,6,7,8], [9,10]
+train_sleep, test_sleep = [4,5,6,7,8,7,6,8], [9,8]
+train_scores, test_scores = [27.2,32.0,37.4,43.4,50.0,51.6,52.6,63.2], [71.3,72.0]
+
+def predict_raw(h, s):
+    return 3*h + 1.5*s + 20
+# Calculate raw_train_mae and raw_test_mae below
+`,
+      tests:[
+        {type:'assert', expr:'round(raw_train_mae, 4) == 2.5875', label:'raw_train_mae correctly rounds to 2.5875'},
+        {type:'assert', expr:'round(raw_test_mae, 4) == 10.4', label:'raw_test_mae correctly rounds to 10.4'}
+      ]
+    },
+    {
+      title:'Step 3b — evaluate the engineered model',
+      desc:`Using predict_engineered(h, s, eff) (given), train_effort/test_effort (given), and the train/test
+        splits, calculate eng_train_mae and eng_test_mae. Assert that eng_train_mae == 0.0 and
+        eng_test_mae == 0.0.`,
+      starter:`def mae(preds, actual):
+    return sum(abs(p-a) for p,a in zip(preds,actual))/len(actual)
+
+train_hours, test_hours = [1,2,3,4,5,6,7,8], [9,10]
+train_sleep, test_sleep = [4,5,6,7,8,7,6,8], [9,8]
+train_scores, test_scores = [27.2,32.0,37.4,43.4,50.0,51.6,52.6,63.2], [71.3,72.0]
+train_effort, test_effort = [4,10,18,28,40,42,42,64], [81,80]
+
+def predict_engineered(h, s, eff):
+    return 2*h + 1*s + 0.3*eff + 20
+# Calculate eng_train_mae and eng_test_mae below
+`,
+      tests:[
+        {type:'assert', expr:'eng_train_mae == 0.0', label:'eng_train_mae correctly equals 0.0'},
+        {type:'assert', expr:'eng_test_mae == 0.0', label:'eng_test_mae correctly equals 0.0'}
+      ]
+    },
+    {
+      title:'Step 4 — check the train/test gap for each model',
+      desc:`Using raw_train_mae=2.5875, raw_test_mae=10.4, eng_train_mae=0.0, eng_test_mae=0.0, calculate
+        raw_gap = raw_test_mae - raw_train_mae and eng_gap = eng_test_mae - eng_train_mae. Assert that
+        raw_gap == 7.8125 and eng_gap == 0.0.`,
+      starter:`raw_train_mae = 2.5875
+raw_test_mae = 10.4
+eng_train_mae = 0.0
+eng_test_mae = 0.0
+# Calculate raw_gap and eng_gap below
+`,
+      tests:[
+        {type:'assert', expr:'raw_gap == 7.8125', label:'raw_gap correctly equals 7.8125'},
+        {type:'assert', expr:'eng_gap == 0.0', label:'eng_gap correctly equals 0.0'}
+      ]
+    },
+    {
+      title:'Step 5 — pick the winner',
+      desc:`Write choose_better_model(raw_mae, eng_mae) (same rule as Week 7: "engineered" if eng_mae < raw_mae,
+        else "raw"), then calculate winner = choose_better_model(raw_test_mae, eng_test_mae) using
+        raw_test_mae=10.4, eng_test_mae=0.0. Assert that winner == "engineered".`,
+      starter:`raw_test_mae = 10.4
+eng_test_mae = 0.0
+# Write choose_better_model(raw_mae, eng_mae), then calculate winner, below
+`,
+      tests:[{type:'assert', expr:'winner == "engineered"', label:'winner correctly equals "engineered"'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why does the raw model in this week\'s pipeline do noticeably worse on the test set than the train set?',
+      options:['It was given too little training data','It\'s missing the one feature (the hours-sleep interaction) that actually explains the pattern, so it systematically mis-predicts new students the same way it mis-predicted training students, just more visibly','The test set is corrupted','Raw models always fail on test data'],
+      correct:1,
+      explain:'A model missing an important feature has a systematic blind spot — it shows up as elevated error on both train and test, often worse on test.'
+    },
+    {
+      q:'What does the "effort" feature (hours × sleep) capture that hours and sleep alone cannot?',
+      options:['Nothing extra — it\'s redundant','The COMBINED effect of studying and resting together — the true relationship in this data depends on both together, not either one added separately','It only matters for classification, not regression','It replaces the need for a train/test split'],
+      correct:1,
+      explain:'An interaction feature captures the idea that two inputs working TOGETHER can matter differently than either one alone — exactly what plain addition of hours and sleep can\'t express.'
+    },
+    {
+      q:'Which skill from Week 6 (Bias vs Variance) is reused directly in Step 4 of this pipeline?',
+      options:['k-NN classification','Calculating the train/test gap (test MAE minus train MAE) to check how well a model generalizes','Feature scaling','Gradient descent'],
+      correct:1,
+      explain:'Step 4 is exactly Week 6\'s gap calculation, applied here to compare the raw and engineered models directly.'
+    },
+    {
+      q:'What is the overall lesson of chaining split → engineer → evaluate → compare into ONE pipeline?',
+      options:['Each step only matters in isolation','A real modeling workflow rarely uses just one technique — fair evaluation, thoughtful features, and honest comparison all combine to produce a trustworthy result','Pipelines are only useful for classification problems','Feature engineering replaces the need for train/test splitting'],
+      correct:1,
+      explain:'Every week this level built a separate tool; a real workflow chains them together, each one supporting the reliability of the next.'
+    }
+  ],
+  sandboxStarter3:`def mae(preds, actual):
+    return sum(abs(p-a) for p,a in zip(preds,actual))/len(actual)
+
+hours  = [1,2,3,4,5,6,7,8,9,10]
+sleep  = [4,5,6,7,8,7,6,8,9,8]
+scores = [27.2,32.0,37.4,43.4,50.0,51.6,52.6,63.2,71.3,72.0]
+
+train_hours, test_hours = hours[:8], hours[8:]
+train_sleep, test_sleep = sleep[:8], sleep[8:]
+train_scores, test_scores = scores[:8], scores[8:]
+
+train_effort = [h*s for h, s in zip(train_hours, train_sleep)]
+test_effort  = [h*s for h, s in zip(test_hours, test_sleep)]
+
+def predict_raw(h, s):
+    return 3*h + 1.5*s + 20
+
+def predict_engineered(h, s, eff):
+    return 2*h + 1*s + 0.3*eff + 20
+
+raw_train_mae = mae([predict_raw(h,s) for h,s in zip(train_hours,train_sleep)], train_scores)
+raw_test_mae = mae([predict_raw(h,s) for h,s in zip(test_hours,test_sleep)], test_scores)
+eng_train_mae = mae([predict_engineered(h,s,e) for h,s,e in zip(train_hours,train_sleep,train_effort)], train_scores)
+eng_test_mae = mae([predict_engineered(h,s,e) for h,s,e in zip(test_hours,test_sleep,test_effort)], test_scores)
+
+print("raw:  train", raw_train_mae, "test", raw_test_mae, "gap", raw_test_mae-raw_train_mae)
+print("eng:  train", eng_train_mae, "test", eng_test_mae, "gap", eng_test_mae-eng_train_mae)
+`,
+  stretchChallenge:{
+    title:'Rebuild the whole pipeline with a different split point',
+    desc:`Using the SAME 10-student hours/sleep/scores, but splitting into the first 6 as train and the last 4
+      as test this time, recompute stretch_train_effort/stretch_test_effort, then stretch_eng_test_mae using
+      predict_engineered (given). Assert that stretch_eng_test_mae == 0.0 — the engineered model generalizes
+      correctly regardless of exactly where the split point falls.`,
+    starter:`def mae(preds, actual):
+    return sum(abs(p-a) for p,a in zip(preds,actual))/len(actual)
+
+hours  = [1,2,3,4,5,6,7,8,9,10]
+sleep  = [4,5,6,7,8,7,6,8,9,8]
+scores = [27.2,32.0,37.4,43.4,50.0,51.6,52.6,63.2,71.3,72.0]
+
+stretch_train_hours, stretch_test_hours = hours[:6], hours[6:]
+stretch_train_sleep, stretch_test_sleep = sleep[:6], sleep[6:]
+stretch_train_scores, stretch_test_scores = scores[:6], scores[6:]
+
+def predict_engineered(h, s, eff):
+    return 2*h + 1*s + 0.3*eff + 20
+# Calculate stretch_train_effort, stretch_test_effort, then stretch_eng_test_mae, below
+`,
+    tests:[{type:'assert', expr:'stretch_eng_test_mae == 0.0', label:'stretch_eng_test_mae correctly equals 0.0'}]
+  }
+},
+{
+  key:'week9', num:9, title:'Capstone — Compare and Justify',
+  scenarioTag:'Real world: a model choice isn\'t finished until you can explain WHY, with numbers, to someone else',
+  scenario:`Week 8 built and evaluated both a raw and an engineered model on the same students. This week tests
+    whether that engineered model's advantage holds up on a genuinely NEW group of students it has never seen —
+    then wraps the comparison into a short, evidence-based written justification, the way a real project report
+    would.`,
+  objectives:[
+    'Evaluate both models from Week 8 on a brand-new group of students',
+    'Calculate a percentage improvement figure to summarize how much better one model performed',
+    'Reuse the choose/recommend pattern to pick a winner from evaluation numbers alone',
+    'Write a short, evidence-based justification string combining all of the above'
+  ],
+  conceptHtml:`
+    <p>Three brand-new students — never used in Week 8's split at all — are the real test of whether the
+    engineered feature's advantage was a fluke of that particular split, or a genuine improvement:</p>
+    <pre class="code-block">new_hours  = [3, 6, 9]
+new_sleep  = [5, 8, 6]
+new_scores = [35.5, 54.4, 60.2]
+
+new_effort = [h*s for h, s in zip(new_hours, new_sleep)]   # [15, 48, 54]
+
+raw_new_mae = mae([predict_raw(h,s) for h,s in zip(new_hours,new_sleep)], new_scores)
+eng_new_mae = mae([predict_engineered(h,s,e) for h,s,e in zip(new_hours,new_sleep,new_effort)], new_scores)
+print(round(raw_new_mae,1), eng_new_mae)   # 3.2   0.0</pre>
+    <p>The gap holds up on brand-new students too — this wasn't a fluke of Week 8's particular split. Turning
+    that into a percentage makes the advantage easy to communicate:</p>
+    <pre class="code-block">improvement_pct = round((raw_new_mae - eng_new_mae) / raw_new_mae * 100, 1)
+print(improvement_pct)   # 100.0  <- the engineered model eliminated ALL of the raw model's error</pre>
+    <p>And finally, wrapping the numbers into one sentence turns a pile of metrics into something a reader who
+    never saw the code can actually understand and act on:</p>
+    <pre class="code-block">justification = (
+    f"The engineered model reduced error by {improvement_pct}% "
+    f"(from {round(raw_new_mae,1)} to {round(eng_new_mae,1)}), "
+    "so we recommend the engineered model."
+)
+print(justification)</pre>`,
+  sandboxStarter:`def mae(preds, actual):
+    return sum(abs(p-a) for p,a in zip(preds,actual))/len(actual)
+
+new_hours  = [3, 6, 9]
+new_sleep  = [5, 8, 6]
+new_scores = [35.5, 54.4, 60.2]
+
+new_effort = [h*s for h, s in zip(new_hours, new_sleep)]
+print("new_effort:", new_effort)
+`,
+  sandboxStarter2:`def mae(preds, actual):
+    return sum(abs(p-a) for p,a in zip(preds,actual))/len(actual)
+
+new_hours  = [3, 6, 9]
+new_sleep  = [5, 8, 6]
+new_scores = [35.5, 54.4, 60.2]
+new_effort = [15, 48, 54]
+
+def predict_raw(h, s):
+    return 3*h + 1.5*s + 20
+
+def predict_engineered(h, s, eff):
+    return 2*h + 1*s + 0.3*eff + 20
+
+raw_new_mae = mae([predict_raw(h,s) for h,s in zip(new_hours,new_sleep)], new_scores)
+eng_new_mae = mae([predict_engineered(h,s,e) for h,s,e in zip(new_hours,new_sleep,new_effort)], new_scores)
+print("raw:", round(raw_new_mae,1), "eng:", eng_new_mae)
+`,
+  exercises:[
+    {
+      title:'Engineer the effort feature for the new students',
+      desc:`Using new_hours = [3, 6, 9] and new_sleep = [5, 8, 6], calculate new_effort. Assert that
+        new_effort == [15, 48, 54].`,
+      starter:`new_hours = [3, 6, 9]
+new_sleep = [5, 8, 6]
+# Calculate new_effort below
+`,
+      tests:[{type:'assert', expr:'new_effort == [15, 48, 54]', label:'new_effort is correctly calculated'}]
+    },
+    {
+      title:'Evaluate the raw model on the new students',
+      desc:`Using predict_raw(h, s) (given), new_hours/new_sleep/new_scores, calculate raw_new_preds and
+        raw_new_mae. Assert that round(raw_new_mae, 1) == 3.2.`,
+      starter:`def mae(preds, actual):
+    return sum(abs(p-a) for p,a in zip(preds,actual))/len(actual)
+
+new_hours  = [3, 6, 9]
+new_sleep  = [5, 8, 6]
+new_scores = [35.5, 54.4, 60.2]
+
+def predict_raw(h, s):
+    return 3*h + 1.5*s + 20
+# Calculate raw_new_preds and raw_new_mae below
+`,
+      tests:[{type:'assert', expr:'round(raw_new_mae, 1) == 3.2', label:'raw_new_mae correctly rounds to 3.2'}]
+    },
+    {
+      title:'Evaluate the engineered model on the new students',
+      desc:`Using predict_engineered(h, s, eff) (given), new_effort = [15, 48, 54], calculate eng_new_preds and
+        eng_new_mae. Assert that eng_new_mae == 0.0.`,
+      starter:`def mae(preds, actual):
+    return sum(abs(p-a) for p,a in zip(preds,actual))/len(actual)
+
+new_hours  = [3, 6, 9]
+new_sleep  = [5, 8, 6]
+new_scores = [35.5, 54.4, 60.2]
+new_effort = [15, 48, 54]
+
+def predict_engineered(h, s, eff):
+    return 2*h + 1*s + 0.3*eff + 20
+# Calculate eng_new_preds and eng_new_mae below
+`,
+      tests:[{type:'assert', expr:'eng_new_mae == 0.0', label:'eng_new_mae correctly equals 0.0'}]
+    },
+    {
+      title:'Calculate the percentage improvement',
+      desc:`Using raw_new_mae (from the previous exercise, recomputed below) and eng_new_mae = 0.0, calculate
+        improvement_pct = round((raw_new_mae - eng_new_mae) / raw_new_mae * 100, 1). Assert that
+        improvement_pct == 100.0.`,
+      starter:`def mae(preds, actual):
+    return sum(abs(p-a) for p,a in zip(preds,actual))/len(actual)
+
+new_hours  = [3, 6, 9]
+new_sleep  = [5, 8, 6]
+new_scores = [35.5, 54.4, 60.2]
+
+def predict_raw(h, s):
+    return 3*h + 1.5*s + 20
+
+raw_new_mae = mae([predict_raw(h,s) for h,s in zip(new_hours,new_sleep)], new_scores)
+eng_new_mae = 0.0
+# Calculate improvement_pct below
+`,
+      tests:[{type:'assert', expr:'improvement_pct == 100.0', label:'improvement_pct correctly equals 100.0'}]
+    },
+    {
+      title:'Write recommend_model',
+      desc:`Write recommend_model(raw_mae, eng_mae) returning "engineered" if eng_mae < raw_mae, else "raw".
+        Assert that recommend_model(3.2, 0.0) == "engineered" and recommend_model(1.0, 1.0) == "raw".`,
+      starter:`# Write recommend_model(raw_mae, eng_mae) below
+`,
+      tests:[
+        {type:'assert', expr:'recommend_model(3.2, 0.0) == "engineered"', label:'recommend_model correctly picks "engineered"'},
+        {type:'assert', expr:'recommend_model(1.0, 1.0) == "raw"', label:'recommend_model correctly picks "raw" on a tie'}
+      ]
+    },
+    {
+      title:'Write the final justification',
+      desc:`Using raw_new_mae, eng_new_mae = 0.0, and improvement_pct = 100.0 (given), build justification as
+        f"The engineered model reduced error by {improvement_pct}% (from {round(raw_new_mae,1)} to
+        {round(eng_new_mae,1)}), so we recommend the engineered model." Assert that justification equals exactly
+        "The engineered model reduced error by 100.0% (from 3.2 to 0.0), so we recommend the engineered model."`,
+      starter:`def mae(preds, actual):
+    return sum(abs(p-a) for p,a in zip(preds,actual))/len(actual)
+
+new_hours  = [3, 6, 9]
+new_sleep  = [5, 8, 6]
+new_scores = [35.5, 54.4, 60.2]
+
+def predict_raw(h, s):
+    return 3*h + 1.5*s + 20
+
+raw_new_mae = mae([predict_raw(h,s) for h,s in zip(new_hours,new_sleep)], new_scores)
+eng_new_mae = 0.0
+improvement_pct = 100.0
+# Build justification below
+`,
+      tests:[{type:'assert', expr:'justification == "The engineered model reduced error by 100.0% (from 3.2 to 0.0), so we recommend the engineered model."', label:'justification is worded and formatted exactly as expected'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why does this week test the models on THREE brand-new students, instead of reusing Week 8\'s test set?',
+      options:['To make the numbers bigger','To confirm the engineered model\'s advantage wasn\'t a fluke of one particular split — a genuinely different, never-seen group is stronger evidence','Because Week 8\'s test set was invalid','Testing on new data is never necessary once a model looks good once'],
+      correct:1,
+      explain:'One good result on one split could be luck. Confirming the SAME pattern holds on an entirely different group of students is much stronger evidence.'
+    },
+    {
+      q:'What does improvement_pct = 100.0 mean in this context?',
+      options:['The engineered model is 100 times bigger','The engineered model eliminated ALL of the raw model\'s error on these new students (its MAE dropped from 3.2 all the way to 0.0)','The raw model was 100% accurate','Both models performed identically'],
+      correct:1,
+      explain:'A 100% reduction means eng_new_mae is exactly 0 — every prediction matched exactly, so there was no remaining error left to compare against.'
+    },
+    {
+      q:'Why write a plain-English justification string at all, instead of just reporting the numbers?',
+      options:['It\'s not necessary — numbers speak for themselves','A reader who never saw the code still needs to understand WHY a model was chosen — turning metrics into a clear recommendation is part of finishing the analysis','Justification strings are required by Python syntax','It replaces the need to calculate MAE at all'],
+      correct:1,
+      explain:'The whole point of evaluating models is to make a decision someone else can trust — a clear, evidence-based sentence is how that decision gets communicated.'
+    },
+    {
+      q:'What would recommend_model(2.0, 2.0) return, and why?',
+      options:['"engineered", because ties always favor the newer approach','"raw", because the condition requires eng_mae to be STRICTLY less than raw_mae — a tie doesn\'t qualify as an improvement','An error, because ties are not allowed','"engineered", because 2.0 is a valid engineered score'],
+      correct:1,
+      explain:'The rule is eng_mae < raw_mae (strictly less than) — on an exact tie, there\'s no actual improvement to justify switching, so it correctly falls back to "raw".'
+    }
+  ],
+  sandboxStarter3:`def mae(preds, actual):
+    return sum(abs(p-a) for p,a in zip(preds,actual))/len(actual)
+
+new_hours  = [3, 6, 9]
+new_sleep  = [5, 8, 6]
+new_scores = [35.5, 54.4, 60.2]
+new_effort = [h*s for h, s in zip(new_hours, new_sleep)]
+
+def predict_raw(h, s):
+    return 3*h + 1.5*s + 20
+
+def predict_engineered(h, s, eff):
+    return 2*h + 1*s + 0.3*eff + 20
+
+raw_new_mae = mae([predict_raw(h,s) for h,s in zip(new_hours,new_sleep)], new_scores)
+eng_new_mae = mae([predict_engineered(h,s,e) for h,s,e in zip(new_hours,new_sleep,new_effort)], new_scores)
+improvement_pct = round((raw_new_mae - eng_new_mae) / raw_new_mae * 100, 1)
+
+def recommend_model(raw_mae, eng_mae):
+    return "engineered" if eng_mae < raw_mae else "raw"
+
+justification = (
+    f"The engineered model reduced error by {improvement_pct}% "
+    f"(from {round(raw_new_mae,1)} to {round(eng_new_mae,1)}), "
+    f"so we recommend the {recommend_model(raw_new_mae, eng_new_mae)} model."
+)
+print(justification)
+`,
+  stretchChallenge:{
+    title:'Justify a much closer comparison',
+    desc:`A different comparison came out much closer: stretch_raw_mae = 15.0, stretch_eng_mae = 5.0. Calculate
+      stretch_improvement_pct = round((stretch_raw_mae - stretch_eng_mae) / stretch_raw_mae * 100, 1), then build
+      stretch_justification using the SAME wording pattern as this week's main exercise. Assert that
+      stretch_improvement_pct == 66.7 and stretch_justification == "The engineered model reduced error by 66.7%
+      (from 15.0 to 5.0), so we recommend the engineered model."`,
+    starter:`stretch_raw_mae = 15.0
+stretch_eng_mae = 5.0
+# Calculate stretch_improvement_pct, then build stretch_justification, below
+`,
+    tests:[
+      {type:'assert', expr:'stretch_improvement_pct == 66.7', label:'stretch_improvement_pct correctly equals 66.7'},
+      {type:'assert', expr:'stretch_justification == "The engineered model reduced error by 66.7% (from 15.0 to 5.0), so we recommend the engineered model."', label:'stretch_justification is worded and formatted exactly as expected'}
+    ]
+  }
 }
 ];
 
