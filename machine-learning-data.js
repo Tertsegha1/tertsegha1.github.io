@@ -5457,6 +5457,279 @@ def confusion(threshold):
       {type:'assert', expr:'dominates_35 == True', label:'dominates_35 correctly equals True'}
     ]
   }
+},
+{
+  key:'week6', num:6, title:'Bias vs Variance, By Example',
+  scenarioTag:'Real world: two "bad" models can look completely different — and one dangerous trap looks GOOD at first',
+  scenario:`Week 2 showed that a memorizing model (k=1) can get suspiciously PERFECT training error while doing
+    badly on new data — that's <strong>overfitting</strong> (high variance). But there's an opposite failure mode
+    too: a model so simple it can't even fit the training data well, called <strong>underfitting</strong> (high
+    bias). This week builds BOTH failure modes side by side on the same dataset, so you can recognize the
+    signature of each — because they need completely different fixes.`,
+  objectives:[
+    'Build an underfitting model (predict the mean for everyone) and measure its train AND test error',
+    'Rebuild an overfitting model (k=1 nearest neighbor) and measure its train AND test error',
+    'Recognize that underfitting shows high error on BOTH train and test, while overfitting shows a near-zero train error but a huge test error',
+    'Diagnose a new, unseen model as underfitting, overfitting, or balanced using both signatures together'
+  ],
+  conceptHtml:`
+    <p>Same eight students, same noisy dataset (one student's score at hour 3 is a fluke spike). Three models,
+    three very different error patterns:</p>
+    <pre class="code-block">def mae(preds, actual):
+    return sum(abs(p-a) for p,a in zip(preds,actual))/len(actual)
+
+train_hours  = [1,2,3,4,5,6,7,8]
+train_scores = [50,55,90,65,70,75,80,88]   # hour 3 is a noisy fluke (trend is really ~58)
+test_hours   = [3.2, 6.5]
+test_scores  = [59, 77]
+
+# UNDERFIT: always predict the mean, ignore the input entirely
+mean_score = sum(train_scores) / len(train_scores)
+underfit_train_mae = mae([mean_score]*len(train_hours), train_scores)
+underfit_test_mae  = mae([mean_score]*len(test_hours), test_scores)
+print(underfit_train_mae, underfit_test_mae)   # 11.625  9.0  <- BOTH bad</pre>
+    <pre class="code-block">def knn_predict(x, k, xs, ys):
+    idx = sorted(range(len(xs)), key=lambda i: abs(xs[i]-x))[:k]
+    return sum(ys[i] for i in idx) / k
+
+# OVERFIT: k=1 memorizes every point exactly, including the noisy fluke
+overfit_train_mae = mae([knn_predict(x,1,train_hours,train_scores) for x in train_hours], train_scores)
+overfit_test_mae  = mae([knn_predict(x,1,train_hours,train_scores) for x in test_hours], test_scores)
+print(overfit_train_mae, overfit_test_mae)   # 0.0  16.5  <- train PERFECT, test terrible</pre>
+    <h3>The two signatures</h3>
+    <ul>
+      <li><strong>Underfitting (high bias):</strong> train error is ALREADY bad (11.625) — the model is too
+        simple to even describe the data it was shown. The test error (9.0) isn't much worse — there's nothing
+        left to "lose" by testing on new data, since it never learned much in the first place.</li>
+      <li><strong>Overfitting (high variance):</strong> train error is suspiciously perfect (0.0) — the model
+        memorized the training data, noisy fluke and all. Test error explodes to 16.5, because it confidently
+        applied that memorized fluke to a nearby new point that didn't share it. The GAP between train and test
+        error (16.5) is the giveaway, not either number alone.</li>
+      <li>A balanced model (e.g. k=3, averaging over 3 neighbors) shrugs off the single fluke: train MAE 7.875,
+        test MAE 6.5 — both reasonable, and the gap between them stays small.</li>
+    </ul>
+    <p><strong>The trap:</strong> a small train/test gap is NOT automatically good news — the underfitting model
+    above has a small gap too (9.0 - 11.625 = -2.625), but only because BOTH numbers are bad. You always need to
+    check both signatures together: is train error itself high (underfitting)? Or is train error great but test
+    error much worse (overfitting)?</p>`,
+  sandboxStarter:`def mae(preds, actual):
+    return sum(abs(p-a) for p,a in zip(preds,actual))/len(actual)
+
+train_hours  = [1,2,3,4,5,6,7,8]
+train_scores = [50,55,90,65,70,75,80,88]
+test_hours   = [3.2, 6.5]
+test_scores  = [59, 77]
+
+mean_score = sum(train_scores) / len(train_scores)
+underfit_train_mae = mae([mean_score]*len(train_hours), train_scores)
+underfit_test_mae  = mae([mean_score]*len(test_hours), test_scores)
+print("underfit train:", underfit_train_mae, "test:", underfit_test_mae)
+`,
+  sandboxStarter2:`def mae(preds, actual):
+    return sum(abs(p-a) for p,a in zip(preds,actual))/len(actual)
+
+def knn_predict(x, k, xs, ys):
+    idx = sorted(range(len(xs)), key=lambda i: abs(xs[i]-x))[:k]
+    return sum(ys[i] for i in idx) / k
+
+train_hours  = [1,2,3,4,5,6,7,8]
+train_scores = [50,55,90,65,70,75,80,88]
+test_hours   = [3.2, 6.5]
+test_scores  = [59, 77]
+
+overfit_train_mae = mae([knn_predict(x,1,train_hours,train_scores) for x in train_hours], train_scores)
+overfit_test_mae  = mae([knn_predict(x,1,train_hours,train_scores) for x in test_hours], test_scores)
+print("overfit(k=1) train:", overfit_train_mae, "test:", overfit_test_mae)
+`,
+  exercises:[
+    {
+      title:'Measure the underfitting (mean-only) model',
+      desc:`Using train_hours/train_scores/test_hours/test_scores (given), calculate mean_score, then
+        underfit_train_mae (predicting mean_score for every training point) and underfit_test_mae (predicting
+        mean_score for every test point). Assert that underfit_train_mae == 11.625 and underfit_test_mae == 9.0.`,
+      starter:`def mae(preds, actual):
+    return sum(abs(p-a) for p,a in zip(preds,actual))/len(actual)
+
+train_hours  = [1,2,3,4,5,6,7,8]
+train_scores = [50,55,90,65,70,75,80,88]
+test_hours   = [3.2, 6.5]
+test_scores  = [59, 77]
+# Calculate mean_score, underfit_train_mae, underfit_test_mae below
+`,
+      tests:[
+        {type:'assert', expr:'underfit_train_mae == 11.625', label:'underfit_train_mae correctly equals 11.625'},
+        {type:'assert', expr:'underfit_test_mae == 9.0', label:'underfit_test_mae correctly equals 9.0'}
+      ]
+    },
+    {
+      title:'Measure the overfitting (k=1) model',
+      desc:`Using knn_predict(x, k, xs, ys) (given), calculate overfit_train_mae and overfit_test_mae using k=1
+        on the same train/test data. Assert that overfit_train_mae == 0.0 and overfit_test_mae == 16.5.`,
+      starter:`def mae(preds, actual):
+    return sum(abs(p-a) for p,a in zip(preds,actual))/len(actual)
+
+def knn_predict(x, k, xs, ys):
+    idx = sorted(range(len(xs)), key=lambda i: abs(xs[i]-x))[:k]
+    return sum(ys[i] for i in idx) / k
+
+train_hours  = [1,2,3,4,5,6,7,8]
+train_scores = [50,55,90,65,70,75,80,88]
+test_hours   = [3.2, 6.5]
+test_scores  = [59, 77]
+# Calculate overfit_train_mae and overfit_test_mae (k=1) below
+`,
+      tests:[
+        {type:'assert', expr:'overfit_train_mae == 0.0', label:'overfit_train_mae correctly equals 0.0'},
+        {type:'assert', expr:'overfit_test_mae == 16.5', label:'overfit_test_mae correctly equals 16.5'}
+      ]
+    },
+    {
+      title:'Measure the balanced (k=3) model',
+      desc:`Using knn_predict, calculate right_train_mae and right_test_mae using k=3 on the same train/test
+        data. Assert that right_train_mae == 7.875 and right_test_mae == 6.5.`,
+      starter:`def mae(preds, actual):
+    return sum(abs(p-a) for p,a in zip(preds,actual))/len(actual)
+
+def knn_predict(x, k, xs, ys):
+    idx = sorted(range(len(xs)), key=lambda i: abs(xs[i]-x))[:k]
+    return sum(ys[i] for i in idx) / k
+
+train_hours  = [1,2,3,4,5,6,7,8]
+train_scores = [50,55,90,65,70,75,80,88]
+test_hours   = [3.2, 6.5]
+test_scores  = [59, 77]
+# Calculate right_train_mae and right_test_mae (k=3) below
+`,
+      tests:[
+        {type:'assert', expr:'right_train_mae == 7.875', label:'right_train_mae correctly equals 7.875'},
+        {type:'assert', expr:'right_test_mae == 6.5', label:'right_test_mae correctly equals 6.5'}
+      ]
+    },
+    {
+      title:'Calculate the train/test gap for each model',
+      desc:`Using underfit_train_mae=11.625, underfit_test_mae=9.0, overfit_train_mae=0.0, overfit_test_mae=16.5,
+        calculate gap_underfit = underfit_test_mae - underfit_train_mae and
+        gap_overfit = overfit_test_mae - overfit_train_mae. Assert that gap_overfit == 16.5 and
+        gap_underfit < 0 — the overfitting model has a HUGE positive gap, while the underfitting model's gap
+        isn't even positive, because it was already doing badly on the training data too.`,
+      starter:`underfit_train_mae = 11.625
+underfit_test_mae = 9.0
+overfit_train_mae = 0.0
+overfit_test_mae = 16.5
+# Calculate gap_underfit and gap_overfit below
+`,
+      tests:[
+        {type:'assert', expr:'gap_overfit == 16.5', label:'gap_overfit correctly equals 16.5'},
+        {type:'assert', expr:'gap_underfit < 0', label:'gap_underfit is correctly negative'}
+      ]
+    },
+    {
+      title:'Write is_underfitting and is_overfitting checks',
+      desc:`Write is_underfitting(train_mae, threshold=10) returning True if train_mae > threshold, and
+        is_overfitting(train_mae, test_mae, gap_threshold=8) returning True if (test_mae - train_mae) >
+        gap_threshold. Assert that is_underfitting(11.625) == True, is_overfitting(0.0, 16.5) == True, and
+        is_underfitting(7.875) == False.`,
+      starter:`# Write is_underfitting(train_mae, threshold=10) and
+# is_overfitting(train_mae, test_mae, gap_threshold=8) below
+`,
+      tests:[
+        {type:'assert', expr:'is_underfitting(11.625) == True', label:'is_underfitting correctly flags the underfit model'},
+        {type:'assert', expr:'is_overfitting(0.0, 16.5) == True', label:'is_overfitting correctly flags the overfit model'},
+        {type:'assert', expr:'is_underfitting(7.875) == False', label:'is_underfitting correctly clears the balanced model'}
+      ]
+    },
+    {
+      title:'Diagnose a brand-new model from its train/test scores alone',
+      desc:`A new model reports new_train_mae = 13.2 and new_test_mae = 14.0. Using is_underfitting and
+        is_overfitting (same rules as above, default thresholds), calculate diagnosis: "underfitting" if
+        is_underfitting(new_train_mae) is True, else "overfitting" if is_overfitting(new_train_mae, new_test_mae)
+        is True, else "balanced". Assert that diagnosis == "underfitting".`,
+      starter:`def is_underfitting(train_mae, threshold=10):
+    return train_mae > threshold
+
+def is_overfitting(train_mae, test_mae, gap_threshold=8):
+    return (test_mae - train_mae) > gap_threshold
+
+new_train_mae = 13.2
+new_test_mae = 14.0
+# Calculate diagnosis below
+`,
+      tests:[{type:'assert', expr:'diagnosis == "underfitting"', label:'diagnosis correctly equals "underfitting"'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What is the key SIGNATURE of an underfitting model?',
+      options:['Train error is near zero but test error is huge','Both train error AND test error are high, with little gap between them','Train error is always exactly zero','It only happens with k-NN models'],
+      correct:1,
+      explain:'Underfitting means the model is too simple to fit even the data it was trained on — both train and test error stay high.'
+    },
+    {
+      q:'What is the key SIGNATURE of an overfitting model?',
+      options:['A near-perfect (or zero) train error paired with a much worse test error — a big gap','Both train and test error are high','It never happens with memorizing models like k=1','Test error is always better than train error'],
+      correct:0,
+      explain:'Overfitting means the model memorized the training data (including its noise) so well that it fails to generalize — train error looks great, test error is much worse.'
+    },
+    {
+      q:'Why is "the train/test gap is small" NOT always good news, by itself?',
+      options:['Gaps are never meaningful','A small gap can also happen when BOTH train and test error are high — that\'s underfitting, not success, so you must check the actual error level too, not just the gap','Gaps only matter for classification, not regression','Small gaps only happen with large datasets'],
+      correct:1,
+      explain:'The underfitting model in this week had a small (even negative) gap, yet was clearly a bad model — a small gap alone can\'t tell you a model is good.'
+    },
+    {
+      q:'In this week\'s data, why did the k=1 (overfit) model do so badly on the test point at hour 3.2?',
+      options:['k=1 always performs badly','It memorized the noisy fluke score at hour 3 exactly, then confidently applied that same fluke value to the nearby, but NOT noisy, test point','The test point was outside the data range','k=1 cannot make numeric predictions'],
+      correct:1,
+      explain:'k=1 always predicts using the single nearest training point — including whatever noise that specific point happened to have.'
+    }
+  ],
+  sandboxStarter3:`def mae(preds, actual):
+    return sum(abs(p-a) for p,a in zip(preds,actual))/len(actual)
+
+def knn_predict(x, k, xs, ys):
+    idx = sorted(range(len(xs)), key=lambda i: abs(xs[i]-x))[:k]
+    return sum(ys[i] for i in idx) / k
+
+train_hours  = [1,2,3,4,5,6,7,8]
+train_scores = [50,55,90,65,70,75,80,88]
+test_hours   = [3.2, 6.5]
+test_scores  = [59, 77]
+
+mean_score = sum(train_scores) / len(train_scores)
+
+for label, preds_train, preds_test in [
+    ("underfit (mean)", [mean_score]*len(train_hours), [mean_score]*len(test_hours)),
+    ("overfit (k=1)", [knn_predict(x,1,train_hours,train_scores) for x in train_hours], [knn_predict(x,1,train_hours,train_scores) for x in test_hours]),
+    ("balanced (k=3)", [knn_predict(x,3,train_hours,train_scores) for x in train_hours], [knn_predict(x,3,train_hours,train_scores) for x in test_hours]),
+]:
+    tr = mae(preds_train, train_scores)
+    te = mae(preds_test, test_scores)
+    print(label, "-> train:", round(tr,3), "test:", round(te,3), "gap:", round(te-tr,3))
+`,
+  stretchChallenge:{
+    title:'Diagnose a fresh class using both signatures',
+    desc:`Using train_hours2/train_scores2/test_hours2/test_scores2 (a fresh, differently-noisy class, provided
+      below) and knn_predict, calculate stretch_overfit_train_mae and stretch_overfit_test_mae using k=1, then
+      stretch_gap = stretch_overfit_test_mae - stretch_overfit_train_mae. Assert that
+      stretch_overfit_train_mae == 0.0 and stretch_gap == 45.0.`,
+    starter:`def mae(preds, actual):
+    return sum(abs(p-a) for p,a in zip(preds,actual))/len(actual)
+
+def knn_predict(x, k, xs, ys):
+    idx = sorted(range(len(xs)), key=lambda i: abs(xs[i]-x))[:k]
+    return sum(ys[i] for i in idx) / k
+
+train_hours2  = [1,2,3,4,5,6]
+train_scores2 = [40,44,95,52,56,60]
+test_hours2   = [3.3]
+test_scores2  = [50]
+# Calculate stretch_overfit_train_mae, stretch_overfit_test_mae (k=1), then stretch_gap, below
+`,
+    tests:[
+      {type:'assert', expr:'stretch_overfit_train_mae == 0.0', label:'stretch_overfit_train_mae correctly equals 0.0'},
+      {type:'assert', expr:'stretch_gap == 45.0', label:'stretch_gap correctly equals 45.0'}
+    ]
+  }
 }
 ];
 
