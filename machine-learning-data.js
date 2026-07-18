@@ -3919,6 +3919,202 @@ centers3 = [(0,0), (10,0), (5,10)]
       {type:'assert', expr:'k3_better == True', label:'k3_better correctly equals True'}
     ]
   }
+},
+{
+  key:'week9', num:9, title:'Comparing Everything We\'ve Built',
+  scenarioTag:'Real world: which of EIGHT techniques actually fits the problem in front of you?',
+  scenario:`This level added six new techniques on top of Beginner's regression/classification/k-NN/clustering
+    toolkit: fair comparisons across differently-scaled features (Week 2), more trustworthy error estimates
+    (Week 3), confidence instead of a flat yes/no (Week 4), systematic threshold search (Week 5), combining
+    several classifiers (Week 6), and separating two DIFFERENT kinds of classifier mistakes (Week 7) — plus
+    choosing how many groups even exist in unlabeled data (Week 8). This final week revisits several of them, then
+    asks the real practitioner question: which technique actually fits a NEW situation?`,
+  objectives:[
+    'Recall and re-run several techniques built across this level: regression, cross-validation, decision-tree splits, precision/recall, clustering',
+    'Recognize what kind of problem each technique is built to solve',
+    'Decide which technique fits a new, unfamiliar scenario',
+    'See the full toolkit side by side, to compare how differently each piece works'
+  ],
+  conceptHtml:`
+    <p>Seven tools now exist for seven different jobs:</p>
+    <ul>
+      <li><strong>Multi-feature regression</strong> (Week 1) — combine more than one clue into a single weighted
+        prediction.</li>
+      <li><strong>Scaling</strong> (Week 2) — make features on different numeric scales comparable, before
+        measuring distance between them.</li>
+      <li><strong>Cross-validation</strong> (Week 3) — get a MORE TRUSTWORTHY error estimate than one lucky (or
+        unlucky) train/test split.</li>
+      <li><strong>Sigmoid / confidence</strong> (Week 4) — turn a plain yes/no into a probability.</li>
+      <li><strong>Decision-tree split search</strong> (Week 5) — systematically try several cutoffs and keep the
+        one with fewest errors.</li>
+      <li><strong>Voting</strong> (Week 6) — combine several classifiers so their mistakes can cancel out.</li>
+      <li><strong>Precision/recall</strong> (Week 7) — separate "how trustworthy are the yes predictions" from
+        "how many real yeses did we actually catch."</li>
+      <li><strong>Choosing k</strong> (Week 8) — decide how many groups actually exist in unlabeled data.</li>
+    </ul>
+    <p>The practitioner's real skill isn't memorizing formulas — it's recognizing which SHAPE of problem you're
+    looking at, and picking the matching tool.</p>`,
+  sandboxStarter:`def predict2(hours, tests, w1, w2, b):
+    return w1*hours + w2*tests + b
+
+w1, w2, b = 6, 8, 38
+print("Multi-feature regression (Week 1) ->", predict2(5, 2, w1, w2, b))
+`,
+  sandboxStarter2:`def sqdist(p, c):
+    return (p[0]-c[0])**2 + (p[1]-c[1])**2
+
+points = [(1,1),(2,2),(3,1), (7,1),(8,2),(9,1), (4,8),(5,9),(6,8)]
+centers3 = [(2,2), (8,2), (5,8)]
+total3 = 0
+for p in points:
+    dists = [sqdist(p, c) for c in centers3]
+    total3 += min(dists)
+print("Clustering (Week 8) -> total distance for k=3:", total3)
+`,
+  exercises:[
+    {
+      title:'Revisit Week 1\'s multi-feature regression',
+      desc:`Write predict2(hours, tests, w1, w2, b) returning w1*hours + w2*tests + b. Using w1 = 6, w2 = 8,
+        b = 38, assert that predict2(5, 2, w1, w2, b) equals 84.`,
+      starter:`def predict2(hours, tests, w1, w2, b):
+    # TODO: return the weighted-sum prediction
+    pass
+
+w1, w2, b = 6, 8, 38
+`,
+      tests:[{type:'assert', expr:'predict2(5, 2, w1, w2, b) == 84', label:'predict2(5, 2, w1, w2, b) correctly equals 84'}]
+    },
+    {
+      title:'Revisit Week 3\'s cross-validation',
+      desc:`Using fold_maes = [1.1905, 0.7299, 0.7619], calculate cv_mae = sum(fold_maes) / len(fold_maes).
+        Assert that round(cv_mae, 2) == 0.89.`,
+      starter:`fold_maes = [1.1905, 0.7299, 0.7619]
+# Calculate cv_mae below
+`,
+      tests:[{type:'assert', expr:'round(cv_mae, 2) == 0.89', label:'cv_mae is correctly calculated (0.89)'}]
+    },
+    {
+      title:'Revisit Week 5\'s decision-tree split search',
+      desc:`Using hours = [1,2,3,4,5,6,7,8,9,10], passed = [False, False, False, False, True, True, False, True,
+        True, True], and majority(labels) (provided below), build errors_for_split(5): the number of
+        misclassifications when splitting at 5. Assert that errors_5 == 1.`,
+      starter:`def majority(labels):
+    return labels.count(True) >= labels.count(False)
+
+hours = [1,2,3,4,5,6,7,8,9,10]
+passed = [False, False, False, False, True, True, False, True, True, True]
+split = 5
+# Build left_idx, right_idx, left_maj, right_maj, preds, then errors_5, below
+`,
+      tests:[{type:'assert', expr:'errors_5 == 1', label:'errors_5 correctly equals 1'}]
+    },
+    {
+      title:'Revisit Week 7\'s precision and recall',
+      desc:`Using classify(x, threshold) (provided below), hours = [1,2,3,4,5,6,7,8,9,10],
+        passed = [False, False, False, False, True, True, False, True, True, True], and threshold = 3, build
+        predictions, then calculate precision and recall. Assert that precision == 0.625 and recall == 1.0.`,
+      starter:`def classify(x, threshold):
+    return x >= threshold
+
+hours = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+passed = [False, False, False, False, True, True, False, True, True, True]
+threshold = 3
+# Build predictions, then calculate precision and recall, below
+`,
+      tests:[
+        {type:'assert', expr:'precision == 0.625', label:'precision correctly equals 0.625'},
+        {type:'assert', expr:'recall == 1.0', label:'recall correctly equals 1.0'}
+      ]
+    },
+    {
+      title:'Revisit Week 8\'s clustering with k = 3',
+      desc:`Using points = [(1,1),(2,2),(3,1), (7,1),(8,2),(9,1), (4,8),(5,9),(6,8)] and
+        centers3 = [(2,2), (8,2), (5,8)], build total3: the sum of each point's squared distance to its nearest
+        center. Assert that total3 == 11.`,
+      starter:`def sqdist(p, c):
+    return (p[0]-c[0])**2 + (p[1]-c[1])**2
+
+points = [(1,1),(2,2),(3,1), (7,1),(8,2),(9,1), (4,8),(5,9),(6,8)]
+centers3 = [(2,2), (8,2), (5,8)]
+# Calculate total3 below
+`,
+      tests:[{type:'assert', expr:'total3 == 11', label:'total3 correctly equals 11'}]
+    },
+    {
+      title:'Choose the right technique',
+      desc:`For each scenario below, decide which ONE technique from this level fits best, and build answers as
+        a list of your 7 choices, in order, using these exact strings: 'scaling', 'cross_validation', 'sigmoid',
+        'decision_tree', 'voting', 'precision_recall', 'clustering'.
+        1. "Two features are measured on very different numeric scales, and you need to compare distances fairly."
+        2. "You want a MORE RELIABLE error estimate than one lucky train/test split gives, by testing on every student once."
+        3. "You want a CONFIDENCE probability attached to each prediction, not just a flat yes/no."
+        4. "You want to systematically try several candidate cutoffs and keep whichever has the fewest errors."
+        5. "You have three separate classifiers and want to combine their predictions into one more reliable answer."
+        6. "Accuracy alone hides that many 'yes' predictions were wrong — you need to separately measure how trustworthy the yes calls are AND how many real yes cases were caught."
+        7. "You have no labels at all, and don't even know how many natural groups (k) the data has."
+        Assert that answers == ['scaling', 'cross_validation', 'sigmoid', 'decision_tree', 'voting', 'precision_recall', 'clustering'].`,
+      starter:`# Build answers as a list of 7 strings, in order, below
+answers = []
+`,
+      tests:[{type:'assert', expr:"answers == ['scaling', 'cross_validation', 'sigmoid', 'decision_tree', 'voting', 'precision_recall', 'clustering']", label:'answers correctly matches the expected 7 techniques, in order'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'Which Week 3 technique should you reach for when a single train/test split might have been "lucky" or "unlucky"?',
+      options:['Scaling','Cross-validation, since it tests on every point once and averages the result','Voting','Clustering'],
+      correct:1,
+      explain:'Cross-validation rotates which slice is held back so every point contributes to the final error estimate, avoiding the risk of one unrepresentative split.'
+    },
+    {
+      q:'You have three separate classifiers and want their combined answer to be MORE reliable than any one alone. Which technique fits?',
+      options:['Scaling','Sigmoid','Voting — as long as the three classifiers\' mistakes don\'t all overlap on the same students','Cross-validation'],
+      correct:2,
+      explain:'Majority voting lets correct voters outnumber a wrong one, as long as mistakes are spread across different voters rather than shared.'
+    },
+    {
+      q:'Accuracy says a classifier is "90% right" — what might precision and recall reveal that accuracy alone hides?',
+      options:['Nothing new','Whether the classifier\'s mistakes are mostly WRONG "yes" calls (precision) or mostly MISSED real "yes" cases (recall) — two very different problems that both count as "10% wrong"','Precision and recall always equal accuracy','They only apply to regression'],
+      correct:1,
+      explain:'Accuracy lumps every mistake together — precision and recall separate out which KIND of mistake is actually happening.'
+    },
+    {
+      q:'Before picking a technique for a brand new problem, what is the most useful first question to ask?',
+      options:['Which technique is fastest to type','What SHAPE is this problem — do I have labels, do I need a number vs yes/no vs confidence, are my features on different scales, and how many groups might exist?','Always default to regression','Whichever technique was used most recently'],
+      correct:1,
+      explain:'Recognizing the shape of the problem — labeled or not, numeric or categorical, single split or many candidates — is what actually determines which of the seven tools applies.'
+    }
+  ],
+  sandboxStarter3:`def majority(labels):
+    return labels.count(True) >= labels.count(False)
+
+hours = [1,2,3,4,5,6,7,8,9,10]
+passed = [False, False, False, False, True, True, False, True, True, True]
+
+def errors_for_split(s):
+    left_idx = [i for i in range(len(hours)) if hours[i] < s]
+    right_idx = [i for i in range(len(hours)) if hours[i] >= s]
+    left_maj = majority([passed[i] for i in left_idx])
+    right_maj = majority([passed[i] for i in right_idx])
+    preds = [left_maj if hours[i] < s else right_maj for i in range(len(hours))]
+    return sum(1 for i in range(len(hours)) if preds[i] != passed[i])
+
+for s in [3, 4, 5, 6, 7]:
+    print("Decision-tree split (Week 5) -> split", s, "errors:", errors_for_split(s))
+`,
+  stretchChallenge:{
+    title:'Match one more scenario',
+    desc:`Decide which technique fits: "A school has hours studied (0-10) and total library minutes (0-500)
+      recorded for each student, and wants to compare students by how similar their study habits are." Set
+      answer to your choice. Assert that answer == 'scaling' — comparing similarity across two very
+      differently-scaled numbers needs scaling FIRST, before any distance is measured.`,
+    starter:`# Set answer below to one of: 'scaling', 'cross_validation', 'sigmoid', 'decision_tree', 'voting', 'precision_recall', 'clustering'
+answer = ''
+`,
+    tests:[
+      {type:'assert', expr:"answer == 'scaling'", label:'answer correctly equals scaling'}
+    ]
+  }
 }
 ];
 
