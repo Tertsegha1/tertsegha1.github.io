@@ -5198,6 +5198,265 @@ votes = [1, 0, 0]
       {type:'assert', expr:'round(accuracy_weighted_vote, 4) == 0.4737', label:'accuracy_weighted_vote is correctly calculated (0.4737)'}
     ]
   }
+},
+{
+  key:'week5', num:5, title:'ROC Thinking by Hand',
+  scenarioTag:'Real world: which threshold has the fewest false alarms for the SAME number of catches?',
+  scenario:`Intermediate Week 7 found the single best-BALANCED threshold using F1. <strong>ROC thinking</strong>
+    asks a complementary question: at each threshold, how many REAL positives do you catch (the True Positive
+    Rate) versus how many false alarms do you raise among the negatives (the False Positive Rate)? Building a
+    small table of these two numbers across candidate thresholds reveals when a stricter threshold is a PURE WIN
+    — catching just as much, with fewer false alarms — versus when it starts trading away real catches for
+    nothing.`,
+  objectives:[
+    'Calculate the False Positive Rate (FPR): of all the REAL negatives, how many were incorrectly flagged?',
+    'Calculate the True Positive Rate (TPR) — the same calculation as recall, under a new name',
+    'Build a small TPR/FPR table across several candidate thresholds',
+    'Recognize when one threshold "dominates" another'
+  ],
+  conceptHtml:`
+    <p><strong>TPR</strong> (True Positive Rate) is EXACTLY Intermediate Week 7's recall — of every REAL "yes",
+    how many did the classifier catch. <strong>FPR</strong> (False Positive Rate) is a new, complementary
+    question — of every REAL "no", how many did the classifier incorrectly flag as "yes"?</p>
+    <pre class="code-block">def classify(x, threshold):
+    return x >= threshold
+
+hours = [1,2,3,4,5,6,7,8,9,10]
+passed = [False, False, False, False, True, True, False, True, True, True]
+
+def confusion(threshold):
+    preds = [classify(h, threshold) for h in hours]
+    TP = sum(1 for i in range(len(hours)) if preds[i] and passed[i])
+    FP = sum(1 for i in range(len(hours)) if preds[i] and not passed[i])
+    TN = sum(1 for i in range(len(hours)) if not preds[i] and not passed[i])
+    FN = sum(1 for i in range(len(hours)) if not preds[i] and passed[i])
+    return TP, FP, TN, FN
+
+TP, FP, TN, FN = confusion(3)
+TPR = TP / (TP + FN)
+FPR = FP / (FP + TN)
+print(TPR, FPR)   # 1.0, 0.6</pre>
+    <p>Building this table across a FEW thresholds reveals whether a stricter cutoff is actually helping:</p>
+    <pre class="code-block">for t in [3, 5, 7]:
+    TP, FP, TN, FN = confusion(t)
+    TPR = TP / (TP + FN)
+    FPR = FP / (FP + TN)
+    print("threshold", t, "-> TPR:", TPR, "FPR:", FPR)
+# threshold 3 -> TPR: 1.0  FPR: 0.6
+# threshold 5 -> TPR: 1.0  FPR: 0.2   <- SAME catches, way fewer false alarms!
+# threshold 7 -> TPR: 0.6  FPR: 0.2   <- SAME false alarms, but WORSE catches</pre>
+    <h3>Let's break down what "dominates" means</h3>
+    <ul>
+      <li>Moving from threshold 3 to 5: TPR stays at 1.0 (still catching every real "yes"), but FPR drops from
+        0.6 to 0.2 — a PURE win, threshold 5 <strong>dominates</strong> threshold 3.</li>
+      <li>Moving from threshold 5 to 7: FPR stays at 0.2 (no fewer false alarms), but TPR drops to 0.6 — a PURE
+        loss, threshold 7 is dominated BY threshold 5, with nothing gained in exchange.</li>
+      <li>A threshold A "dominates" threshold B when A's TPR is at least as good AND A's FPR is at least as
+        good (lower), with at least one of them strictly better — there's simply no reason to prefer B.</li>
+    </ul>`,
+  sandboxStarter:`def classify(x, threshold):
+    return x >= threshold
+
+hours = [1,2,3,4,5,6,7,8,9,10]
+passed = [False, False, False, False, True, True, False, True, True, True]
+
+def confusion(threshold):
+    preds = [classify(h, threshold) for h in hours]
+    TP = sum(1 for i in range(len(hours)) if preds[i] and passed[i])
+    FP = sum(1 for i in range(len(hours)) if preds[i] and not passed[i])
+    TN = sum(1 for i in range(len(hours)) if not preds[i] and not passed[i])
+    FN = sum(1 for i in range(len(hours)) if not preds[i] and passed[i])
+    return TP, FP, TN, FN
+
+TP, FP, TN, FN = confusion(3)
+print("TP", TP, "FP", FP, "TN", TN, "FN", FN)
+print("TPR:", TP/(TP+FN), "FPR:", FP/(FP+TN))
+`,
+  sandboxStarter2:`def classify(x, threshold):
+    return x >= threshold
+
+hours = [1,2,3,4,5,6,7,8,9,10]
+passed = [False, False, False, False, True, True, False, True, True, True]
+
+def confusion(threshold):
+    preds = [classify(h, threshold) for h in hours]
+    TP = sum(1 for i in range(len(hours)) if preds[i] and passed[i])
+    FP = sum(1 for i in range(len(hours)) if preds[i] and not passed[i])
+    TN = sum(1 for i in range(len(hours)) if not preds[i] and not passed[i])
+    FN = sum(1 for i in range(len(hours)) if not preds[i] and passed[i])
+    return TP, FP, TN, FN
+
+for t in [3, 5, 7]:
+    TP, FP, TN, FN = confusion(t)
+    print("threshold", t, "-> TPR:", round(TP/(TP+FN),2), "FPR:", round(FP/(FP+TN),2))
+`,
+  exercises:[
+    {
+      title:'Calculate FPR at threshold = 3',
+      desc:`Using classify(x, threshold), hours = [1..10], passed = [False, False, False, False, True, True,
+        False, True, True, True], and threshold = 3, build predictions, then FP and TN, then
+        FPR = FP / (FP + TN). Assert that FPR == 0.6.`,
+      starter:`def classify(x, threshold):
+    return x >= threshold
+
+hours = [1,2,3,4,5,6,7,8,9,10]
+passed = [False, False, False, False, True, True, False, True, True, True]
+threshold = 3
+# Build predictions, then FP and TN, then FPR, below
+`,
+      tests:[{type:'assert', expr:'FPR == 0.6', label:'FPR correctly equals 0.6'}]
+    },
+    {
+      title:'Calculate TPR at threshold = 3',
+      desc:`Using the same setup, build TP and FN, then TPR = TP / (TP + FN). Assert that TPR == 1.0.`,
+      starter:`def classify(x, threshold):
+    return x >= threshold
+
+hours = [1,2,3,4,5,6,7,8,9,10]
+passed = [False, False, False, False, True, True, False, True, True, True]
+threshold = 3
+predictions = [classify(h, threshold) for h in hours]
+# Build TP and FN, then TPR, below
+`,
+      tests:[{type:'assert', expr:'TPR == 1.0', label:'TPR correctly equals 1.0'}]
+    },
+    {
+      title:'Calculate both TPR and FPR at threshold = 5',
+      desc:`Using the same hours/passed but threshold = 5, build predictions, TP, FP, TN, FN, then TPR_5 and
+        FPR_5. Assert that TPR_5 == 1.0 and FPR_5 == 0.2.`,
+      starter:`def classify(x, threshold):
+    return x >= threshold
+
+hours = [1,2,3,4,5,6,7,8,9,10]
+passed = [False, False, False, False, True, True, False, True, True, True]
+threshold = 5
+# Build predictions, TP, FP, TN, FN, then TPR_5 and FPR_5, below
+`,
+      tests:[
+        {type:'assert', expr:'TPR_5 == 1.0', label:'TPR_5 correctly equals 1.0'},
+        {type:'assert', expr:'FPR_5 == 0.2', label:'FPR_5 correctly equals 0.2'}
+      ]
+    },
+    {
+      title:'Calculate both TPR and FPR at threshold = 7',
+      desc:`Using the same hours/passed but threshold = 7, build predictions, TP, FP, TN, FN, then TPR_7 and
+        FPR_7. Assert that TPR_7 == 0.6 and FPR_7 == 0.2.`,
+      starter:`def classify(x, threshold):
+    return x >= threshold
+
+hours = [1,2,3,4,5,6,7,8,9,10]
+passed = [False, False, False, False, True, True, False, True, True, True]
+threshold = 7
+# Build predictions, TP, FP, TN, FN, then TPR_7 and FPR_7, below
+`,
+      tests:[
+        {type:'assert', expr:'TPR_7 == 0.6', label:'TPR_7 correctly equals 0.6'},
+        {type:'assert', expr:'FPR_7 == 0.2', label:'FPR_7 correctly equals 0.2'}
+      ]
+    },
+    {
+      title:'Confirm threshold = 5 is a pure win over threshold = 3',
+      desc:`Using TPR_3 = 1.0, FPR_3 = 0.6, TPR_5 = 1.0, and FPR_5 = 0.2, calculate
+        dominates_3 = (TPR_5 >= TPR_3) and (FPR_5 < FPR_3). Assert that dominates_3 == True — threshold 5 catches
+        JUST AS MUCH as threshold 3, with far fewer false alarms.`,
+      starter:`TPR_3 = 1.0
+FPR_3 = 0.6
+TPR_5 = 1.0
+FPR_5 = 0.2
+# Calculate dominates_3 below
+`,
+      tests:[{type:'assert', expr:'dominates_3 == True', label:'dominates_3 correctly equals True'}]
+    },
+    {
+      title:'Confirm threshold = 7 is a pure loss vs threshold = 5',
+      desc:`Using TPR_5 = 1.0, FPR_5 = 0.2, TPR_7 = 0.6, and FPR_7 = 0.2, assert that TPR_7 < TPR_5 and
+        FPR_7 == FPR_5 — threshold 7 gets NO fewer false alarms than threshold 5, yet catches noticeably fewer
+        real positives. A pure loss, with nothing gained in exchange.`,
+      starter:`TPR_5 = 1.0
+FPR_5 = 0.2
+TPR_7 = 0.6
+FPR_7 = 0.2
+# Add your assert below
+`,
+      tests:[{type:'assert', expr:'TPR_7 < TPR_5 and FPR_7 == FPR_5', label:'threshold 7 is correctly confirmed as a pure loss vs threshold 5'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does the False Positive Rate (FPR) measure?',
+      options:['Of everything predicted "yes", how much really was','Of everything that was ACTUALLY negative, how many did the classifier incorrectly flag as positive','The total number of wrong predictions','The same thing as precision'],
+      correct:1,
+      explain:'FPR looks specifically at the REAL negatives and asks how many got wrongly flagged as positive — a false-alarm rate.'
+    },
+    {
+      q:'How does TPR relate to Intermediate Week 7\'s recall?',
+      options:['They are unrelated metrics','TPR IS recall — the exact same calculation (TP / (TP + FN)), just given a different name in the ROC context','TPR is the opposite of recall','TPR only applies to regression'],
+      correct:1,
+      explain:'TPR and recall are literally the same formula — ROC analysis just uses the name "TPR" for it.'
+    },
+    {
+      q:'What does it mean for one threshold to "dominate" another?',
+      options:['It has a bigger threshold number','It achieves an equal-or-better TPR AND an equal-or-better FPR, with at least one strictly better — so there\'s no reason to prefer the dominated threshold','It always has 100% accuracy','Dominance only applies to F1 scores'],
+      correct:1,
+      explain:'A dominating threshold is simply better (or tied) on BOTH measures at once — no trade-off needed to prefer it.'
+    },
+    {
+      q:'Why is moving from threshold 5 to threshold 7 in this week\'s data a bad idea?',
+      options:['It isn\'t — stricter is always better','FPR stays exactly the same (0.2, no fewer false alarms), but TPR drops from 1.0 to 0.6 — a real cost with zero compensating benefit','Threshold 7 is not a valid threshold','TPR always increases with a stricter threshold'],
+      correct:1,
+      explain:'When FPR doesn\'t improve at all but TPR gets worse, the change is a pure loss — there was nothing gained to justify catching fewer real positives.'
+    }
+  ],
+  sandboxStarter3:`def classify(x, threshold):
+    return x >= threshold
+
+hours = [1,2,3,4,5,6,7,8,9,10]
+passed = [False, False, False, False, True, True, False, True, True, True]
+
+def confusion(threshold):
+    preds = [classify(h, threshold) for h in hours]
+    TP = sum(1 for i in range(len(hours)) if preds[i] and passed[i])
+    FP = sum(1 for i in range(len(hours)) if preds[i] and not passed[i])
+    TN = sum(1 for i in range(len(hours)) if not preds[i] and not passed[i])
+    FN = sum(1 for i in range(len(hours)) if not preds[i] and passed[i])
+    return TP, FP, TN, FN
+
+table = {}
+for t in [3, 5, 7]:
+    TP, FP, TN, FN = confusion(t)
+    table[t] = (round(TP/(TP+FN),2), round(FP/(FP+TN),2))
+
+print("threshold | TPR | FPR")
+for t, (tpr, fpr) in table.items():
+    print(t, "|", tpr, "|", fpr)
+`,
+  stretchChallenge:{
+    title:'Find a dominating threshold in a fresh class',
+    desc:`Using attendance = [10,20,30,40,50,60,70,80,90,100],
+      passed = [False,False,False,True,False,True,True,False,True,True], and confusion(threshold) adapted for
+      this data (provided below), calculate TPR_35/FPR_35 (threshold=35) and TPR_45/FPR_45 (threshold=45), then
+      dominates_35 = (TPR_35 >= TPR_45) and (FPR_35 <= FPR_45) and (TPR_35 > TPR_45 or FPR_35 < FPR_45). Assert
+      that dominates_35 == True.`,
+    starter:`def classify(x, threshold):
+    return x >= threshold
+
+attendance = [10,20,30,40,50,60,70,80,90,100]
+passed = [False,False,False,True,False,True,True,False,True,True]
+
+def confusion(threshold):
+    preds = [classify(a, threshold) for a in attendance]
+    TP = sum(1 for i in range(len(attendance)) if preds[i] and passed[i])
+    FP = sum(1 for i in range(len(attendance)) if preds[i] and not passed[i])
+    TN = sum(1 for i in range(len(attendance)) if not preds[i] and not passed[i])
+    FN = sum(1 for i in range(len(attendance)) if not preds[i] and passed[i])
+    return TP, FP, TN, FN
+
+# Calculate TPR_35, FPR_35 (threshold=35) and TPR_45, FPR_45 (threshold=45), then dominates_35, below
+`,
+    tests:[
+      {type:'assert', expr:'dominates_35 == True', label:'dominates_35 correctly equals True'}
+    ]
+  }
 }
 ];
 
