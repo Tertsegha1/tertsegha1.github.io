@@ -4974,6 +4974,230 @@ w1, w2 = 0.2, 0.4
       {type:'assert', expr:'neuron(10, 5, 0.2, 0.4, b) == 0.5', label:'neuron(10, 5, 0.2, 0.4, b) correctly equals 0.5'}
     ]
   }
+},
+{
+  key:'week4', num:4, title:'Weighing the Vote: Weighted Ensembles by Hand',
+  scenarioTag:'Real world: not every voter deserves an equal say',
+  scenario:`Intermediate Week 6's majority vote treated every classifier equally — one vote each. But what if one
+    voter is genuinely more trustworthy than the others? A <strong>weighted ensemble</strong> gives each voter a
+    weight based on how much it should be trusted, so a single reliable voter can outweigh two unreliable ones —
+    something equal-weight majority voting can never do.`,
+  objectives:[
+    'Calculate a weighted vote from several voters\' predictions and their weights',
+    'Compare a weighted vote against an equal-weight (unweighted) vote for the same votes',
+    'Assign weights based on each voter\'s own past accuracy',
+    'See weighted voting outperform equal-weight voting across a whole class'
+  ],
+  conceptHtml:`
+    <p>A <strong>weighted vote</strong> combines each voter's prediction (1 for True, 0 for False) with a WEIGHT
+    reflecting how much that voter should count:</p>
+    <pre class="code-block">def weighted_vote(votes, weights):
+    return sum(w*v for w, v in zip(weights, votes)) / sum(weights)
+
+votes = [1, 0, 0]     # voter A says True, voters B and C say False
+weights = [3, 1, 1]   # voter A is trusted 3x as much as B or C
+
+wv = weighted_vote(votes, weights)
+print(wv)              # 0.6 -> predicts True (A's single vote outweighs B and C combined)</pre>
+    <p>Compare that to an EQUAL-weight vote on the exact same votes:</p>
+    <pre class="code-block">unweighted = sum(votes) / len(votes)
+print(unweighted)      # 0.333 -> predicts False (B and C outvote A, 2 against 1)</pre>
+    <h3>Let's break down why the weights change the outcome</h3>
+    <ul>
+      <li><code>sum(w*v for w, v in zip(weights, votes))</code> — each vote is multiplied by its OWN weight
+        before adding, so a heavily-weighted voter's vote counts for more in the total.</li>
+      <li>Dividing by <code>sum(weights)</code> (5, not 3) keeps the result in the same 0-to-1 range as a plain
+        average, so <code>>= 0.5</code> is still a sensible "predict True" cutoff.</li>
+      <li>With equal weights ([1,1,1]), <code>weighted_vote</code> reduces to EXACTLY the same calculation as
+        Intermediate Week 6's plain majority vote — weighting is a generalization, not a different idea.</li>
+      <li>Where the weights come FROM matters: a natural choice is to weight each voter by its OWN measured
+        accuracy, so voters that have proven more trustworthy get more say.</li>
+    </ul>`,
+  sandboxStarter:`def weighted_vote(votes, weights):
+    return sum(w*v for w, v in zip(weights, votes)) / sum(weights)
+
+votes = [1, 0, 0]
+weights = [3, 1, 1]
+print("weighted:", weighted_vote(votes, weights))
+print("unweighted:", sum(votes) / len(votes))
+`,
+  sandboxStarter2:`def weighted_vote(votes, weights):
+    return sum(w*v for w, v in zip(weights, votes)) / sum(weights)
+
+votes_A = [1, 1, 0, 1, 0]
+votes_B = [1, 0, 0, 1, 1]
+votes_C = [1, 0, 1, 0, 1]
+actual  = [1, 1, 0, 1, 0]
+weights = [3, 1, 1]
+
+for i in range(5):
+    votes = [votes_A[i], votes_B[i], votes_C[i]]
+    wv = weighted_vote(votes, weights)
+    uv = sum(votes) / len(votes)
+    print("student", i, "-> weighted:", round(wv,2), "unweighted:", round(uv,2), "actual:", actual[i])
+`,
+  exercises:[
+    {
+      title:'Calculate a weighted vote',
+      desc:`Write weighted_vote(votes, weights) returning sum(w*v for w, v in zip(weights, votes)) /
+        sum(weights). Using votes = [1, 0, 0] and weights = [3, 1, 1], assert that
+        weighted_vote(votes, weights) == 0.6.`,
+      starter:`def weighted_vote(votes, weights):
+    # TODO: return the weighted average of votes
+    pass
+
+votes = [1, 0, 0]
+weights = [3, 1, 1]
+`,
+      tests:[{type:'assert', expr:'weighted_vote(votes, weights) == 0.6', label:'weighted_vote(votes, weights) correctly equals 0.6'}]
+    },
+    {
+      title:'Compare weighted vs equal-weight voting',
+      desc:`Using votes = [1, 0, 0], calculate unweighted_vote = sum(votes) / len(votes), then
+        unweighted_predict = unweighted_vote >= 0.5 and weighted_predict = weighted_vote(votes, [3,1,1]) >= 0.5.
+        Assert that round(unweighted_vote, 4) == 0.3333 and unweighted_predict != weighted_predict — the SAME
+        votes give a DIFFERENT final answer depending on whether the voters are weighted.`,
+      starter:`def weighted_vote(votes, weights):
+    return sum(w*v for w, v in zip(weights, votes)) / sum(weights)
+
+votes = [1, 0, 0]
+# Calculate unweighted_vote, unweighted_predict and weighted_predict below
+`,
+      tests:[
+        {type:'assert', expr:'round(unweighted_vote, 4) == 0.3333', label:'unweighted_vote correctly rounds to 0.3333'},
+        {type:'assert', expr:'unweighted_predict != weighted_predict', label:'unweighted_predict correctly differs from weighted_predict'}
+      ]
+    },
+    {
+      title:'Give a whole class weighted votes',
+      desc:`Using votes_A = [1,1,0,1,0], votes_B = [1,0,0,1,1], votes_C = [1,0,1,0,1], and weights = [3,1,1],
+        build weighted_preds: for each student i, weighted_vote([votes_A[i],votes_B[i],votes_C[i]], weights) >=
+        0.5. Assert that weighted_preds == [True, True, False, True, False].`,
+      starter:`def weighted_vote(votes, weights):
+    return sum(w*v for w, v in zip(weights, votes)) / sum(weights)
+
+votes_A = [1, 1, 0, 1, 0]
+votes_B = [1, 0, 0, 1, 1]
+votes_C = [1, 0, 1, 0, 1]
+weights = [3, 1, 1]
+# Build weighted_preds below
+`,
+      tests:[{type:'assert', expr:'weighted_preds == [True, True, False, True, False]', label:'weighted_preds is correctly calculated'}]
+    },
+    {
+      title:'Build the equal-weight predictions for comparison',
+      desc:`Using votes_A, votes_B, votes_C from before, build unweighted_preds: for each student i,
+        (votes_A[i]+votes_B[i]+votes_C[i])/3 >= 0.5. Assert that
+        unweighted_preds == [True, False, False, True, True].`,
+      starter:`votes_A = [1, 1, 0, 1, 0]
+votes_B = [1, 0, 0, 1, 1]
+votes_C = [1, 0, 1, 0, 1]
+# Build unweighted_preds below
+`,
+      tests:[{type:'assert', expr:'unweighted_preds == [True, False, False, True, True]', label:'unweighted_preds is correctly calculated'}]
+    },
+    {
+      title:'Confirm weighted voting outperforms equal-weight voting',
+      desc:`Using weighted_preds = [True, True, False, True, False],
+        unweighted_preds = [True, False, False, True, True], and actual = [True, True, False, True, False]
+        (as booleans), calculate weighted_accuracy and unweighted_accuracy (fraction matching actual). Assert
+        that weighted_accuracy == 1.0 and unweighted_accuracy == 0.6 and
+        weighted_accuracy > unweighted_accuracy.`,
+      starter:`weighted_preds = [True, True, False, True, False]
+unweighted_preds = [True, False, False, True, True]
+actual = [True, True, False, True, False]
+# Calculate weighted_accuracy and unweighted_accuracy below
+`,
+      tests:[
+        {type:'assert', expr:'weighted_accuracy == 1.0', label:'weighted_accuracy correctly equals 1.0'},
+        {type:'assert', expr:'unweighted_accuracy == 0.6', label:'unweighted_accuracy correctly equals 0.6'},
+        {type:'assert', expr:'weighted_accuracy > unweighted_accuracy', label:'weighted_accuracy is correctly greater than unweighted_accuracy'}
+      ]
+    },
+    {
+      title:'See what happens with badly-chosen weights',
+      desc:`Using votes_A, votes_B, votes_C, and actual from before, but bad_weights = [1, 3, 3] (favoring the
+        WEAK voters B and C instead of the trustworthy voter A), build bad_preds the same way as
+        weighted_preds, then bad_accuracy. Assert that bad_accuracy == 0.6 and bad_accuracy < 1.0 — weighting
+        only helps when the weights actually reflect which voter is trustworthy.`,
+      starter:`def weighted_vote(votes, weights):
+    return sum(w*v for w, v in zip(weights, votes)) / sum(weights)
+
+votes_A = [1, 1, 0, 1, 0]
+votes_B = [1, 0, 0, 1, 1]
+votes_C = [1, 0, 1, 0, 1]
+actual = [True, True, False, True, False]
+bad_weights = [1, 3, 3]
+# Build bad_preds, then bad_accuracy, below
+`,
+      tests:[
+        {type:'assert', expr:'bad_accuracy == 0.6', label:'bad_accuracy correctly equals 0.6'},
+        {type:'assert', expr:'bad_accuracy < 1.0', label:'bad_accuracy is correctly less than the well-weighted 1.0'}
+      ]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does a weighted vote do differently from Intermediate Week 6\'s equal-weight majority vote?',
+      options:['Nothing, they are identical in every case','It multiplies each voter\'s vote by a weight reflecting how trustworthy that voter is, so some voters count for more than others','It only works with exactly 2 voters','It ignores some voters completely'],
+      correct:1,
+      explain:'Weighted voting generalizes majority voting — with all weights equal, it reduces to exactly the same calculation.'
+    },
+    {
+      q:'In this week\'s example, why did weighted voting predict differently from equal-weight voting for the SAME votes [1, 0, 0]?',
+      options:['It was a coding error','With weights [3,1,1], the single "1" vote (weight 3) outweighs the two "0" votes (weight 1 each combined = 2), flipping the result compared to a plain 1-vs-2 majority','Weighted voting always agrees with unweighted voting','The votes were different in each case'],
+      correct:1,
+      explain:'3 > 1+1, so the heavily-weighted voter\'s single vote can outvote two unweighted voters combined — impossible under equal-weight majority.'
+    },
+    {
+      q:'Where do sensible weights for each voter typically come from?',
+      options:['Random numbers','Each voter\'s own measured accuracy on past data — a voter that has proven more reliable earns a bigger weight','Alphabetical order of the voters\' names','Weights should always be equal, regardless of accuracy'],
+      correct:1,
+      explain:'Weighting by a voter\'s own track record is the natural choice — it rewards voters that have actually proven trustworthy.'
+    },
+    {
+      q:'Why did bad_weights = [1,3,3] (favoring the WEAK voters) perform worse than the well-chosen weights?',
+      options:['Bad weights always perform the same as good weights','Weighting only helps when the weights actually reflect which voter deserves more trust — giving MORE weight to LESS reliable voters can make the ensemble worse, not better','bad_weights is not a valid input','Weighted voting cannot use different weight values'],
+      correct:1,
+      explain:'Weighted voting is only as good as the weights themselves — poorly-chosen weights can amplify the wrong voters\' mistakes instead of correcting them.'
+    }
+  ],
+  sandboxStarter3:`def weighted_vote(votes, weights):
+    return sum(w*v for w, v in zip(weights, votes)) / sum(weights)
+
+votes_A = [1, 1, 0, 1, 0]
+votes_B = [1, 0, 0, 1, 1]
+votes_C = [1, 0, 1, 0, 1]
+actual  = [True, True, False, True, False]
+
+for weights, label in [([1,1,1], "equal"), ([3,1,1], "A trusted 3x"), ([1,3,3], "B,C trusted 3x")]:
+    preds = []
+    for i in range(5):
+        votes = [votes_A[i], votes_B[i], votes_C[i]]
+        preds.append(weighted_vote(votes, weights) >= 0.5)
+    acc = sum(1 for i in range(5) if preds[i] == actual[i]) / 5
+    print(label, "-> weights:", weights, "accuracy:", acc)
+`,
+  stretchChallenge:{
+    title:'Weight by measured accuracy directly',
+    desc:`Using voter_A_acc = 0.9, voter_B_acc = 0.5, voter_C_acc = 0.5 as the weights themselves (using
+      accuracy directly as the weight), and votes = [1, 0, 0] for one new student, calculate
+      accuracy_weighted_vote = weighted_vote(votes, [voter_A_acc, voter_B_acc, voter_C_acc]). Assert that
+      round(accuracy_weighted_vote, 4) == 0.4737 and accuracy_weighted_vote < 0.5 — even trusting A 0.9 vs 0.5
+      isn't QUITE enough to flip this particular vote, unlike the integer weights [3,1,1] used earlier.`,
+    starter:`def weighted_vote(votes, weights):
+    return sum(w*v for w, v in zip(weights, votes)) / sum(weights)
+
+voter_A_acc = 0.9
+voter_B_acc = 0.5
+voter_C_acc = 0.5
+votes = [1, 0, 0]
+# Calculate accuracy_weighted_vote below
+`,
+    tests:[
+      {type:'assert', expr:'round(accuracy_weighted_vote, 4) == 0.4737', label:'accuracy_weighted_vote is correctly calculated (0.4737)'}
+    ]
+  }
 }
 ];
 
