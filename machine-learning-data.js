@@ -3455,6 +3455,250 @@ actual = [True, True, False, False, True]
       {type:'assert', expr:'combined == actual', label:'combined correctly matches actual'}
     ]
   }
+},
+{
+  key:'week7', num:7, title:'How Sure Are We? Precision vs Recall Trade-offs',
+  scenarioTag:'Real world: sweeping across thresholds to find the best precision/recall balance',
+  scenario:`Beginner Week 6 compared precision and recall at just TWO thresholds (5 and 7). This week sweeps
+    across FIVE candidate thresholds, calculates precision, recall AND the F1 score (which balances both) for
+    each one, and finds which threshold gives the best overall BALANCE — not just the highest accuracy.`,
+  objectives:[
+    'Calculate precision and recall for several different thresholds',
+    'Calculate the F1 score, which balances precision and recall into one number',
+    'Sweep across multiple thresholds and compare their F1 scores',
+    'Find the threshold that gives the best precision/recall balance'
+  ],
+  conceptHtml:`
+    <p>Beginner Week 6 introduced the <strong>F1 score</strong> as a stretch challenge:
+    <code>F1 = 2 * precision * recall / (precision + recall)</code> — a single number that's high only when
+    BOTH precision and recall are reasonably high. This week uses it to compare several thresholds at once:</p>
+    <pre class="code-block">def stats(threshold):
+    preds = [classify(h, threshold) for h in hours]
+    TP = sum(1 for i in range(len(hours)) if preds[i] and passed[i])
+    FP = sum(1 for i in range(len(hours)) if preds[i] and not passed[i])
+    FN = sum(1 for i in range(len(hours)) if not preds[i] and passed[i])
+    precision = TP / (TP + FP)
+    recall = TP / (TP + FN)
+    f1 = 2 * precision * recall / (precision + recall)
+    return f1
+
+for t in [3, 4, 5, 6, 7]:
+    print(t, round(stats(t), 4))</pre>
+    <h3>Let's break down the sweep, and what it reveals</h3>
+    <ul>
+      <li>As the threshold gets STRICTER (bigger), the classifier predicts "yes" less often — this tends to raise
+        precision (fewer wrong "yes" calls) while lowering recall (more missed real "yes" cases).</li>
+      <li>F1 rises as long as precision improves faster than recall drops, then FALLS once the threshold gets so
+        strict that real "yes" cases start being missed — so the F1 sweep has a peak, not a straight line.</li>
+      <li>Collecting every threshold's F1 into one <code>{threshold: f1}</code> dict makes finding the BEST one
+        a simple <code>max(..., key=...)</code> lookup — the exact same pattern used for finding the best split
+        in Week 5 and the winning model in earlier tracks.</li>
+    </ul>`,
+  sandboxStarter:`def classify(x, threshold):
+    return x >= threshold
+
+hours = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+passed = [False, False, False, False, True, True, False, True, True, True]
+threshold = 3
+
+predictions = [classify(h, threshold) for h in hours]
+TP = sum(1 for i in range(len(hours)) if predictions[i] and passed[i])
+FP = sum(1 for i in range(len(hours)) if predictions[i] and not passed[i])
+FN = sum(1 for i in range(len(hours)) if not predictions[i] and passed[i])
+precision = TP / (TP + FP)
+recall = TP / (TP + FN)
+print("threshold", threshold, "-> precision", round(precision, 4), "recall", round(recall, 4))
+`,
+  sandboxStarter2:`def classify(x, threshold):
+    return x >= threshold
+
+hours = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+passed = [False, False, False, False, True, True, False, True, True, True]
+
+def stats(threshold):
+    preds = [classify(h, threshold) for h in hours]
+    TP = sum(1 for i in range(len(hours)) if preds[i] and passed[i])
+    FP = sum(1 for i in range(len(hours)) if preds[i] and not passed[i])
+    FN = sum(1 for i in range(len(hours)) if not preds[i] and passed[i])
+    precision = TP / (TP + FP)
+    recall = TP / (TP + FN)
+    f1 = 2 * precision * recall / (precision + recall)
+    return round(f1, 4)
+
+for t in [3, 4, 5, 6, 7]:
+    print("threshold", t, "-> f1", stats(t))
+`,
+  exercises:[
+    {
+      title:'Compute precision/recall for threshold = 3',
+      desc:`Using classify(x, threshold) from Beginner Week 4, hours = [1,2,3,4,5,6,7,8,9,10],
+        passed = [False, False, False, False, True, True, False, True, True, True], and threshold = 3, build
+        predictions, then calculate precision and recall. Assert that precision == 0.625 and recall == 1.0.`,
+      starter:`def classify(x, threshold):
+    return x >= threshold
+
+hours = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+passed = [False, False, False, False, True, True, False, True, True, True]
+threshold = 3
+# Build predictions, then calculate precision and recall, below
+`,
+      tests:[
+        {type:'assert', expr:'precision == 0.625', label:'precision correctly equals 0.625'},
+        {type:'assert', expr:'recall == 1.0', label:'recall correctly equals 1.0'}
+      ]
+    },
+    {
+      title:'Compute precision/recall for threshold = 6',
+      desc:`Using the same setup but threshold = 6, build predictions, then calculate precision and recall.
+        Assert that precision == 0.8 and recall == 0.8 — at THIS threshold, they happen to be exactly equal.`,
+      starter:`def classify(x, threshold):
+    return x >= threshold
+
+hours = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+passed = [False, False, False, False, True, True, False, True, True, True]
+threshold = 6
+# Build predictions, then calculate precision and recall, below
+`,
+      tests:[
+        {type:'assert', expr:'precision == 0.8', label:'precision correctly equals 0.8'},
+        {type:'assert', expr:'recall == 0.8', label:'recall correctly equals 0.8'}
+      ]
+    },
+    {
+      title:'Calculate F1 at threshold = 6',
+      desc:`Using precision = 0.8 and recall = 0.8, calculate
+        f1 = 2 * precision * recall / (precision + recall). Assert that round(f1, 4) == 0.8 — when precision and
+        recall are EQUAL, F1 equals them too.`,
+      starter:`precision = 0.8
+recall = 0.8
+# Calculate f1 below
+`,
+      tests:[{type:'assert', expr:'round(f1, 4) == 0.8', label:'f1 correctly rounds to 0.8'}]
+    },
+    {
+      title:'Sweep across all 5 thresholds',
+      desc:`Using stats(threshold) (provided below — do not modify it) and
+        candidates = [3, 4, 5, 6, 7], build f1_by_threshold = {t: stats(t) for t in candidates}. Assert that
+        f1_by_threshold[5] == 0.9091.`,
+      starter:`def classify(x, threshold):
+    return x >= threshold
+
+hours = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+passed = [False, False, False, False, True, True, False, True, True, True]
+
+def stats(threshold):
+    preds = [classify(h, threshold) for h in hours]
+    TP = sum(1 for i in range(len(hours)) if preds[i] and passed[i])
+    FP = sum(1 for i in range(len(hours)) if preds[i] and not passed[i])
+    FN = sum(1 for i in range(len(hours)) if not preds[i] and passed[i])
+    precision = TP / (TP + FP)
+    recall = TP / (TP + FN)
+    return round(2 * precision * recall / (precision + recall), 4)
+
+candidates = [3, 4, 5, 6, 7]
+# Build f1_by_threshold below
+`,
+      tests:[{type:'assert', expr:'f1_by_threshold[5] == 0.9091', label:'f1_by_threshold[5] is correctly calculated (0.9091)'}]
+    },
+    {
+      title:'Find the threshold with the best F1',
+      desc:`Using f1_by_threshold = {3: 0.7692, 4: 0.8333, 5: 0.9091, 6: 0.8, 7: 0.6667}, calculate
+        best_threshold = max(f1_by_threshold, key=f1_by_threshold.get). Assert that best_threshold == 5 — the
+        SAME threshold Week 5's decision tree search and Beginner Week 4's accuracy search both landed on.`,
+      starter:`f1_by_threshold = {3: 0.7692, 4: 0.8333, 5: 0.9091, 6: 0.8, 7: 0.6667}
+# Calculate best_threshold below
+`,
+      tests:[{type:'assert', expr:'best_threshold == 5', label:'best_threshold is correctly calculated (5)'}]
+    },
+    {
+      title:'Confirm the trade-off direction',
+      desc:`Using recall_at_3 = 1.0, recall_at_7 = 0.6, precision_at_3 = 0.625, and precision_at_7 = 0.75, assert
+        that recall_at_3 > recall_at_7 and precision_at_7 > precision_at_3 — moving from a LOOSE threshold (3) to
+        a STRICT one (7) trades recall away in exchange for higher precision.`,
+      starter:`recall_at_3 = 1.0
+recall_at_7 = 0.6
+precision_at_3 = 0.625
+precision_at_7 = 0.75
+# Add your assert below
+`,
+      tests:[{type:'assert', expr:'recall_at_3 > recall_at_7 and precision_at_7 > precision_at_3', label:'The trade-off direction is correctly confirmed'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why sweep across MULTIPLE thresholds instead of just comparing two, like Beginner Week 6 did?',
+      options:['It makes no real difference','It reveals the FULL trade-off curve, so you can find the threshold that gives the best actual balance instead of guessing between two options','More thresholds always means better accuracy','Sweeping is required by Python'],
+      correct:1,
+      explain:'Comparing only two points can miss a better option in between — a full sweep shows the whole shape of the trade-off.'
+    },
+    {
+      q:'What does it mean when precision and recall come out EQUAL at a threshold (like 0.8 and 0.8 at threshold=6)?',
+      options:['It is always a mistake','At that specific point, the classifier is equally good at avoiding wrong "yes" calls and avoiding missed real "yes" cases — and F1 there equals both, since F1 is the balance of the two','Precision and recall are the same thing','It means accuracy is 100%'],
+      correct:1,
+      explain:'F1 is a balance between precision and recall — when the two inputs are already equal, the balanced result equals them too.'
+    },
+    {
+      q:'Why does F1 in this week\'s sweep rise from threshold 3 to 5, then fall from 5 to 7?',
+      options:['F1 always rises then falls, for any dataset','From 3 to 5, precision improves without losing recall (F1 rises); past 5, the threshold gets so strict real "yes" cases start being missed, recall drops, and F1 falls','F1 is random','F1 only depends on recall'],
+      correct:1,
+      explain:'The sweep has a peak because early on, stricter thresholds only remove wrong "yes" calls — but eventually they start removing correct ones too.'
+    },
+    {
+      q:'What does the "best F1 threshold" actually represent?',
+      options:['The threshold with the highest recall, ignoring precision','The threshold that gives the best overall BALANCE between precision and recall, rather than maximizing either one alone','The threshold with the most True Positives','The strictest threshold possible'],
+      correct:1,
+      explain:'F1 specifically rewards a good balance — maximizing it finds the threshold that doesn\'t sacrifice one metric too much for the other.'
+    }
+  ],
+  sandboxStarter3:`def classify(x, threshold):
+    return x >= threshold
+
+hours = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+passed = [False, False, False, False, True, True, False, True, True, True]
+
+def stats(threshold):
+    preds = [classify(h, threshold) for h in hours]
+    TP = sum(1 for i in range(len(hours)) if preds[i] and passed[i])
+    FP = sum(1 for i in range(len(hours)) if preds[i] and not passed[i])
+    FN = sum(1 for i in range(len(hours)) if not preds[i] and passed[i])
+    precision = TP / (TP + FP)
+    recall = TP / (TP + FN)
+    return round(2 * precision * recall / (precision + recall), 4)
+
+candidates = [3, 4, 5, 6, 7]
+f1_by_threshold = {t: stats(t) for t in candidates}
+best_threshold = max(f1_by_threshold, key=f1_by_threshold.get)
+print("F1 by threshold:", f1_by_threshold)
+print("Best threshold:", best_threshold)
+`,
+  stretchChallenge:{
+    title:'Sweep a fresh class by attendance',
+    desc:`Using attendance = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
+      passed = [False, False, False, True, False, True, True, False, True, True], and stats(threshold) adapted
+      for this data (provided below), sweep candidates = [35, 45, 55, 65, 75] and find best_threshold. Assert
+      that best_threshold == 35.`,
+    starter:`def classify(x, threshold):
+    return x >= threshold
+
+attendance = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+passed = [False, False, False, True, False, True, True, False, True, True]
+
+def stats(threshold):
+    preds = [classify(a, threshold) for a in attendance]
+    TP = sum(1 for i in range(len(attendance)) if preds[i] and passed[i])
+    FP = sum(1 for i in range(len(attendance)) if preds[i] and not passed[i])
+    FN = sum(1 for i in range(len(attendance)) if not preds[i] and passed[i])
+    precision = TP / (TP + FP)
+    recall = TP / (TP + FN)
+    return round(2 * precision * recall / (precision + recall), 4)
+
+candidates = [35, 45, 55, 65, 75]
+# Build f1_by_threshold, then best_threshold, below
+`,
+    tests:[
+      {type:'assert', expr:'best_threshold == 35', label:'best_threshold is correctly calculated (35)'}
+    ]
+  }
 }
 ];
 
