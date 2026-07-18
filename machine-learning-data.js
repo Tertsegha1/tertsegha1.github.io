@@ -4716,6 +4716,264 @@ test_scores = [42]
       {type:'assert', expr:'test_error_k1 > test_error_k5', label:'test_error_k1 is correctly greater than test_error_k5'}
     ]
   }
+},
+{
+  key:'week3', num:3, title:'A Tiny Neural Node by Hand',
+  scenarioTag:'Real world: the building block every neural network is made of',
+  scenario:`Intermediate Week 1 combined two inputs into a weighted sum. Intermediate Week 4 squashed a single
+    number into a confidence probability with sigmoid. Put those two ideas TOGETHER — a weighted sum of inputs,
+    fed straight into sigmoid — and you've just built one <strong>artificial neuron</strong>: the single building
+    block every real neural network is made of, just stacked by the thousands or millions.`,
+  objectives:[
+    'Build a single neuron: a weighted sum of inputs, squashed through sigmoid',
+    'Fire the neuron for several different students, and read its confidence output',
+    'See how changing ONE weight changes how strongly the neuron responds to that input',
+    'Compare two neurons with different weights on the same class of students'
+  ],
+  conceptHtml:`
+    <p>A single <strong>artificial neuron</strong> is just Week 1 (Intermediate)'s weighted sum, fed straight
+    into Week 4 (Intermediate)'s sigmoid:</p>
+    <pre class="code-block">import math
+
+def sigmoid(z):
+    return 1 / (1 + math.exp(-z))
+
+def neuron(x1, x2, w1, w2, b):
+    z = w1*x1 + w2*x2 + b
+    return sigmoid(z)
+
+w1, w2, b = 0.5, 1.0, -5
+print(neuron(6, 2, w1, w2, b))   # 0.5 - exactly balanced, z is exactly 0
+print(neuron(8, 3, w1, w2, b))   # 0.8808 - strongly "fires"
+print(neuron(3, 0, w1, w2, b))   # 0.0293 - barely fires at all</pre>
+    <p>Each weight controls how much ITS OWN input matters to the neuron's decision — increasing <code>w2</code>
+    makes the neuron respond more strongly to <code>x2</code>, without changing how it responds to
+    <code>x1</code> at all:</p>
+    <pre class="code-block">print(neuron(4, 1, 0.5, 1.0, -5))   # 0.1192
+print(neuron(4, 1, 0.5, 2.0, -5))   # 0.2689 - bigger w2, stronger response to the SAME x2=1</pre>
+    <h3>Let's break down why this IS a neural network's building block</h3>
+    <ul>
+      <li><code>z = w1*x1 + w2*x2 + b</code> is EXACTLY Intermediate Week 1's <code>predict2</code> — nothing
+        new mechanically, just renamed.</li>
+      <li><code>sigmoid(z)</code> is EXACTLY Intermediate Week 4's activation — turning that weighted sum into a
+        confidence between 0 and 1.</li>
+      <li>A real neural network is just MANY of these neurons, each with their own weights, connected together in
+        layers — but every single one does exactly this same weighted-sum-then-squash calculation.</li>
+    </ul>`,
+  sandboxStarter:`import math
+
+def sigmoid(z):
+    return 1 / (1 + math.exp(-z))
+
+def neuron(x1, x2, w1, w2, b):
+    z = w1*x1 + w2*x2 + b
+    return sigmoid(z)
+
+w1, w2, b = 0.5, 1.0, -5
+print("neuron(6, 2):", neuron(6, 2, w1, w2, b))
+print("neuron(8, 3):", neuron(8, 3, w1, w2, b))
+print("neuron(3, 0):", neuron(3, 0, w1, w2, b))
+`,
+  sandboxStarter2:`import math
+
+def sigmoid(z):
+    return 1 / (1 + math.exp(-z))
+
+def neuron(x1, x2, w1, w2, b):
+    z = w1*x1 + w2*x2 + b
+    return sigmoid(z)
+
+students = [(4,1), (6,2), (8,3), (3,0)]
+w1, w2, b = 0.5, 1.0, -5
+for x1, x2 in students:
+    print(x1, x2, "-> fires at:", round(neuron(x1, x2, w1, w2, b), 4))
+`,
+  exercises:[
+    {
+      title:'Build a single neuron',
+      desc:`Write neuron(x1, x2, w1, w2, b) that computes z = w1*x1 + w2*x2 + b, then returns sigmoid(z). Using
+        w1 = 0.5, w2 = 1.0, b = -5, assert that neuron(6, 2, w1, w2, b) == 0.5 — z works out to exactly 0.`,
+      starter:`import math
+
+def sigmoid(z):
+    return 1 / (1 + math.exp(-z))
+
+def neuron(x1, x2, w1, w2, b):
+    # TODO: compute z, then return sigmoid(z)
+    pass
+
+w1, w2, b = 0.5, 1.0, -5
+`,
+      tests:[{type:'assert', expr:'neuron(6, 2, w1, w2, b) == 0.5', label:'neuron(6, 2, w1, w2, b) correctly equals 0.5'}]
+    },
+    {
+      title:'Fire the neuron for a confident student',
+      desc:`Using the same neuron and w1 = 0.5, w2 = 1.0, b = -5, assert that
+        round(neuron(8, 3, w1, w2, b), 4) == 0.8808.`,
+      starter:`import math
+
+def sigmoid(z):
+    return 1 / (1 + math.exp(-z))
+
+def neuron(x1, x2, w1, w2, b):
+    z = w1*x1 + w2*x2 + b
+    return sigmoid(z)
+
+w1, w2, b = 0.5, 1.0, -5
+`,
+      tests:[{type:'assert', expr:'round(neuron(8, 3, w1, w2, b), 4) == 0.8808', label:'neuron(8, 3, w1, w2, b) correctly rounds to 0.8808'}]
+    },
+    {
+      title:'A weak student barely activates the neuron',
+      desc:`Using the same neuron and weights, assert that round(neuron(3, 0, w1, w2, b), 4) == 0.0293 — this
+        student barely triggers the neuron at all.`,
+      starter:`import math
+
+def sigmoid(z):
+    return 1 / (1 + math.exp(-z))
+
+def neuron(x1, x2, w1, w2, b):
+    z = w1*x1 + w2*x2 + b
+    return sigmoid(z)
+
+w1, w2, b = 0.5, 1.0, -5
+`,
+      tests:[{type:'assert', expr:'round(neuron(3, 0, w1, w2, b), 4) == 0.0293', label:'neuron(3, 0, w1, w2, b) correctly rounds to 0.0293'}]
+    },
+    {
+      title:'See how changing one weight changes the response',
+      desc:`Using x1 = 4, x2 = 1, w1 = 0.5, b = -5, calculate a_w2_1 = neuron(4, 1, w1, 1.0, b) and
+        a_w2_2 = neuron(4, 1, w1, 2.0, b). Assert that round(a_w2_1, 4) == 0.1192 and
+        round(a_w2_2, 4) == 0.2689 and a_w2_2 > a_w2_1 — a bigger w2 makes the neuron respond MORE strongly to
+        the SAME x2 value.`,
+      starter:`import math
+
+def sigmoid(z):
+    return 1 / (1 + math.exp(-z))
+
+def neuron(x1, x2, w1, w2, b):
+    z = w1*x1 + w2*x2 + b
+    return sigmoid(z)
+
+x1, x2 = 4, 1
+w1, b = 0.5, -5
+# Calculate a_w2_1 and a_w2_2 below
+`,
+      tests:[
+        {type:'assert', expr:'round(a_w2_1, 4) == 0.1192', label:'a_w2_1 correctly rounds to 0.1192'},
+        {type:'assert', expr:'round(a_w2_2, 4) == 0.2689', label:'a_w2_2 correctly rounds to 0.2689'},
+        {type:'assert', expr:'a_w2_2 > a_w2_1', label:'a_w2_2 is correctly greater than a_w2_1'}
+      ]
+    },
+    {
+      title:'Classify using the neuron\'s output',
+      desc:`Using students = [(4,1), (6,2), (8,3), (3,0)] and w1 = 0.5, w2 = 1.0, b = -5, build
+        classified = [neuron(x1, x2, w1, w2, b) >= 0.5 for x1, x2 in students]. Assert that
+        classified == [False, True, True, False].`,
+      starter:`import math
+
+def sigmoid(z):
+    return 1 / (1 + math.exp(-z))
+
+def neuron(x1, x2, w1, w2, b):
+    z = w1*x1 + w2*x2 + b
+    return sigmoid(z)
+
+students = [(4,1), (6,2), (8,3), (3,0)]
+w1, w2, b = 0.5, 1.0, -5
+# Build classified below
+`,
+      tests:[{type:'assert', expr:'classified == [False, True, True, False]', label:'classified is correctly calculated'}]
+    },
+    {
+      title:'Compare two neurons with different weights',
+      desc:`Using student x1 = 4, x2 = 1, calculate neuron_a = neuron(4, 1, 0.5, 1.0, -5) (weighs x1 less) and
+        neuron_b = neuron(4, 1, 1.0, 0.5, -5) (weighs x1 more). Assert that round(neuron_a, 4) == 0.1192 and
+        round(neuron_b, 4) == 0.3775 and neuron_b > neuron_a — for THIS student (bigger x1 than x2), the neuron
+        that weighs x1 more heavily fires more strongly.`,
+      starter:`import math
+
+def sigmoid(z):
+    return 1 / (1 + math.exp(-z))
+
+def neuron(x1, x2, w1, w2, b):
+    z = w1*x1 + w2*x2 + b
+    return sigmoid(z)
+
+# Calculate neuron_a and neuron_b below
+`,
+      tests:[
+        {type:'assert', expr:'round(neuron_a, 4) == 0.1192', label:'neuron_a correctly rounds to 0.1192'},
+        {type:'assert', expr:'round(neuron_b, 4) == 0.3775', label:'neuron_b correctly rounds to 0.3775'},
+        {type:'assert', expr:'neuron_b > neuron_a', label:'neuron_b is correctly greater than neuron_a'}
+      ]
+    }
+  ],
+  quiz:[
+    {
+      q:'What TWO ideas from earlier weeks combine to make one artificial neuron?',
+      options:['Cross-validation and clustering','A weighted sum of inputs (Intermediate Week 1) and the sigmoid activation (Intermediate Week 4)','Decision trees and voting','k-NN and precision/recall'],
+      correct:1,
+      explain:'A neuron is literally predict2()\'s weighted sum, fed straight into sigmoid() — two previously-separate ideas, combined.'
+    },
+    {
+      q:'What does increasing a specific weight (like w2) do to the neuron\'s output?',
+      options:['Nothing, weights don\'t affect the output','Makes the neuron respond MORE strongly to that specific input, without changing how it responds to other inputs','Always makes the neuron fire less','Changes the bias term instead'],
+      correct:1,
+      explain:'Each weight scales ONLY its own input\'s contribution to z — increasing w2 amplifies x2\'s influence specifically.'
+    },
+    {
+      q:'Why can two neurons with DIFFERENT weights give very different answers for the SAME student?',
+      options:['They can\'t — weights don\'t matter','Each neuron\'s weights represent a different "opinion" about which input matters more, so the same inputs can produce very different weighted sums (and therefore different confidence outputs)','Only the bias term affects the output','Neurons always agree with each other'],
+      correct:1,
+      explain:'Weights encode what the neuron has "learned" to pay attention to — different weights mean a genuinely different judgment about the same input.'
+    },
+    {
+      q:'How does a full neural network relate to the single neuron built this week?',
+      options:['They are completely unrelated concepts','A real neural network is many of these same weighted-sum-then-sigmoid neurons, connected together in layers — each one doing exactly this same calculation','Neural networks don\'t use weighted sums','A neural network is just one very large neuron'],
+      correct:1,
+      explain:'Every neuron in a real network does exactly this same weighted-sum-then-activation calculation — the "network" part comes from connecting many of them together.'
+    }
+  ],
+  sandboxStarter3:`import math
+
+def sigmoid(z):
+    return 1 / (1 + math.exp(-z))
+
+def neuron(x1, x2, w1, w2, b):
+    z = w1*x1 + w2*x2 + b
+    return sigmoid(z)
+
+students = [(4,1), (6,2), (8,3), (3,0)]
+neuron_a_weights = (0.5, 1.0, -5)
+neuron_b_weights = (1.0, 0.5, -5)
+
+for x1, x2 in students:
+    a = neuron(x1, x2, *neuron_a_weights)
+    b = neuron(x1, x2, *neuron_b_weights)
+    print(x1, x2, "-> neuron_a:", round(a,4), "neuron_b:", round(b,4))
+`,
+  stretchChallenge:{
+    title:'Find the bias that balances a new neuron',
+    desc:`Using x1 = 10, x2 = 5, w1 = 0.2, w2 = 0.4, find the value of b that makes z exactly 0 (so the neuron
+      fires at EXACTLY 0.5). Assert that neuron(10, 5, 0.2, 0.4, b) == 0.5.`,
+    starter:`import math
+
+def sigmoid(z):
+    return 1 / (1 + math.exp(-z))
+
+def neuron(x1, x2, w1, w2, b):
+    z = w1*x1 + w2*x2 + b
+    return sigmoid(z)
+
+x1, x2 = 10, 5
+w1, w2 = 0.2, 0.4
+# Find b below (z = w1*x1 + w2*x2 + b should equal 0)
+`,
+    tests:[
+      {type:'assert', expr:'neuron(10, 5, 0.2, 0.4, b) == 0.5', label:'neuron(10, 5, 0.2, 0.4, b) correctly equals 0.5'}
+    ]
+  }
 }
 ];
 
