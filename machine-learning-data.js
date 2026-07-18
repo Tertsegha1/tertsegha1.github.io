@@ -4272,6 +4272,219 @@ center_B = 10
   ]
 };
 
+const MLR_ADVANCED_WEEKS = [
+{
+  key:'week1', num:1, title:'Tuning by Hand: Trying Different Learning Rates',
+  scenarioTag:'Real world: the SAME gradient descent, three very different outcomes',
+  scenario:`Beginner Week 5 used one fixed learning rate that happened to work nicely. This week reveals what the
+    learning rate ACTUALLY controls: too small wastes steps crawling toward the answer, a well-tuned rate
+    converges fast, and too LARGE causes the guess to swing wider and wider each step until it explodes —
+    "diverges" — instead of ever settling down.`,
+  objectives:[
+    'Calculate one gradient descent step for a single-parameter model',
+    'Compare how far a few steps get with a small learning rate vs a well-tuned one',
+    'Recognize divergence: a learning rate so large the guess grows in magnitude instead of shrinking',
+    'Confirm a well-chosen learning rate reaches the target in far fewer steps than a tiny one'
+  ],
+  conceptHtml:`
+    <p>This week uses a simpler one-parameter model — just <code>predict(x) = m*x</code>, no intercept — fitted
+    to x = [1, 2, 3, 4], y = [3, 6, 9, 12] (the true answer is exactly m = 3):</p>
+    <pre class="code-block">x = [1, 2, 3, 4]
+y = [3, 6, 9, 12]
+n = len(x)
+
+def gradient(m):
+    predictions = [m*x[i] for i in range(n)]
+    return (-2/n) * sum(x[i]*(y[i]-predictions[i]) for i in range(n))
+
+m = 0.0
+dm = gradient(m)
+m = m - 0.01*dm
+print(m)</pre>
+    <p>Running this update repeatedly with DIFFERENT learning rates produces three very different stories:</p>
+    <pre class="code-block">for lr in [0.01, 0.1, 0.15]:
+    m = 0.0
+    for step in range(6):
+        m = m - lr*gradient(m)
+    print(lr, "->", m)</pre>
+    <h3>Let's break down why the SAME update rule gives such different results</h3>
+    <ul>
+      <li><strong>lr = 0.01</strong> (too small): each nudge is tiny, so after only a handful of steps m has
+        barely moved toward 3 — it would eventually get there, just very slowly.</li>
+      <li><strong>lr = 0.1</strong> (well-tuned): nudges are big enough to make real progress each step, landing
+        very close to m = 3 within just a handful of steps.</li>
+      <li><strong>lr = 0.15</strong> (too large): each nudge OVERSHOOTS the target so far that the next
+        gradient is even bigger in the opposite direction — the guess swings further and further away each step,
+        growing without bound instead of settling down. This is called <strong>divergence</strong>.</li>
+    </ul>`,
+  sandboxStarter:`x = [1, 2, 3, 4]
+y = [3, 6, 9, 12]
+n = len(x)
+
+def gradient(m):
+    predictions = [m*x[i] for i in range(n)]
+    return (-2/n) * sum(x[i]*(y[i]-predictions[i]) for i in range(n))
+
+m = 0.0
+dm = gradient(m)
+print("dm:", dm)
+m = m - 0.01*dm
+print("m after one step:", m)
+`,
+  sandboxStarter2:`x = [1, 2, 3, 4]
+y = [3, 6, 9, 12]
+n = len(x)
+
+def gradient(m):
+    predictions = [m*x[i] for i in range(n)]
+    return (-2/n) * sum(x[i]*(y[i]-predictions[i]) for i in range(n))
+
+for lr in [0.01, 0.1, 0.15]:
+    m = 0.0
+    for step in range(6):
+        m = m - lr*gradient(m)
+    print("learning_rate", lr, "-> m after 6 steps:", round(m, 2))
+`,
+  exercises:[
+    {
+      title:'Calculate one gradient step',
+      desc:`Using x = [1,2,3,4], y = [3,6,9,12], and m = 0.0, calculate dm using the gradient formula from the
+        concept box. Assert that dm == -45.0.`,
+      starter:`x = [1, 2, 3, 4]
+y = [3, 6, 9, 12]
+n = len(x)
+m = 0.0
+# Calculate dm below
+`,
+      tests:[{type:'assert', expr:'dm == -45.0', label:'dm correctly equals -45.0'}]
+    },
+    {
+      title:'Update m with a small learning rate',
+      desc:`Using dm = -45.0, m = 0.0, and learning_rate = 0.01, calculate new_m = m - learning_rate*dm. Assert
+        that new_m == 0.45.`,
+      starter:`dm = -45.0
+m = 0.0
+learning_rate = 0.01
+# Calculate new_m below
+`,
+      tests:[{type:'assert', expr:'new_m == 0.45', label:'new_m correctly equals 0.45'}]
+    },
+    {
+      title:'Run 3 steps with the small learning rate',
+      desc:`Using x = [1,2,3,4], y = [3,6,9,12], m = 0.0, and learning_rate = 0.01, run the update 3 times
+        (recalculating the gradient fresh each step). Assert that round(m, 4) == 1.1576 — after 3 steps, still
+        far from the target of 3.`,
+      starter:`x = [1, 2, 3, 4]
+y = [3, 6, 9, 12]
+n = len(x)
+m = 0.0
+learning_rate = 0.01
+# Run the update loop for 3 steps below
+`,
+      tests:[{type:'assert', expr:'round(m, 4) == 1.1576', label:'m is correctly calculated after 3 steps (1.1576)'}]
+    },
+    {
+      title:'Run 5 steps with a well-tuned learning rate',
+      desc:`Using the same x, y, m = 0.0, but learning_rate = 0.1 this time, run the update loop 5 times. Assert
+        that round(m, 4) == 3.0938 — MUCH closer to the target of 3 in the SAME number of steps.`,
+      starter:`x = [1, 2, 3, 4]
+y = [3, 6, 9, 12]
+n = len(x)
+m = 0.0
+learning_rate = 0.1
+# Run the update loop for 5 steps below
+`,
+      tests:[{type:'assert', expr:'round(m, 4) == 3.0938', label:'m is correctly calculated after 5 steps (3.0938)'}]
+    },
+    {
+      title:'See what happens with a learning rate that\'s too large',
+      desc:`Using the same x, y, m = 0.0, but learning_rate = 0.15, run the update loop 6 times. Assert that
+        abs(m) > 8 — the guess has swung to a magnitude bigger than the target itself, a sign of divergence.`,
+      starter:`x = [1, 2, 3, 4]
+y = [3, 6, 9, 12]
+n = len(x)
+m = 0.0
+learning_rate = 0.15
+# Run the update loop for 6 steps below
+`,
+      tests:[{type:'assert', expr:'abs(m) > 8', label:'abs(m) is correctly greater than 8 after 6 steps'}]
+    },
+    {
+      title:'Confirm divergence keeps getting worse',
+      desc:`Using the same setup, run the update loop for 10 steps instead of 6 (still learning_rate = 0.15).
+        Assert that abs(m) > 20 — the magnitude keeps GROWING with more steps, confirming this is genuine
+        divergence, not just a temporarily large swing.`,
+      starter:`x = [1, 2, 3, 4]
+y = [3, 6, 9, 12]
+n = len(x)
+m = 0.0
+learning_rate = 0.15
+# Run the update loop for 10 steps below
+`,
+      tests:[{type:'assert', expr:'abs(m) > 20', label:'abs(m) is correctly greater than 20 after 10 steps'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why does a very SMALL learning rate take so many more steps to reach the target?',
+      options:['It doesn\'t — small and large rates converge equally fast','Each update only nudges m by a tiny fraction of the gradient, so progress toward the target happens slowly, step by step','Small learning rates always diverge','The gradient itself changes when the learning rate changes'],
+      correct:1,
+      explain:'The learning rate scales how big each nudge is — a small rate means small nudges, so it takes many more steps to cover the same distance.'
+    },
+    {
+      q:'What does "divergence" mean in gradient descent?',
+      options:['The loop finishes early','The learning rate is exactly right','The guess (m) grows in magnitude with each step instead of settling toward the target — the updates overshoot further and further',' Divergence means the same as convergence'],
+      correct:2,
+      explain:'Divergence happens when each update overshoots so far past the target that the NEXT gradient is even bigger in the opposite direction, and the guess spirals outward.'
+    },
+    {
+      q:'In this week\'s data, why did learning_rate = 0.15 cause divergence while 0.1 converged nicely?',
+      options:['0.15 is a typo and never works','0.15 crossed a threshold where each update\'s overshoot became bigger than the previous one, instead of smaller — the updates start amplifying the error instead of shrinking it','Both actually converge at the same speed','The dataset changed between the two runs'],
+      correct:1,
+      explain:'Above a certain learning rate, each step\'s overshoot is LARGER than the one before, so the guess grows explosively instead of homing in.'
+    },
+    {
+      q:'What is the practical lesson of comparing learning_rate = 0.01, 0.1, and 0.15 on the SAME problem?',
+      options:['Always use the smallest possible learning rate to be safe','Always use the largest possible learning rate to converge fastest','The learning rate needs to be tuned — too small wastes time, too large can blow up entirely, so there\'s a "just right" range worth searching for','Learning rate never matters as long as you run enough steps'],
+      correct:2,
+      explain:'This is exactly why it\'s called "tuning": too small is slow, too large can diverge completely, and a well-chosen value in between converges quickly and safely.'
+    }
+  ],
+  sandboxStarter3:`x = [1, 2, 3, 4]
+y = [3, 6, 9, 12]
+n = len(x)
+
+def gradient(m):
+    predictions = [m*x[i] for i in range(n)]
+    return (-2/n) * sum(x[i]*(y[i]-predictions[i]) for i in range(n))
+
+for lr in [0.01, 0.05, 0.1, 0.15]:
+    m = 0.0
+    trace = [0.0]
+    for step in range(6):
+        m = m - lr*gradient(m)
+        trace.append(round(m, 2))
+    print("lr", lr, "-> trace:", trace)
+`,
+  stretchChallenge:{
+    title:'A learning rate that also converges nicely',
+    desc:`Using the same x, y, m = 0.0, but learning_rate = 0.05, run the update loop 10 times. Assert that
+      abs(m - 3) < 0.0001 — proving 0.1 isn't the ONLY well-tuned choice; a whole RANGE of learning rates
+      converges well, not just one exact value.`,
+    starter:`x = [1, 2, 3, 4]
+y = [3, 6, 9, 12]
+n = len(x)
+m = 0.0
+learning_rate = 0.05
+# Run the update loop for 10 steps below
+`,
+    tests:[
+      {type:'assert', expr:'abs(m - 3) < 0.0001', label:'m is correctly close to 3 after 10 steps with learning_rate=0.05'}
+    ]
+  }
+}
+];
+
 window.SUBJECT_DATA = window.SUBJECT_DATA || {};
 window.SUBJECT_DATA.mlr = {
   b: {weeks: MLR_WEEKS, mp1: MLR_MP1, mp2: MLR_MP2},
