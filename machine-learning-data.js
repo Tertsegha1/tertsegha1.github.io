@@ -3699,6 +3699,226 @@ candidates = [35, 45, 55, 65, 75]
       {type:'assert', expr:'best_threshold == 35', label:'best_threshold is correctly calculated (35)'}
     ]
   }
+},
+{
+  key:'week8', num:8, title:'Grouping Smarter: Choosing k by Hand',
+  scenarioTag:'Real world: is 2 groups really the right number?',
+  scenario:`Beginner Week 8 always clustered into exactly 2 groups. But what if the data actually has THREE
+    natural groups? Forcing k = 2 merges two groups that don't really belong together, and the fit gets
+    noticeably worse. This week compares k = 2 against k = 3 using a "total distance" quality score — the sum
+    of every point's squared distance to its OWN assigned center — where a LOWER score means a tighter, better
+    fit.`,
+  objectives:[
+    'Assign each point to its nearest of SEVERAL cluster centers (not just 2)',
+    'Calculate a clustering\'s total squared distance as a quality score',
+    'Compare the total distance for different values of k',
+    'See how choosing too FEW clusters forces unrelated points together'
+  ],
+  conceptHtml:`
+    <p>With more than 2 centers, each point still picks whichever center is closest — just checking ALL of them,
+    not just two:</p>
+    <pre class="code-block">def sqdist(p, c):
+    return (p[0]-c[0])**2 + (p[1]-c[1])**2
+
+def assign_many(points, centers):
+    assignments = []
+    for p in points:
+        dists = [sqdist(p, c) for c in centers]
+        assignments.append(dists.index(min(dists)))
+    return assignments</pre>
+    <p><code>dists.index(min(dists))</code> finds WHICH center (by position: 0, 1, 2...) gave the smallest
+    distance — the same "find where the smallest value is" idea, just using a list's built-in
+    <code>.index()</code> instead of writing the comparison by hand. The TOTAL distance across every point is a
+    single number you can use to compare different values of k:</p>
+    <pre class="code-block">def total_distance(points, centers):
+    total = 0
+    for p in points:
+        dists = [sqdist(p, c) for c in centers]
+        total += min(dists)
+    return total</pre>
+    <h3>Let's break down why comparing k values matters</h3>
+    <ul>
+      <li>Lower total distance means points sit CLOSER to their own assigned center — a tighter, more faithful
+        grouping.</li>
+      <li>If the data genuinely has 3 separate groups but you only allow k = 2 centers, one center gets forced to
+        "cover" points from TWO different real groups — and since it can't be close to both, the total distance
+        balloons.</li>
+      <li>Giving the data enough centers to match its TRUE natural groups (k = 3 here) lets every point sit close
+        to a center that actually represents its own group.</li>
+    </ul>`,
+  sandboxStarter:`def sqdist(p, c):
+    return (p[0]-c[0])**2 + (p[1]-c[1])**2
+
+points = [(1,1),(2,2),(3,1), (7,1),(8,2),(9,1), (4,8),(5,9),(6,8)]
+centers2 = [(2,2), (8,2)]
+
+for p in points:
+    dists = [sqdist(p, c) for c in centers2]
+    print(p, "-> distances:", dists, "-> nearest center:", dists.index(min(dists)))
+`,
+  sandboxStarter2:`def sqdist(p, c):
+    return (p[0]-c[0])**2 + (p[1]-c[1])**2
+
+def total_distance(points, centers):
+    total = 0
+    for p in points:
+        dists = [sqdist(p, c) for c in centers]
+        total += min(dists)
+    return total
+
+points = [(1,1),(2,2),(3,1), (7,1),(8,2),(9,1), (4,8),(5,9),(6,8)]
+centers2 = [(2,2), (8,2)]
+centers3 = [(2,2), (8,2), (5,8)]
+print("k=2 total distance:", total_distance(points, centers2))
+print("k=3 total distance:", total_distance(points, centers3))
+`,
+  exercises:[
+    {
+      title:'Assign to the nearest of 2 centers',
+      desc:`Using points = [(1,1),(2,2),(3,1), (7,1),(8,2),(9,1), (4,8),(5,9),(6,8)] and
+        centers2 = [(2,2), (8,2)], build assignments: for each point, the INDEX (0 or 1) of its nearest center.
+        Assert that assignments == [0, 0, 0, 1, 1, 1, 0, 0, 1].`,
+      starter:`def sqdist(p, c):
+    return (p[0]-c[0])**2 + (p[1]-c[1])**2
+
+points = [(1,1),(2,2),(3,1), (7,1),(8,2),(9,1), (4,8),(5,9),(6,8)]
+centers2 = [(2,2), (8,2)]
+# Build assignments below
+`,
+      tests:[{type:'assert', expr:'assignments == [0, 0, 0, 1, 1, 1, 0, 0, 1]', label:'assignments is correctly calculated'}]
+    },
+    {
+      title:'Calculate the total distance for k = 2',
+      desc:`Using points and centers2 from before, build total2: the sum of each point's squared distance to its
+        assigned nearest center. Assert that total2 == 146.`,
+      starter:`def sqdist(p, c):
+    return (p[0]-c[0])**2 + (p[1]-c[1])**2
+
+points = [(1,1),(2,2),(3,1), (7,1),(8,2),(9,1), (4,8),(5,9),(6,8)]
+centers2 = [(2,2), (8,2)]
+# Calculate total2 below
+`,
+      tests:[{type:'assert', expr:'total2 == 146', label:'total2 correctly equals 146'}]
+    },
+    {
+      title:'Assign to the nearest of 3 centers',
+      desc:`Using the same points and centers3 = [(2,2), (8,2), (5,8)], build assignments3. Assert that
+        assignments3 == [0, 0, 0, 1, 1, 1, 2, 2, 2] — with a THIRD center available, the top cluster finally gets
+        its own group instead of being split between the other two.`,
+      starter:`def sqdist(p, c):
+    return (p[0]-c[0])**2 + (p[1]-c[1])**2
+
+points = [(1,1),(2,2),(3,1), (7,1),(8,2),(9,1), (4,8),(5,9),(6,8)]
+centers3 = [(2,2), (8,2), (5,8)]
+# Build assignments3 below
+`,
+      tests:[{type:'assert', expr:'assignments3 == [0, 0, 0, 1, 1, 1, 2, 2, 2]', label:'assignments3 is correctly calculated'}]
+    },
+    {
+      title:'Calculate the total distance for k = 3',
+      desc:`Using points and centers3 from before, build total3: the sum of each point's squared distance to its
+        assigned nearest center. Assert that total3 == 11.`,
+      starter:`def sqdist(p, c):
+    return (p[0]-c[0])**2 + (p[1]-c[1])**2
+
+points = [(1,1),(2,2),(3,1), (7,1),(8,2),(9,1), (4,8),(5,9),(6,8)]
+centers3 = [(2,2), (8,2), (5,8)]
+# Calculate total3 below
+`,
+      tests:[{type:'assert', expr:'total3 == 11', label:'total3 correctly equals 11'}]
+    },
+    {
+      title:'Compare the two k values',
+      desc:`Using total2 = 146 and total3 = 11, calculate k3_better = total3 < total2. Assert that
+        k3_better == True — k = 3 fits this data FAR more tightly than k = 2.`,
+      starter:`total2 = 146
+total3 = 11
+# Calculate k3_better below
+`,
+      tests:[{type:'assert', expr:'k3_better == True', label:'k3_better correctly equals True'}]
+    },
+    {
+      title:'Measure HOW much better k = 3 is',
+      desc:`Using total2 = 146 and total3 = 11, calculate improvement_ratio = total2 / total3. Assert that
+        round(improvement_ratio, 2) == 13.27 — k = 3 isn't just slightly better here, it fits more than 13 times
+        more tightly.`,
+      starter:`total2 = 146
+total3 = 11
+# Calculate improvement_ratio below
+`,
+      tests:[{type:'assert', expr:'round(improvement_ratio, 2) == 13.27', label:'improvement_ratio is correctly calculated (13.27)'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does "total distance" measure when comparing different values of k?',
+      options:['How many points there are','The sum of every point\'s squared distance to its OWN assigned center — lower means a tighter, more faithful grouping','The number of clusters chosen','The distance between the two farthest points'],
+      correct:1,
+      explain:'Total distance adds up how far every point is from the center it was assigned to — a tight, well-matched clustering keeps this number small.'
+    },
+    {
+      q:'Why did k = 2\'s total distance (146) come out so much worse than k = 3\'s (11) in this week\'s data?',
+      options:['It was a coding mistake','Forcing 3 genuinely separate groups into only 2 clusters merges points from DIFFERENT real groups under one center, and that shared center ends up far from at least one of them','k = 2 always performs worse than k = 3, for any dataset','Total distance does not depend on k'],
+      correct:1,
+      explain:'When there are more true groups than available centers, some center has to "cover" more than one group — and can\'t be close to both, so total distance grows.'
+    },
+    {
+      q:'What real risk does choosing too FEW clusters create?',
+      options:['No risk — fewer clusters is always simpler and better','It can force genuinely different groups to share one center, making that center a poor representative of any of them','It makes the code run slower','It has no effect on the total distance score'],
+      correct:1,
+      explain:'Too few centers means some real groups get blended together, and the shared center ends up not truly representing either group well.'
+    },
+    {
+      q:'Does a LOWER total distance always mean k was chosen correctly?',
+      options:['Yes, always — the lowest possible total distance is always the right choice','Not on its own — pushed to the extreme (as many centers as points), total distance would trivially hit zero; the comparison is meaningful specifically when it reveals the data\'s TRUE natural grouping being merged incorrectly','Total distance is unrelated to how good a k is','Lower total distance always means k is too small'],
+      correct:1,
+      explain:'Total distance keeps shrinking as k grows, even trivially — its real value here is revealing when TOO FEW clusters are forcing separate groups together, not as a blind "smaller is always better" rule.'
+    }
+  ],
+  sandboxStarter3:`def sqdist(p, c):
+    return (p[0]-c[0])**2 + (p[1]-c[1])**2
+
+def total_distance(points, centers):
+    total = 0
+    for p in points:
+        dists = [sqdist(p, c) for c in centers]
+        total += min(dists)
+    return total
+
+points = [(1,1),(2,2),(3,1), (7,1),(8,2),(9,1), (4,8),(5,9),(6,8)]
+candidates = {
+    2: [(2,2), (8,2)],
+    3: [(2,2), (8,2), (5,8)],
+}
+for k, centers in candidates.items():
+    print("k =", k, "-> total distance:", total_distance(points, centers))
+`,
+  stretchChallenge:{
+    title:'Compare k = 2 and k = 3 for a new set of points',
+    desc:`Using points2 = [(0,0),(1,0), (10,0),(11,0), (5,10),(6,10)], centers2 = [(0,0), (10,0)], and
+      centers3 = [(0,0), (10,0), (5,10)], calculate total2 and total3 (total squared distance for each), then
+      k3_better = total3 < total2. Assert that total2 == 243 and total3 == 3 and k3_better == True.`,
+    starter:`def sqdist(p, c):
+    return (p[0]-c[0])**2 + (p[1]-c[1])**2
+
+def total_distance(points, centers):
+    total = 0
+    for p in points:
+        dists = [sqdist(p, c) for c in centers]
+        total += min(dists)
+    return total
+
+points2 = [(0,0),(1,0), (10,0),(11,0), (5,10),(6,10)]
+centers2 = [(0,0), (10,0)]
+centers3 = [(0,0), (10,0), (5,10)]
+# Calculate total2, total3 and k3_better below
+`,
+    tests:[
+      {type:'assert', expr:'total2 == 243', label:'total2 correctly equals 243'},
+      {type:'assert', expr:'total3 == 3', label:'total3 correctly equals 3'},
+      {type:'assert', expr:'k3_better == True', label:'k3_better correctly equals True'}
+    ]
+  }
 }
 ];
 
