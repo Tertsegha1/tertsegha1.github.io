@@ -5201,6 +5201,82 @@ votes = [1, 0, 0]
 }
 ];
 
+const MLR_ADVANCED_MP1 = {
+  key:'mp1',
+  title:'Mini Project 1 — Build a Tuned, Weighted Predictor',
+  intro:`Three stages, combining Weeks 1-4: tune a learning rate for a regression model by comparing candidates
+    after a fixed number of steps, check a k-NN classifier for overfitting by comparing its train/test gap at
+    two different k values, then combine three classifiers into one final decision using a weighted vote.`,
+  newTrick:`Chaining THREE separate diagnostic techniques (tuning, overfitting-checking, weighted combining) into
+    one connected workflow — each stage's "winner" (best learning rate, best k, best weighting) is chosen using
+    the exact same comparison pattern: try a few candidates, measure them the same way, pick whichever performs
+    best.`,
+  stages:[
+    {
+      key:'a', title:'Stage A — Tune a learning rate',
+      desc:`Using x = [1,2,3,4], y = [3,6,9,12], and gradient(m) (Week 1), run the gradient descent update loop
+        for 5 steps with learning_rate = 0.01 to get m_slow, and separately for 5 steps with
+        learning_rate = 0.1 to get m_fast. Calculate dist_slow = abs(m_slow - 3) and dist_fast = abs(m_fast - 3),
+        then best_lr = 0.1 if dist_fast < dist_slow else 0.01. Assert that round(dist_fast, 4) == 0.0938 and
+        best_lr == 0.1.`,
+      starter:`x = [1, 2, 3, 4]
+y = [3, 6, 9, 12]
+n = len(x)
+
+def gradient(m):
+    predictions = [m*x[i] for i in range(n)]
+    return (-2/n) * sum(x[i]*(y[i]-predictions[i]) for i in range(n))
+
+# Run 5-step loops for learning_rate=0.01 (m_slow) and learning_rate=0.1 (m_fast) below,
+# then calculate dist_slow, dist_fast and best_lr
+`,
+      tests:[
+        {type:'assert', expr:'round(dist_fast, 4) == 0.0938', label:'dist_fast is correctly calculated (0.0938)'},
+        {type:'assert', expr:'best_lr == 0.1', label:'best_lr correctly equals 0.1'}
+      ]
+    },
+    {
+      key:'b', title:'Stage B — Check a classifier for overfitting',
+      desc:`Using knn_predict(x, k, xs, ys) (Week 2), train_hours = [1,2,3,4,5],
+        train_scores = [50,90,70,80,90], test_hours = [2], and test_scores = [60], calculate
+        train_error_k1/test_error_k1 (using k=1) and train_error_k5/test_error_k5 (using k=5), the same way as
+        Week 2, then gap_k1 = test_error_k1 - train_error_k1 and gap_k5 = test_error_k5 - train_error_k5. Set
+        best_k = 5 if gap_k5 < gap_k1 else 1. Assert that gap_k1 == 30.0 and best_k == 5.`,
+      starter:`def knn_predict(x, k, xs, ys):
+    idx = sorted(range(len(xs)), key=lambda i: abs(xs[i]-x))[:k]
+    return sum(ys[i] for i in idx) / k
+
+train_hours = [1, 2, 3, 4, 5]
+train_scores = [50, 90, 70, 80, 90]
+test_hours = [2]
+test_scores = [60]
+# Calculate gap_k1 and gap_k5 (using k=1 and k=5), then best_k, below
+`,
+      tests:[
+        {type:'assert', expr:'gap_k1 == 30.0', label:'gap_k1 is correctly calculated (30.0)'},
+        {type:'assert', expr:'best_k == 5', label:'best_k correctly equals 5'}
+      ]
+    },
+    {
+      key:'c', title:'Stage C — Combine classifiers with a weighted vote',
+      desc:`Using weighted_vote(votes, weights) (Week 4), votes_A = [1,1,0,1,0], votes_B = [1,0,0,1,1],
+        votes_C = [1,0,1,0,1], and weights = [3,1,1] (trusting voter A, the most reliable, 3x as much), build
+        final_preds: for each student i, weighted_vote([votes_A[i],votes_B[i],votes_C[i]], weights) >= 0.5.
+        Assert that final_preds == [True, True, False, True, False].`,
+      starter:`def weighted_vote(votes, weights):
+    return sum(w*v for w, v in zip(weights, votes)) / sum(weights)
+
+votes_A = [1, 1, 0, 1, 0]
+votes_B = [1, 0, 0, 1, 1]
+votes_C = [1, 0, 1, 0, 1]
+weights = [3, 1, 1]
+# Build final_preds below
+`,
+      tests:[{type:'assert', expr:'final_preds == [True, True, False, True, False]', label:'final_preds is correctly calculated'}]
+    }
+  ]
+};
+
 window.SUBJECT_DATA = window.SUBJECT_DATA || {};
 window.SUBJECT_DATA.mlr = {
   b: {weeks: MLR_WEEKS, mp1: MLR_MP1, mp2: MLR_MP2},
