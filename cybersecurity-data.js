@@ -3192,6 +3192,243 @@ print("Predictable pair:", predictable_a, predictable_b, predictable_a == predic
       {type:'assert', expr:'all_different == True', label:'all_different correctly equals True'}
     ]
   }
+},
+{
+  key:'week5', num:5, title:'Why Secrets Don\'t Belong in Code',
+  scenarioTag:'Real world: what happens the day your source code gets shared, backed up, or made public?',
+  scenario:`Real applications need secrets — an API key, a database password. Beginner Week 1 taught you never to
+    STORE a password in plain text; this week extends that idea one step further: never WRITE a secret directly
+    into your source code either. Code gets shared, copied, backed up, and sometimes accidentally made public —
+    every one of those is a moment a hardcoded secret leaks. The fix: read secrets from the ENVIRONMENT instead.`,
+  objectives:[
+    'Read a secret from an environment variable using os.environ.get',
+    'Provide a safe default for a missing environment variable',
+    'Detect when a line of code hardcodes a secret directly instead of reading it safely',
+    'Audit a whole block of code for hardcoded secrets'
+  ],
+  conceptHtml:`
+    <p>A hardcoded secret is a secret typed DIRECTLY into your source code:</p>
+    <pre class="code-block">API_KEY = "sk_live_12345"   # DANGEROUS — this exact value is now sitting in your source code forever</pre>
+    <p>The safe pattern reads the value from an environment variable INSTEAD — a value set OUTSIDE the code, by
+    whoever is running or deploying it, never typed into the file itself:</p>
+    <pre class="code-block">import os
+
+def get_secret(name, default=None):
+    return os.environ.get(name, default)
+
+# Somewhere outside your code (a real deployment sets this, not the source file):
+os.environ["API_KEY"] = "sk_test_999"
+
+print(get_secret("API_KEY"))            # "sk_test_999" — read safely, never typed into the file
+print(get_secret("MISSING_KEY", "fallback"))   # "fallback" — a missing variable doesn't crash, it falls back safely</pre>
+    <h3>Spotting the difference in someone else's code</h3>
+    <p>A simple line-by-line check can catch the pattern even without running anything:</p>
+    <pre class="code-block">def is_hardcoded_secret(line):
+    keywords = ["API_KEY", "PASSWORD", "SECRET", "TOKEN"]
+    if not any(k in line for k in keywords):
+        return False
+    if "os.environ" in line:
+        return False
+    return '"' in line or "'" in line
+
+print(is_hardcoded_secret('API_KEY = "sk_live_12345"'))            # True  — a real secret typed directly
+print(is_hardcoded_secret('API_KEY = os.environ.get("API_KEY")'))  # False — read safely from the environment</pre>`,
+  sandboxStarter:`import os
+
+def get_secret(name, default=None):
+    return os.environ.get(name, default)
+
+os.environ["API_KEY"] = "sk_test_999"
+print(get_secret("API_KEY"))
+print(get_secret("MISSING_KEY", "fallback"))
+`,
+  sandboxStarter2:`def is_hardcoded_secret(line):
+    keywords = ["API_KEY", "PASSWORD", "SECRET", "TOKEN"]
+    if not any(k in line for k in keywords):
+        return False
+    if "os.environ" in line:
+        return False
+    return '"' in line or "'" in line
+
+print(is_hardcoded_secret('API_KEY = "sk_live_12345"'))
+print(is_hardcoded_secret('API_KEY = os.environ.get("API_KEY")'))
+`,
+  exercises:[
+    {
+      title:'Read a secret from the environment',
+      desc:`Write get_secret(name, default=None) using os.environ.get(name, default). Using
+        os.environ["API_KEY"] = "sk_test_999" (given), assert that get_secret("API_KEY") == "sk_test_999".`,
+      starter:`import os
+os.environ["API_KEY"] = "sk_test_999"
+# Write get_secret(name, default=None) below
+`,
+      tests:[{type:'assert', expr:'get_secret("API_KEY") == "sk_test_999"', label:'get_secret correctly reads "API_KEY" from the environment'}]
+    },
+    {
+      title:'Fall back safely when a variable is missing',
+      desc:`Using get_secret (given), assert that get_secret("MISSING_KEY", "fallback") == "fallback" — a missing
+        environment variable safely returns the default instead of crashing.`,
+      starter:`import os
+
+def get_secret(name, default=None):
+    return os.environ.get(name, default)
+# Assert below (as a variable, not a bare assert statement) that get_secret("MISSING_KEY", "fallback") gives "fallback"
+result = get_secret("MISSING_KEY", "fallback")
+`,
+      tests:[{type:'assert', expr:'result == "fallback"', label:'result correctly equals "fallback"'}]
+    },
+    {
+      title:'Detect a hardcoded secret',
+      desc:`Write is_hardcoded_secret(line) that returns False if none of the keywords ["API_KEY", "PASSWORD",
+        "SECRET", "TOKEN"] appear in line, False if "os.environ" appears in line, and otherwise True if the line
+        contains a quote character. Assert that is_hardcoded_secret('API_KEY = "sk_live_12345"') == True.`,
+      starter:`# Write is_hardcoded_secret(line) below
+`,
+      tests:[{type:'assert', expr:'is_hardcoded_secret(\'API_KEY = "sk_live_12345"\') == True', label:'A directly-typed API key is correctly flagged as hardcoded'}]
+    },
+    {
+      title:'Confirm the safe pattern is NOT flagged',
+      desc:`Using is_hardcoded_secret (given), assert that
+        is_hardcoded_secret('API_KEY = os.environ.get("API_KEY")') == False (reads safely from the environment)
+        and is_hardcoded_secret('username = "ada"') == False (no secret keyword at all, just an ordinary
+        variable).`,
+      starter:`def is_hardcoded_secret(line):
+    keywords = ["API_KEY", "PASSWORD", "SECRET", "TOKEN"]
+    if not any(k in line for k in keywords):
+        return False
+    if "os.environ" in line:
+        return False
+    return '"' in line or "'" in line
+`,
+      tests:[
+        {type:'assert', expr:'is_hardcoded_secret(\'API_KEY = os.environ.get("API_KEY")\') == False', label:'A safely-read API key is correctly NOT flagged'},
+        {type:'assert', expr:'is_hardcoded_secret(\'username = "ada"\') == False', label:'An ordinary non-secret variable is correctly NOT flagged'}
+      ]
+    },
+    {
+      title:'Audit a whole block of code',
+      desc:`Using is_hardcoded_secret (given) and code_lines (given, 5 lines), calculate hardcoded_count, the
+        number of lines flagged as hardcoded secrets. Assert that hardcoded_count == 2.`,
+      starter:`def is_hardcoded_secret(line):
+    keywords = ["API_KEY", "PASSWORD", "SECRET", "TOKEN"]
+    if not any(k in line for k in keywords):
+        return False
+    if "os.environ" in line:
+        return False
+    return '"' in line or "'" in line
+
+code_lines = [
+    'API_KEY = "sk_live_12345"',
+    'PASSWORD = os.environ.get("DB_PASSWORD")',
+    'SECRET_TOKEN = "abc123xyz"',
+    'username = "ada"',
+    'TOKEN = os.environ.get("AUTH_TOKEN")',
+]
+# Calculate hardcoded_count below
+`,
+      tests:[{type:'assert', expr:'hardcoded_count == 2', label:'hardcoded_count correctly equals 2'}]
+    },
+    {
+      title:'List the actual offending lines',
+      desc:`Using is_hardcoded_secret and code_lines (given, same as before), write audit_code(lines) that
+        returns a list of every line flagged as hardcoded. Assert that
+        audit_code(code_lines) == ['API_KEY = "sk_live_12345"', 'SECRET_TOKEN = "abc123xyz"'].`,
+      starter:`def is_hardcoded_secret(line):
+    keywords = ["API_KEY", "PASSWORD", "SECRET", "TOKEN"]
+    if not any(k in line for k in keywords):
+        return False
+    if "os.environ" in line:
+        return False
+    return '"' in line or "'" in line
+
+code_lines = [
+    'API_KEY = "sk_live_12345"',
+    'PASSWORD = os.environ.get("DB_PASSWORD")',
+    'SECRET_TOKEN = "abc123xyz"',
+    'username = "ada"',
+    'TOKEN = os.environ.get("AUTH_TOKEN")',
+]
+# Write audit_code(lines) below
+`,
+      tests:[{type:'assert', expr:'audit_code(code_lines) == [\'API_KEY = "sk_live_12345"\', \'SECRET_TOKEN = "abc123xyz"\']', label:'audit_code correctly returns both offending lines'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why is API_KEY = "sk_live_12345" dangerous, even if the code never gets deliberately shared?',
+      options:['It isn\'t dangerous — the code stays on one computer forever','Source code gets copied, backed up, put in version control, and sometimes accidentally made public — every one of those is a chance for a hardcoded secret to leak','Python requires all variables to be public','It only matters for websites, not scripts'],
+      correct:1,
+      explain:'Code has a way of spreading further than intended — backups, repositories, shared drives — and a hardcoded secret travels with it every time.'
+    },
+    {
+      q:'What does os.environ.get(name, default) do if the named variable was never set?',
+      options:['It crashes the program','It safely returns default instead of raising an error','It creates the variable automatically','It always returns None regardless of default'],
+      correct:1,
+      explain:'Just like dict.get, os.environ.get returns the fallback value instead of raising a KeyError when the variable is missing.'
+    },
+    {
+      q:'Where does a secret\'s VALUE actually live in the safe pattern?',
+      options:['Hardcoded directly in the .py file','Set externally, in the environment the program runs in — never typed into the source code itself','In a comment above the variable','Nowhere — the safe pattern doesn\'t use secrets at all'],
+      correct:1,
+      explain:'The whole point is that the actual secret value lives OUTSIDE the code — set by whoever deploys or runs the program, not baked into the file.'
+    },
+    {
+      q:'Why does is_hardcoded_secret check for "os.environ" in the line before flagging it?',
+      options:['To make the function run faster','So that a line correctly using the SAFE pattern (reading from the environment) isn\'t mistakenly flagged as a hardcoded secret just because it mentions a keyword like API_KEY','Because os.environ lines are always bugs','It doesn\'t — that check does nothing'],
+      correct:1,
+      explain:'Without that check, EVERY line mentioning API_KEY would be flagged — including the safe ones. The check specifically distinguishes "typed a real value" from "read it safely."'
+    }
+  ],
+  sandboxStarter3:`import os
+
+def get_secret(name, default=None):
+    return os.environ.get(name, default)
+
+def is_hardcoded_secret(line):
+    keywords = ["API_KEY", "PASSWORD", "SECRET", "TOKEN"]
+    if not any(k in line for k in keywords):
+        return False
+    if "os.environ" in line:
+        return False
+    return '"' in line or "'" in line
+
+def audit_code(lines):
+    return [line for line in lines if is_hardcoded_secret(line)]
+
+code_lines = [
+    'API_KEY = "sk_live_12345"',
+    'PASSWORD = os.environ.get("DB_PASSWORD")',
+    'SECRET_TOKEN = "abc123xyz"',
+    'username = "ada"',
+    'TOKEN = os.environ.get("AUTH_TOKEN")',
+]
+print("Offending lines:", audit_code(code_lines))
+`,
+  stretchChallenge:{
+    title:'Audit a fresh batch of code from a different file',
+    desc:`Using is_hardcoded_secret (given) and stretch_lines (given, 4 lines), write audit_code(lines) (same as
+      before) and calculate stretch_bad_lines. Assert that
+      stretch_bad_lines == ['DB_PASSWORD = "hunter2"', 'STRIPE_SECRET = "sk_abc"'].`,
+    starter:`def is_hardcoded_secret(line):
+    keywords = ["API_KEY", "PASSWORD", "SECRET", "TOKEN"]
+    if not any(k in line for k in keywords):
+        return False
+    if "os.environ" in line:
+        return False
+    return '"' in line or "'" in line
+
+stretch_lines = [
+    'DB_PASSWORD = "hunter2"',
+    'ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN")',
+    'STRIPE_SECRET = "sk_abc"',
+    'display_name = "Ada"',
+]
+# Write audit_code(lines) below, then calculate stretch_bad_lines
+`,
+    tests:[
+      {type:'assert', expr:'stretch_bad_lines == [\'DB_PASSWORD = "hunter2"\', \'STRIPE_SECRET = "sk_abc"\']', label:'stretch_bad_lines is correctly calculated'}
+    ]
+  }
 }
 ];
 
