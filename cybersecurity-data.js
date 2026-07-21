@@ -2797,6 +2797,229 @@ roster_line = "Students in YR7, YR8 and YR100X need to re-register"
       {type:'assert', expr:'found_codes == ["YR7", "YR8"]', label:'found_codes correctly equals ["YR7", "YR8"]'}
     ]
   }
+},
+{
+  key:'week3', num:3, title:'Stop Guessing: Rate-Limiting Logic',
+  scenarioTag:'Real world: an attacker doesn\'t need a clever password — just enough GUESSES',
+  scenario:`Beginner Week 9 read through a log of login attempts after the fact. This week builds the thing that
+    should have stopped a bad actor WHILE it was happening: a counter that tracks failed logins per username, and
+    blocks further attempts once too many failures pile up in a row. This is exactly the mechanism real login
+    systems use to make blind password-guessing hopeless.`,
+  objectives:[
+    'Track a per-username count of failed login attempts using a dict',
+    'Decide when a username should be blocked based on that count',
+    'Reset a username\'s count back to zero after a successful login',
+    'Process a whole login log in order, tracking state as you go'
+  ],
+  conceptHtml:`
+    <p>A dict mapping username to a running count of CONSECUTIVE failures is all it takes:</p>
+    <pre class="code-block">def record_failed_attempt(username, attempts):
+    attempts[username] = attempts.get(username, 0) + 1
+
+attempts = {}
+record_failed_attempt("alice", attempts)
+record_failed_attempt("alice", attempts)
+print(attempts)   # {'alice': 2}</pre>
+    <pre class="code-block">def is_blocked(username, attempts, max_attempts=3):
+    return attempts.get(username, 0) >= max_attempts
+
+print(is_blocked("alice", {"alice": 3}))   # True
+print(is_blocked("bob", {"bob": 1}))       # False</pre>
+    <p>A SUCCESSFUL login should reset the counter back to zero — otherwise old failures from long ago would
+    unfairly count against someone who just proved they know their password:</p>
+    <pre class="code-block">def reset_attempts(username, attempts):
+    attempts[username] = 0</pre>
+    <h3>Putting it together over a whole log</h3>
+    <p>Processing a login log IN ORDER, one entry at a time, updating the SAME attempts dict as you go, is exactly
+    how a real system would track this live:</p>
+    <pre class="code-block">def process_log(log, max_attempts=3):
+    attempts = {}
+    blocked = set()
+    for username, success in log:
+        if success:
+            attempts[username] = 0
+        else:
+            attempts[username] = attempts.get(username, 0) + 1
+            if attempts[username] >= max_attempts:
+                blocked.add(username)
+    return attempts, blocked</pre>
+    <p>Each entry either resets a counter (on success) or bumps it up and checks the threshold (on failure) — the
+    SAME two building blocks from above, just applied one log line at a time.</p>`,
+  sandboxStarter:`def record_failed_attempt(username, attempts):
+    attempts[username] = attempts.get(username, 0) + 1
+
+attempts = {}
+record_failed_attempt("alice", attempts)
+record_failed_attempt("alice", attempts)
+print(attempts)
+`,
+  sandboxStarter2:`def is_blocked(username, attempts, max_attempts=3):
+    return attempts.get(username, 0) >= max_attempts
+
+print(is_blocked("alice", {"alice": 3}))
+print(is_blocked("bob", {"bob": 1}))
+`,
+  exercises:[
+    {
+      title:'Track a failed attempt',
+      desc:`Write record_failed_attempt(username, attempts) that increments attempts[username] by 1 (starting
+        from 0 if the username isn't in attempts yet). Using attempts = {}, call
+        record_failed_attempt("alice", attempts) twice. Assert that attempts["alice"] == 2.`,
+      starter:`# Write record_failed_attempt(username, attempts) below
+attempts = {}
+# Call it twice for "alice" below
+`,
+      tests:[{type:'assert', expr:'attempts["alice"] == 2', label:'attempts["alice"] correctly equals 2 after two failures'}]
+    },
+    {
+      title:'Decide who\'s blocked',
+      desc:`Write is_blocked(username, attempts, max_attempts=3) returning True if attempts.get(username, 0) is
+        3 or more. Using attempts = {"alice": 3, "bob": 1}, assert that is_blocked("alice", attempts) == True and
+        is_blocked("bob", attempts) == False.`,
+      starter:`attempts = {"alice": 3, "bob": 1}
+# Write is_blocked(username, attempts, max_attempts=3) below
+`,
+      tests:[
+        {type:'assert', expr:'is_blocked("alice", attempts) == True', label:'"alice" is correctly identified as blocked'},
+        {type:'assert', expr:'is_blocked("bob", attempts) == False', label:'"bob" is correctly identified as NOT blocked'}
+      ]
+    },
+    {
+      title:'Reset on success',
+      desc:`Write reset_attempts(username, attempts) that sets attempts[username] to 0. Using
+        attempts = {"alice": 3}, call reset_attempts("alice", attempts). Assert that attempts["alice"] == 0.`,
+      starter:`attempts = {"alice": 3}
+# Write reset_attempts(username, attempts) below
+`,
+      tests:[{type:'assert', expr:'attempts["alice"] == 0', label:'attempts["alice"] correctly resets to 0'}]
+    },
+    {
+      title:'Watch the block trigger in real time',
+      desc:`Using record_failed_attempt and is_blocked (given), starting from attempts = {}, record TWO failed
+        attempts for "sam" and assert is_blocked("sam", attempts) == False (only 2 so far). Then record ONE more
+        failed attempt and assert is_blocked("sam", attempts) == True — the exact moment the 3rd failure tips it
+        over the threshold.`,
+      starter:`def record_failed_attempt(username, attempts):
+    attempts[username] = attempts.get(username, 0) + 1
+
+def is_blocked(username, attempts, max_attempts=3):
+    return attempts.get(username, 0) >= max_attempts
+
+attempts = {}
+# Record 2 failed attempts for "sam", assert not blocked yet,
+# then record 1 more and assert now blocked
+`,
+      tests:[
+        {type:'assert', expr:'is_blocked("sam", attempts) == True', label:'"sam" is correctly blocked after the 3rd failed attempt'}
+      ]
+    },
+    {
+      title:'Process a whole login log',
+      desc:`Write process_log(log, max_attempts=3) that processes each (username, success) entry in log IN
+        ORDER: on success, reset that username's count to 0; on failure, increment it and add the username to a
+        blocked set if it reaches max_attempts. Return (attempts, blocked). Using
+        log = [("alice", False), ("alice", False), ("bob", False), ("alice", False), ("bob", True), ("bob", False)],
+        assert that attempts == {"alice": 3, "bob": 1} and blocked == {"alice"}.`,
+      starter:`log = [("alice", False), ("alice", False), ("bob", False), ("alice", False), ("bob", True), ("bob", False)]
+# Write process_log(log, max_attempts=3) below, then call it as: attempts, blocked = process_log(log)
+`,
+      tests:[
+        {type:'assert', expr:'attempts == {"alice": 3, "bob": 1}', label:'attempts is correctly calculated'},
+        {type:'assert', expr:'blocked == {"alice"}', label:'blocked correctly equals {"alice"}'}
+      ]
+    },
+    {
+      title:'Count how many usernames got blocked',
+      desc:`Using process_log (given) on
+        log2 = [("x", False), ("y", False), ("x", False), ("z", False), ("x", False), ("y", False), ("z", False),
+        ("z", False)], calculate blocked_count, the number of usernames in the resulting blocked set. Assert that
+        blocked_count == 2.`,
+      starter:`def process_log(log, max_attempts=3):
+    attempts = {}
+    blocked = set()
+    for username, success in log:
+        if success:
+            attempts[username] = 0
+        else:
+            attempts[username] = attempts.get(username, 0) + 1
+            if attempts[username] >= max_attempts:
+                blocked.add(username)
+    return attempts, blocked
+
+log2 = [("x", False), ("y", False), ("x", False), ("z", False), ("x", False), ("y", False), ("z", False), ("z", False)]
+# Calculate blocked_count below
+`,
+      tests:[{type:'assert', expr:'blocked_count == 2', label:'blocked_count correctly equals 2'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why does a real login system reset the failure count to 0 after a SUCCESSFUL login?',
+      options:['It doesn\'t — successes and failures both count the same way','So old failures from before someone correctly proved their password don\'t unfairly count against them later','To make the system run faster','Resetting is only needed once per day'],
+      correct:1,
+      explain:'A successful login proves the person knows the password — carrying old failures forward past that point would be unfair and pointless.'
+    },
+    {
+      q:'What does attempts.get(username, 0) do if username isn\'t in the dict yet?',
+      options:['It crashes with a KeyError','It returns 0 (the default), so a first-time username is safely treated as having zero prior failures','It adds the username with a random value','It returns None'],
+      correct:1,
+      explain:'dict.get(key, default) returns the default value instead of raising an error when the key is missing — exactly what\'s needed for a username\'s very first attempt.'
+    },
+    {
+      q:'In process_log, why does the function process the log ENTRIES IN ORDER, one at a time?',
+      options:['Order doesn\'t matter, any order gives the same result','Each entry depends on the RUNNING state built up by every entry before it — an attempt only makes sense in the context of what already happened','Python requires lists to be processed in order','It only matters for very long logs'],
+      correct:1,
+      explain:'Whether someone should be blocked depends on their CONSECUTIVE recent failures — that\'s only meaningful if entries are replayed in the order they really happened.'
+    },
+    {
+      q:'What is the real-world benefit of blocking after N failed attempts?',
+      options:['It makes the website load faster','It makes blind password-guessing attacks impractical — an attacker gets cut off long before they could try enough combinations to succeed','It prevents all attacks completely','It only affects usernames, not passwords'],
+      correct:1,
+      explain:'Rate-limiting doesn\'t stop every attack, but it makes brute-force guessing far too slow and risky to be worth attempting.'
+    }
+  ],
+  sandboxStarter3:`def process_log(log, max_attempts=3):
+    attempts = {}
+    blocked = set()
+    for username, success in log:
+        if success:
+            attempts[username] = 0
+        else:
+            attempts[username] = attempts.get(username, 0) + 1
+            if attempts[username] >= max_attempts:
+                blocked.add(username)
+    return attempts, blocked
+
+log = [("alice", False), ("alice", False), ("bob", False), ("alice", False), ("bob", True), ("bob", False)]
+attempts, blocked = process_log(log)
+print("attempts:", attempts)
+print("blocked:", blocked)
+`,
+  stretchChallenge:{
+    title:'Lower the threshold and watch more usernames get caught',
+    desc:`Using process_log (given) on the SAME log2 = [("x", False), ("y", False), ("x", False), ("z", False),
+      ("x", False), ("y", False), ("z", False), ("z", False)] but with max_attempts = 2 instead of 3, calculate
+      stretch_attempts and stretch_blocked. Assert that stretch_blocked == {"x", "y", "z"} — a stricter threshold
+      catches every username in this log, not just the two caught at the default threshold of 3.`,
+    starter:`def process_log(log, max_attempts=3):
+    attempts = {}
+    blocked = set()
+    for username, success in log:
+        if success:
+            attempts[username] = 0
+        else:
+            attempts[username] = attempts.get(username, 0) + 1
+            if attempts[username] >= max_attempts:
+                blocked.add(username)
+    return attempts, blocked
+
+log2 = [("x", False), ("y", False), ("x", False), ("z", False), ("x", False), ("y", False), ("z", False), ("z", False)]
+# Calculate stretch_attempts, stretch_blocked below, using max_attempts=2
+`,
+    tests:[
+      {type:'assert', expr:'stretch_blocked == {"x", "y", "z"}', label:'stretch_blocked correctly equals {"x", "y", "z"}'}
+    ]
+  }
 }
 ];
 
