@@ -372,10 +372,10 @@ print(f"{buses_needed} buses needed for {total_students} students")
   exercises:[
     {
       title:'Trip cost calculator',
-      desc:`Write a function trip_cost(people, price_per_person) that returns the total cost of the trip
-        (a whole group's tickets).`,
+      desc:`Write a function trip_cost(people, price_per_person) that returns the total cost of the trip —
+        multiply the number of people by the price per person (people * price_per_person).`,
       starter:`def trip_cost(people, price_per_person):
-    # TODO: return the total cost
+    # TODO: return people * price_per_person
     pass`,
       tests:[
         {type:'assert', expr:`trip_cost(4, 15) == 60`, label:'trip_cost(4, 15) == 60'},
@@ -402,7 +402,7 @@ print(f"{buses_needed} buses needed for {total_students} students")
         (slices_each, leftover) using // and % — how many whole slices each friend gets, and how many
         slices are left over.`,
       starter:`def split_pizza(slices, friends):
-    # TODO: return (slices_each, leftover)
+    # TODO: return (slices // friends, slices % friends)
     pass`,
       tests:[
         {type:'assert', expr:`split_pizza(10, 3) == (3, 1)`, label:'split_pizza(10, 3) == (3, 1)'},
@@ -413,9 +413,10 @@ print(f"{buses_needed} buses needed for {total_students} students")
     {
       title:'Pack the supplies',
       desc:`Write a function pack_supplies(total_pens, pens_per_pack) that returns a tuple of
-        (full_packs, leftover) — how many full packs of pens you can make, and how many pens are left over.`,
+        (full_packs, leftover) using // and % — how many full packs of pens you can make, and how many pens
+        are left over.`,
       starter:`def pack_supplies(total_pens, pens_per_pack):
-    # TODO: return (full_packs, leftover)
+    # TODO: return (total_pens // pens_per_pack, total_pens % pens_per_pack)
     pass`,
       tests:[
         {type:'assert', expr:`pack_supplies(23, 5) == (4, 3)`, label:'pack_supplies(23, 5) == (4, 3)'},
