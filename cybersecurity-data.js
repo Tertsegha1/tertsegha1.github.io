@@ -3195,6 +3195,92 @@ print("Predictable pair:", predictable_a, predictable_b, predictable_a == predic
 }
 ];
 
+const CY_INTERMEDIATE_MP1 = {
+  key:'mp1',
+  title:'Mini Project 1 — Harden the Login Endpoint (Simulated)',
+  intro:`Three doors, combining all four weeks: validate a sign-up request using an allow-list AND regex checks
+    together, apply rate-limiting to a login attempt log to see who should be blocked, then issue a genuinely
+    secure session token to whoever makes it through.`,
+  fixtureNote:`All three doors build on this same simulated login endpoint:`,
+  fixtureCode:`ALLOWED_EXTENSIONS = {"jpg", "png", "gif"}
+def is_valid_class_code(code): ...   # ^[A-Z]{2}[0-9]{1,2}$  (Week 2)
+def is_safe_username(username): ...  # ^[A-Za-z0-9_]{3,20}$  (Week 2)`,
+  doors:[
+    {
+      key:'a', title:'Door 1 — Validate a sign-up request',
+      desc:`Using is_valid_class_code, is_safe_username, and is_allowed (all given, from Weeks 1-2), write
+        validate_signup_request(class_code, username, filename) returning "accepted" only if ALL THREE checks
+        pass, else "rejected". Assert that validate_signup_request("YR7", "ada_2010", "photo.jpg") == "accepted",
+        validate_signup_request("YR100", "ada_2010", "photo.jpg") == "rejected" (bad class code), and
+        validate_signup_request("YR7", "ada_2010", "hack.exe") == "rejected" (bad file).`,
+      starter:`import re
+
+ALLOWED_EXTENSIONS = {"jpg", "png", "gif"}
+
+def get_extension(filename):
+    return filename.split(".")[-1].lower()
+
+def is_allowed(filename):
+    return get_extension(filename) in ALLOWED_EXTENSIONS
+
+def is_valid_class_code(code):
+    return bool(re.match(r"^[A-Z]{2}[0-9]{1,2}$", code))
+
+def is_safe_username(username):
+    return bool(re.match(r"^[A-Za-z0-9_]{3,20}$", username))
+# Write validate_signup_request(class_code, username, filename) below
+`,
+      tests:[
+        {type:'assert', expr:'validate_signup_request("YR7", "ada_2010", "photo.jpg") == "accepted"', label:'A fully valid sign-up request is correctly accepted'},
+        {type:'assert', expr:'validate_signup_request("YR100", "ada_2010", "photo.jpg") == "rejected"', label:'An invalid class code correctly rejects the whole request'},
+        {type:'assert', expr:'validate_signup_request("YR7", "ada_2010", "hack.exe") == "rejected"', label:'A disallowed file extension correctly rejects the whole request'}
+      ]
+    },
+    {
+      key:'b', title:'Door 2 — Rate-limit the login log, then find who\'s still allowed',
+      desc:`Using process_log (given, from Week 3) on
+        log = [("alice", False), ("alice", False), ("alice", False), ("bob", False), ("bob", True)], calculate
+        attempts and blocked. Then calculate allowed_usernames = the set of ALL usernames appearing in log, MINUS
+        blocked. Assert that blocked == {"alice"} and allowed_usernames == {"bob"}.`,
+      starter:`def process_log(log, max_attempts=3):
+    attempts = {}
+    blocked = set()
+    for username, success in log:
+        if success:
+            attempts[username] = 0
+        else:
+            attempts[username] = attempts.get(username, 0) + 1
+            if attempts[username] >= max_attempts:
+                blocked.add(username)
+    return attempts, blocked
+
+log = [("alice", False), ("alice", False), ("alice", False), ("bob", False), ("bob", True)]
+# Calculate attempts, blocked (using process_log), then allowed_usernames, below
+`,
+      tests:[
+        {type:'assert', expr:'blocked == {"alice"}', label:'blocked correctly equals {"alice"}'},
+        {type:'assert', expr:'allowed_usernames == {"bob"}', label:'allowed_usernames correctly equals {"bob"}'}
+      ]
+    },
+    {
+      key:'c', title:'Door 3 — Issue a genuinely secure session token',
+      desc:`Write generate_session_token() using secrets.token_hex(16) (Week 4). Using
+        token1 = generate_session_token() and token2 = generate_session_token() (two separate calls), calculate
+        tokens_differ = (token1 != token2) and correct_length = (len(token1) == 32). Assert that
+        tokens_differ == True and correct_length == True — every session gets its own genuinely unpredictable
+        token, never a reused or guessable one.`,
+      starter:`import secrets
+# Write generate_session_token() below, then generate token1 and token2,
+# then calculate tokens_differ and correct_length
+`,
+      tests:[
+        {type:'assert', expr:'tokens_differ == True', label:'tokens_differ correctly equals True'},
+        {type:'assert', expr:'correct_length == True', label:'correct_length correctly equals True'}
+      ]
+    }
+  ]
+};
+
 window.SUBJECT_DATA = window.SUBJECT_DATA || {};
 window.SUBJECT_DATA.cy = {
   b: {weeks: CY_WEEKS, mp1: CY_MP1, mp2: CY_MP2},
