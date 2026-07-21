@@ -3429,6 +3429,180 @@ stretch_lines = [
       {type:'assert', expr:'stretch_bad_lines == [\'DB_PASSWORD = "hunter2"\', \'STRIPE_SECRET = "sk_abc"\']', label:'stretch_bad_lines is correctly calculated'}
     ]
   }
+},
+{
+  key:'week6', num:6, title:'Sessions and Expiry',
+  scenarioTag:'Real world: should a login from three days ago still be trusted today?',
+  scenario:`Week 4 issued a secure session token the moment someone logs in. But a token that never expires is
+    itself a risk — if it's ever stolen (a shared computer, a leaked log), it stays valid FOREVER. This week adds
+    the missing piece: every session remembers WHEN it was created, and gets checked against a maximum age before
+    being trusted.`,
+  objectives:[
+    'Check whether a session has expired by comparing timestamps',
+    'Understand why the expiry comparison uses ">" and not ">=" at the exact boundary',
+    'Create a session record that bundles a username, a token, and a creation time',
+    'Scan a whole set of sessions to find which ones have expired'
+  ],
+  conceptHtml:`
+    <p>A session is "too old" once the time elapsed since it was created passes some maximum allowed age:</p>
+    <pre class="code-block">def is_session_expired(created_at, current_time, max_age=3600):
+    return (current_time - created_at) > max_age
+
+print(is_session_expired(0, 100, 3600))     # False — only 100 seconds have passed
+print(is_session_expired(0, 4000, 3600))    # True  — 4000 seconds have passed, over the 3600 limit</pre>
+    <p>Notice the comparison is <code>&gt;</code>, not <code>&gt;=</code> — a session that's EXACTLY at the
+    maximum age (elapsed time equal to max_age) is still considered valid, right up to the boundary:</p>
+    <pre class="code-block">print(is_session_expired(0, 3600, 3600))    # False — exactly at the limit, not PAST it yet</pre>
+    <p>A real session record bundles the token (Week 4) together with WHEN it was created:</p>
+    <pre class="code-block">import secrets
+
+def create_session(username, current_time):
+    return {"username": username, "created_at": current_time, "token": secrets.token_hex(8)}</pre>`,
+  sandboxStarter:`def is_session_expired(created_at, current_time, max_age=3600):
+    return (current_time - created_at) > max_age
+
+print(is_session_expired(0, 100, 3600))
+print(is_session_expired(0, 4000, 3600))
+`,
+  sandboxStarter2:`import secrets
+
+def create_session(username, current_time):
+    return {"username": username, "created_at": current_time, "token": secrets.token_hex(8)}
+
+session = create_session("ada", 1000)
+print(session["username"], session["created_at"], len(session["token"]))
+`,
+  exercises:[
+    {
+      title:'Check a fresh session',
+      desc:`Using is_session_expired(created_at, current_time, max_age=3600) (given), assert that
+        is_session_expired(0, 100, 3600) == False — only 100 seconds have passed, well within the limit.`,
+      starter:`def is_session_expired(created_at, current_time, max_age=3600):
+    return (current_time - created_at) > max_age
+`,
+      tests:[{type:'assert', expr:'is_session_expired(0, 100, 3600) == False', label:'A fresh session is correctly NOT expired'}]
+    },
+    {
+      title:'Check an old session',
+      desc:`Using is_session_expired (given), assert that is_session_expired(0, 4000, 3600) == True — 4000
+        seconds have passed, past the 3600-second limit.`,
+      starter:`def is_session_expired(created_at, current_time, max_age=3600):
+    return (current_time - created_at) > max_age
+`,
+      tests:[{type:'assert', expr:'is_session_expired(0, 4000, 3600) == True', label:'An old session is correctly expired'}]
+    },
+    {
+      title:'Check the exact boundary',
+      desc:`Using is_session_expired (given), assert that is_session_expired(0, 3600, 3600) == False — exactly
+        3600 seconds have passed, which is AT the limit but not PAST it.`,
+      starter:`def is_session_expired(created_at, current_time, max_age=3600):
+    return (current_time - created_at) > max_age
+`,
+      tests:[{type:'assert', expr:'is_session_expired(0, 3600, 3600) == False', label:'A session exactly at the boundary is correctly NOT expired'}]
+    },
+    {
+      title:'Create a session record',
+      desc:`Write create_session(username, current_time) using secrets.token_hex(8) (Week 4) that returns
+        {"username": username, "created_at": current_time, "token": <the generated token>}. Using
+        session = create_session("ada", 1000), assert that session["username"] == "ada" and
+        session["created_at"] == 1000 and len(session["token"]) == 16.`,
+      starter:`import secrets
+# Write create_session(username, current_time) below, then call it as:
+# session = create_session("ada", 1000)
+`,
+      tests:[
+        {type:'assert', expr:'session["username"] == "ada"', label:'session["username"] correctly equals "ada"'},
+        {type:'assert', expr:'session["created_at"] == 1000', label:'session["created_at"] correctly equals 1000'},
+        {type:'assert', expr:'len(session["token"]) == 16', label:'session["token"] correctly has 16 hex characters'}
+      ]
+    },
+    {
+      title:'Scan a whole set of sessions for expired ones',
+      desc:`Using is_session_expired (given, default max_age=3600) and
+        sessions = {"alice": 100, "bob": 3000, "carol": 500}, calculate expired_users, a list of usernames whose
+        session (created at the given time) has expired by current_time = 4000. Assert that
+        expired_users == ["alice"].`,
+      starter:`def is_session_expired(created_at, current_time, max_age=3600):
+    return (current_time - created_at) > max_age
+
+sessions = {"alice": 100, "bob": 3000, "carol": 500}
+current_time = 4000
+# Calculate expired_users below
+`,
+      tests:[{type:'assert', expr:'expired_users == ["alice"]', label:'expired_users correctly equals ["alice"]'}]
+    },
+    {
+      title:'Renew a session\'s clock',
+      desc:`Write refresh_session(session, current_time) that sets session["created_at"] = current_time and
+        returns session — being active resets how long the session has left. Using
+        sess = {"username": "ada", "created_at": 100, "token": "abc"}, call
+        refresh_session(sess, 5000). Assert that sess["created_at"] == 5000.`,
+      starter:`sess = {"username": "ada", "created_at": 100, "token": "abc"}
+# Write refresh_session(session, current_time) below, then call it on sess with current_time=5000
+`,
+      tests:[{type:'assert', expr:'sess["created_at"] == 5000', label:'sess["created_at"] correctly updates to 5000'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why is a session that NEVER expires a security risk?',
+      options:['It isn\'t — permanent sessions are always safer','If the token is ever stolen (a shared computer, a leaked log), it stays valid FOREVER, giving an attacker unlimited time to use it','It makes the website slower','Sessions without expiry are illegal'],
+      correct:1,
+      explain:'Expiry limits the WINDOW a stolen token is useful for — a compromised token that expires in an hour is far less dangerous than one that never expires.'
+    },
+    {
+      q:'Why does is_session_expired use "current_time - created_at > max_age" rather than ">="?',
+      options:['It doesn\'t matter which one is used','So a session exactly AT the maximum age is still considered valid, right up to (but not past) the limit — the boundary itself is not yet "too late"','">=" would cause an error','">" runs faster than ">="'],
+      correct:1,
+      explain:'Using strict ">" means the exact boundary value itself still counts as valid — the session only becomes invalid once it goes PAST the limit, not AT it.'
+    },
+    {
+      q:'What does refresh_session do, and why is that reasonable?',
+      options:['It deletes the session','It resets created_at to the current time — an ACTIVE session getting used shouldn\'t be treated the same as one that\'s been sitting idle since login','It generates a brand new token every time','It permanently disables expiry'],
+      correct:1,
+      explain:'Refreshing on activity is how "stay logged in while you\'re using it" works in real systems — genuine activity resets the clock, not just the original login moment.'
+    },
+    {
+      q:'In the sessions scan exercise, why was "bob" (created_at=3000) NOT in expired_users at current_time=4000?',
+      options:['bob\'s session was deleted','Only 1000 seconds had passed for bob (4000-3000), well under the 3600-second limit — carol\'s and alice\'s gaps were checked the same way, and only alice\'s (3900 seconds) exceeded it','The function has a bug','bob is a special exempted user'],
+      correct:1,
+      explain:'Every session is checked with the exact SAME rule — the difference is purely in how much time had actually elapsed for each one.'
+    }
+  ],
+  sandboxStarter3:`import secrets
+
+def is_session_expired(created_at, current_time, max_age=3600):
+    return (current_time - created_at) > max_age
+
+def create_session(username, current_time):
+    return {"username": username, "created_at": current_time, "token": secrets.token_hex(8)}
+
+def refresh_session(session, current_time):
+    session["created_at"] = current_time
+    return session
+
+session = create_session("ada", 0)
+print("Fresh:", is_session_expired(session["created_at"], 1000))
+print("Stale:", is_session_expired(session["created_at"], 5000))
+refresh_session(session, 5000)
+print("After refresh:", is_session_expired(session["created_at"], 5100))
+`,
+  stretchChallenge:{
+    title:'Scan sessions with a stricter max_age',
+    desc:`Using is_session_expired (given) and stretch_sessions = {"dan": 0, "eve": 2000, "finn": 3999}, calculate
+      stretch_expired, a list of usernames whose session has expired by stretch_current_time = 4000, using
+      max_age = 1500 (stricter than the default). Assert that stretch_expired == ["dan", "eve"].`,
+    starter:`def is_session_expired(created_at, current_time, max_age=3600):
+    return (current_time - created_at) > max_age
+
+stretch_sessions = {"dan": 0, "eve": 2000, "finn": 3999}
+stretch_current_time = 4000
+# Calculate stretch_expired below, using max_age=1500
+`,
+    tests:[
+      {type:'assert', expr:'stretch_expired == ["dan", "eve"]', label:'stretch_expired correctly equals ["dan", "eve"]'}
+    ]
+  }
 }
 ];
 
