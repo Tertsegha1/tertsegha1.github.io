@@ -3020,6 +3020,178 @@ log2 = [("x", False), ("y", False), ("x", False), ("z", False), ("x", False), ("
       {type:'assert', expr:'stretch_blocked == {"x", "y", "z"}', label:'stretch_blocked correctly equals {"x", "y", "z"}'}
     ]
   }
+},
+{
+  key:'week4', num:4, title:'Real Randomness: the secrets Module',
+  scenarioTag:'Real world: a password reset code has to be a genuine SURPRISE, even to someone who knows your code',
+  scenario:`Beginner Week 1 hashed passwords so they could never be reversed. But a password RESET flow needs
+    something else too: a one-time code sent to prove it's really you. That code has to be truly unpredictable —
+    and Python's ordinary random module, useful as it is for games and simulations, was never built for that job.
+    This week finds out exactly why, and switches to the module that was: secrets.`,
+  objectives:[
+    'Generate a secure random token using secrets.token_hex',
+    'Check that a token has the right length and character set',
+    'Demonstrate that random.seed() makes the random module fully PREDICTABLE',
+    'Explain why that predictability makes random unsafe for anything security-related'
+  ],
+  conceptHtml:`
+    <p><code>secrets.token_hex(n)</code> generates a random hexadecimal string built from n random bytes (so its
+    length is always 2*n characters, since each byte prints as 2 hex digits):</p>
+    <pre class="code-block">import secrets
+token = secrets.token_hex(8)
+print(token)          # e.g. "841cbf99157faf38" — 16 hex characters
+print(len(token))      # 16</pre>
+    <p>Now compare that to Python's ordinary <code>random</code> module — useful for games, shuffling, simulations
+    — combined with <code>random.seed(...)</code>, which forces it to replay the EXACT SAME sequence every time:</p>
+    <pre class="code-block">import random
+random.seed(42)
+a = random.getrandbits(32)
+random.seed(42)
+b = random.getrandbits(32)
+print(a == b)   # True — same seed ALWAYS produces the same "random" number</pre>
+    <h3>Why this makes random dangerous for tokens</h3>
+    <ul>
+      <li><code>random.seed(...)</code> exists on purpose — it's genuinely useful for making a GAME or
+        SIMULATION reproducible for testing. But that exact same feature means anyone who guesses or discovers
+        the seed a system used can reproduce every "random" value it ever generated.</li>
+      <li><code>secrets</code> has NO seed function at all — it draws from the operating system's own
+        cryptographically secure randomness source, which cannot be rewound or reproduced by anyone, including
+        the program that generated it.</li>
+      <li>The rule: use <code>random</code> for games, shuffling, and simulations. Use <code>secrets</code> for
+        anything security-sensitive — password reset codes, session tokens, API keys.</li>
+    </ul>`,
+  sandboxStarter:`import secrets
+
+token = secrets.token_hex(8)
+print(token)
+print(len(token))
+`,
+  sandboxStarter2:`import random
+
+random.seed(42)
+a = random.getrandbits(32)
+random.seed(42)
+b = random.getrandbits(32)
+print(a, b)
+print(a == b)
+`,
+  exercises:[
+    {
+      title:'Generate a token and check its length',
+      desc:`Using secrets.token_hex(8), calculate token. Assert that len(token) == 16 — 8 bytes always produce
+        16 hex characters (2 hex digits per byte).`,
+      starter:`import secrets
+# Calculate token below
+`,
+      tests:[{type:'assert', expr:'len(token) == 16', label:'token correctly has 16 hex characters'}]
+    },
+    {
+      title:'Check the token only contains hex characters',
+      desc:`Using the SAME token from the previous exercise (regenerate it here), calculate is_hex, True if every
+        character in token is one of "0123456789abcdef". Assert that is_hex == True.`,
+      starter:`import secrets
+token = secrets.token_hex(8)
+# Calculate is_hex below
+`,
+      tests:[{type:'assert', expr:'is_hex == True', label:'is_hex correctly equals True'}]
+    },
+    {
+      title:'Confirm two tokens are different',
+      desc:`Using secrets.token_hex(16), generate token1 and token2 (two SEPARATE calls). Assert that
+        token1 != token2 — with 16 random bytes, the odds of an accidental match are astronomically small.`,
+      starter:`import secrets
+# Generate token1 and token2 below (two separate calls)
+`,
+      tests:[{type:'assert', expr:'token1 != token2', label:'token1 and token2 are correctly different'}]
+    },
+    {
+      title:'Prove random.seed() makes numbers predictable',
+      desc:`Using random.seed(42) followed by random.getrandbits(32) (calculate a), then random.seed(42) AGAIN
+        followed by random.getrandbits(32) (calculate b), assert that a == b — the exact same seed always
+        replays the exact same sequence.`,
+      starter:`import random
+# Seed with 42, calculate a, re-seed with 42, calculate b, below
+`,
+      tests:[{type:'assert', expr:'a == b', label:'a and b are correctly identical after re-seeding'}]
+    },
+    {
+      title:'Write a reset-code generator',
+      desc:`Write generate_reset_code() using secrets.token_hex(4) (returns 8 hex characters — a short code
+        suitable for a user to type in). Assert that len(generate_reset_code()) == 8.`,
+      starter:`import secrets
+# Write generate_reset_code() below
+`,
+      tests:[{type:'assert', expr:'len(generate_reset_code()) == 8', label:'generate_reset_code() correctly returns 8 characters'}]
+    },
+    {
+      title:'Write a general seed-predictability checker',
+      desc:`Write is_same_with_same_seed(seed) that seeds random with seed, calls random.getrandbits(32), re-seeds
+        with the SAME seed, calls random.getrandbits(32) again, and returns whether the two results are equal.
+        Assert that is_same_with_same_seed(7) == True and is_same_with_same_seed(999) == True — this holds for
+        ANY seed value, not just 42.`,
+      starter:`import random
+# Write is_same_with_same_seed(seed) below
+`,
+      tests:[
+        {type:'assert', expr:'is_same_with_same_seed(7) == True', label:'is_same_with_same_seed(7) correctly equals True'},
+        {type:'assert', expr:'is_same_with_same_seed(999) == True', label:'is_same_with_same_seed(999) correctly equals True'}
+      ]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why is secrets.token_hex(8) always 16 characters long?',
+      options:['It\'s a fixed length regardless of input','Each of the 8 random BYTES prints as exactly 2 hex characters, so 8 bytes always produce 16 hex characters','token_hex always returns 16 characters no matter what number you pass in','It depends on the current time'],
+      correct:1,
+      explain:'A byte is 8 bits, which needs exactly 2 hex digits to represent — so n bytes always produce 2n hex characters.'
+    },
+    {
+      q:'What does random.seed(42) do?',
+      options:['Makes the numbers MORE random','Forces the random module to replay the exact same sequence of "random" numbers every time it\'s given that same seed value','Deletes all previously generated random numbers','Only works the first time it\'s called'],
+      correct:1,
+      explain:'Seeding fixes the internal starting state, so the exact same sequence of numbers comes out every time — useful for testing, dangerous for security.'
+    },
+    {
+      q:'Why does secrets have no seed function, unlike random?',
+      options:['It was simply never implemented','Being un-reproducible is the whole POINT — a security token must never be something an attacker could regenerate by guessing a seed','secrets is slower than random','seed() only works with integers'],
+      correct:1,
+      explain:'secrets is built specifically so its output can never be reproduced by anyone, including the original program — exactly the opposite of what seeding gives you.'
+    },
+    {
+      q:'When IS it appropriate to use random.seed()?',
+      options:['Never, under any circumstances','For non-security uses like games, shuffling, or simulations where reproducible testing is actually useful','Only for password generation','Only when secrets is unavailable'],
+      correct:1,
+      explain:'Reproducibility is a genuine FEATURE for testing games and simulations — the danger only appears when that same predictability is applied to anything security-sensitive.'
+    }
+  ],
+  sandboxStarter3:`import secrets
+import random
+
+def generate_reset_code():
+    return secrets.token_hex(4)
+
+print("Secure reset code:", generate_reset_code())
+
+random.seed(1)
+predictable_a = random.getrandbits(16)
+random.seed(1)
+predictable_b = random.getrandbits(16)
+print("Predictable pair:", predictable_a, predictable_b, predictable_a == predictable_b)
+`,
+  stretchChallenge:{
+    title:'Confirm secrets tokens do NOT repeat, even seeded the "same way"',
+    desc:`There is no way to seed the secrets module — that's the whole point. Generate stretch_token1 and
+      stretch_token2 using secrets.token_hex(16) (two separate calls, exactly as before), then generate a THIRD,
+      stretch_token3, also using secrets.token_hex(16). Calculate all_different = (stretch_token1 != stretch_token2
+      and stretch_token2 != stretch_token3 and stretch_token1 != stretch_token3). Assert that
+      all_different == True.`,
+    starter:`import secrets
+# Generate stretch_token1, stretch_token2, stretch_token3 (three separate calls), then all_different, below
+`,
+    tests:[
+      {type:'assert', expr:'all_different == True', label:'all_different correctly equals True'}
+    ]
+  }
 }
 ];
 
