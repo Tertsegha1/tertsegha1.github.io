@@ -299,9 +299,7 @@ const DATA = {
         "GitHub Pages"
       ],
       "links": [
-        { "label": "⚡ Launch Codify", "url": "subject-select.html" },
-        { "label": "🧑‍💻 Python Track", "url": "python-academy.html" },
-        { "label": "📊 Instructor Dashboard", "url": "python-academy-instructor.html" }
+        { "label": "🔐 Access System", "url": "codify-access.html" }
       ]
     },
     {
@@ -339,10 +337,7 @@ const DATA = {
         "GitHub Pages"
       ],
       "links": [
-        {
-          "label": "🔒 Request Access",
-          "url": "https://cmp701-studio.tertseghaanande.workers.dev"
-        }
+        { "label": "🔐 Access System", "url": "studio-access.html" }
       ]
     },
     {
@@ -357,10 +352,7 @@ const DATA = {
         "GitHub Pages"
       ],
       "links": [
-        {
-          "label": "🔒 Request Access",
-          "url": "https://cmp701-tracker.tertseghaanande.workers.dev"
-        }
+        { "label": "🔐 Access System", "url": "tracker-access.html" }
       ]
     },
     {
