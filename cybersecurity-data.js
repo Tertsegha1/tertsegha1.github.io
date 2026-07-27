@@ -3868,6 +3868,334 @@ stretch_attempts = [("letmein123","482913"), ("letmein123","999999"), ("wrongpas
       {type:'assert', expr:'stretch_blocked_by_mfa == [("letmein123", "999999")]', label:'stretch_blocked_by_mfa correctly equals [("letmein123", "999999")]'}
     ]
   }
+},
+{
+  key:'week8', num:8, title:'Reading a Bigger Log: Multiple Attack Patterns',
+  scenarioTag:'Real world: real logs mix multiple different warning signs together, not just one',
+  scenario:`Beginner Week 9 read through a simple log looking for one thing. Real logs mix several different
+    warning signs together in one file — a burst of failed logins from one account, AND a successful login at an
+    hour nobody should be signing in. This week builds a small toolkit that parses a log ONCE, then checks it for
+    BOTH patterns independently.`,
+  objectives:[
+    'Parse a raw log line into its time, username, and event fields',
+    'Detect a brute-force pattern — repeated consecutive failed logins for one username',
+    'Detect an odd-hour successful login — outside normal school hours',
+    'Combine both checks into one report, and count every DISTINCT user flagged by either'
+  ],
+  conceptHtml:`
+    <p>Each log line is a fixed, space-separated format — time, username, event:</p>
+    <pre class="code-block">def parse_line(line):
+    parts = line.split(" ")
+    return {"time": parts[0], "user": parts[1], "event": parts[2]}
+
+print(parse_line("09:15 alice LOGIN_FAIL"))
+# {'time': '09:15', 'user': 'alice', 'event': 'LOGIN_FAIL'}</pre>
+    <p>Pattern 1 — brute force, a per-user running counter of CONSECUTIVE failures (reset on any success), same
+    idea as Week 3's rate-limiting:</p>
+    <pre class="code-block">def find_brute_force(entries, threshold=3):
+    counts = {}
+    flagged = set()
+    for e in entries:
+        if e["event"] == "LOGIN_FAIL":
+            counts[e["user"]] = counts.get(e["user"], 0) + 1
+            if counts[e["user"]] >= threshold:
+                flagged.add(e["user"])
+        else:
+            counts[e["user"]] = 0
+    return flagged</pre>
+    <p>Pattern 2 — a SUCCESSFUL login at an unusual hour (before 6am or at/after 10pm):</p>
+    <pre class="code-block">def is_odd_hour(time_str):
+    hour = int(time_str.split(":")[0])
+    return hour < 6 or hour >= 22
+
+def find_odd_hour_logins(entries):
+    return [e["user"] for e in entries if e["event"] == "LOGIN_SUCCESS" and is_odd_hour(e["time"])]</pre>
+    <p>These two patterns catch COMPLETELY different things — one is about failed attempts piling up, the other
+    is about a SUCCESSFUL login happening at a suspicious time. A thorough log review checks for both, not just
+    one.</p>`,
+  sandboxStarter:`def parse_line(line):
+    parts = line.split(" ")
+    return {"time": parts[0], "user": parts[1], "event": parts[2]}
+
+print(parse_line("09:15 alice LOGIN_FAIL"))
+print(parse_line("02:03 bob LOGIN_SUCCESS"))
+`,
+  sandboxStarter2:`def is_odd_hour(time_str):
+    hour = int(time_str.split(":")[0])
+    return hour < 6 or hour >= 22
+
+print(is_odd_hour("02:03"))
+print(is_odd_hour("14:22"))
+`,
+  exercises:[
+    {
+      title:'Parse a log line',
+      desc:`Write parse_line(line) that splits line on spaces and returns
+        {"time": ..., "user": ..., "event": ...}. Assert that
+        parse_line("09:15 alice LOGIN_FAIL") == {"time": "09:15", "user": "alice", "event": "LOGIN_FAIL"}.`,
+      starter:`# Write parse_line(line) below
+`,
+      tests:[{type:'assert', expr:'parse_line("09:15 alice LOGIN_FAIL") == {"time": "09:15", "user": "alice", "event": "LOGIN_FAIL"}', label:'parse_line correctly parses the log line'}]
+    },
+    {
+      title:'Detect the brute-force pattern',
+      desc:`Using parse_line (given) and log_lines (given, 7 lines), calculate parsed (a list of parsed entries),
+        then write find_brute_force(entries, threshold=3) as shown in the concept box. Assert that
+        find_brute_force(parsed) == {"alice"} — alice has 3 consecutive failures, the only user who does.`,
+      starter:`log_lines = [
+    "09:15 alice LOGIN_FAIL",
+    "09:16 alice LOGIN_FAIL",
+    "02:03 bob LOGIN_SUCCESS",
+    "09:17 alice LOGIN_FAIL",
+    "14:22 carol LOGIN_SUCCESS",
+    "02:05 bob LOGIN_SUCCESS",
+    "23:58 dave LOGIN_SUCCESS",
+]
+
+def parse_line(line):
+    parts = line.split(" ")
+    return {"time": parts[0], "user": parts[1], "event": parts[2]}
+
+parsed = [parse_line(l) for l in log_lines]
+# Write find_brute_force(entries, threshold=3) below
+`,
+      tests:[{type:'assert', expr:'find_brute_force(parsed) == {"alice"}', label:'find_brute_force correctly equals {"alice"}'}]
+    },
+    {
+      title:'Detect an odd-hour login',
+      desc:`Write is_odd_hour(time_str) returning True if the hour (before the ":") is less than 6 or 22 or
+        greater. Assert that is_odd_hour("02:03") == True and is_odd_hour("14:22") == False.`,
+      starter:`# Write is_odd_hour(time_str) below
+`,
+      tests:[
+        {type:'assert', expr:'is_odd_hour("02:03") == True', label:'"02:03" is correctly flagged as an odd hour'},
+        {type:'assert', expr:'is_odd_hour("14:22") == False', label:'"14:22" is correctly NOT flagged'}
+      ]
+    },
+    {
+      title:'Find every odd-hour successful login',
+      desc:`Using is_odd_hour and parsed (given, same log as before), write
+        find_odd_hour_logins(entries) returning a list of usernames for every entry where event is
+        "LOGIN_SUCCESS" AND is_odd_hour(time) is True. Assert that
+        find_odd_hour_logins(parsed) == ["bob", "bob", "dave"].`,
+      starter:`log_lines = [
+    "09:15 alice LOGIN_FAIL",
+    "09:16 alice LOGIN_FAIL",
+    "02:03 bob LOGIN_SUCCESS",
+    "09:17 alice LOGIN_FAIL",
+    "14:22 carol LOGIN_SUCCESS",
+    "02:05 bob LOGIN_SUCCESS",
+    "23:58 dave LOGIN_SUCCESS",
+]
+
+def parse_line(line):
+    parts = line.split(" ")
+    return {"time": parts[0], "user": parts[1], "event": parts[2]}
+
+def is_odd_hour(time_str):
+    hour = int(time_str.split(":")[0])
+    return hour < 6 or hour >= 22
+
+parsed = [parse_line(l) for l in log_lines]
+# Write find_odd_hour_logins(entries) below
+`,
+      tests:[{type:'assert', expr:'find_odd_hour_logins(parsed) == ["bob", "bob", "dave"]', label:'find_odd_hour_logins is correctly calculated'}]
+    },
+    {
+      title:'Build one combined report',
+      desc:`Using find_brute_force and find_odd_hour_logins (given), write
+        suspicious_activity_report(entries) returning
+        {"brute_force": find_brute_force(entries), "odd_hour_logins": find_odd_hour_logins(entries)}. Using
+        report = suspicious_activity_report(parsed), assert that report["brute_force"] == {"alice"} and
+        report["odd_hour_logins"] == ["bob", "bob", "dave"].`,
+      starter:`log_lines = [
+    "09:15 alice LOGIN_FAIL",
+    "09:16 alice LOGIN_FAIL",
+    "02:03 bob LOGIN_SUCCESS",
+    "09:17 alice LOGIN_FAIL",
+    "14:22 carol LOGIN_SUCCESS",
+    "02:05 bob LOGIN_SUCCESS",
+    "23:58 dave LOGIN_SUCCESS",
+]
+
+def parse_line(line):
+    parts = line.split(" ")
+    return {"time": parts[0], "user": parts[1], "event": parts[2]}
+
+def find_brute_force(entries, threshold=3):
+    counts = {}
+    flagged = set()
+    for e in entries:
+        if e["event"] == "LOGIN_FAIL":
+            counts[e["user"]] = counts.get(e["user"], 0) + 1
+            if counts[e["user"]] >= threshold:
+                flagged.add(e["user"])
+        else:
+            counts[e["user"]] = 0
+    return flagged
+
+def is_odd_hour(time_str):
+    hour = int(time_str.split(":")[0])
+    return hour < 6 or hour >= 22
+
+def find_odd_hour_logins(entries):
+    return [e["user"] for e in entries if e["event"] == "LOGIN_SUCCESS" and is_odd_hour(e["time"])]
+
+parsed = [parse_line(l) for l in log_lines]
+# Write suspicious_activity_report(entries) below, then call it: report = suspicious_activity_report(parsed)
+`,
+      tests:[
+        {type:'assert', expr:'report["brute_force"] == {"alice"}', label:'report["brute_force"] correctly equals {"alice"}'},
+        {type:'assert', expr:'report["odd_hour_logins"] == ["bob", "bob", "dave"]', label:'report["odd_hour_logins"] is correctly calculated'}
+      ]
+    },
+    {
+      title:'Count every distinct user flagged by EITHER pattern',
+      desc:`Using find_brute_force and find_odd_hour_logins (given), calculate unique_flagged_users, the set of
+        ALL usernames flagged by EITHER check (brute_force set UNIONed with the set of odd_hour_logins). Assert
+        that unique_flagged_users == {"alice", "bob", "dave"}.`,
+      starter:`log_lines = [
+    "09:15 alice LOGIN_FAIL",
+    "09:16 alice LOGIN_FAIL",
+    "02:03 bob LOGIN_SUCCESS",
+    "09:17 alice LOGIN_FAIL",
+    "14:22 carol LOGIN_SUCCESS",
+    "02:05 bob LOGIN_SUCCESS",
+    "23:58 dave LOGIN_SUCCESS",
+]
+
+def parse_line(line):
+    parts = line.split(" ")
+    return {"time": parts[0], "user": parts[1], "event": parts[2]}
+
+def find_brute_force(entries, threshold=3):
+    counts = {}
+    flagged = set()
+    for e in entries:
+        if e["event"] == "LOGIN_FAIL":
+            counts[e["user"]] = counts.get(e["user"], 0) + 1
+            if counts[e["user"]] >= threshold:
+                flagged.add(e["user"])
+        else:
+            counts[e["user"]] = 0
+    return flagged
+
+def is_odd_hour(time_str):
+    hour = int(time_str.split(":")[0])
+    return hour < 6 or hour >= 22
+
+def find_odd_hour_logins(entries):
+    return [e["user"] for e in entries if e["event"] == "LOGIN_SUCCESS" and is_odd_hour(e["time"])]
+
+parsed = [parse_line(l) for l in log_lines]
+# Calculate unique_flagged_users below
+`,
+      tests:[{type:'assert', expr:'unique_flagged_users == {"alice", "bob", "dave"}', label:'unique_flagged_users correctly equals {"alice", "bob", "dave"}'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why does find_brute_force reset a user\'s counter to 0 on any success?',
+      options:['It doesn\'t — counters never reset','Only CONSECUTIVE failures should count as a burst — a success in between means the previous failures weren\'t part of an ongoing attack','Resetting makes the loop run faster','Successes are ignored entirely'],
+      correct:1,
+      explain:'Same idea as Week 3\'s rate-limiting — a burst of consecutive failures is the warning sign, not a scattered few failures with successes mixed in.'
+    },
+    {
+      q:'Why does this week check for odd-hour logins SEPARATELY from brute-force, rather than combining them into one check?',
+      options:['They are actually the same check','They catch completely different things — one is about failed attempts piling up, the other is about a SUCCESSFUL login at a suspicious time — a thorough review needs both independently','Odd-hour logins are never suspicious','Combining checks is impossible in Python'],
+      correct:1,
+      explain:'A real attacker might trigger either pattern (or neither) — checking for just one leaves the other completely undetected.'
+    },
+    {
+      q:'In this week\'s log, why was "bob" flagged by find_odd_hour_logins TWICE?',
+      options:['It\'s a bug — usernames should never repeat','bob had TWO separate successful logins, both at odd hours (02:03 and 02:05) — the list keeps one entry per matching event, not per unique user','bob attempted to log in 3 times','find_odd_hour_logins ignores duplicates'],
+      correct:1,
+      explain:'find_odd_hour_logins returns one entry per matching LOG LINE, not one per user — that\'s exactly why unique_flagged_users needed a set to count distinct people afterward.'
+    },
+    {
+      q:'Why does unique_flagged_users use a set (via union) instead of just adding the two lists together?',
+      options:['Sets are always faster than lists','A set automatically removes duplicates — if the SAME user appeared in both find_brute_force and find_odd_hour_logins, they should only be counted once as "a flagged user"','Union only works with numbers','Lists cannot contain usernames'],
+      correct:1,
+      explain:'The question being asked is "how many DISTINCT people were flagged," not "how many total flags were raised" — a set answers exactly that.'
+    }
+  ],
+  sandboxStarter3:`log_lines = [
+    "09:15 alice LOGIN_FAIL",
+    "09:16 alice LOGIN_FAIL",
+    "02:03 bob LOGIN_SUCCESS",
+    "09:17 alice LOGIN_FAIL",
+    "14:22 carol LOGIN_SUCCESS",
+    "02:05 bob LOGIN_SUCCESS",
+    "23:58 dave LOGIN_SUCCESS",
+]
+
+def parse_line(line):
+    parts = line.split(" ")
+    return {"time": parts[0], "user": parts[1], "event": parts[2]}
+
+def find_brute_force(entries, threshold=3):
+    counts = {}
+    flagged = set()
+    for e in entries:
+        if e["event"] == "LOGIN_FAIL":
+            counts[e["user"]] = counts.get(e["user"], 0) + 1
+            if counts[e["user"]] >= threshold:
+                flagged.add(e["user"])
+        else:
+            counts[e["user"]] = 0
+    return flagged
+
+def is_odd_hour(time_str):
+    hour = int(time_str.split(":")[0])
+    return hour < 6 or hour >= 22
+
+def find_odd_hour_logins(entries):
+    return [e["user"] for e in entries if e["event"] == "LOGIN_SUCCESS" and is_odd_hour(e["time"])]
+
+parsed = [parse_line(l) for l in log_lines]
+print("Brute force:", find_brute_force(parsed))
+print("Odd-hour logins:", find_odd_hour_logins(parsed))
+print("All flagged:", find_brute_force(parsed) | set(find_odd_hour_logins(parsed)))
+`,
+  stretchChallenge:{
+    title:'Analyze a fresh, differently-shaped log',
+    desc:`Using parse_line, find_brute_force, and find_odd_hour_logins (given) on
+      stretch_log_lines = ["10:00 eve LOGIN_FAIL", "10:01 eve LOGIN_FAIL", "03:15 frank LOGIN_SUCCESS",
+      "10:02 eve LOGIN_SUCCESS", "10:03 eve LOGIN_FAIL", "10:04 eve LOGIN_FAIL", "10:05 eve LOGIN_FAIL"],
+      calculate stretch_parsed, stretch_brute_force, and stretch_odd_hour. Assert that
+      stretch_brute_force == {"eve"} (eve's EARLIER 2 failures don't count — they were reset by her success at
+      10:02, so only the LAST 3 consecutive failures trigger it) and stretch_odd_hour == ["frank"].`,
+    starter:`def parse_line(line):
+    parts = line.split(" ")
+    return {"time": parts[0], "user": parts[1], "event": parts[2]}
+
+def find_brute_force(entries, threshold=3):
+    counts = {}
+    flagged = set()
+    for e in entries:
+        if e["event"] == "LOGIN_FAIL":
+            counts[e["user"]] = counts.get(e["user"], 0) + 1
+            if counts[e["user"]] >= threshold:
+                flagged.add(e["user"])
+        else:
+            counts[e["user"]] = 0
+    return flagged
+
+def is_odd_hour(time_str):
+    hour = int(time_str.split(":")[0])
+    return hour < 6 or hour >= 22
+
+def find_odd_hour_logins(entries):
+    return [e["user"] for e in entries if e["event"] == "LOGIN_SUCCESS" and is_odd_hour(e["time"])]
+
+stretch_log_lines = ["10:00 eve LOGIN_FAIL", "10:01 eve LOGIN_FAIL", "03:15 frank LOGIN_SUCCESS", "10:02 eve LOGIN_SUCCESS", "10:03 eve LOGIN_FAIL", "10:04 eve LOGIN_FAIL", "10:05 eve LOGIN_FAIL"]
+# Calculate stretch_parsed, stretch_brute_force, stretch_odd_hour below
+`,
+    tests:[
+      {type:'assert', expr:'stretch_brute_force == {"eve"}', label:'stretch_brute_force correctly equals {"eve"}'},
+      {type:'assert', expr:'stretch_odd_hour == ["frank"]', label:'stretch_odd_hour correctly equals ["frank"]'}
+    ]
+  }
 }
 ];
 
