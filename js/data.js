@@ -377,14 +377,7 @@ const DATA = {
         "GitHub Pages"
       ],
       "links": [
-        {
-          "label": "🌐 Live Demo",
-          "url": "https://cmp701-grading-system.tertseghaanande.workers.dev"
-        },
-        {
-          "label": "🔒 Request Access",
-          "url": "https://cmp701-grading-system.tertseghaanande.workers.dev"
-        }
+        { "label": "🔐 Access System", "url": "grading-system-access.html" }
       ]
     },
     {

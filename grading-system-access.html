@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Restricted Access</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#0f2044 0%,#1a3260 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
+
+  .card{background:#fff;border-radius:16px;padding:48px 40px;width:100%;max-width:400px;box-shadow:0 24px 64px rgba(0,0,0,0.3)}
+
+  .logo{text-align:center;margin-bottom:32px}
+  .lock-icon{font-size:52px;display:block;margin-bottom:14px}
+  .logo h2{font-size:17px;font-weight:700;color:#0f2044;letter-spacing:0.3px}
+  .logo p{font-size:13px;color:#888;margin-top:6px;line-height:1.5}
+
+  .field{margin-bottom:20px}
+  .field label{display:block;font-size:13px;font-weight:600;color:#444;margin-bottom:6px}
+  .field input{width:100%;padding:11px 14px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none;transition:border-color 0.2s;letter-spacing:1px;font-family:inherit}
+  .field input:focus{border-color:#0f2044}
+
+  .btn{width:100%;padding:13px;background:#0f2044;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;transition:background 0.2s;margin-top:4px;font-family:inherit}
+  .btn:hover{background:#1a3260}
+  .btn:disabled{opacity:0.5;cursor:not-allowed}
+
+  .err{color:#CC2229;font-size:13px;margin-top:10px;display:none;text-align:center;font-weight:500}
+  .attempts{font-size:12px;color:#aaa;text-align:center;margin-top:8px}
+
+  .locked-msg{display:none;text-align:center;padding:14px;background:#fff5f5;border-radius:8px;color:#CC2229;font-size:13px;font-weight:600;margin-top:14px;line-height:1.6}
+
+  .divider{display:flex;align-items:center;gap:10px;margin:22px 0}
+  .divider hr{flex:1;border:none;border-top:1px solid #eee}
+  .divider span{font-size:11px;color:#bbb;white-space:nowrap}
+
+  .contact-block{text-align:center}
+  .contact-block p{font-size:12.5px;color:#888;margin-bottom:10px;line-height:1.55}
+  .contact-btn{display:inline-block;padding:9px 22px;border:1.5px solid #ccc;border-radius:8px;font-size:13px;font-weight:600;color:#555;text-decoration:none;transition:all 0.2s}
+  .contact-btn:hover{border-color:#0f2044;color:#0f2044}
+
+  /* ── SUCCESS ── */
+  .success{display:none;text-align:center}
+  .success .tick{font-size:52px;margin-bottom:16px}
+  .success h3{font-size:17px;font-weight:700;color:#1A5C35;margin-bottom:8px}
+  .success p{font-size:13px;color:#666;margin-bottom:24px;line-height:1.65}
+  .launch-btn{display:inline-block;padding:13px 32px;background:#0f2044;color:#fff;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none;transition:background 0.2s;letter-spacing:0.3px}
+  .launch-btn:hover{background:#1a3260}
+  .back-link{display:block;margin-top:14px;font-size:12px;color:#aaa;text-decoration:none;cursor:pointer}
+  .back-link:hover{color:#555}
+</style>
+</head>
+<body>
+
+<div class="card">
+
+  <!-- LOGIN -->
+  <div id="loginForm">
+    <div class="logo">
+      <span class="lock-icon">🔒</span>
+      <h2>Restricted Access</h2>
+      <p>This system is available to authorised users only.</p>
+    </div>
+
+    <div class="field">
+      <label for="passInput">Access Code</label>
+      <input type="password" id="passInput" placeholder="Enter your access code" autocomplete="off"/>
+    </div>
+    <button class="btn" id="submitBtn" onclick="checkPass()">Continue</button>
+    <p class="err" id="errMsg">Incorrect access code. Please try again.</p>
+    <p class="attempts" id="attemptsMsg"></p>
+    <div class="locked-msg" id="lockedMsg">
+      🔒 Too many failed attempts.<br>Please contact the system owner to gain access.
+    </div>
+
+    <div class="divider"><hr><span>Need access?</span><hr></div>
+
+    <div class="contact-block">
+      <p>If you do not have an access code, contact the system owner to request access.</p>
+      <a class="contact-btn" href="mailto:tertseghaanande@gmail.com?subject=System%20Access%20Request&body=Hi%20Dr.%20Anande%2C%0D%0A%0D%0AI%20would%20like%20to%20request%20access%20to%20the%20system.%0D%0A%0D%0AMy%20name%3A%0D%0AMy%20role%2Faffiliation%3A%0D%0APurpose%3A%0D%0A%0D%0AThank%20you.">✉ Request Access</a>
+    </div>
+  </div>
+
+  <!-- SUCCESS -->
+  <div class="success" id="successView">
+    <div class="tick">✅</div>
+    <h3>Access Granted</h3>
+    <p>You are now authorised to use the system.</p>
+    <a class="launch-btn" href="https://cmp701-grading-system.tertseghaanande.workers.dev" target="_blank">🚀 Launch System</a>
+    <a class="back-link" onclick="reset()">← Back</a>
+  </div>
+
+</div>
+
+<script>
+const PASS = 'Grading@2026';
+const MAX  = 5;
+let attempts = 0;
+let locked   = false;
+
+document.getElementById('passInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') checkPass();
+});
+
+function checkPass() {
+  if (locked) return;
+  const val = document.getElementById('passInput').value;
+  if (val === PASS) {
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('successView').style.display = 'block';
+  } else {
+    attempts++;
+    document.getElementById('passInput').value = '';
+    document.getElementById('errMsg').style.display = 'block';
+    const remaining = MAX - attempts;
+    if (remaining > 0) {
+      document.getElementById('attemptsMsg').textContent =
+        remaining + ' attempt' + (remaining === 1 ? '' : 's') + ' remaining.';
+    } else {
+      locked = true;
+      document.getElementById('errMsg').style.display    = 'none';
+      document.getElementById('attemptsMsg').textContent = '';
+      document.getElementById('lockedMsg').style.display = 'block';
+      document.getElementById('passInput').disabled      = true;
+      document.getElementById('submitBtn').disabled      = true;
+    }
+  }
+}
+
+function reset() {
+  document.getElementById('successView').style.display = 'none';
+  document.getElementById('loginForm').style.display   = 'block';
+  document.getElementById('passInput').value = '';
+}
+</script>
+</body>
+</html>
