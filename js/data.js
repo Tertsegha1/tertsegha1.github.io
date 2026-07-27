@@ -276,11 +276,7 @@ const DATA = {
         "Enterprise Data Systems"
       ],
       "links": [
-        { "label": "🚀 Interactive Workshop Platform", "url": "postgresql-workshop.html" },
-        { "label": "📋 Full Lesson Plan", "url": "postgresql-training.html" },
-        { "label": "📘 Participant Workbook", "url": "auktie-participant-workbook.pdf" },
-        { "label": "📊 Attendance System", "url": "auktie-attendance.html" },
-        { "label": "🔐 Instructor Guide", "url": "auktie-instructor-guide.html" }
+        { "label": "🔐 Access System", "url": "postgresql-access.html" }
       ]
     },
     {
