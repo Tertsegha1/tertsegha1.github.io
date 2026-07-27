@@ -4196,6 +4196,255 @@ stretch_log_lines = ["10:00 eve LOGIN_FAIL", "10:01 eve LOGIN_FAIL", "03:15 fran
       {type:'assert', expr:'stretch_odd_hour == ["frank"]', label:'stretch_odd_hour correctly equals ["frank"]'}
     ]
   }
+},
+{
+  key:'week9', num:9, title:'Writing It Up: A Security Checklist',
+  scenarioTag:'Real world: how do you PROVE a review was thorough, not just "looked okay to me"?',
+  scenario:`Beginner Week 3 spotted ONE flaw in a snippet. A real review needs to check for SEVERAL things at
+    once, systematically, and be able to show exactly which items passed and which didn't — not just a vague
+    "looks fine." This week builds a small, reusable checklist system: each item is its own independent check,
+    run against the same code, producing a clear pass/fail report.`,
+  objectives:[
+    'Write independent checklist items as separate functions',
+    'Run every checklist item against a piece of code and collect the results',
+    'Count how many items passed',
+    'List exactly which items failed, by name'
+  ],
+  conceptHtml:`
+    <p>Each checklist item is its OWN small function — this week reuses three checks already built in earlier
+    weeks, applied to a NEW piece of code:</p>
+    <pre class="code-block">def check_no_hardcoded_secrets(lines):
+    return not any("API_KEY" in l and "=" in l and "os.environ" not in l and ('"' in l or "'" in l) for l in lines)
+
+def check_password_is_hashed(lines):
+    return any("hashlib" in l and "hash" in l for l in lines)
+
+def check_username_validated(lines):
+    return any("re.match" in l and "username" in l for l in lines)</pre>
+    <p>A checklist is just a list of (label, check_function) pairs, run against the same code:</p>
+    <pre class="code-block">checklist = [
+    ("No hardcoded secrets", check_no_hardcoded_secrets),
+    ("Password is hashed, not stored plain", check_password_is_hashed),
+    ("Username format is validated", check_username_validated),
+]
+
+def run_checklist(lines, checklist):
+    return {label: check(lines) for label, check in checklist}
+
+code_snippet = [
+    'API_KEY = "sk_live_12345"',
+    "password_hash = hashlib.sha256(password.encode()).hexdigest()",
+    'username_ok = bool(re.match(r"^[A-Za-z0-9_]{3,20}$", username))',
+]
+
+print(run_checklist(code_snippet, checklist))
+# {'No hardcoded secrets': False, 'Password is hashed, not stored plain': True, 'Username format is validated': True}</pre>
+    <p>This snippet passes 2 of 3 checks — the report shows EXACTLY which one it fails (the hardcoded API key),
+    rather than a vague overall verdict.</p>`,
+  sandboxStarter:`def check_no_hardcoded_secrets(lines):
+    return not any("API_KEY" in l and "=" in l and "os.environ" not in l and ('"' in l or "'" in l) for l in lines)
+
+lines_bad = ['API_KEY = "sk_live_12345"']
+lines_good = ['API_KEY = os.environ.get("API_KEY")']
+print(check_no_hardcoded_secrets(lines_bad))
+print(check_no_hardcoded_secrets(lines_good))
+`,
+  sandboxStarter2:`def check_password_is_hashed(lines):
+    return any("hashlib" in l and "hash" in l for l in lines)
+
+lines_hashed = ["password_hash = hashlib.sha256(password.encode()).hexdigest()"]
+lines_plain = ['password = "hunter2"']
+print(check_password_is_hashed(lines_hashed))
+print(check_password_is_hashed(lines_plain))
+`,
+  exercises:[
+    {
+      title:'Write the hardcoded-secrets check',
+      desc:`Write check_no_hardcoded_secrets(lines) that returns True only if NO line contains "API_KEY" AND "="
+        AND a quote character AND does NOT contain "os.environ". Using lines_bad = ['API_KEY = "sk_live_12345"']
+        and lines_good = ['API_KEY = os.environ.get("API_KEY")'], assert that
+        check_no_hardcoded_secrets(lines_bad) == False and check_no_hardcoded_secrets(lines_good) == True.`,
+      starter:`lines_bad = ['API_KEY = "sk_live_12345"']
+lines_good = ['API_KEY = os.environ.get("API_KEY")']
+# Write check_no_hardcoded_secrets(lines) below
+`,
+      tests:[
+        {type:'assert', expr:'check_no_hardcoded_secrets(lines_bad) == False', label:'A hardcoded secret is correctly detected'},
+        {type:'assert', expr:'check_no_hardcoded_secrets(lines_good) == True', label:'A safely-read secret is correctly NOT flagged'}
+      ]
+    },
+    {
+      title:'Write the password-hashing check',
+      desc:`Write check_password_is_hashed(lines) that returns True if any line contains both "hashlib" and
+        "hash". Using lines_hashed = ["password_hash = hashlib.sha256(password.encode()).hexdigest()"] and
+        lines_plain = ['password = "hunter2"'], assert that check_password_is_hashed(lines_hashed) == True and
+        check_password_is_hashed(lines_plain) == False.`,
+      starter:`lines_hashed = ["password_hash = hashlib.sha256(password.encode()).hexdigest()"]
+lines_plain = ['password = "hunter2"']
+# Write check_password_is_hashed(lines) below
+`,
+      tests:[
+        {type:'assert', expr:'check_password_is_hashed(lines_hashed) == True', label:'A hashed password is correctly detected'},
+        {type:'assert', expr:'check_password_is_hashed(lines_plain) == False', label:'A plain-text password is correctly NOT passed'}
+      ]
+    },
+    {
+      title:'Write the username-validation check',
+      desc:`Write check_username_validated(lines) that returns True if any line contains both "re.match" and
+        "username". Using lines_validated = ['username_ok = bool(re.match(r"^[A-Za-z0-9_]{3,20}$", username))']
+        and lines_unvalidated = ['username = input("Username: ")'], assert that
+        check_username_validated(lines_validated) == True and
+        check_username_validated(lines_unvalidated) == False.`,
+      starter:`lines_validated = ['username_ok = bool(re.match(r"^[A-Za-z0-9_]{3,20}$", username))']
+lines_unvalidated = ['username = input("Username: ")']
+# Write check_username_validated(lines) below
+`,
+      tests:[
+        {type:'assert', expr:'check_username_validated(lines_validated) == True', label:'A validated username check is correctly detected'},
+        {type:'assert', expr:'check_username_validated(lines_unvalidated) == False', label:'An unvalidated username correctly fails'}
+      ]
+    },
+    {
+      title:'Run the whole checklist',
+      desc:`Using check_no_hardcoded_secrets, check_password_is_hashed, check_username_validated, checklist, and
+        code_snippet (all given), write run_checklist(lines, checklist) returning
+        {label: check(lines) for label, check in checklist}. Using
+        results = run_checklist(code_snippet, checklist), assert that
+        results == {"No hardcoded secrets": False, "Password is hashed, not stored plain": True,
+        "Username format is validated": True}.`,
+      starter:`def check_no_hardcoded_secrets(lines):
+    return not any("API_KEY" in l and "=" in l and "os.environ" not in l and ('"' in l or "'" in l) for l in lines)
+
+def check_password_is_hashed(lines):
+    return any("hashlib" in l and "hash" in l for l in lines)
+
+def check_username_validated(lines):
+    return any("re.match" in l and "username" in l for l in lines)
+
+checklist = [
+    ("No hardcoded secrets", check_no_hardcoded_secrets),
+    ("Password is hashed, not stored plain", check_password_is_hashed),
+    ("Username format is validated", check_username_validated),
+]
+
+code_snippet = [
+    'API_KEY = "sk_live_12345"',
+    "password_hash = hashlib.sha256(password.encode()).hexdigest()",
+    'username_ok = bool(re.match(r"^[A-Za-z0-9_]{3,20}$", username))',
+]
+# Write run_checklist(lines, checklist) below, then call it: results = run_checklist(code_snippet, checklist)
+`,
+      tests:[{type:'assert', expr:'results == {"No hardcoded secrets": False, "Password is hashed, not stored plain": True, "Username format is validated": True}', label:'results is correctly calculated'}]
+    },
+    {
+      title:'Count how many checks passed',
+      desc:`Using results (given), calculate passed_count, the number of checklist items that passed. Assert
+        that passed_count == 2.`,
+      starter:`results = {"No hardcoded secrets": False, "Password is hashed, not stored plain": True, "Username format is validated": True}
+# Calculate passed_count below
+`,
+      tests:[{type:'assert', expr:'passed_count == 2', label:'passed_count correctly equals 2'}]
+    },
+    {
+      title:'List exactly which checks failed',
+      desc:`Using results (given), calculate failed_items, a list of the labels whose value is False. Assert
+        that failed_items == ["No hardcoded secrets"].`,
+      starter:`results = {"No hardcoded secrets": False, "Password is hashed, not stored plain": True, "Username format is validated": True}
+# Calculate failed_items below
+`,
+      tests:[{type:'assert', expr:'failed_items == ["No hardcoded secrets"]', label:'failed_items correctly equals ["No hardcoded secrets"]'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why is a checklist made of SEPARATE, independent functions better than one big "review the code" function?',
+      options:['It isn\'t better, it\'s just more typing','Each check can be tested, understood, and fixed on its own, and the report can show EXACTLY which specific item failed, not just an overall verdict','Python requires functions to be small','Separate functions run faster'],
+      correct:1,
+      explain:'A precise, itemized result ("this ONE thing failed") is far more useful for fixing a real problem than a single pass/fail verdict.'
+    },
+    {
+      q:'In this week\'s code_snippet, why does check_no_hardcoded_secrets fail but the other two checks pass?',
+      options:['All three checks actually fail','The snippet has a real hardcoded API_KEY (a genuine issue), but its password IS hashed and its username IS validated — the checklist correctly reports exactly one real problem','The checklist has a bug','Hardcoded secrets always pass this check'],
+      correct:1,
+      explain:'This is exactly what a good checklist should do — flag the ONE real issue precisely, without falsely flagging the two things that were actually done correctly.'
+    },
+    {
+      q:'What does run_checklist(lines, checklist) actually do?',
+      options:['It fixes any problems it finds automatically','It calls EVERY check function in the checklist against the same lines, collecting each one\'s True/False result into a dict keyed by label','It only runs the first check in the list','It deletes lines that fail a check'],
+      correct:1,
+      explain:'run_checklist is a small loop (as a dict comprehension) that applies every check function to the same code and records each individual result.'
+    },
+    {
+      q:'Why is failed_items (a list of labels) more useful for someone fixing the code than passed_count (a number) alone?',
+      options:['It isn\'t more useful, they\'re equivalent','passed_count only tells you HOW MANY things are wrong; failed_items tells you WHICH SPECIFIC things are wrong, so you know exactly what to fix','failed_items is always empty','passed_count is calculated incorrectly'],
+      correct:1,
+      explain:'"2 out of 3 passed" tells you there\'s a problem; "No hardcoded secrets" failed tells you exactly WHERE to look.'
+    }
+  ],
+  sandboxStarter3:`def check_no_hardcoded_secrets(lines):
+    return not any("API_KEY" in l and "=" in l and "os.environ" not in l and ('"' in l or "'" in l) for l in lines)
+
+def check_password_is_hashed(lines):
+    return any("hashlib" in l and "hash" in l for l in lines)
+
+def check_username_validated(lines):
+    return any("re.match" in l and "username" in l for l in lines)
+
+checklist = [
+    ("No hardcoded secrets", check_no_hardcoded_secrets),
+    ("Password is hashed, not stored plain", check_password_is_hashed),
+    ("Username format is validated", check_username_validated),
+]
+
+def run_checklist(lines, checklist):
+    return {label: check(lines) for label, check in checklist}
+
+code_snippet = [
+    'API_KEY = "sk_live_12345"',
+    "password_hash = hashlib.sha256(password.encode()).hexdigest()",
+    'username_ok = bool(re.match(r"^[A-Za-z0-9_]{3,20}$", username))',
+]
+
+results = run_checklist(code_snippet, checklist)
+print("Results:", results)
+print("Passed:", sum(1 for v in results.values() if v), "/", len(results))
+print("Failed items:", [label for label, passed in results.items() if not passed])
+`,
+  stretchChallenge:{
+    title:'Review a second, differently-flawed snippet',
+    desc:`Using check_no_hardcoded_secrets, check_password_is_hashed, check_username_validated, checklist, and
+      run_checklist (given), apply the checklist to
+      stretch_snippet = ['API_KEY = os.environ.get("API_KEY")', 'password = "hunter2"',
+      'username_ok = bool(re.match(r"^[A-Za-z0-9_]{3,20}$", username))']. Assert that stretch_results ==
+      {"No hardcoded secrets": True, "Password is hashed, not stored plain": False,
+      "Username format is validated": True} and stretch_failed == ["Password is hashed, not stored plain"] — this
+      time the ONLY problem is a plain-text password, a completely different failure than the main exercise.`,
+    starter:`def check_no_hardcoded_secrets(lines):
+    return not any("API_KEY" in l and "=" in l and "os.environ" not in l and ('"' in l or "'" in l) for l in lines)
+
+def check_password_is_hashed(lines):
+    return any("hashlib" in l and "hash" in l for l in lines)
+
+def check_username_validated(lines):
+    return any("re.match" in l and "username" in l for l in lines)
+
+checklist = [
+    ("No hardcoded secrets", check_no_hardcoded_secrets),
+    ("Password is hashed, not stored plain", check_password_is_hashed),
+    ("Username format is validated", check_username_validated),
+]
+
+def run_checklist(lines, checklist):
+    return {label: check(lines) for label, check in checklist}
+
+stretch_snippet = ['API_KEY = os.environ.get("API_KEY")', 'password = "hunter2"', 'username_ok = bool(re.match(r"^[A-Za-z0-9_]{3,20}$", username))']
+# Calculate stretch_results, then stretch_failed, below
+`,
+    tests:[
+      {type:'assert', expr:'stretch_results == {"No hardcoded secrets": True, "Password is hashed, not stored plain": False, "Username format is validated": True}', label:'stretch_results is correctly calculated'},
+      {type:'assert', expr:'stretch_failed == ["Password is hashed, not stored plain"]', label:'stretch_failed correctly equals ["Password is hashed, not stored plain"]'}
+    ]
+  }
 }
 ];
 
