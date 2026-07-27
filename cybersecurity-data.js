@@ -4534,9 +4534,119 @@ log = [("alice", False), ("alice", False), ("alice", False), ("bob", False), ("b
   ]
 };
 
+const CY_INTERMEDIATE_MP2 = {
+  key:'mp2',
+  title:'Mini Project 2 — Audit and Harden the Sign-Up Flow',
+  intro:`The full arc of this level, combined: run the Week 9 checklist against a real flawed snippet, FIX the
+    flaws it finds and confirm the fix actually passes, then harden the login itself by combining Week 3's
+    rate-limiting with Week 4's secure token generation — issuing a session token only to whoever the rate-limit
+    check actually allows through.`,
+  fixtureNote:`All three doors build on the same checklist and login log:`,
+  fixtureCode:`checklist = [
+    ("No hardcoded secrets", check_no_hardcoded_secrets),
+    ("Password is hashed, not stored plain", check_password_is_hashed),
+    ("Username format is validated", check_username_validated),
+]
+log = [("alice", False), ("alice", False), ("alice", False), ("bob", True)]`,
+  doors:[
+    {
+      key:'a', title:'Door 1 — Audit the flawed sign-up snippet',
+      desc:`Using check_no_hardcoded_secrets, check_password_is_hashed, check_username_validated, checklist, and
+        run_checklist (all given, from Week 9), apply the checklist to
+        snippet = ['API_KEY = "sk_live_99999"', 'password = "hunter2"',
+        'username_ok = bool(re.match(r"^[A-Za-z0-9_]{3,20}$", username))']. Calculate results and failed. Assert
+        that failed == ["No hardcoded secrets", "Password is hashed, not stored plain"] — TWO real flaws found.`,
+      starter:`def check_no_hardcoded_secrets(lines):
+    return not any("API_KEY" in l and "=" in l and "os.environ" not in l and ('"' in l or "'" in l) for l in lines)
+
+def check_password_is_hashed(lines):
+    return any("hashlib" in l and "hash" in l for l in lines)
+
+def check_username_validated(lines):
+    return any("re.match" in l and "username" in l for l in lines)
+
+checklist = [
+    ("No hardcoded secrets", check_no_hardcoded_secrets),
+    ("Password is hashed, not stored plain", check_password_is_hashed),
+    ("Username format is validated", check_username_validated),
+]
+
+def run_checklist(lines, checklist):
+    return {label: check(lines) for label, check in checklist}
+
+snippet = ['API_KEY = "sk_live_99999"', 'password = "hunter2"', 'username_ok = bool(re.match(r"^[A-Za-z0-9_]{3,20}$", username))']
+# Calculate results and failed below
+`,
+      tests:[{type:'assert', expr:'failed == ["No hardcoded secrets", "Password is hashed, not stored plain"]', label:'failed correctly identifies both real flaws'}]
+    },
+    {
+      key:'b', title:'Door 2 — Fix the flaws and confirm the checklist now passes',
+      desc:`Using run_checklist and checklist (given), write
+        fixed_snippet = ['API_KEY = os.environ.get("API_KEY")',
+        'password_hash = hashlib.sha256(password.encode()).hexdigest()',
+        'username_ok = bool(re.match(r"^[A-Za-z0-9_]{3,20}$", username))'], calculate fixed_results, then
+        all_passed = all(fixed_results.values()). Assert that all_passed == True — every item now passes after
+        the fix.`,
+      starter:`def check_no_hardcoded_secrets(lines):
+    return not any("API_KEY" in l and "=" in l and "os.environ" not in l and ('"' in l or "'" in l) for l in lines)
+
+def check_password_is_hashed(lines):
+    return any("hashlib" in l and "hash" in l for l in lines)
+
+def check_username_validated(lines):
+    return any("re.match" in l and "username" in l for l in lines)
+
+checklist = [
+    ("No hardcoded secrets", check_no_hardcoded_secrets),
+    ("Password is hashed, not stored plain", check_password_is_hashed),
+    ("Username format is validated", check_username_validated),
+]
+
+def run_checklist(lines, checklist):
+    return {label: check(lines) for label, check in checklist}
+# Write fixed_snippet below, then calculate fixed_results and all_passed
+`,
+      tests:[{type:'assert', expr:'all_passed == True', label:'all_passed correctly equals True after the fix'}]
+    },
+    {
+      key:'c', title:'Door 3 — Harden the login: rate-limit, then issue secure tokens',
+      desc:`Using process_log (Week 3) and secrets.token_hex (Week 4), on
+        log = [("alice", False), ("alice", False), ("alice", False), ("bob", True)]: calculate attempts and
+        blocked via process_log, then allowed_usernames = (the set of all usernames in log) MINUS blocked. Write
+        generate_session_token() using secrets.token_hex(16), then build
+        tokens = {username: generate_session_token() for username in allowed_usernames}. Assert that
+        "alice" not in tokens and "bob" in tokens and len(tokens["bob"]) == 32 — the rate-limited user never gets
+        a session token at all.`,
+      starter:`import secrets
+
+def process_log(log, max_attempts=3):
+    attempts = {}
+    blocked = set()
+    for username, success in log:
+        if success:
+            attempts[username] = 0
+        else:
+            attempts[username] = attempts.get(username, 0) + 1
+            if attempts[username] >= max_attempts:
+                blocked.add(username)
+    return attempts, blocked
+
+log = [("alice", False), ("alice", False), ("alice", False), ("bob", True)]
+# Calculate attempts, blocked, then allowed_usernames below.
+# Write generate_session_token(), then build tokens = {username: generate_session_token() for username in allowed_usernames}
+`,
+      tests:[
+        {type:'assert', expr:'"alice" not in tokens', label:'"alice" (rate-limited) correctly gets no session token'},
+        {type:'assert', expr:'"bob" in tokens', label:'"bob" (allowed) correctly gets a session token'},
+        {type:'assert', expr:'len(tokens["bob"]) == 32', label:'"bob"\'s token has the correct length'}
+      ]
+    }
+  ]
+};
+
 window.SUBJECT_DATA = window.SUBJECT_DATA || {};
 window.SUBJECT_DATA.cy = {
   b: {weeks: CY_WEEKS, mp1: CY_MP1, mp2: CY_MP2},
-  i: {weeks: CY_WEEKS, mp1: CY_MP1, mp2: CY_MP2},
+  i: {weeks: CY_INTERMEDIATE_WEEKS, mp1: CY_INTERMEDIATE_MP1, mp2: CY_INTERMEDIATE_MP2},
   a: {weeks: CY_WEEKS, mp1: CY_MP1, mp2: CY_MP2}
 };
