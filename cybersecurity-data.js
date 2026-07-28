@@ -5124,6 +5124,354 @@ def coverage_percentage(model):
       {type:'assert', expr:'stretch_gaps == []', label:'stretch_gaps correctly equals an empty list'}
     ]
   }
+},
+{
+  key:'week3', num:3, title:'Bigger Logs, Real Investigation',
+  scenarioTag:'Real world: no single log tells the whole story — real incidents connect TWO of them',
+  scenario:`Intermediate Week 8 checked ONE log for suspicious patterns. Real investigations often need TWO
+    separate logs to confirm something actually happened: a login log (who tried to log in, and whether it
+    worked) and an access log (who touched what, once they were in). A username that shows up suspicious in BOTH,
+    for the SAME reason, is a much stronger signal than either log alone.`,
+  objectives:[
+    'Find usernames whose login pattern shows a brute-force attempt that eventually SUCCEEDED',
+    'Find usernames who accessed a SENSITIVE resource',
+    'Correlate both logs — find usernames flagged by BOTH signals',
+    'Explain why a username flagged by only ONE log is weaker evidence than one flagged by both'
+  ],
+  conceptHtml:`
+    <p>A login log shows attempts; a SUCCESSFUL login right after a burst of failures is the exact pattern worth
+    flagging — someone eventually broke in, or got lucky:</p>
+    <pre class="code-block">def find_brute_forced_then_succeeded(login_log, threshold=3):
+    counts = {}
+    flagged = set()
+    for username, success in login_log:
+        if success:
+            if counts.get(username, 0) >= threshold:
+                flagged.add(username)
+            counts[username] = 0
+        else:
+            counts[username] = counts.get(username, 0) + 1
+    return flagged</pre>
+    <p>An access log shows what a logged-in user actually DID — flag anyone who touched a SENSITIVE resource:</p>
+    <pre class="code-block">SENSITIVE_RESOURCES = {"grades_database", "admin_panel"}
+
+def find_sensitive_access(access_log):
+    return set(username for username, resource in access_log if resource in SENSITIVE_RESOURCES)</pre>
+    <h3>The correlation — where the real signal is</h3>
+    <pre class="code-block">def correlate_incident(login_log, access_log):
+    brute_forced = find_brute_forced_then_succeeded(login_log)
+    sensitive_access = find_sensitive_access(access_log)
+    return brute_forced & sensitive_access   # SET INTERSECTION — flagged by BOTH
+
+# "bob" brute-forced his way in but never touched anything sensitive — probably fine
+# "carol" touched something sensitive but has a completely clean login history — probably a real admin
+# "mallory" did BOTH — brute-forced in, then touched grades_database — THIS is the real incident
+print(correlate_incident(login_log, access_log))   # {'mallory'}</pre>`,
+  sandboxStarter:`login_log = [
+    ("mallory", False), ("mallory", False), ("mallory", False), ("mallory", True),
+    ("alice", True),
+    ("bob", False), ("bob", False), ("bob", False), ("bob", True),
+]
+
+def find_brute_forced_then_succeeded(login_log, threshold=3):
+    counts = {}
+    flagged = set()
+    for username, success in login_log:
+        if success:
+            if counts.get(username, 0) >= threshold:
+                flagged.add(username)
+            counts[username] = 0
+        else:
+            counts[username] = counts.get(username, 0) + 1
+    return flagged
+
+print(find_brute_forced_then_succeeded(login_log))
+`,
+  sandboxStarter2:`access_log = [
+    ("mallory", "grades_database"),
+    ("alice", "own_profile"),
+    ("carol", "admin_panel"),
+]
+
+SENSITIVE_RESOURCES = {"grades_database", "admin_panel"}
+
+def find_sensitive_access(access_log):
+    return set(username for username, resource in access_log if resource in SENSITIVE_RESOURCES)
+
+print(find_sensitive_access(access_log))
+`,
+  exercises:[
+    {
+      title:'Find who brute-forced their way in',
+      desc:`Using login_log (given), write find_brute_forced_then_succeeded(login_log, threshold=3) exactly as
+        in the concept box. Assert that find_brute_forced_then_succeeded(login_log) == {"mallory", "bob"}.`,
+      starter:`login_log = [
+    ("mallory", False), ("mallory", False), ("mallory", False), ("mallory", True),
+    ("alice", True),
+    ("bob", False), ("bob", False), ("bob", False), ("bob", True),
+]
+# Write find_brute_forced_then_succeeded(login_log, threshold=3) below
+`,
+      tests:[{type:'assert', expr:'find_brute_forced_then_succeeded(login_log) == {"mallory", "bob"}', label:'find_brute_forced_then_succeeded correctly equals {"mallory", "bob"}'}]
+    },
+    {
+      title:'Find who accessed a sensitive resource',
+      desc:`Using access_log and SENSITIVE_RESOURCES (given), write find_sensitive_access(access_log). Assert
+        that find_sensitive_access(access_log) == {"mallory", "carol"}.`,
+      starter:`access_log = [
+    ("mallory", "grades_database"),
+    ("alice", "own_profile"),
+    ("carol", "admin_panel"),
+]
+SENSITIVE_RESOURCES = {"grades_database", "admin_panel"}
+# Write find_sensitive_access(access_log) below
+`,
+      tests:[{type:'assert', expr:'find_sensitive_access(access_log) == {"mallory", "carol"}', label:'find_sensitive_access correctly equals {"mallory", "carol"}'}]
+    },
+    {
+      title:'Correlate both logs into one incident set',
+      desc:`Using find_brute_forced_then_succeeded and find_sensitive_access (given), write
+        correlate_incident(login_log, access_log) returning the SET INTERSECTION of both flagged sets. Assert
+        that correlate_incident(login_log, access_log) == {"mallory"}.`,
+      starter:`login_log = [
+    ("mallory", False), ("mallory", False), ("mallory", False), ("mallory", True),
+    ("alice", True),
+    ("bob", False), ("bob", False), ("bob", False), ("bob", True),
+]
+access_log = [
+    ("mallory", "grades_database"),
+    ("alice", "own_profile"),
+    ("carol", "admin_panel"),
+]
+SENSITIVE_RESOURCES = {"grades_database", "admin_panel"}
+
+def find_brute_forced_then_succeeded(login_log, threshold=3):
+    counts = {}
+    flagged = set()
+    for username, success in login_log:
+        if success:
+            if counts.get(username, 0) >= threshold:
+                flagged.add(username)
+            counts[username] = 0
+        else:
+            counts[username] = counts.get(username, 0) + 1
+    return flagged
+
+def find_sensitive_access(access_log):
+    return set(username for username, resource in access_log if resource in SENSITIVE_RESOURCES)
+# Write correlate_incident(login_log, access_log) below
+`,
+      tests:[{type:'assert', expr:'correlate_incident(login_log, access_log) == {"mallory"}', label:'correlate_incident correctly equals {"mallory"}'}]
+    },
+    {
+      title:'Confirm "bob" is correctly excluded',
+      desc:`Using correlate_incident (given), assert that "bob" not in correlate_incident(login_log, access_log)
+        — bob brute-forced his way in, but never touched a sensitive resource, so he is correctly NOT flagged as
+        a confirmed incident.`,
+      starter:`login_log = [
+    ("mallory", False), ("mallory", False), ("mallory", False), ("mallory", True),
+    ("alice", True),
+    ("bob", False), ("bob", False), ("bob", False), ("bob", True),
+]
+access_log = [
+    ("mallory", "grades_database"),
+    ("alice", "own_profile"),
+    ("carol", "admin_panel"),
+]
+SENSITIVE_RESOURCES = {"grades_database", "admin_panel"}
+
+def find_brute_forced_then_succeeded(login_log, threshold=3):
+    counts = {}
+    flagged = set()
+    for username, success in login_log:
+        if success:
+            if counts.get(username, 0) >= threshold:
+                flagged.add(username)
+            counts[username] = 0
+        else:
+            counts[username] = counts.get(username, 0) + 1
+    return flagged
+
+def find_sensitive_access(access_log):
+    return set(username for username, resource in access_log if resource in SENSITIVE_RESOURCES)
+
+def correlate_incident(login_log, access_log):
+    return find_brute_forced_then_succeeded(login_log) & find_sensitive_access(access_log)
+`,
+      tests:[{type:'assert', expr:'"bob" not in correlate_incident(login_log, access_log)', label:'"bob" is correctly excluded from the confirmed incident'}]
+    },
+    {
+      title:'Confirm "carol" is correctly excluded',
+      desc:`Using correlate_incident (given), assert that "carol" not in correlate_incident(login_log,
+        access_log) — carol accessed a sensitive resource, but has no suspicious login pattern at all, so she is
+        correctly NOT flagged as a confirmed incident.`,
+      starter:`login_log = [
+    ("mallory", False), ("mallory", False), ("mallory", False), ("mallory", True),
+    ("alice", True),
+    ("bob", False), ("bob", False), ("bob", False), ("bob", True),
+]
+access_log = [
+    ("mallory", "grades_database"),
+    ("alice", "own_profile"),
+    ("carol", "admin_panel"),
+]
+SENSITIVE_RESOURCES = {"grades_database", "admin_panel"}
+
+def find_brute_forced_then_succeeded(login_log, threshold=3):
+    counts = {}
+    flagged = set()
+    for username, success in login_log:
+        if success:
+            if counts.get(username, 0) >= threshold:
+                flagged.add(username)
+            counts[username] = 0
+        else:
+            counts[username] = counts.get(username, 0) + 1
+    return flagged
+
+def find_sensitive_access(access_log):
+    return set(username for username, resource in access_log if resource in SENSITIVE_RESOURCES)
+
+def correlate_incident(login_log, access_log):
+    return find_brute_forced_then_succeeded(login_log) & find_sensitive_access(access_log)
+`,
+      tests:[{type:'assert', expr:'"carol" not in correlate_incident(login_log, access_log)', label:'"carol" is correctly excluded from the confirmed incident'}]
+    },
+    {
+      title:'Write a one-line incident summary',
+      desc:`Using correlate_incident (given), write summarize_incident(login_log, access_log) returning
+        f"{len(incidents)} confirmed incident(s): {sorted(incidents)}" where incidents =
+        correlate_incident(login_log, access_log). Assert that summarize_incident(login_log, access_log) ==
+        "1 confirmed incident(s): ['mallory']".`,
+      starter:`login_log = [
+    ("mallory", False), ("mallory", False), ("mallory", False), ("mallory", True),
+    ("alice", True),
+    ("bob", False), ("bob", False), ("bob", False), ("bob", True),
+]
+access_log = [
+    ("mallory", "grades_database"),
+    ("alice", "own_profile"),
+    ("carol", "admin_panel"),
+]
+SENSITIVE_RESOURCES = {"grades_database", "admin_panel"}
+
+def find_brute_forced_then_succeeded(login_log, threshold=3):
+    counts = {}
+    flagged = set()
+    for username, success in login_log:
+        if success:
+            if counts.get(username, 0) >= threshold:
+                flagged.add(username)
+            counts[username] = 0
+        else:
+            counts[username] = counts.get(username, 0) + 1
+    return flagged
+
+def find_sensitive_access(access_log):
+    return set(username for username, resource in access_log if resource in SENSITIVE_RESOURCES)
+
+def correlate_incident(login_log, access_log):
+    return find_brute_forced_then_succeeded(login_log) & find_sensitive_access(access_log)
+# Write summarize_incident(login_log, access_log) below
+`,
+      tests:[{type:'assert', expr:'summarize_incident(login_log, access_log) == "1 confirmed incident(s): [\'mallory\']"', label:'summarize_incident correctly summarizes the confirmed incident'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why is "bob" (brute-forced in, but touched nothing sensitive) NOT flagged as a confirmed incident?',
+      options:['He is flagged, the exercise has a bug','Brute-forcing alone, without any suspicious follow-up action, is weaker evidence — the correlation step specifically requires BOTH signals to agree before confirming a real incident','Bob is a trusted admin exempt from all checks','The system only tracks usernames starting with "m"'],
+      correct:1,
+      explain:'One suspicious signal alone could be a fluke (a forgotten password, a typo-prone user); requiring BOTH signals together is what makes the correlation meaningful.'
+    },
+    {
+      q:'Why is "carol" (touched something sensitive, but has a clean login history) NOT flagged either?',
+      options:['She is flagged, the exercise has a bug','A clean login history suggests she may be a LEGITIMATE admin with normal access — sensitive access alone, without any suspicious login pattern, isn\'t enough evidence of an incident','Carol\'s username is too short to track','Sensitive resources are never actually monitored'],
+      correct:1,
+      explain:'Context matters — the same action (accessing admin_panel) means something very different depending on whether it followed a suspicious login pattern or a completely normal one.'
+    },
+    {
+      q:'What does the & (set intersection) operator accomplish in correlate_incident?',
+      options:['It combines both sets into one bigger set (union)','It keeps only the usernames present in BOTH sets — exactly the "flagged by both signals" requirement','It removes duplicate names from a single list','It sorts the usernames alphabetically'],
+      correct:1,
+      explain:'Set intersection is precisely "in this AND in that" — the mathematical operation that matches "flagged by both logs."'
+    },
+    {
+      q:'Why does a real security investigation often need MORE than one log source?',
+      options:['It never does — one log is always enough','Any single log can only tell part of the story; correlating multiple independent sources turns two weak, ambiguous signals into one much stronger, harder-to-fake piece of evidence','Multiple logs are required by law in every country','Logs from different sources always contradict each other'],
+      correct:1,
+      explain:'This is exactly why real investigations pull together login logs, access logs, network logs, and more — no single source tells the whole story on its own.'
+    }
+  ],
+  sandboxStarter3:`login_log = [
+    ("mallory", False), ("mallory", False), ("mallory", False), ("mallory", True),
+    ("alice", True),
+    ("bob", False), ("bob", False), ("bob", False), ("bob", True),
+]
+access_log = [
+    ("mallory", "grades_database"),
+    ("alice", "own_profile"),
+    ("carol", "admin_panel"),
+]
+SENSITIVE_RESOURCES = {"grades_database", "admin_panel"}
+
+def find_brute_forced_then_succeeded(login_log, threshold=3):
+    counts = {}
+    flagged = set()
+    for username, success in login_log:
+        if success:
+            if counts.get(username, 0) >= threshold:
+                flagged.add(username)
+            counts[username] = 0
+        else:
+            counts[username] = counts.get(username, 0) + 1
+    return flagged
+
+def find_sensitive_access(access_log):
+    return set(username for username, resource in access_log if resource in SENSITIVE_RESOURCES)
+
+def correlate_incident(login_log, access_log):
+    return find_brute_forced_then_succeeded(login_log) & find_sensitive_access(access_log)
+
+print("Brute-forced logins:", find_brute_forced_then_succeeded(login_log))
+print("Sensitive access:", find_sensitive_access(access_log))
+print("Confirmed incidents:", correlate_incident(login_log, access_log))
+`,
+  stretchChallenge:{
+    title:'Investigate a fresh pair of logs with a different outcome',
+    desc:`Using find_brute_forced_then_succeeded, find_sensitive_access, and correlate_incident (given), apply
+      them to stretch_login_log = [("dave", False), ("dave", False), ("dave", False), ("dave", True),
+      ("eve", True)] and stretch_access_log = [("dave", "own_profile"), ("eve", "admin_panel")]. Calculate
+      stretch_incidents. Assert that stretch_incidents == set() — dave brute-forced in but only touched his own
+      profile, and eve accessed something sensitive but with a completely clean login, so NEITHER is confirmed.`,
+    starter:`def find_brute_forced_then_succeeded(login_log, threshold=3):
+    counts = {}
+    flagged = set()
+    for username, success in login_log:
+        if success:
+            if counts.get(username, 0) >= threshold:
+                flagged.add(username)
+            counts[username] = 0
+        else:
+            counts[username] = counts.get(username, 0) + 1
+    return flagged
+
+SENSITIVE_RESOURCES = {"grades_database", "admin_panel"}
+
+def find_sensitive_access(access_log):
+    return set(username for username, resource in access_log if resource in SENSITIVE_RESOURCES)
+
+def correlate_incident(login_log, access_log):
+    return find_brute_forced_then_succeeded(login_log) & find_sensitive_access(access_log)
+
+stretch_login_log = [("dave", False), ("dave", False), ("dave", False), ("dave", True), ("eve", True)]
+stretch_access_log = [("dave", "own_profile"), ("eve", "admin_panel")]
+# Calculate stretch_incidents below
+`,
+    tests:[
+      {type:'assert', expr:'stretch_incidents == set()', label:'stretch_incidents correctly equals an empty set'}
+    ]
+  }
 }
 ];
 
