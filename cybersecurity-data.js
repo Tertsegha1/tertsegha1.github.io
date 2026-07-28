@@ -4644,6 +4644,250 @@ log = [("alice", False), ("alice", False), ("alice", False), ("bob", True)]
   ]
 };
 
+const CY_ADVANCED_WEEKS = [
+{
+  key:'week1', num:1, title:'Encrypting vs Hashing: What\'s the Difference',
+  scenarioTag:'Real world: two completely different tools, often confused for the same thing',
+  scenario:`Beginner Week 1 hashed a password. Beginner Week 4 built a Caesar cipher. These can look similar —
+    both scramble text — but they solve OPPOSITE problems. Encryption is designed to be REVERSED (with the right
+    key, you get the original back). Hashing is designed to NEVER be reversed (you can only verify a match, never
+    recover the original). This week makes that distinction concrete, by hand, with both tools side by side.`,
+  objectives:[
+    'Rebuild the Caesar cipher\'s encrypt and decrypt functions',
+    'Demonstrate that encryption is genuinely reversible — decrypt(encrypt(x)) recovers the EXACT original',
+    'Rebuild a SHA-256 hash function and confirm there is no matching "unhash" function',
+    'Explain why verifying a match never requires reversing a hash'
+  ],
+  conceptHtml:`
+    <p>The Caesar cipher (Beginner Week 4) shifts every letter forward to encrypt — and shifting the SAME amount
+    BACKWARD recovers the exact original:</p>
+    <pre class="code-block">def caesar_encrypt(text, shift):
+    result = ""
+    for ch in text:
+        if ch.isalpha():
+            base = ord("A") if ch.isupper() else ord("a")
+            result += chr((ord(ch) - base + shift) % 26 + base)
+        else:
+            result += ch
+    return result
+
+def caesar_decrypt(text, shift):
+    return caesar_encrypt(text, -shift)   # the SAME operation, just shifted the other way
+
+print(caesar_encrypt("HELLO", 3))          # "KHOOR"
+print(caesar_decrypt("KHOOR", 3))          # "HELLO" — the EXACT original text, recovered</pre>
+    <p>Hashing (Beginner Week 1) looks similar on the surface — it also scrambles text — but there is NO
+    equivalent "unhash" function, for any hash function used in practice:</p>
+    <pre class="code-block">import hashlib
+
+def hash_text(text):
+    return hashlib.sha256(text.encode()).hexdigest()
+
+print(hash_text("secret"))
+# '2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b'
+# There is no hash_text_reverse() function — this is intentional, not a missing feature.</pre>
+    <h3>How do you ever "check" a hash, then?</h3>
+    <p>By hashing the NEW input again and comparing the two hashes — never by reversing anything:</p>
+    <pre class="code-block">def is_same_hash(text1, text2):
+    return hash_text(text1) == hash_text(text2)
+
+print(is_same_hash("secret", "secret"))   # True — same input, same hash, genuine match
+print(is_same_hash("secret", "Secret"))   # False — even one changed letter produces a totally different hash</pre>
+    <p>This is exactly how login systems verify passwords (Beginner Week 6) — they never need to know the
+    original password, only whether a NEW hash matches the STORED one.</p>`,
+  sandboxStarter:`def caesar_encrypt(text, shift):
+    result = ""
+    for ch in text:
+        if ch.isalpha():
+            base = ord("A") if ch.isupper() else ord("a")
+            result += chr((ord(ch) - base + shift) % 26 + base)
+        else:
+            result += ch
+    return result
+
+def caesar_decrypt(text, shift):
+    return caesar_encrypt(text, -shift)
+
+print(caesar_encrypt("HELLO", 3))
+print(caesar_decrypt("KHOOR", 3))
+`,
+  sandboxStarter2:`import hashlib
+
+def hash_text(text):
+    return hashlib.sha256(text.encode()).hexdigest()
+
+print(hash_text("secret"))
+print(hash_text("Secret"))
+`,
+  exercises:[
+    {
+      title:'Rebuild the Caesar encrypt function',
+      desc:`Write caesar_encrypt(text, shift) exactly as in Beginner Week 4. Assert that
+        caesar_encrypt("HELLO", 3) == "KHOOR".`,
+      starter:`# Write caesar_encrypt(text, shift) below
+`,
+      tests:[{type:'assert', expr:'caesar_encrypt("HELLO", 3) == "KHOOR"', label:'caesar_encrypt correctly produces "KHOOR"'}]
+    },
+    {
+      title:'Rebuild the Caesar decrypt function',
+      desc:`Write caesar_decrypt(text, shift) using caesar_encrypt(text, -shift) (given). Assert that
+        caesar_decrypt("KHOOR", 3) == "HELLO".`,
+      starter:`def caesar_encrypt(text, shift):
+    result = ""
+    for ch in text:
+        if ch.isalpha():
+            base = ord("A") if ch.isupper() else ord("a")
+            result += chr((ord(ch) - base + shift) % 26 + base)
+        else:
+            result += ch
+    return result
+# Write caesar_decrypt(text, shift) below
+`,
+      tests:[{type:'assert', expr:'caesar_decrypt("KHOOR", 3) == "HELLO"', label:'caesar_decrypt correctly recovers "HELLO"'}]
+    },
+    {
+      title:'Prove encryption is genuinely reversible',
+      desc:`Using caesar_encrypt and caesar_decrypt (given), write is_reversible(original, shift) that encrypts
+        original, then decrypts the result, and returns whether the final text equals original EXACTLY. Assert
+        that is_reversible("HELLO WORLD", 7) == True.`,
+      starter:`def caesar_encrypt(text, shift):
+    result = ""
+    for ch in text:
+        if ch.isalpha():
+            base = ord("A") if ch.isupper() else ord("a")
+            result += chr((ord(ch) - base + shift) % 26 + base)
+        else:
+            result += ch
+    return result
+
+def caesar_decrypt(text, shift):
+    return caesar_encrypt(text, -shift)
+# Write is_reversible(original, shift) below
+`,
+      tests:[{type:'assert', expr:'is_reversible("HELLO WORLD", 7) == True', label:'is_reversible correctly confirms full recovery'}]
+    },
+    {
+      title:'Rebuild the hash function',
+      desc:`Write hash_text(text) using hashlib.sha256(text.encode()).hexdigest(). Assert that
+        hash_text("secret") == "2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b".`,
+      starter:`import hashlib
+# Write hash_text(text) below
+`,
+      tests:[{type:'assert', expr:'hash_text("secret") == "2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b"', label:'hash_text correctly produces the expected SHA-256 digest'}]
+    },
+    {
+      title:'Verify a match WITHOUT ever reversing the hash',
+      desc:`Using hash_text (given), write is_same_hash(text1, text2) returning whether their hashes match.
+        Assert that is_same_hash("secret", "secret") == True and is_same_hash("secret", "Secret") == False — a
+        genuine match is confirmed, and a tiny change is correctly caught, all without ever "unhashing" anything.`,
+      starter:`import hashlib
+
+def hash_text(text):
+    return hashlib.sha256(text.encode()).hexdigest()
+# Write is_same_hash(text1, text2) below
+`,
+      tests:[
+        {type:'assert', expr:'is_same_hash("secret", "secret") == True', label:'Identical text correctly produces matching hashes'},
+        {type:'assert', expr:'is_same_hash("secret", "Secret") == False', label:'A single changed letter correctly produces different hashes'}
+      ]
+    },
+    {
+      title:'Classify a technique as reversible or irreversible',
+      desc:`Write classify_technique(name) using a dict mapping {"Caesar cipher": "reversible (encryption)",
+        "SHA-256": "irreversible (hashing)"}, returning "unknown" for anything else. Assert that
+        classify_technique("Caesar cipher") == "reversible (encryption)" and
+        classify_technique("SHA-256") == "irreversible (hashing)".`,
+      starter:`# Write classify_technique(name) below
+`,
+      tests:[
+        {type:'assert', expr:'classify_technique("Caesar cipher") == "reversible (encryption)"', label:'"Caesar cipher" is correctly classified as reversible'},
+        {type:'assert', expr:'classify_technique("SHA-256") == "irreversible (hashing)"', label:'"SHA-256" is correctly classified as irreversible'}
+      ]
+    }
+  ],
+  quiz:[
+    {
+      q:'What is the fundamental difference between encryption and hashing?',
+      options:['They are the same thing with different names','Encryption is designed to be REVERSED with the right key; hashing is designed to NEVER be reversed, even by its own creator','Encryption is always weaker than hashing','Hashing only works on numbers'],
+      correct:1,
+      explain:'That single distinction — reversible vs irreversible by design — determines which tool fits which problem.'
+    },
+    {
+      q:'Why does a login system hash passwords instead of encrypting them?',
+      options:['Hashing is faster to type','The system never needs to recover the ORIGINAL password — it only ever needs to check whether a NEW attempt matches, which hashing does perfectly without ever storing something reversible','Encryption doesn\'t work on text','Hashing uses less memory'],
+      correct:1,
+      explain:'If a password store could be reversed by anyone (even the system itself), a single breach would expose every real password — hashing removes that risk entirely.'
+    },
+    {
+      q:'is_reversible("HELLO WORLD", 7) checks something very specific. What?',
+      options:['That the text contains only letters','That encrypting THEN decrypting produces the EXACT original text back, proving the Caesar cipher is a true two-way (reversible) operation','That the shift value is valid','That hashing and encryption produce the same result'],
+      correct:1,
+      explain:'Reversibility means the round trip — encrypt, then decrypt — returns you to precisely where you started, with nothing lost.'
+    },
+    {
+      q:'Why is there no "unhash" function for SHA-256, even in principle?',
+      options:['Nobody has written one yet, but it will exist eventually','A cryptographic hash function is deliberately designed to destroy information in a way that can\'t be undone — that irreversibility is the entire point of the design, not a limitation','SHA-256 is too old to reverse','Hash functions only work one direction due to a bug'],
+      correct:1,
+      explain:'Irreversibility is the core security property hash functions are built to guarantee — it\'s a deliberate design goal, not a missing feature waiting to be added.'
+    }
+  ],
+  sandboxStarter3:`import hashlib
+
+def caesar_encrypt(text, shift):
+    result = ""
+    for ch in text:
+        if ch.isalpha():
+            base = ord("A") if ch.isupper() else ord("a")
+            result += chr((ord(ch) - base + shift) % 26 + base)
+        else:
+            result += ch
+    return result
+
+def caesar_decrypt(text, shift):
+    return caesar_encrypt(text, -shift)
+
+def hash_text(text):
+    return hashlib.sha256(text.encode()).hexdigest()
+
+message = "MEET ME AT NOON"
+encrypted = caesar_encrypt(message, 5)
+decrypted = caesar_decrypt(encrypted, 5)
+print("Encrypted:", encrypted)
+print("Decrypted:", decrypted, "-> matches original:", decrypted == message)
+print("Hash of message:", hash_text(message))
+print("(There is no way to turn that hash back into the message.)")
+`,
+  stretchChallenge:{
+    title:'Confirm reversibility holds for ANY shift, not just one',
+    desc:`Using caesar_encrypt and caesar_decrypt (given), write is_reversible(original, shift) (same as the main
+      exercise), then check it across MULTIPLE shifts: stretch_shifts = [1, 5, 13, 25], and
+      stretch_text = "DEFEND THE PORTAL". Calculate stretch_all_reversible = all(is_reversible(stretch_text, s)
+      for s in stretch_shifts). Assert that stretch_all_reversible == True — reversibility holds for every shift
+      value, not just one lucky case.`,
+    starter:`def caesar_encrypt(text, shift):
+    result = ""
+    for ch in text:
+        if ch.isalpha():
+            base = ord("A") if ch.isupper() else ord("a")
+            result += chr((ord(ch) - base + shift) % 26 + base)
+        else:
+            result += ch
+    return result
+
+def caesar_decrypt(text, shift):
+    return caesar_encrypt(text, -shift)
+
+stretch_shifts = [1, 5, 13, 25]
+stretch_text = "DEFEND THE PORTAL"
+# Write is_reversible(original, shift) below, then calculate stretch_all_reversible
+`,
+    tests:[
+      {type:'assert', expr:'stretch_all_reversible == True', label:'stretch_all_reversible correctly equals True'}
+    ]
+  }
+}
+];
+
 window.SUBJECT_DATA = window.SUBJECT_DATA || {};
 window.SUBJECT_DATA.cy = {
   b: {weeks: CY_WEEKS, mp1: CY_MP1, mp2: CY_MP2},
