@@ -2007,6 +2007,76 @@ Dee,Blue,74"
 }
 ];
 
+const R_INTERMEDIATE_MP1 = {
+  key:'mp1',
+  title:'Load and Summarize the Class Roster',
+  intro:`Three doors, combining all four weeks: load a real class roster from CSV text and check its shape
+    (Week 4), turn its house column into a factor (Week 3), label pass/fail with ifelse() (Week 2), then use
+    sapply() to summarise scores per house without writing a single loop (Week 1).`,
+  fixtureNote:`All three doors build on this same roster:`,
+  fixtureCode:`csv_text <- "name,house,score
+Ada,Red,85
+Ben,Blue,62
+Cy,Red,45
+Dee,Blue,90
+Eve,Red,55"`,
+  doors:[
+    {
+      key:'a', title:'Door 1 — Load the roster and check its shape',
+      desc:`Using read.csv and factor (Weeks 4 and 3), calculate df as read.csv(text = csv_text), then houses as
+        factor(df$house, levels = c("Red", "Blue")). Calculate row_count as nrow(df) and house_levels as
+        levels(houses). Use stopifnot() to confirm that row_count == 5 && all(house_levels == c("Red", "Blue")).`,
+      starter:`csv_text <- "name,house,score
+Ada,Red,85
+Ben,Blue,62
+Cy,Red,45
+Dee,Blue,90
+Eve,Red,55"
+# Calculate df, houses, row_count, and house_levels below
+`,
+      tests:[
+        {type:'assert', expr:'row_count == 5 && all(house_levels == c("Red", "Blue"))', label:'row_count and house_levels are both correct'}
+      ]
+    },
+    {
+      key:'b', title:'Door 2 — Label pass/fail, then count passes per house',
+      desc:`Using ifelse and sapply (Weeks 2 and 1), calculate results as ifelse(df$score >= 50, "Pass", "Fail"),
+        then house_pass_counts as sapply(c("Red", "Blue"), function(h) sum(df$house == h & results == "Pass")).
+        Use stopifnot() to confirm that house_pass_counts[["Red"]] == 2 && house_pass_counts[["Blue"]] == 2.`,
+      starter:`csv_text <- "name,house,score
+Ada,Red,85
+Ben,Blue,62
+Cy,Red,45
+Dee,Blue,90
+Eve,Red,55"
+df <- read.csv(text = csv_text)
+# Calculate results, then house_pass_counts below
+`,
+      tests:[
+        {type:'assert', expr:'house_pass_counts[["Red"]] == 2 && house_pass_counts[["Blue"]] == 2', label:'house_pass_counts is correct for both houses'}
+      ]
+    },
+    {
+      key:'c', title:'Door 3 — Summarise average score per house with sapply',
+      desc:`Using sapply (Week 1), calculate avg_by_house as sapply(c("Red", "Blue"), function(h)
+        mean(df$score[df$house == h])). Use stopifnot() to confirm that round(avg_by_house[["Red"]]) == 62 &&
+        round(avg_by_house[["Blue"]]) == 76.`,
+      starter:`csv_text <- "name,house,score
+Ada,Red,85
+Ben,Blue,62
+Cy,Red,45
+Dee,Blue,90
+Eve,Red,55"
+df <- read.csv(text = csv_text)
+# Calculate avg_by_house below
+`,
+      tests:[
+        {type:'assert', expr:'round(avg_by_house[["Red"]]) == 62 && round(avg_by_house[["Blue"]]) == 76', label:'avg_by_house is correct for both houses'}
+      ]
+    }
+  ]
+};
+
 const R_MP1 = {
   key:'mp1',
   title:'Class Attendance Report',
