@@ -1359,6 +1359,167 @@ print(round(sd(scores), 1))
 }
 ];
 
+/* =========================================================================
+   R Academy — Intermediate Level content data
+   ========================================================================= */
+
+const R_INTERMEDIATE_WEEKS = [
+{
+  key:'week1', num:1, title:'Skipping the Loop: sapply and lapply',
+  scenarioTag:'Real world: applying the same calculation to every student, without writing a loop',
+  scenario:`Beginner Week 4 taught you the for loop — great for building up a total step by step. But R has a
+    faster, cleaner way to apply the SAME function to every value in a vector: sapply() and lapply() do the
+    looping for you.`,
+  objectives:[
+    'Use sapply() to apply a function to every value in a vector',
+    'Use a named function (not just an anonymous one) with sapply()',
+    'Use lapply() to get a list back instead of a simplified vector',
+    'Access one element of a list with [[ ]]'
+  ],
+  conceptHtml:`
+    <p><code>sapply(vector, function)</code> applies <code>function</code> to EVERY value in <code>vector</code>,
+    and simplifies the results back into a plain vector — no for loop needed:</p>
+    <pre class="code-block">nums &lt;- c(3, 5, 8)
+doubled &lt;- sapply(nums, function(x) x * 2)
+print(doubled)   # 6 10 16</pre>
+    <p>You can also pass a function you've already written a name for (Beginner Week 5), instead of writing it
+    inline each time:</p>
+    <pre class="code-block">square &lt;- function(x) x^2
+squared &lt;- sapply(c(2, 3, 4), square)
+print(squared)   # 4 9 16</pre>
+    <p><code>lapply()</code> works the same way, but ALWAYS returns a <strong>list</strong> instead of simplifying
+    to a vector — useful when each result might be a different shape. Access one item with double brackets
+    <code>[[ ]]</code>:</p>
+    <pre class="code-block">squared_list &lt;- lapply(c(1, 2, 3), function(x) x^2)
+print(squared_list[[1]])   # 1
+print(squared_list[[2]])   # 4</pre>
+    <h3>Let's break down the starter code, line by line</h3>
+    <pre class="code-block">nums &lt;- c(3, 5, 8)
+doubled &lt;- sapply(nums, function(x) x * 2)
+print(doubled)</pre>
+    <ul>
+      <li><code>function(x) x * 2</code> — an <strong>anonymous function</strong> (no name given) that takes one
+        value <code>x</code> and doubles it. Beginner Week 5 always gave functions a name first
+        (<code>my_func &lt;- function(x) ...</code>) — sapply() lets you skip that step for a quick one-off.</li>
+      <li><code>sapply(nums, function(x) x * 2)</code> — runs that function once for EACH value in
+        <code>nums</code> (3, then 5, then 8), collecting every result into one new vector.</li>
+      <li>The result, <code>doubled</code>, is an ordinary vector — every trick from Weeks 1-9 (indexing, sum(),
+        filtering) still works on it.</li>
+    </ul>
+    <p>The second example follows the same shape but uses a function that was DEFINED first and given a name
+    (<code>square</code>), then passed to sapply() by that name, with no brackets after it — sapply() calls it for
+    you.</p>`,
+  sandboxStarter:`nums <- c(3, 5, 8)
+doubled <- sapply(nums, function(x) x * 2)
+print(doubled)
+`,
+  sandboxStarter2:`square <- function(x) x^2
+squared <- sapply(c(2, 3, 4), square)
+print(squared)
+`,
+  exercises:[
+    {
+      title:'Double every value with sapply',
+      desc:`Create a vector called nums with the values 4, 6, 9. Print sapply(nums, function(x) x * 2) — it should
+        print 8, 12 and 18.`,
+      starter:`# Create your vector, then sapply a doubling function over it and print the result
+`,
+      tests:[{type:'output', contains:['8','12','18'], label:'Prints all three doubled values (8, 12, 18)'}]
+    },
+    {
+      title:'Use a named function with sapply',
+      desc:`Define a function called add_five that returns x + 5. Create a vector nums with the values 1, 2, 3.
+        Print sapply(nums, add_five) — it should print 6, 7 and 8.`,
+      starter:`# Define add_five, create nums, then sapply it and print the result
+add_five <- function(x) x + 5
+`,
+      tests:[{type:'output', contains:['6','7','8'], label:'Prints all three results (6, 7, 8)'}]
+    },
+    {
+      title:'Get string lengths with sapply',
+      desc:`Create a vector called words with the values "cat", "elephant", "dog". Print sapply(words, nchar) —
+        the built-in nchar() function counts letters, so this should print 3, 8 and 3.`,
+      starter:`# Create your vector, then sapply nchar over it and print the result
+`,
+      tests:[{type:'output', contains:['3','8'], label:'Prints the correct lengths (3, 8, 3)'}]
+    },
+    {
+      title:'Total after doubling',
+      desc:`Create a vector called nums with the values 2, 4, 6. Calculate total_doubled as
+        sum(sapply(nums, function(x) x * 2)). Use stopifnot() to confirm that total_doubled == 24.`,
+      starter:`# Create nums, then calculate total_doubled below
+nums <- c(2, 4, 6)
+`,
+      tests:[{type:'assert', expr:'total_doubled == 24', label:'total_doubled equals 24'}]
+    },
+    {
+      title:'Use lapply to build a list',
+      desc:`Create a vector called nums with the values 2, 3, 4. Calculate squared_list as lapply(nums,
+        function(x) x^2). Use stopifnot() to confirm that squared_list[[2]] == 9 — the SECOND item in the list,
+        accessed with double brackets.`,
+      starter:`# Create nums, then calculate squared_list below
+nums <- c(2, 3, 4)
+`,
+      tests:[{type:'assert', expr:'squared_list[[2]] == 9', label:'squared_list[[2]] equals 9'}]
+    },
+    {
+      title:'Count how many pass, using sapply',
+      desc:`Create a vector called scores with the values 45, 82, 91, 38. Calculate passes as sapply(scores,
+        function(x) x >= 50) — a vector of TRUE/FALSE values. Use stopifnot() to confirm that sum(passes) == 2 —
+        TRUE counts as 1 and FALSE counts as 0, so summing a TRUE/FALSE vector counts how many were TRUE.`,
+      starter:`# Create scores, then calculate passes below
+scores <- c(45, 82, 91, 38)
+`,
+      tests:[{type:'assert', expr:'sum(passes) == 2', label:'sum(passes) equals 2'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does sapply(nums, function(x) x * 2) do?',
+      options:['Doubles only the first value in nums','Applies the doubling function to EVERY value in nums and returns the results as a vector, without writing a for loop','Multiplies the whole vector together','Creates a new empty vector'],
+      correct:1,
+      explain:'sapply() applies a function once per element and collects every result — the loop happens for you, behind the scenes.'
+    },
+    {
+      q:'What is the main difference between sapply() and lapply()?',
+      options:['There is no difference, they are identical','sapply() simplifies its results into a plain vector when possible; lapply() always returns a list','lapply() is only for text, sapply() is only for numbers','sapply() cannot use named functions'],
+      correct:1,
+      explain:'Both apply a function across every element, but sapply() tries to simplify the result to a vector, while lapply() always keeps the list shape.'
+    },
+    {
+      q:'How do you get the 2nd item out of a list called my_list?',
+      options:['my_list[2]','my_list.2','my_list[[2]]','my_list$2'],
+      correct:2,
+      explain:'Double square brackets [[ ]] pull out ONE element of a list, unlike single brackets which are used differently for lists.'
+    },
+    {
+      q:'Why does sum(sapply(c(45,82,91,38), function(x) x >= 50)) equal 2?',
+      options:['Because sapply() always returns 2','Because two of the four values (82 and 91) are >= 50, and summing a TRUE/FALSE vector counts the TRUEs (TRUE=1, FALSE=0)','Because 45+38=83 which rounds to 2','It actually equals 4, not 2'],
+      correct:1,
+      explain:'R treats TRUE as 1 and FALSE as 0 when you do arithmetic on a logical vector, so sum() on a TRUE/FALSE vector is a quick way to count how many conditions were met.'
+    }
+  ],
+  sandboxStarter3:`nums <- c(1, 2, 3)
+squared_list <- lapply(nums, function(x) x^2)
+print(squared_list[[1]])
+print(squared_list[[2]])
+print(squared_list[[3]])
+`,
+  stretchChallenge:{
+    title:'Count words longer than 4 letters',
+    desc:`Create a vector called words with the values "cat", "elephant", "dog", "giraffe". Calculate long_count as
+      sum(sapply(words, function(x) nchar(x) > 4)). Use stopifnot() to confirm that long_count == 2 — only
+      "elephant" and "giraffe" have more than 4 letters.`,
+    starter:`# Create words, then calculate long_count below
+words <- c("cat", "elephant", "dog", "giraffe")
+`,
+    tests:[
+      {type:'assert', expr:'long_count == 2', label:'long_count equals 2'}
+    ]
+  }
+}
+];
+
 const R_MP1 = {
   key:'mp1',
   title:'Class Attendance Report',
