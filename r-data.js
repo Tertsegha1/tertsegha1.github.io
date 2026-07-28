@@ -2327,6 +2327,159 @@ print(sorted_desc)
       {type:'assert', expr:'all(sorted$grade == c("A", "B", "C"))', label:'sorted$grade exactly equals c("A", "B", "C")'}
     ]
   }
+},
+{
+  key:'week7', num:7, title:'Group Summaries: aggregate()',
+  scenarioTag:'Real world: what\'s the average score for EACH house, not the whole class at once?',
+  scenario:`mean(students$score) gives ONE number for the whole class. But a real report usually wants it broken
+    down BY GROUP — the average for Red house, separately from the average for Blue house. aggregate() is R's
+    tool for exactly this: "summarise Y, grouped by X."`,
+  objectives:[
+    'Use aggregate() to compute one summary value PER GROUP',
+    'Read the formula syntax value ~ group used by aggregate()',
+    'Swap FUN=mean for other summary functions (sum, length, max)',
+    'Pull a specific group\'s result out of an aggregate() table'
+  ],
+  conceptHtml:`
+    <p><code>aggregate(value ~ group, data = df, FUN = function)</code> splits <code>df</code> into groups
+    (based on the <code>group</code> column), and applies <code>FUN</code> to the <code>value</code> column
+    WITHIN each group separately:</p>
+    <pre class="code-block">students &lt;- data.frame(house = c("Red", "Blue", "Red", "Blue", "Red"), score = c(85, 62, 90, 74, 55))
+house_avg &lt;- aggregate(score ~ house, data = students, FUN = mean)
+print(house_avg)
+#   house    score
+# 1  Blue 68.00000
+# 2   Red 76.66667</pre>
+    <p>The result is a NEW, smaller data.frame — one row per group, not one row per original student.</p>
+    <p>Swap <code>FUN = mean</code> for a different function to get a different summary — the GROUPING stays the
+    same, only the calculation changes:</p>
+    <pre class="code-block">house_count &lt;- aggregate(score ~ house, data = students, FUN = length)
+print(house_count)   # how many students are in each house</pre>
+    <h3>Let's break down the starter code, line by line</h3>
+    <pre class="code-block">students &lt;- data.frame(house = c("Red", "Blue", "Red"), score = c(85, 62, 90))
+house_avg &lt;- aggregate(score ~ house, data = students, FUN = mean)
+print(house_avg$house)</pre>
+    <ul>
+      <li><code>score ~ house</code> — read this as "score, BY house" — the <code>~</code> (tilde) separates
+        WHAT to summarise (score) from WHAT to group by (house).</li>
+      <li><code>data = students</code> — tells aggregate() which data.frame these column names refer to.</li>
+      <li><code>FUN = mean</code> — the function applied to EACH group's scores separately — swap this for
+        <code>sum</code>, <code>max</code>, <code>length</code>, or any function that takes a vector.</li>
+      <li><code>house_avg$house</code> — the result has its OWN <code>house</code> and <code>score</code>
+        columns, exactly like any other data.frame from Beginner Week 6.</li>
+    </ul>`,
+  sandboxStarter:`students <- data.frame(house = c("Red", "Blue", "Red", "Blue", "Red"), score = c(85, 62, 90, 74, 55))
+house_avg <- aggregate(score ~ house, data = students, FUN = mean)
+print(house_avg)
+`,
+  sandboxStarter2:`students <- data.frame(house = c("Red", "Blue", "Red", "Blue", "Red"), score = c(85, 62, 90, 74, 55))
+house_count <- aggregate(score ~ house, data = students, FUN = length)
+print(house_count)
+`,
+  exercises:[
+    {
+      title:'Group into a summary table',
+      desc:`Create students as data.frame(house = c("Red", "Blue", "Red", "Blue", "Red"), score = c(85, 62, 90,
+        74, 55)). Calculate house_avg as aggregate(score ~ house, data = students, FUN = mean). Use stopifnot()
+        to confirm that nrow(house_avg) == 2 — one row per house, not one row per student.`,
+      starter:`# Create students, then calculate house_avg below
+students <- data.frame(house = c("Red", "Blue", "Red", "Blue", "Red"), score = c(85, 62, 90, 74, 55))
+`,
+      tests:[{type:'assert', expr:'nrow(house_avg) == 2', label:'nrow(house_avg) equals 2'}]
+    },
+    {
+      title:'Check one group\'s average',
+      desc:`Using the same house_avg, use stopifnot() to confirm that round(house_avg$score[house_avg$house ==
+        "Red"]) == 77 — Red house's average score (85, 90, 55) rounds to 77.`,
+      starter:`students <- data.frame(house = c("Red", "Blue", "Red", "Blue", "Red"), score = c(85, 62, 90, 74, 55))
+house_avg <- aggregate(score ~ house, data = students, FUN = mean)
+# Check Red's average below
+`,
+      tests:[{type:'assert', expr:'round(house_avg$score[house_avg$house == "Red"]) == 77', label:'Red house\'s average correctly rounds to 77'}]
+    },
+    {
+      title:'Check the other group\'s average',
+      desc:`Using the same house_avg, use stopifnot() to confirm that house_avg$score[house_avg$house == "Blue"]
+        == 68 — Blue house's average score (62, 74).`,
+      starter:`students <- data.frame(house = c("Red", "Blue", "Red", "Blue", "Red"), score = c(85, 62, 90, 74, 55))
+house_avg <- aggregate(score ~ house, data = students, FUN = mean)
+# Check Blue's average below
+`,
+      tests:[{type:'assert', expr:'house_avg$score[house_avg$house == "Blue"] == 68', label:'Blue house\'s average correctly equals 68'}]
+    },
+    {
+      title:'Swap mean for sum',
+      desc:`Using the same students data.frame, calculate house_sum as aggregate(score ~ house, data = students,
+        FUN = sum). Use stopifnot() to confirm that house_sum$score[house_sum$house == "Red"] == 230.`,
+      starter:`students <- data.frame(house = c("Red", "Blue", "Red", "Blue", "Red"), score = c(85, 62, 90, 74, 55))
+# Calculate house_sum below
+`,
+      tests:[{type:'assert', expr:'house_sum$score[house_sum$house == "Red"] == 230', label:'house_sum for Red correctly equals 230'}]
+    },
+    {
+      title:'Count students per group',
+      desc:`Using the same students data.frame, calculate house_count as aggregate(score ~ house, data =
+        students, FUN = length). Use stopifnot() to confirm that house_count$score[house_count$house == "Red"]
+        == 3 — three students are in Red house.`,
+      starter:`students <- data.frame(house = c("Red", "Blue", "Red", "Blue", "Red"), score = c(85, 62, 90, 74, 55))
+# Calculate house_count below
+`,
+      tests:[{type:'assert', expr:'house_count$score[house_count$house == "Red"] == 3', label:'house_count for Red correctly equals 3'}]
+    },
+    {
+      title:'Find the top score per group',
+      desc:`Using the same students data.frame, calculate house_max as aggregate(score ~ house, data = students,
+        FUN = max). Use stopifnot() to confirm that house_max$score[house_max$house == "Blue"] == 74.`,
+      starter:`students <- data.frame(house = c("Red", "Blue", "Red", "Blue", "Red"), score = c(85, 62, 90, 74, 55))
+# Calculate house_max below
+`,
+      tests:[{type:'assert', expr:'house_max$score[house_max$house == "Blue"] == 74', label:'house_max for Blue correctly equals 74'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does the formula score ~ house mean inside aggregate()?',
+      options:['Divide score by house','Summarise the score column, GROUPED BY the house column — read the ~ as "by"','Compare score to house for equality','It has no special meaning'],
+      correct:1,
+      explain:'The ~ (tilde) formula syntax means "score, broken down by house" — exactly what you\'d say describing the summary out loud.'
+    },
+    {
+      q:'How many rows does aggregate(score ~ house, data = students, FUN = mean) return, if students has 3 different house values?',
+      options:['Always exactly the same number of rows as students','One row per DISTINCT house value (3 rows), regardless of how many students are in each','Exactly 1 row, always','It depends on the FUN used, not on the number of houses'],
+      correct:1,
+      explain:'aggregate() collapses each group down to ONE summary row — the row count matches the number of distinct groups, not the number of original rows.'
+    },
+    {
+      q:'What changes if you swap FUN = mean for FUN = length in the exact same aggregate() call?',
+      options:['Nothing changes at all','The GROUPING stays identical (still one row per house), but now each group\'s value is a COUNT of students instead of an average score','It groups by a completely different column','It causes an error, since length() cannot be used with aggregate()'],
+      correct:1,
+      explain:'FUN is just the function applied WITHIN each group — swapping it changes what\'s calculated, not how the data is split into groups.'
+    },
+    {
+      q:'Why does house_avg$score[house_avg$house == "Red"] correctly pull out just Red\'s average?',
+      options:['It doesn\'t work, this is invalid R syntax','house_avg$house == "Red" builds a TRUE/FALSE vector marking which row(s) are Red, and house_avg$score[...] uses that to filter down to just that row\'s score — the same indexing pattern from Beginner Week 7','It always returns the first row no matter what','It searches every data.frame in the session for a house called Red'],
+      correct:1,
+      explain:'This is exactly the same logical-indexing pattern used throughout this course — a TRUE/FALSE condition inside [ ] filters down to matching rows/values.'
+    }
+  ],
+  sandboxStarter3:`students <- data.frame(house = c("Red", "Blue", "Red", "Blue", "Red"), score = c(85, 62, 90, 74, 55))
+house_avg <- aggregate(score ~ house, data = students, FUN = mean)
+house_count <- aggregate(score ~ house, data = students, FUN = length)
+print(house_avg)
+print(house_count)
+`,
+  stretchChallenge:{
+    title:'Check every group\'s count at once',
+    desc:`Using students (given), calculate house_count as aggregate(score ~ house, data = students, FUN =
+      length), then sorted_count as house_count[order(house_count$house), ]. Use stopifnot() to confirm that
+      all(sorted_count$score == c(2, 3)) — Blue (2 students) comes before Red (3 students) alphabetically.`,
+    starter:`students <- data.frame(house = c("Red", "Blue", "Red", "Blue", "Red"), score = c(85, 62, 90, 74, 55))
+# Calculate house_count, then sorted_count below
+`,
+    tests:[
+      {type:'assert', expr:'all(sorted_count$score == c(2, 3))', label:'sorted_count$score exactly equals c(2, 3)'}
+    ]
+  }
 }
 ];
 
