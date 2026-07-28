@@ -2625,6 +2625,148 @@ print(sum(grepl("er$", words)))
       {type:'assert', expr:'cat_start_count == 3 && total_count == 5', label:'cat_start_count and total_count are both correct'}
     ]
   }
+},
+{
+  key:'week9', num:9, title:'Lists: When a Vector Isn\'t Enough',
+  scenarioTag:'Real world: bundling DIFFERENT types of information about one thing together',
+  scenario:`Every data structure so far — vectors, factors, data.frames — holds ONE type of thing per column/
+    slot. But one student really has a name (text), several scores (numbers), and a pass/fail flag (logical) all
+    at once. A list() bundles all of that together under one name, whatever the mix of types.`,
+  objectives:[
+    'Create a list() that bundles together values of different types',
+    'Access a named element of a list using $',
+    'Use names() and length() to inspect a list\'s structure',
+    'Add a new named element to a list, and combine a list\'s contents into a summary with paste()'
+  ],
+  conceptHtml:`
+    <p>A vector like <code>c(85, 90, 78)</code> can only hold ONE type of value. A <code>list()</code> can hold
+    ANYTHING — text, numbers, TRUE/FALSE, even another vector — each piece given its own name:</p>
+    <pre class="code-block">student &lt;- list(name = "Ada", scores = c(85, 90, 78), passed = TRUE)
+print(student$name)     # "Ada"
+print(student$scores)   # 85 90 78</pre>
+    <p><code>$</code> pulls out one named piece — exactly the same <code>$</code> you've already used on
+    data.frames since Beginner Week 6, just applied to a list instead of a table.</p>
+    <h3>Let's break down the starter code, line by line</h3>
+    <pre class="code-block">student &lt;- list(name = "Ada", scores = c(85, 90, 78), passed = TRUE)
+print(student$name)
+print(student$scores)</pre>
+    <ul>
+      <li><code>list(name = ..., scores = ..., passed = ...)</code> — builds one list with three named pieces,
+        mixing a character value, a numeric vector, and a logical value in a single object.</li>
+      <li><code>student$name</code> — reaches inside the list and pulls out just the piece named
+        <code>name</code>, the same way <code>df$score</code> pulls out one column of a data.frame.</li>
+    </ul>
+    <p>Two more useful checks: <code>names(student)</code> lists every element's name, and
+    <code>length(student)</code> counts how many named elements the list has — not the length of any vector
+    inside it.</p>`,
+  sandboxStarter:`student <- list(name = "Ada", scores = c(85, 90, 78), passed = TRUE)
+print(student$name)
+print(student$scores)
+`,
+  sandboxStarter2:`student <- list(name = "Ada", scores = c(85, 90, 78), passed = TRUE)
+print(names(student))
+print(length(student))
+`,
+  exercises:[
+    {
+      title:'Access a named element',
+      desc:`Create student as list(name = "Ada", scores = c(85, 90, 78), passed = TRUE). Calculate student_name
+        as student$name. Use stopifnot() to confirm that student_name == "Ada".`,
+      starter:`# Create student, then calculate student_name below
+student <- list(name = "Ada", scores = c(85, 90, 78), passed = TRUE)
+`,
+      tests:[{type:'assert', expr:'student_name == "Ada"', label:'student_name equals "Ada"'}]
+    },
+    {
+      title:'Summarize a numeric element inside a list',
+      desc:`Using the same student, calculate avg_score as round(mean(student$scores)). Use stopifnot() to
+        confirm that avg_score == 84 — the average of 85, 90, and 78, rounded.`,
+      starter:`student <- list(name = "Ada", scores = c(85, 90, 78), passed = TRUE)
+# Calculate avg_score below
+`,
+      tests:[{type:'assert', expr:'avg_score == 84', label:'avg_score equals 84'}]
+    },
+    {
+      title:'Check a logical element',
+      desc:`Using the same student, calculate passed_flag as student$passed. Use stopifnot() to confirm that
+        passed_flag == TRUE.`,
+      starter:`student <- list(name = "Ada", scores = c(85, 90, 78), passed = TRUE)
+# Calculate passed_flag below
+`,
+      tests:[{type:'assert', expr:'passed_flag == TRUE', label:'passed_flag equals TRUE'}]
+    },
+    {
+      title:'List every element\'s name',
+      desc:`Using the same student, calculate student_fields as names(student). Use stopifnot() to confirm that
+        all(student_fields == c("name", "scores", "passed")) — the three names, in the order they were created.`,
+      starter:`student <- list(name = "Ada", scores = c(85, 90, 78), passed = TRUE)
+# Calculate student_fields below
+`,
+      tests:[{type:'assert', expr:'all(student_fields == c("name", "scores", "passed"))', label:'student_fields exactly equals c("name", "scores", "passed")'}]
+    },
+    {
+      title:'Add a new element to a list',
+      desc:`Using the same student, add a new element by running student$age <- 12. Then calculate list_length as
+        length(student). Use stopifnot() to confirm that list_length == 4 — the list started with 3 named
+        elements, and now has 4.`,
+      starter:`student <- list(name = "Ada", scores = c(85, 90, 78), passed = TRUE)
+# Add student$age, then calculate list_length below
+`,
+      tests:[{type:'assert', expr:'list_length == 4', label:'list_length equals 4'}]
+    },
+    {
+      title:'Combine a list\'s contents into a summary',
+      desc:`Using the same student (without the age addition), calculate summary as paste(student$name, "scored
+        an average of", round(mean(student$scores))). Use stopifnot() to confirm that summary == "Ada scored an
+        average of 84".`,
+      starter:`student <- list(name = "Ada", scores = c(85, 90, 78), passed = TRUE)
+# Calculate summary below
+`,
+      tests:[{type:'assert', expr:'summary == "Ada scored an average of 84"', label:'summary exactly equals "Ada scored an average of 84"'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What can a list() hold that a vector c() cannot?',
+      options:['Lists can only hold numbers, same as vectors','A mix of DIFFERENT types together — text, a numeric vector, TRUE/FALSE — all bundled into one object','Lists can only hold one single value','There is no real difference between the two'],
+      correct:1,
+      explain:'A vector forces every element to the same type; a list has no such restriction — that\'s exactly why it fits "one student\'s name, scores, and pass flag" so naturally.'
+    },
+    {
+      q:'What does student$scores return, if student <- list(name = "Ada", scores = c(85, 90, 78), passed = TRUE)?',
+      options:['The word "scores", as text','The numeric vector c(85, 90, 78) — the whole piece stored under that name','Just the number 85','An error, since $ only works on data.frames'],
+      correct:1,
+      explain:'$ reaches into the list and returns whatever was stored under that name — here, that\'s a whole numeric vector, not just one number.'
+    },
+    {
+      q:'What does names(student) return?',
+      options:['The values stored inside the list','A character vector of the list\'s element NAMES, e.g. c("name", "scores", "passed")','The number of elements in the list','Nothing — names() only works on data.frames'],
+      correct:1,
+      explain:'names() lists what each piece is CALLED, not what it contains — length() is the one that counts how many pieces there are.'
+    },
+    {
+      q:'Why does length(student) become 4 after running student$age <- 12, if student started with 3 named elements?',
+      options:['It doesn\'t change — length() always returns 3 for this list','Assigning to a NEW name (student$age) inside a list adds a brand new named element, so the list now has one more piece than before','age overwrites the existing name element','length() counts something unrelated to the number of elements'],
+      correct:1,
+      explain:'Just like adding a new column to a data.frame with df$new <- ..., assigning to a list element that doesn\'t exist yet CREATES it — growing the list by one.'
+    }
+  ],
+  sandboxStarter3:`student <- list(name = "Ada", scores = c(85, 90, 78), passed = TRUE)
+summary <- paste(student$name, "scored an average of", round(mean(student$scores)))
+print(summary)
+print(length(student))
+`,
+  stretchChallenge:{
+    title:'Build a list from scratch and summarize it',
+    desc:`Create classmate as list(name = "Ben", scores = c(60, 72, 68), passed = FALSE). Calculate ben_summary as
+      paste(classmate$name, "averaged", round(mean(classmate$scores)), "and passed:", classmate$passed). Use
+      stopifnot() to confirm that ben_summary == "Ben averaged 67 and passed: FALSE".`,
+    starter:`# Create classmate, then calculate ben_summary below
+`,
+    tests:[
+      {type:'assert', expr:'ben_summary == "Ben averaged 67 and passed: FALSE"', label:'ben_summary exactly matches the expected text'}
+    ]
+  }
 }
 ];
 
