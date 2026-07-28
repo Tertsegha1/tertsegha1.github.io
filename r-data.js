@@ -1662,6 +1662,154 @@ scores <- c(95, 72, 40)
       {type:'assert', expr:'all(grades == c("A", "B", "F"))', label:'grades exactly equals c("A", "B", "F")'}
     ]
   }
+},
+{
+  key:'week3', num:3, title:'Categories in R: Factors',
+  scenarioTag:'Real world: house colours and t-shirt sizes are categories, not free text',
+  scenario:`So far every text vector has just been ordinary text — nothing stops a typo like "Rde" sneaking in.
+    A factor tells R "this column can ONLY be one of these specific categories" — and, when the categories have
+    a natural order (like t-shirt sizes), lets you compare them directly.`,
+  objectives:[
+    'Create a factor with factor() and a fixed set of levels',
+    'Check how many categories exist with nlevels()',
+    'Create an ORDERED factor and compare two categories directly',
+    'Convert a factor back to text or to its underlying integer code'
+  ],
+  conceptHtml:`
+    <p><code>factor(vector, levels = c(...))</code> creates a category vector — R remembers the FULL set of
+    allowed categories, not just whichever ones happen to appear:</p>
+    <pre class="code-block">houses &lt;- factor(c("Red", "Blue", "Red", "Green"), levels = c("Red", "Blue", "Green"))
+print(levels(houses))    # "Red"   "Blue"  "Green"
+print(nlevels(houses))   # 3</pre>
+    <p>Add <code>ordered = TRUE</code> when the categories have a natural order — this lets you compare them
+    directly with <code>&lt;</code>/<code>&gt;</code>, something plain text can never do:</p>
+    <pre class="code-block">sizes &lt;- factor(c("S", "L", "M"), levels = c("S", "M", "L"), ordered = TRUE)
+print(sizes[2] > sizes[1])   # TRUE - "L" comes after "S" in the level order</pre>
+    <p>Underneath, R stores each factor value as a plain integer code matching its position in <code>levels</code>
+    — get it back with <code>as.integer()</code>, or get the original text back with <code>as.character()</code>:</p>
+    <pre class="code-block">print(as.integer(houses))     # 1 2 1 3 - Red=1, Blue=2, Green=3
+print(as.character(houses[1]))  # "Red"</pre>
+    <h3>Let's break down the starter code, line by line</h3>
+    <pre class="code-block">houses &lt;- factor(c("Red", "Blue", "Red", "Green"), levels = c("Red", "Blue", "Green"))
+print(levels(houses))
+print(nlevels(houses))</pre>
+    <ul>
+      <li><code>levels = c("Red", "Blue", "Green")</code> — this fixes the COMPLETE set of allowed categories,
+        in a specific order. Even though "Green" only appears once in the data, it's still a recognised level.</li>
+      <li><code>levels(houses)</code> — returns that full set of categories, as an ordinary text vector.</li>
+      <li><code>nlevels(houses)</code> — just counts how many categories there are (3), regardless of how many
+        times each one appears in the actual data.</li>
+    </ul>
+    <p>The second example follows a similar shape but adds <code>ordered = TRUE</code>, which is what unlocks
+    <code>&gt;</code>/<code>&lt;</code> comparisons between factor values — comparing plain text with
+    <code>&gt;</code> wouldn't mean anything, but comparing ORDERED categories does.</p>`,
+  sandboxStarter:`houses <- factor(c("Red", "Blue", "Red", "Green"), levels = c("Red", "Blue", "Green"))
+print(levels(houses))
+print(nlevels(houses))
+`,
+  sandboxStarter2:`sizes <- factor(c("S", "L", "M"), levels = c("S", "M", "L"), ordered = TRUE)
+print(sizes[2] > sizes[1])
+`,
+  exercises:[
+    {
+      title:'Build a factor and check its levels',
+      desc:`Create a factor called houses from c("Red", "Blue", "Red", "Green") with levels = c("Red", "Blue",
+        "Green"). Use stopifnot() to confirm that all(levels(houses) == c("Red", "Blue", "Green")).`,
+      starter:`# Create houses below
+houses <- factor(c("Red", "Blue", "Red", "Green"), levels = c("Red", "Blue", "Green"))
+`,
+      tests:[{type:'assert', expr:'all(levels(houses) == c("Red", "Blue", "Green"))', label:'levels(houses) exactly equals c("Red", "Blue", "Green")'}]
+    },
+    {
+      title:'Count how many categories exist',
+      desc:`Using the same houses factor (c("Red", "Blue", "Red", "Green"), levels = c("Red", "Blue", "Green")),
+        use stopifnot() to confirm that nlevels(houses) == 3.`,
+      starter:`houses <- factor(c("Red", "Blue", "Red", "Green"), levels = c("Red", "Blue", "Green"))
+# Check nlevels(houses) below
+`,
+      tests:[{type:'assert', expr:'nlevels(houses) == 3', label:'nlevels(houses) equals 3'}]
+    },
+    {
+      title:'Get one value back as text',
+      desc:`Using the same houses factor, use stopifnot() to confirm that as.character(houses[1]) == "Red" —
+        as.character() converts a single factor value back into an ordinary piece of text.`,
+      starter:`houses <- factor(c("Red", "Blue", "Red", "Green"), levels = c("Red", "Blue", "Green"))
+# Check as.character(houses[1]) below
+`,
+      tests:[{type:'assert', expr:'as.character(houses[1]) == "Red"', label:'as.character(houses[1]) equals "Red"'}]
+    },
+    {
+      title:'Compare ordered factor values',
+      desc:`Create an ordered factor called sizes from c("S", "L", "M") with levels = c("S", "M", "L"), ordered =
+        TRUE. Use stopifnot() to confirm that sizes[2] > sizes[1] — "L" (the 2nd value) comes after "S" (the 1st
+        value) in the level order.`,
+      starter:`# Create sizes below
+sizes <- factor(c("S", "L", "M"), levels = c("S", "M", "L"), ordered = TRUE)
+`,
+      tests:[{type:'assert', expr:'sizes[2] > sizes[1]', label:'sizes[2] is correctly greater than sizes[1]'}]
+    },
+    {
+      title:'Get the underlying integer code',
+      desc:`Using the same houses factor, use stopifnot() to confirm that as.integer(houses)[1] == 1 — "Red" is
+        the FIRST level, so its underlying code is 1.`,
+      starter:`houses <- factor(c("Red", "Blue", "Red", "Green"), levels = c("Red", "Blue", "Green"))
+# Check as.integer(houses)[1] below
+`,
+      tests:[{type:'assert', expr:'as.integer(houses)[1] == 1', label:'as.integer(houses)[1] equals 1'}]
+    },
+    {
+      title:'Count how many of one category',
+      desc:`Using the same houses factor, calculate house_count as sum(houses == "Red"). Use stopifnot() to
+        confirm that house_count == 2 — "Red" appears twice in the data.`,
+      starter:`houses <- factor(c("Red", "Blue", "Red", "Green"), levels = c("Red", "Blue", "Green"))
+# Calculate house_count below
+`,
+      tests:[{type:'assert', expr:'house_count == 2', label:'house_count equals 2'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does levels = c("Red", "Blue", "Green") do when creating a factor?',
+      options:['It sorts the data alphabetically','It fixes the COMPLETE set of allowed categories, even ones that might not appear in the actual data','It deletes any value not in the list','It converts the vector into numbers only'],
+      correct:1,
+      explain:'A factor remembers its full category set independently of how many times (or whether) each one actually appears in the data.'
+    },
+    {
+      q:'Why can you compare sizes[2] > sizes[1] for an ORDERED factor, but not for plain text?',
+      options:['You actually can\'t, this would error','Ordered factors have a defined level ORDER ("S" < "M" < "L"), so R knows what ">" means; plain text has no defined order for ">" to use','Ordered factors are automatically converted to numbers first, losing their labels','Comparison operators only work on numbers, never on categories'],
+      correct:1,
+      explain:'ordered = TRUE attaches a meaningful sequence to the levels, which is exactly what > and < need to make sense of "bigger" or "smaller".'
+    },
+    {
+      q:'What does as.integer(houses) return for a factor like houses <- factor(c("Red","Blue"), levels=c("Red","Blue","Green"))?',
+      options:['The original text, unchanged','The position (index) of each value within the levels list — e.g. "Red" becomes 1, since it\'s the first level','A random unique ID for each value','An error, since factors cannot be converted to integers'],
+      correct:1,
+      explain:'Underneath, R stores every factor value as its integer position in the levels vector — as.integer() reveals that underlying code.'
+    },
+    {
+      q:'Why use a factor instead of just leaving house colours as plain text?',
+      options:['There is no real benefit, they behave identically','A factor fixes the exact set of valid categories up front, which helps catch typos/invalid values and enables features like ordering that plain text doesn\'t have','Factors take up less memory than text, which is the only reason to use them','Factors can only ever store numbers'],
+      correct:1,
+      explain:'Declaring the valid categories in advance is exactly what makes a factor more useful than free-form text for genuinely categorical data.'
+    }
+  ],
+  sandboxStarter3:`houses <- factor(c("Red", "Blue", "Red", "Green"), levels = c("Red", "Blue", "Green"))
+print(as.integer(houses))
+print(as.character(houses[1]))
+print(sum(houses == "Red"))
+`,
+  stretchChallenge:{
+    title:'Compare two ordered sizes the other way round',
+    desc:`Using sizes <- factor(c("S", "L", "M"), levels = c("S", "M", "L"), ordered = TRUE), calculate
+      size_check as (sizes[3] > sizes[1]) && (sizes[3] < sizes[2]) — "M" (3rd value) should be bigger than "S"
+      (1st) but smaller than "L" (2nd). Use stopifnot() to confirm that size_check == TRUE.`,
+    starter:`sizes <- factor(c("S", "L", "M"), levels = c("S", "M", "L"), ordered = TRUE)
+# Calculate size_check below
+`,
+    tests:[
+      {type:'assert', expr:'size_check == TRUE', label:'size_check equals TRUE'}
+    ]
+  }
 }
 ];
 
