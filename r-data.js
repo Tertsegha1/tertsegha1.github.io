@@ -1517,6 +1517,151 @@ words <- c("cat", "elephant", "dog", "giraffe")
       {type:'assert', expr:'long_count == 2', label:'long_count equals 2'}
     ]
   }
+},
+{
+  key:'week2', num:2, title:'Vectorized Decisions: ifelse()',
+  scenarioTag:'Real world: labelling an entire class register at once, not one student at a time',
+  scenario:`Beginner Week 3's if/else only works on ONE value at a time. But real class data is a whole vector of
+    scores. ifelse() applies a yes/no decision to EVERY value in a vector at once, no loop and no sapply needed.`,
+  objectives:[
+    'Use ifelse(condition, value_if_true, value_if_false) on a whole vector',
+    'Use ifelse() to clamp or replace values based on a condition',
+    'Nest ifelse() inside another ifelse() for three or more categories',
+    'Combine ifelse() with sum() to count how many values met a condition'
+  ],
+  conceptHtml:`
+    <p><code>ifelse(condition, yes, no)</code> checks a condition for EVERY element of a vector at once, and picks
+    <code>yes</code> or <code>no</code> for each position:</p>
+    <pre class="code-block">scores &lt;- c(45, 82, 91, 38)
+results &lt;- ifelse(scores >= 50, "Pass", "Fail")
+print(results)   # "Fail" "Pass" "Pass" "Fail"</pre>
+    <p>You can nest one ifelse() inside another to handle THREE or more categories, not just two:</p>
+    <pre class="code-block">temps &lt;- c(-5, 10, 25)
+labels &lt;- ifelse(temps < 0, "Freezing", ifelse(temps < 20, "Cool", "Warm"))
+print(labels)   # "Freezing" "Cool" "Warm"</pre>
+    <h3>Let's break down the starter code, line by line</h3>
+    <pre class="code-block">scores &lt;- c(45, 82, 91, 38)
+results &lt;- ifelse(scores >= 50, "Pass", "Fail")
+print(results)</pre>
+    <ul>
+      <li><code>scores >= 50</code> — builds a TRUE/FALSE vector first, exactly like Week 2's filtering
+        (<code>scores[scores > 70]</code>), just without the square brackets this time.</li>
+      <li><code>ifelse(scores >= 50, "Pass", "Fail")</code> — for each position, if that TRUE/FALSE value is TRUE
+        it picks <code>"Pass"</code>, otherwise it picks <code>"Fail"</code> — one single call handles the WHOLE
+        vector.</li>
+      <li>Compare this to Beginner Week 3's <code>if (score >= 50) {...} else {...}</code> — that only works on
+        ONE score. ifelse() is the vector-friendly version.</li>
+    </ul>
+    <p>The second example follows the same shape but NESTS a second ifelse() inside the "no" slot of the first
+    one — R first checks <code>temps < 0</code>; wherever that's FALSE, it then checks the INNER condition
+    (<code>temps < 20</code>) to decide between "Cool" and "Warm".</p>`,
+  sandboxStarter:`scores <- c(45, 82, 91, 38)
+results <- ifelse(scores >= 50, "Pass", "Fail")
+print(results)
+`,
+  sandboxStarter2:`temps <- c(-5, 10, 25)
+labels <- ifelse(temps < 0, "Freezing", ifelse(temps < 20, "Cool", "Warm"))
+print(labels)
+`,
+  exercises:[
+    {
+      title:'Label pass and fail for a whole vector',
+      desc:`Create a vector called scores with the values 70, 40, 55, 90. Calculate results as ifelse(scores >=
+        50, "Pass", "Fail"). Use stopifnot() to confirm that all(results == c("Pass", "Fail", "Pass", "Pass")).`,
+      starter:`# Create scores, then calculate results below
+scores <- c(70, 40, 55, 90)
+`,
+      tests:[{type:'assert', expr:'all(results == c("Pass", "Fail", "Pass", "Pass"))', label:'results exactly equals c("Pass", "Fail", "Pass", "Pass")'}]
+    },
+    {
+      title:'Clamp negative numbers to zero',
+      desc:`Create a vector called nums with the values -3, 5, -1, 8. Print ifelse(nums < 0, 0, nums) — any
+        negative value becomes 0, others stay the same. It should print 0, 5, 0, 8.`,
+      starter:`# Create your vector, then ifelse it and print the result
+`,
+      tests:[{type:'output', contains:['0','5','8'], label:'Prints the clamped values (0, 5, 0, 8)'}]
+    },
+    {
+      title:'Three categories with nested ifelse',
+      desc:`Create a vector called temps with the values -5, 10, 25. Calculate labels as ifelse(temps < 0,
+        "Freezing", ifelse(temps < 20, "Cool", "Warm")). Use stopifnot() to confirm that all(labels ==
+        c("Freezing", "Cool", "Warm")).`,
+      starter:`# Create temps, then calculate labels below
+temps <- c(-5, 10, 25)
+`,
+      tests:[{type:'assert', expr:'all(labels == c("Freezing", "Cool", "Warm"))', label:'labels exactly equals c("Freezing", "Cool", "Warm")'}]
+    },
+    {
+      title:'Count how many pass, using ifelse and sum',
+      desc:`Create a vector called scores with the values 45, 82, 91, 38. Calculate pass_count as
+        sum(ifelse(scores >= 50, 1, 0)). Use stopifnot() to confirm that pass_count == 2.`,
+      starter:`# Create scores, then calculate pass_count below
+scores <- c(45, 82, 91, 38)
+`,
+      tests:[{type:'assert', expr:'pass_count == 2', label:'pass_count equals 2'}]
+    },
+    {
+      title:'Check the clamped vector exactly',
+      desc:`Create a vector called nums with the values -2, 4, -6, 8. Calculate clamped as ifelse(nums < 0, 0,
+        nums). Use stopifnot() to confirm that all(clamped == c(0, 4, 0, 8)) — all() checks that EVERY comparison
+        in the vector is TRUE.`,
+      starter:`# Create nums, then calculate clamped below
+nums <- c(-2, 4, -6, 8)
+`,
+      tests:[{type:'assert', expr:'all(clamped == c(0, 4, 0, 8))', label:'clamped exactly equals c(0, 4, 0, 8)'}]
+    },
+    {
+      title:'Check the height boundary exactly',
+      desc:`Create a vector called heights with the values 140, 139, 145. Calculate results as ifelse(heights >=
+        140, "Allowed", "Not tall enough"). Use stopifnot() to confirm that all(results == c("Allowed", "Not tall
+        enough", "Allowed")) — notice 140 itself counts as Allowed, since the condition is >= not just >.`,
+      starter:`# Create heights, then calculate results below
+heights <- c(140, 139, 145)
+`,
+      tests:[{type:'assert', expr:'all(results == c("Allowed", "Not tall enough", "Allowed"))', label:'results exactly equals c("Allowed", "Not tall enough", "Allowed")'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What is the main advantage of ifelse() over a plain if/else statement (Beginner Week 3)?',
+      options:['ifelse() only works on a single value, same as if/else','ifelse() works on a WHOLE vector at once, applying the decision to every element, while if/else only checks one value','ifelse() is only for text values','There is no real difference'],
+      correct:1,
+      explain:'if/else branches on one condition at a time; ifelse() vectorizes that same decision across every element of a vector in one call.'
+    },
+    {
+      q:'What does ifelse(nums < 0, 0, nums) do?',
+      options:['Replaces every value in nums with 0','Keeps every negative value the same, replaces positives with 0','Replaces negative values with 0, and leaves other values unchanged','Removes negative values from the vector entirely'],
+      correct:2,
+      explain:'Wherever the condition (nums < 0) is TRUE, ifelse() picks the "yes" value (0); wherever it\'s FALSE, it picks the "no" value (the original number) — this is a common "clamping" pattern.'
+    },
+    {
+      q:'In ifelse(temps < 0, "Freezing", ifelse(temps < 20, "Cool", "Warm")), when does a temperature get labelled "Warm"?',
+      options:['Whenever temps < 0 is TRUE','Whenever temps < 0 is FALSE, no matter what','Only when temps < 0 is FALSE AND temps < 20 is also FALSE','Every value gets labelled "Warm"'],
+      correct:2,
+      explain:'The inner ifelse() only runs when the outer condition is FALSE — and within that, "Warm" is only picked when the inner condition (temps < 20) is ALSO FALSE.'
+    },
+    {
+      q:'Why does sum(ifelse(scores >= 50, 1, 0)) correctly count how many scores passed?',
+      options:['sum() only works with ifelse()','ifelse() converts each TRUE/FALSE decision into a 1 or 0, and summing those 1s and 0s counts how many were 1 (i.e. passed)','It doesn\'t work correctly, this is a common mistake','ifelse() automatically counts things without sum()'],
+      correct:1,
+      explain:'ifelse() explicitly returns 1 for a pass and 0 for a fail here, so adding them all up gives a running count of passes — the same idea as summing a TRUE/FALSE vector directly.'
+    }
+  ],
+  sandboxStarter3:`scores <- c(45, 82, 91, 38)
+pass_count <- sum(ifelse(scores >= 50, 1, 0))
+print(pass_count)
+`,
+  stretchChallenge:{
+    title:'Label three grade bands with nested ifelse',
+    desc:`Create a vector called scores with the values 95, 72, 40. Calculate grades as ifelse(scores >= 90, "A",
+      ifelse(scores >= 60, "B", "F")). Use stopifnot() to confirm that all(grades == c("A", "B", "F")).`,
+    starter:`# Create scores, then calculate grades below
+scores <- c(95, 72, 40)
+`,
+    tests:[
+      {type:'assert', expr:'all(grades == c("A", "B", "F"))', label:'grades exactly equals c("A", "B", "F")'}
+    ]
+  }
 }
 ];
 
