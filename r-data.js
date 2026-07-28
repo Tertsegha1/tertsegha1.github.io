@@ -2004,6 +2004,174 @@ Dee,Blue,74"
       {type:'assert', expr:'nrow(red_house) == 2', label:'nrow(red_house) equals 2'}
     ]
   }
+},
+{
+  key:'week5', num:5, title:'Functions with Defaults',
+  scenarioTag:'Real world: most students pass at 50, but some tests have a stricter pass mark',
+  scenario:`Beginner Week 5 wrote functions with every argument required every time. But most calls to a
+    pass/fail checker will use the SAME pass mark — R lets a function argument have a DEFAULT value, so you only
+    need to override it on the rare occasions it's actually different.`,
+  objectives:[
+    'Write a function with a default value for one of its arguments',
+    'Call that function WITHOUT the optional argument, using the default',
+    'Call the SAME function overriding the default with a different value',
+    'Combine a default-argument function with sapply() across a whole vector'
+  ],
+  conceptHtml:`
+    <p>Adding <code>= value</code> after a parameter name gives it a DEFAULT — callers can leave it out entirely:</p>
+    <pre class="code-block">is_pass &lt;- function(score, threshold = 50) {
+  return(score >= threshold)
+}
+print(is_pass(65))       # TRUE - uses the default threshold of 50
+print(is_pass(65, 70))   # FALSE - 70 overrides the default this time</pre>
+    <p>This is exactly the same function either way — the default just saves you from repeating
+    <code>threshold = 50</code> on every single call where 50 is what you wanted anyway.</p>
+    <h3>Let's break down the starter code, line by line</h3>
+    <pre class="code-block">is_pass &lt;- function(score, threshold = 50) {
+  return(score >= threshold)
+}
+print(is_pass(65))</pre>
+    <ul>
+      <li><code>function(score, threshold = 50)</code> — <code>score</code> has no default, so it's REQUIRED every
+        time; <code>threshold = 50</code> gives threshold a default, so it's OPTIONAL.</li>
+      <li><code>is_pass(65)</code> — only one argument is given. R fills in <code>threshold = 50</code>
+        automatically, since none was provided.</li>
+      <li><code>is_pass(65, 70)</code> — providing a SECOND argument overrides the default for just this call —
+        the function definition itself never changes.</li>
+    </ul>
+    <p>The second example follows the same shape, but calls <code>is_pass</code> from INSIDE <code>sapply()</code>
+    (Week 1) — the default still applies unless you explicitly wrap it to pass something else.</p>`,
+  sandboxStarter:`is_pass <- function(score, threshold = 50) {
+  return(score >= threshold)
+}
+print(is_pass(65))
+print(is_pass(65, 70))
+`,
+  sandboxStarter2:`is_pass <- function(score, threshold = 50) {
+  return(score >= threshold)
+}
+scores <- c(45, 65, 80)
+print(sapply(scores, is_pass))
+`,
+  exercises:[
+    {
+      title:'Write a function with a default and use it',
+      desc:`Define is_pass(score, threshold = 50) returning score >= threshold. Use stopifnot() to confirm that
+        is_pass(65) == TRUE — called with just one argument, using the default threshold of 50.`,
+      starter:`# Define is_pass below
+is_pass <- function(score, threshold = 50) {
+  return(score >= threshold)
+}
+`,
+      tests:[{type:'assert', expr:'is_pass(65) == TRUE', label:'is_pass(65) equals TRUE using the default threshold'}]
+    },
+    {
+      title:'Override the default',
+      desc:`Using the same is_pass function, use stopifnot() to confirm that is_pass(65, 70) == FALSE — providing
+        a second argument overrides the default threshold of 50 with 70.`,
+      starter:`is_pass <- function(score, threshold = 50) {
+  return(score >= threshold)
+}
+# Check is_pass(65, 70) below
+`,
+      tests:[{type:'assert', expr:'is_pass(65, 70) == FALSE', label:'is_pass(65, 70) equals FALSE using the overridden threshold'}]
+    },
+    {
+      title:'Confirm the default applies again',
+      desc:`Using the same is_pass function, use stopifnot() to confirm that is_pass(30) == FALSE — 30 is below
+        the default threshold of 50.`,
+      starter:`is_pass <- function(score, threshold = 50) {
+  return(score >= threshold)
+}
+# Check is_pass(30) below
+`,
+      tests:[{type:'assert', expr:'is_pass(30) == FALSE', label:'is_pass(30) equals FALSE using the default threshold'}]
+    },
+    {
+      title:'Use the default with sapply across a vector',
+      desc:`Using is_pass (given) and a vector scores with the values 45, 65, 80, calculate results as
+        sapply(scores, is_pass) (using the default threshold for every value). Use stopifnot() to confirm that
+        sum(results) == 2.`,
+      starter:`is_pass <- function(score, threshold = 50) {
+  return(score >= threshold)
+}
+scores <- c(45, 65, 80)
+# Calculate results below
+`,
+      tests:[{type:'assert', expr:'sum(results) == 2', label:'sum(results) equals 2 using the default threshold'}]
+    },
+    {
+      title:'Override the threshold inside sapply',
+      desc:`Using is_pass and the same scores vector, calculate results_strict as sapply(scores, function(s)
+        is_pass(s, 70)) — this time explicitly overriding the threshold to 70 for every value. Use stopifnot() to
+        confirm that sum(results_strict) == 1.`,
+      starter:`is_pass <- function(score, threshold = 50) {
+  return(score >= threshold)
+}
+scores <- c(45, 65, 80)
+# Calculate results_strict below
+`,
+      tests:[{type:'assert', expr:'sum(results_strict) == 1', label:'sum(results_strict) equals 1 using the overridden threshold'}]
+    },
+    {
+      title:'Write a function with two defaults',
+      desc:`Define trip_cost(people, price = 10, discount = 0) returning people * price - discount. Use
+        stopifnot() to confirm that trip_cost(4) == 40 — called with just one argument, using BOTH defaults
+        (price = 10, discount = 0).`,
+      starter:`# Define trip_cost below
+trip_cost <- function(people, price = 10, discount = 0) {
+  return(people * price - discount)
+}
+`,
+      tests:[{type:'assert', expr:'trip_cost(4) == 40', label:'trip_cost(4) equals 40 using both defaults'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does threshold = 50 mean in function(score, threshold = 50)?',
+      options:['threshold must always be exactly 50, no other value is ever allowed','threshold is OPTIONAL — if a caller doesn\'t provide it, R automatically uses 50 instead','This is a syntax error in R','threshold gets multiplied by 50 automatically'],
+      correct:1,
+      explain:'A default value makes an argument optional — callers can still override it whenever they need something different.'
+    },
+    {
+      q:'After defining is_pass(score, threshold = 50), what happens when you call is_pass(65, 70)?',
+      options:['It ignores the 70 and always uses 50','It uses 70 as the threshold for this call, overriding the default — the function definition itself never changes','It causes an error, since threshold already has a default','It changes the default to 70 for all FUTURE calls too'],
+      correct:1,
+      explain:'Providing a value for an optional argument simply overrides the default for THAT call — the function\'s own default stays 50 for any future call that omits it.'
+    },
+    {
+      q:'Why is sapply(scores, is_pass) able to work even though is_pass technically has two parameters?',
+      options:['It can\'t work, this would be an error','sapply() only supplies the FIRST argument (score) for each element; threshold is left to use its default (50) automatically, since sapply never mentions it','sapply() automatically fills threshold with the mean of scores','is_pass secretly ignores its second parameter'],
+      correct:1,
+      explain:'sapply() just calls the function once per element with that one value as the first argument — any other parameters simply keep their defaults unless you wrap the call yourself.'
+    },
+    {
+      q:'In sapply(scores, function(s) is_pass(s, 70)), what is the purpose of wrapping is_pass in an anonymous function(s) {...}?',
+      options:['It has no purpose, this is unnecessary','It lets you explicitly pass 70 as the threshold for every element, since sapply(scores, is_pass) alone has no way to specify a NON-default threshold','It converts is_pass into a different kind of function entirely','It only works with exactly one value in scores'],
+      correct:1,
+      explain:'Wrapping the call lets you supply BOTH arguments explicitly for each element — this is the standard pattern whenever you need to override a default from inside sapply().'
+    }
+  ],
+  sandboxStarter3:`is_pass <- function(score, threshold = 50) {
+  return(score >= threshold)
+}
+scores <- c(45, 65, 80)
+print(sapply(scores, is_pass))
+print(sapply(scores, function(s) is_pass(s, 70)))
+`,
+  stretchChallenge:{
+    title:'Override every default at once',
+    desc:`Using trip_cost(people, price = 10, discount = 0) (given), use stopifnot() to confirm that
+      trip_cost(4, 12, 5) == 43 — overriding BOTH defaults this time (price = 12, discount = 5).`,
+    starter:`trip_cost <- function(people, price = 10, discount = 0) {
+  return(people * price - discount)
+}
+# Check trip_cost(4, 12, 5) below
+`,
+    tests:[
+      {type:'assert', expr:'trip_cost(4, 12, 5) == 43', label:'trip_cost(4, 12, 5) equals 43 with both defaults overridden'}
+    ]
+  }
 }
 ];
 
