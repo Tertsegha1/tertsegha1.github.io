@@ -2480,6 +2480,151 @@ print(house_count)
       {type:'assert', expr:'all(sorted_count$score == c(2, 3))', label:'sorted_count$score exactly equals c(2, 3)'}
     ]
   }
+},
+{
+  key:'week8', num:8, title:'Text Patterns: grepl and Basic Regex',
+  scenarioTag:'Real world: which words in a whole vector contain a pattern, not just one word',
+  scenario:`Beginner Week 8 checked properties of ONE piece of text at a time. grepl() checks a WHOLE vector of
+    text at once, returning TRUE/FALSE for each element — and with a couple of extra symbols, you can check
+    "starts with" or "ends with", not just "contains anywhere".`,
+  objectives:[
+    'Use grepl() to check which elements of a vector contain a pattern',
+    'Use ^ to check whether text STARTS WITH a pattern',
+    'Use $ to check whether text ENDS WITH a pattern',
+    'Combine grepl() with row-filtering and case-insensitive matching'
+  ],
+  conceptHtml:`
+    <p><code>grepl(pattern, vector)</code> checks EVERY element of <code>vector</code> for <code>pattern</code>,
+    returning a TRUE/FALSE for each one:</p>
+    <pre class="code-block">words &lt;- c("cat", "caterpillar", "dog", "scatter")
+print(grepl("cat", words))   # TRUE TRUE FALSE TRUE - "scatter" contains "cat" too (s-CAT-ter)</pre>
+    <p>Two special symbols make the pattern more precise: <code>^</code> means "the text must START with this",
+    and <code>$</code> means "the text must END with this":</p>
+    <pre class="code-block">print(grepl("^cat", words))   # TRUE TRUE FALSE FALSE - "scatter" no longer counts, it doesn't START with cat
+print(grepl("er$", words))   # FALSE FALSE FALSE TRUE - only "scatter" ENDS with "er"</pre>
+    <h3>Let's break down the starter code, line by line</h3>
+    <pre class="code-block">words &lt;- c("cat", "caterpillar", "dog", "scatter")
+matches &lt;- grepl("cat", words)
+print(sum(matches))</pre>
+    <ul>
+      <li><code>grepl("cat", words)</code> — returns a TRUE/FALSE vector, one value per element of
+        <code>words</code>, marking whether that element CONTAINS "cat" anywhere.</li>
+      <li><code>sum(matches)</code> — exactly like Week 2's ifelse()-based counting, summing a TRUE/FALSE vector
+        counts how many were TRUE.</li>
+    </ul>
+    <p>The second example follows the same shape but adds <code>^</code> to the pattern — a small change that
+    makes the check strictly more specific ("contains" becomes "starts with").</p>`,
+  sandboxStarter:`words <- c("cat", "caterpillar", "dog", "scatter")
+matches <- grepl("cat", words)
+print(sum(matches))
+`,
+  sandboxStarter2:`words <- c("cat", "caterpillar", "dog", "scatter")
+starts_with_cat <- grepl("^cat", words)
+print(starts_with_cat)
+`,
+  exercises:[
+    {
+      title:'Find words containing a pattern',
+      desc:`Create words as c("cat", "caterpillar", "dog", "scatter", "catalog"). Calculate matches as
+        grepl("cat", words). Use stopifnot() to confirm that sum(matches) == 4.`,
+      starter:`# Create words, then calculate matches below
+words <- c("cat", "caterpillar", "dog", "scatter", "catalog")
+`,
+      tests:[{type:'assert', expr:'sum(matches) == 4', label:'sum(matches) equals 4'}]
+    },
+    {
+      title:'Find words that START WITH a pattern',
+      desc:`Using the same words vector, calculate starts as grepl("^cat", words). Use stopifnot() to confirm
+        that sum(starts) == 3 — "scatter" contains "cat" but does NOT start with it, so it's correctly excluded.`,
+      starter:`words <- c("cat", "caterpillar", "dog", "scatter", "catalog")
+# Calculate starts below
+`,
+      tests:[{type:'assert', expr:'sum(starts) == 3', label:'sum(starts) equals 3'}]
+    },
+    {
+      title:'Find words that END WITH a pattern',
+      desc:`Using the same words vector, calculate ends as grepl("er$", words). Use stopifnot() to confirm that
+        sum(ends) == 1 — only "scatter" ends with "er".`,
+      starter:`words <- c("cat", "caterpillar", "dog", "scatter", "catalog")
+# Calculate ends below
+`,
+      tests:[{type:'assert', expr:'sum(ends) == 1', label:'sum(ends) equals 1'}]
+    },
+    {
+      title:'Count a different pattern',
+      desc:`Using the same words vector, calculate og_matches as grepl("og", words). Use stopifnot() to confirm
+        that sum(og_matches) == 2 — "dog" and "catalog" both contain "og".`,
+      starter:`words <- c("cat", "caterpillar", "dog", "scatter", "catalog")
+# Calculate og_matches below
+`,
+      tests:[{type:'assert', expr:'sum(og_matches) == 2', label:'sum(og_matches) equals 2'}]
+    },
+    {
+      title:'Filter a data.frame using grepl',
+      desc:`Create animals as data.frame(name = words, length = c(3, 11, 3, 7, 7)) (using the same words
+        vector). Calculate matches_df as animals[grepl("^cat", animals$name), ]. Use stopifnot() to confirm that
+        nrow(matches_df) == 3.`,
+      starter:`words <- c("cat", "caterpillar", "dog", "scatter", "catalog")
+animals <- data.frame(name = words, length = c(3, 11, 3, 7, 7))
+# Calculate matches_df below
+`,
+      tests:[{type:'assert', expr:'nrow(matches_df) == 3', label:'nrow(matches_df) equals 3'}]
+    },
+    {
+      title:'Match regardless of capitalisation',
+      desc:`Create mixed as c("Cat", "DOG", "Catalog"). Calculate case_matches as grepl("cat", mixed, ignore.case
+        = TRUE). Use stopifnot() to confirm that sum(case_matches) == 2 — "Cat" and "Catalog" both match "cat"
+        once capitalisation is ignored.`,
+      starter:`# Create mixed, then calculate case_matches below
+mixed <- c("Cat", "DOG", "Catalog")
+`,
+      tests:[{type:'assert', expr:'sum(case_matches) == 2', label:'sum(case_matches) equals 2'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does grepl("cat", words) return?',
+      options:['The actual matching words, as text','A TRUE/FALSE vector — one value per element of words, marking whether each one contains "cat" anywhere','The number of matches found, as one single number','An error, since grepl only works on one piece of text at a time'],
+      correct:1,
+      explain:'grepl() checks every element of the vector and returns a matching TRUE/FALSE vector — exactly the shape needed for counting with sum() or filtering with [ ].'
+    },
+    {
+      q:'Why does grepl("^cat", words) match fewer words than grepl("cat", words), for the same words vector?',
+      options:['^ is a typo and has no real effect','^ anchors the pattern to the START of the text — a word like "scatter" contains "cat" in the middle, but doesn\'t START with it, so ^ correctly excludes it','^ makes the match case-insensitive','^ only works on numbers, not text'],
+      correct:1,
+      explain:'^ is a real regex anchor meaning "the match must begin right here" — it\'s what turns "contains" into the stricter "starts with".'
+    },
+    {
+      q:'What does the $ symbol mean at the end of a grepl() pattern like "er$"?',
+      options:['It means "the price is in dollars"','It anchors the match to the END of the text — the pattern must be the LAST characters, not just appear somewhere inside','It has no special meaning in R','It means the pattern must appear exactly once'],
+      correct:1,
+      explain:'$ is the end-of-text anchor — combined with ^, these two symbols let you check "starts with" and "ends with" precisely, not just "contains anywhere".'
+    },
+    {
+      q:'Why does animals[grepl("^cat", animals$name), ] correctly filter the data.frame\'s ROWS, not just check the name column?',
+      options:['It doesn\'t actually filter rows, only the name column changes','grepl() produces a TRUE/FALSE vector matching animals$name\'s length, and putting that inside [ ] before the comma selects matching ROWS — the same row-filtering pattern from Beginner Week 7, just using a text condition instead of a numeric one','grepl() can only be used on numeric columns','It selects columns, not rows'],
+      correct:1,
+      explain:'This is the exact same [rows, ] filtering pattern used throughout this course — the only difference here is that the TRUE/FALSE condition comes from grepl() instead of a numeric comparison.'
+    }
+  ],
+  sandboxStarter3:`words <- c("cat", "caterpillar", "dog", "scatter", "catalog")
+animals <- data.frame(name = words, length = c(3, 11, 3, 7, 7))
+matches_df <- animals[grepl("^cat", animals$name), ]
+print(matches_df)
+print(sum(grepl("er$", words)))
+`,
+  stretchChallenge:{
+    title:'Combine start and end anchors',
+    desc:`Using words <- c("cat", "caterpillar", "dog", "scatter", "catalog"), calculate cat_start_count as
+      sum(grepl("^cat", words)) and total_count as length(words). Use stopifnot() to confirm that
+      cat_start_count == 3 && total_count == 5.`,
+    starter:`words <- c("cat", "caterpillar", "dog", "scatter", "catalog")
+# Calculate cat_start_count and total_count below
+`,
+    tests:[
+      {type:'assert', expr:'cat_start_count == 3 && total_count == 5', label:'cat_start_count and total_count are both correct'}
+    ]
+  }
 }
 ];
 
