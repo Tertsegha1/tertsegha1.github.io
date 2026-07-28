@@ -6798,6 +6798,570 @@ print(classify_design("unsafe_check_password"))
       {type:'assert', expr:'classify_design("random_function") == "unknown"', label:'classify_design correctly reports "unknown" for an unrecognized name'}
     ]
   }
+},
+{
+  key:'week8', num:8, title:'Capstone — Audit the Student Portal',
+  scenarioTag:'Capstone Part 1: bring every prior week together into ONE full audit',
+  scenario:`This is the first of a two-week capstone. A bigger, more realistic student portal snippet has FOUR
+    flaws this time (one more than Week 6's three), AND its own login/access logs to correlate (Week 3). Your job
+    is to build ONE combined audit report covering BOTH the code review and the log investigation — exactly what
+    a real security audit produces. Next week, you'll fix everything this audit finds.`,
+  objectives:[
+    'Detect a new flaw type: a second-factor check that always passes, regardless of input',
+    'Combine four independent flaw checks into one exhaustive code audit',
+    'Correlate a NEW pair of logs to confirm which usernames are real incidents',
+    'Produce one combined audit_report covering both the code flaws and the confirmed incidents'
+  ],
+  conceptHtml:`
+    <p>The portal snippet this time has a new kind of flaw — a second-factor check that LOOKS real but always
+    passes, no matter what code is entered:</p>
+    <pre class="code-block">portal_snippet = [
+    'API_KEY = "sk_live_99999"',
+    'def check_login(username, password_input, stored_password):',
+    '    return password_input == stored_password',
+    'def is_blocked(username):',
+    '    return False',
+    'def check_second_factor(code_input):',
+    '    return True',
+]
+
+def flaw_fake_mfa(lines):
+    return any('def check_second_factor' in l for l in lines) and any(l.strip() == 'return True' for l in lines)</pre>
+    <p>Combining ALL four checks (three from Week 6, plus this new one) audits the code completely:</p>
+    <pre class="code-block">def audit_snippet(lines):
+    flaws = []
+    if flaw_hardcoded_secret(lines):
+        flaws.append("Hardcoded secret")
+    if flaw_plaintext_password_compare(lines):
+        flaws.append("Plaintext password comparison")
+    if flaw_no_rate_limit(lines):
+        flaws.append("Rate-limiting always returns False (not implemented)")
+    if flaw_fake_mfa(lines):
+        flaws.append("Second factor check always passes (not implemented)")
+    return flaws</pre>
+    <p>Meanwhile, Week 3's correlate_incident (unchanged) runs against a BRAND NEW pair of logs for this portal.
+    A full audit report combines BOTH results into one place:</p>
+    <pre class="code-block">def audit_report(lines, login_log, access_log):
+    return {
+        "code_flaws": audit_snippet(lines),
+        "confirmed_incidents": correlate_incident(login_log, access_log),
+    }</pre>`,
+  sandboxStarter:`portal_snippet = [
+    'API_KEY = "sk_live_99999"',
+    'def check_login(username, password_input, stored_password):',
+    '    return password_input == stored_password',
+    'def is_blocked(username):',
+    '    return False',
+    'def check_second_factor(code_input):',
+    '    return True',
+]
+
+def flaw_fake_mfa(lines):
+    return any('def check_second_factor' in l for l in lines) and any(l.strip() == 'return True' for l in lines)
+
+print(flaw_fake_mfa(portal_snippet))
+`,
+  sandboxStarter2:`login_log2 = [
+    ("trudy", False), ("trudy", False), ("trudy", False), ("trudy", True),
+    ("frank", True),
+]
+access_log2 = [
+    ("trudy", "grades_database"),
+    ("frank", "own_profile"),
+]
+SENSITIVE_RESOURCES = {"grades_database", "admin_panel"}
+
+def find_brute_forced_then_succeeded(login_log, threshold=3):
+    counts = {}
+    flagged = set()
+    for username, success in login_log:
+        if success:
+            if counts.get(username, 0) >= threshold:
+                flagged.add(username)
+            counts[username] = 0
+        else:
+            counts[username] = counts.get(username, 0) + 1
+    return flagged
+
+def find_sensitive_access(access_log):
+    return set(username for username, resource in access_log if resource in SENSITIVE_RESOURCES)
+
+def correlate_incident(login_log, access_log):
+    return find_brute_forced_then_succeeded(login_log) & find_sensitive_access(access_log)
+
+print(correlate_incident(login_log2, access_log2))
+`,
+  exercises:[
+    {
+      title:'Detect the new "fake MFA" flaw',
+      desc:`Using portal_snippet (given), write flaw_fake_mfa(lines) exactly as in the concept box. Assert that
+        flaw_fake_mfa(portal_snippet) == True.`,
+      starter:`portal_snippet = [
+    'API_KEY = "sk_live_99999"',
+    'def check_login(username, password_input, stored_password):',
+    '    return password_input == stored_password',
+    'def is_blocked(username):',
+    '    return False',
+    'def check_second_factor(code_input):',
+    '    return True',
+]
+# Write flaw_fake_mfa(lines) below
+`,
+      tests:[{type:'assert', expr:'flaw_fake_mfa(portal_snippet) == True', label:'flaw_fake_mfa correctly detects the always-passing second factor check'}]
+    },
+    {
+      title:'Combine all four checks into one code audit',
+      desc:`Using flaw_hardcoded_secret, flaw_plaintext_password_compare, flaw_no_rate_limit, and flaw_fake_mfa
+        (all given), write audit_snippet(lines) exactly as in the concept box. Assert that
+        audit_snippet(portal_snippet) == ["Hardcoded secret", "Plaintext password comparison", "Rate-limiting
+        always returns False (not implemented)", "Second factor check always passes (not implemented)"].`,
+      starter:`portal_snippet = [
+    'API_KEY = "sk_live_99999"',
+    'def check_login(username, password_input, stored_password):',
+    '    return password_input == stored_password',
+    'def is_blocked(username):',
+    '    return False',
+    'def check_second_factor(code_input):',
+    '    return True',
+]
+
+def flaw_hardcoded_secret(lines):
+    return any('API_KEY' in l and '=' in l and ('"' in l or "'" in l) and 'os.environ' not in l for l in lines)
+
+def flaw_plaintext_password_compare(lines):
+    return any('password_input == stored_password' in l for l in lines)
+
+def flaw_no_rate_limit(lines):
+    return any('def is_blocked' in l for l in lines) and any('return False' in l for l in lines)
+
+def flaw_fake_mfa(lines):
+    return any('def check_second_factor' in l for l in lines) and any(l.strip() == 'return True' for l in lines)
+# Write audit_snippet(lines) below
+`,
+      tests:[{type:'assert', expr:'audit_snippet(portal_snippet) == ["Hardcoded secret", "Plaintext password comparison", "Rate-limiting always returns False (not implemented)", "Second factor check always passes (not implemented)"]', label:'audit_snippet correctly finds all four flaws, in order'}]
+    },
+    {
+      title:'Correlate the NEW login and access logs',
+      desc:`Using find_brute_forced_then_succeeded and find_sensitive_access (given, unchanged from Week 3), write
+        correlate_incident(login_log, access_log) and apply it to login_log2 and access_log2 (given). Assert that
+        correlate_incident(login_log2, access_log2) == {"trudy"}.`,
+      starter:`login_log2 = [
+    ("trudy", False), ("trudy", False), ("trudy", False), ("trudy", True),
+    ("frank", True),
+]
+access_log2 = [
+    ("trudy", "grades_database"),
+    ("frank", "own_profile"),
+]
+SENSITIVE_RESOURCES = {"grades_database", "admin_panel"}
+
+def find_brute_forced_then_succeeded(login_log, threshold=3):
+    counts = {}
+    flagged = set()
+    for username, success in login_log:
+        if success:
+            if counts.get(username, 0) >= threshold:
+                flagged.add(username)
+            counts[username] = 0
+        else:
+            counts[username] = counts.get(username, 0) + 1
+    return flagged
+
+def find_sensitive_access(access_log):
+    return set(username for username, resource in access_log if resource in SENSITIVE_RESOURCES)
+# Write correlate_incident(login_log, access_log) below
+`,
+      tests:[{type:'assert', expr:'correlate_incident(login_log2, access_log2) == {"trudy"}', label:'correlate_incident correctly equals {"trudy"}'}]
+    },
+    {
+      title:'Combine the code audit and the log correlation into one report',
+      desc:`Using audit_snippet and correlate_incident (both given), write audit_report(lines, login_log,
+        access_log) exactly as in the concept box, returning a dict with keys "code_flaws" and
+        "confirmed_incidents". Assert that audit_report(portal_snippet, login_log2, access_log2) == {"code_flaws":
+        ["Hardcoded secret", "Plaintext password comparison", "Rate-limiting always returns False (not
+        implemented)", "Second factor check always passes (not implemented)"], "confirmed_incidents": {"trudy"}}.`,
+      starter:`portal_snippet = [
+    'API_KEY = "sk_live_99999"',
+    'def check_login(username, password_input, stored_password):',
+    '    return password_input == stored_password',
+    'def is_blocked(username):',
+    '    return False',
+    'def check_second_factor(code_input):',
+    '    return True',
+]
+login_log2 = [
+    ("trudy", False), ("trudy", False), ("trudy", False), ("trudy", True),
+    ("frank", True),
+]
+access_log2 = [
+    ("trudy", "grades_database"),
+    ("frank", "own_profile"),
+]
+SENSITIVE_RESOURCES = {"grades_database", "admin_panel"}
+
+def flaw_hardcoded_secret(lines):
+    return any('API_KEY' in l and '=' in l and ('"' in l or "'" in l) and 'os.environ' not in l for l in lines)
+
+def flaw_plaintext_password_compare(lines):
+    return any('password_input == stored_password' in l for l in lines)
+
+def flaw_no_rate_limit(lines):
+    return any('def is_blocked' in l for l in lines) and any('return False' in l for l in lines)
+
+def flaw_fake_mfa(lines):
+    return any('def check_second_factor' in l for l in lines) and any(l.strip() == 'return True' for l in lines)
+
+def audit_snippet(lines):
+    flaws = []
+    if flaw_hardcoded_secret(lines):
+        flaws.append("Hardcoded secret")
+    if flaw_plaintext_password_compare(lines):
+        flaws.append("Plaintext password comparison")
+    if flaw_no_rate_limit(lines):
+        flaws.append("Rate-limiting always returns False (not implemented)")
+    if flaw_fake_mfa(lines):
+        flaws.append("Second factor check always passes (not implemented)")
+    return flaws
+
+def find_brute_forced_then_succeeded(login_log, threshold=3):
+    counts = {}
+    flagged = set()
+    for username, success in login_log:
+        if success:
+            if counts.get(username, 0) >= threshold:
+                flagged.add(username)
+            counts[username] = 0
+        else:
+            counts[username] = counts.get(username, 0) + 1
+    return flagged
+
+def find_sensitive_access(access_log):
+    return set(username for username, resource in access_log if resource in SENSITIVE_RESOURCES)
+
+def correlate_incident(login_log, access_log):
+    return find_brute_forced_then_succeeded(login_log) & find_sensitive_access(access_log)
+# Write audit_report(lines, login_log, access_log) below
+`,
+      tests:[{type:'assert', expr:'audit_report(portal_snippet, login_log2, access_log2) == {"code_flaws": ["Hardcoded secret", "Plaintext password comparison", "Rate-limiting always returns False (not implemented)", "Second factor check always passes (not implemented)"], "confirmed_incidents": {"trudy"}}', label:'audit_report correctly combines both the code audit and the confirmed incidents'}]
+    },
+    {
+      title:'Confirm all four flaws are counted',
+      desc:`Using audit_report (given), assert that len(audit_report(portal_snippet, login_log2,
+        access_log2)["code_flaws"]) == 4.`,
+      starter:`portal_snippet = [
+    'API_KEY = "sk_live_99999"',
+    'def check_login(username, password_input, stored_password):',
+    '    return password_input == stored_password',
+    'def is_blocked(username):',
+    '    return False',
+    'def check_second_factor(code_input):',
+    '    return True',
+]
+login_log2 = [
+    ("trudy", False), ("trudy", False), ("trudy", False), ("trudy", True),
+    ("frank", True),
+]
+access_log2 = [
+    ("trudy", "grades_database"),
+    ("frank", "own_profile"),
+]
+SENSITIVE_RESOURCES = {"grades_database", "admin_panel"}
+
+def flaw_hardcoded_secret(lines):
+    return any('API_KEY' in l and '=' in l and ('"' in l or "'" in l) and 'os.environ' not in l for l in lines)
+
+def flaw_plaintext_password_compare(lines):
+    return any('password_input == stored_password' in l for l in lines)
+
+def flaw_no_rate_limit(lines):
+    return any('def is_blocked' in l for l in lines) and any('return False' in l for l in lines)
+
+def flaw_fake_mfa(lines):
+    return any('def check_second_factor' in l for l in lines) and any(l.strip() == 'return True' for l in lines)
+
+def audit_snippet(lines):
+    flaws = []
+    if flaw_hardcoded_secret(lines):
+        flaws.append("Hardcoded secret")
+    if flaw_plaintext_password_compare(lines):
+        flaws.append("Plaintext password comparison")
+    if flaw_no_rate_limit(lines):
+        flaws.append("Rate-limiting always returns False (not implemented)")
+    if flaw_fake_mfa(lines):
+        flaws.append("Second factor check always passes (not implemented)")
+    return flaws
+
+def find_brute_forced_then_succeeded(login_log, threshold=3):
+    counts = {}
+    flagged = set()
+    for username, success in login_log:
+        if success:
+            if counts.get(username, 0) >= threshold:
+                flagged.add(username)
+            counts[username] = 0
+        else:
+            counts[username] = counts.get(username, 0) + 1
+    return flagged
+
+def find_sensitive_access(access_log):
+    return set(username for username, resource in access_log if resource in SENSITIVE_RESOURCES)
+
+def correlate_incident(login_log, access_log):
+    return find_brute_forced_then_succeeded(login_log) & find_sensitive_access(access_log)
+
+def audit_report(lines, login_log, access_log):
+    return {
+        "code_flaws": audit_snippet(lines),
+        "confirmed_incidents": correlate_incident(login_log, access_log),
+    }
+`,
+      tests:[{type:'assert', expr:'len(audit_report(portal_snippet, login_log2, access_log2)["code_flaws"]) == 4', label:'The audit report correctly counts all four flaws'}]
+    },
+    {
+      title:'Confirm "frank" is correctly excluded from the incidents',
+      desc:`Using audit_report (given), assert that "frank" not in audit_report(portal_snippet, login_log2,
+        access_log2)["confirmed_incidents"] — frank logged in successfully on his FIRST attempt (no brute-force
+        pattern), so he is correctly not flagged, even though he accessed his own profile.`,
+      starter:`portal_snippet = [
+    'API_KEY = "sk_live_99999"',
+    'def check_login(username, password_input, stored_password):',
+    '    return password_input == stored_password',
+    'def is_blocked(username):',
+    '    return False',
+    'def check_second_factor(code_input):',
+    '    return True',
+]
+login_log2 = [
+    ("trudy", False), ("trudy", False), ("trudy", False), ("trudy", True),
+    ("frank", True),
+]
+access_log2 = [
+    ("trudy", "grades_database"),
+    ("frank", "own_profile"),
+]
+SENSITIVE_RESOURCES = {"grades_database", "admin_panel"}
+
+def flaw_hardcoded_secret(lines):
+    return any('API_KEY' in l and '=' in l and ('"' in l or "'" in l) and 'os.environ' not in l for l in lines)
+
+def flaw_plaintext_password_compare(lines):
+    return any('password_input == stored_password' in l for l in lines)
+
+def flaw_no_rate_limit(lines):
+    return any('def is_blocked' in l for l in lines) and any('return False' in l for l in lines)
+
+def flaw_fake_mfa(lines):
+    return any('def check_second_factor' in l for l in lines) and any(l.strip() == 'return True' for l in lines)
+
+def audit_snippet(lines):
+    flaws = []
+    if flaw_hardcoded_secret(lines):
+        flaws.append("Hardcoded secret")
+    if flaw_plaintext_password_compare(lines):
+        flaws.append("Plaintext password comparison")
+    if flaw_no_rate_limit(lines):
+        flaws.append("Rate-limiting always returns False (not implemented)")
+    if flaw_fake_mfa(lines):
+        flaws.append("Second factor check always passes (not implemented)")
+    return flaws
+
+def find_brute_forced_then_succeeded(login_log, threshold=3):
+    counts = {}
+    flagged = set()
+    for username, success in login_log:
+        if success:
+            if counts.get(username, 0) >= threshold:
+                flagged.add(username)
+            counts[username] = 0
+        else:
+            counts[username] = counts.get(username, 0) + 1
+    return flagged
+
+def find_sensitive_access(access_log):
+    return set(username for username, resource in access_log if resource in SENSITIVE_RESOURCES)
+
+def correlate_incident(login_log, access_log):
+    return find_brute_forced_then_succeeded(login_log) & find_sensitive_access(access_log)
+
+def audit_report(lines, login_log, access_log):
+    return {
+        "code_flaws": audit_snippet(lines),
+        "confirmed_incidents": correlate_incident(login_log, access_log),
+    }
+`,
+      tests:[{type:'assert', expr:'"frank" not in audit_report(portal_snippet, login_log2, access_log2)["confirmed_incidents"]', label:'"frank" is correctly excluded from the confirmed incidents'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why does flaw_fake_mfa check for a function that ALWAYS returns True, rather than just checking whether check_second_factor exists?',
+      options:['There is no difference between the two checks','A second-factor check that EXISTS but always passes gives false confidence — it looks like a real defense while actually providing none, which is worse than an obviously missing check','Checking for True is faster than checking for the function\'s existence','Python requires this exact check'],
+      correct:1,
+      explain:'This mirrors flaw_no_rate_limit from Week 6 — a fake defense that always "passes" can be more dangerous than an honestly-missing one, since it hides the real risk.'
+    },
+    {
+      q:'Why does audit_report combine BOTH the code audit and the log correlation into one dict, instead of two separate reports?',
+      options:['It doesn\'t matter, separate reports would be identical','A real security audit needs to present the FULL picture together — code flaws AND confirmed incidents — so a reader gets one complete view rather than having to mentally combine two disconnected documents','Combining them makes the code run faster','Dicts are required by Python for this kind of data'],
+      correct:1,
+      explain:'Presenting a complete, combined picture is exactly what a real audit report does — this is a genuine documentation choice, not just a coding convenience.'
+    },
+    {
+      q:'Why is frank NOT flagged as a confirmed incident, even though he accessed a sensitive resource (his own profile)?',
+      options:['own_profile isn\'t actually in SENSITIVE_RESOURCES, so there\'s nothing sensitive about frank\'s access at all — he correctly has no flags on either signal','frank\'s username starts with the wrong letter','The system has a bug that always excludes frank','Sensitive resources are never checked for successful logins'],
+      correct:0,
+      explain:'own_profile was never in SENSITIVE_RESOURCES to begin with — frank never triggers EITHER signal, so there\'s nothing to correlate for him, unlike trudy who triggers both.'
+    },
+    {
+      q:'What is the overall PURPOSE of this capstone week, compared to every individual week before it?',
+      options:['To learn one brand new isolated skill','To demonstrate that all the separate skills built across this course — flaw detection, log correlation, structured reporting — combine into ONE realistic, full security audit, which is what real security work actually looks like','To replace all previous weeks\' content','To test typing speed'],
+      correct:1,
+      explain:'A capstone\'s job is exactly this: proving that individually-learned skills genuinely combine into one coherent, realistic piece of work.'
+    }
+  ],
+  sandboxStarter3:`portal_snippet = [
+    'API_KEY = "sk_live_99999"',
+    'def check_login(username, password_input, stored_password):',
+    '    return password_input == stored_password',
+    'def is_blocked(username):',
+    '    return False',
+    'def check_second_factor(code_input):',
+    '    return True',
+]
+login_log2 = [
+    ("trudy", False), ("trudy", False), ("trudy", False), ("trudy", True),
+    ("frank", True),
+]
+access_log2 = [
+    ("trudy", "grades_database"),
+    ("frank", "own_profile"),
+]
+SENSITIVE_RESOURCES = {"grades_database", "admin_panel"}
+
+def flaw_hardcoded_secret(lines):
+    return any('API_KEY' in l and '=' in l and ('"' in l or "'" in l) and 'os.environ' not in l for l in lines)
+
+def flaw_plaintext_password_compare(lines):
+    return any('password_input == stored_password' in l for l in lines)
+
+def flaw_no_rate_limit(lines):
+    return any('def is_blocked' in l for l in lines) and any('return False' in l for l in lines)
+
+def flaw_fake_mfa(lines):
+    return any('def check_second_factor' in l for l in lines) and any(l.strip() == 'return True' for l in lines)
+
+def audit_snippet(lines):
+    flaws = []
+    if flaw_hardcoded_secret(lines):
+        flaws.append("Hardcoded secret")
+    if flaw_plaintext_password_compare(lines):
+        flaws.append("Plaintext password comparison")
+    if flaw_no_rate_limit(lines):
+        flaws.append("Rate-limiting always returns False (not implemented)")
+    if flaw_fake_mfa(lines):
+        flaws.append("Second factor check always passes (not implemented)")
+    return flaws
+
+def find_brute_forced_then_succeeded(login_log, threshold=3):
+    counts = {}
+    flagged = set()
+    for username, success in login_log:
+        if success:
+            if counts.get(username, 0) >= threshold:
+                flagged.add(username)
+            counts[username] = 0
+        else:
+            counts[username] = counts.get(username, 0) + 1
+    return flagged
+
+def find_sensitive_access(access_log):
+    return set(username for username, resource in access_log if resource in SENSITIVE_RESOURCES)
+
+def correlate_incident(login_log, access_log):
+    return find_brute_forced_then_succeeded(login_log) & find_sensitive_access(access_log)
+
+def audit_report(lines, login_log, access_log):
+    return {
+        "code_flaws": audit_snippet(lines),
+        "confirmed_incidents": correlate_incident(login_log, access_log),
+    }
+
+print(audit_report(portal_snippet, login_log2, access_log2))
+`,
+  stretchChallenge:{
+    title:'Confirm a fully clean portal produces an empty audit',
+    desc:`Using audit_report (given), apply it to fixed_portal_snippet = ['API_KEY =
+      os.environ.get("API_KEY")', 'def check_login(username, password_input, stored_hash):', '    return
+      hash_text(password_input) == stored_hash', 'def is_blocked(username, attempts, max_attempts=3):', '    return
+      attempts.get(username, 0) >= max_attempts', 'def check_second_factor(code_input, stored_code):', '    return
+      code_input == stored_code'], clean_login_log = [("grace", True)], and clean_access_log = [("grace",
+      "own_profile")]. Assert that audit_report(fixed_portal_snippet, clean_login_log, clean_access_log) ==
+      {"code_flaws": [], "confirmed_incidents": set()} — a genuinely secure system correctly produces an empty
+      audit.`,
+    starter:`fixed_portal_snippet = [
+    'API_KEY = os.environ.get("API_KEY")',
+    'def check_login(username, password_input, stored_hash):',
+    '    return hash_text(password_input) == stored_hash',
+    'def is_blocked(username, attempts, max_attempts=3):',
+    '    return attempts.get(username, 0) >= max_attempts',
+    'def check_second_factor(code_input, stored_code):',
+    '    return code_input == stored_code',
+]
+clean_login_log = [("grace", True)]
+clean_access_log = [("grace", "own_profile")]
+SENSITIVE_RESOURCES = {"grades_database", "admin_panel"}
+
+def flaw_hardcoded_secret(lines):
+    return any('API_KEY' in l and '=' in l and ('"' in l or "'" in l) and 'os.environ' not in l for l in lines)
+
+def flaw_plaintext_password_compare(lines):
+    return any('password_input == stored_password' in l for l in lines)
+
+def flaw_no_rate_limit(lines):
+    return any('def is_blocked' in l for l in lines) and any('return False' in l for l in lines)
+
+def flaw_fake_mfa(lines):
+    return any('def check_second_factor' in l for l in lines) and any(l.strip() == 'return True' for l in lines)
+
+def audit_snippet(lines):
+    flaws = []
+    if flaw_hardcoded_secret(lines):
+        flaws.append("Hardcoded secret")
+    if flaw_plaintext_password_compare(lines):
+        flaws.append("Plaintext password comparison")
+    if flaw_no_rate_limit(lines):
+        flaws.append("Rate-limiting always returns False (not implemented)")
+    if flaw_fake_mfa(lines):
+        flaws.append("Second factor check always passes (not implemented)")
+    return flaws
+
+def find_brute_forced_then_succeeded(login_log, threshold=3):
+    counts = {}
+    flagged = set()
+    for username, success in login_log:
+        if success:
+            if counts.get(username, 0) >= threshold:
+                flagged.add(username)
+            counts[username] = 0
+        else:
+            counts[username] = counts.get(username, 0) + 1
+    return flagged
+
+def find_sensitive_access(access_log):
+    return set(username for username, resource in access_log if resource in SENSITIVE_RESOURCES)
+
+def correlate_incident(login_log, access_log):
+    return find_brute_forced_then_succeeded(login_log) & find_sensitive_access(access_log)
+
+def audit_report(lines, login_log, access_log):
+    return {
+        "code_flaws": audit_snippet(lines),
+        "confirmed_incidents": correlate_incident(login_log, access_log),
+    }
+`,
+    tests:[
+      {type:'assert', expr:'audit_report(fixed_portal_snippet, clean_login_log, clean_access_log) == {"code_flaws": [], "confirmed_incidents": set()}', label:'audit_report correctly produces an empty audit for the fixed portal'}
+    ]
+  }
 }
 ];
 
