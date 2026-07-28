@@ -5946,6 +5946,175 @@ stretch_access_log = [("dave", "own_profile"), ("eve", "admin_panel")]
 }
 ];
 
+const CY_ADVANCED_MP1 = {
+  key:'mp1',
+  title:'Mini Project 1 — Investigate and Report an Incident',
+  intro:`Three doors, combining all four weeks: confirm the login log hasn't been tampered with (Week 1's
+    hash-compare pattern) before trusting it enough to correlate an incident (Week 3), look up the RIGHT
+    mitigation for the exact asset that was actually compromised (Week 2's threat model), then write a single
+    final report that includes both the incident AND the fix (Week 4, extended).`,
+  fixtureNote:`All three doors build on this same login log, access log, and threat model:`,
+  fixtureCode:`login_log = [
+    ("mallory", False), ("mallory", False), ("mallory", False), ("mallory", True),
+    ("alice", True),
+    ("bob", False), ("bob", False), ("bob", False), ("bob", True),
+]
+access_log = [
+    ("mallory", "grades_database"),
+    ("alice", "own_profile"),
+    ("carol", "admin_panel"),
+]
+threat_model = [
+    {"asset": "grades_database", "threat": "Unauthorized access after brute-force login", "mitigation": "Role-based access control + audit logging"},
+    {"asset": "admin_panel", "threat": "Privilege escalation", "mitigation": "Multi-factor authentication"},
+    {"asset": "own_profile", "threat": "Minimal — self-owned data", "mitigation": None},
+]`,
+  doors:[
+    {
+      key:'a', title:'Door 1 — Confirm the log is untampered, then correlate the incident',
+      desc:`Using hash_text (Week 1) and correlate_incident (Week 3, both given), and log_text = str(login_log)
+        (given) with stored_hash = hash_text(log_text) (given, computed once when the log was first saved),
+        calculate integrity_ok = (hash_text(log_text) == stored_hash) and incidents =
+        correlate_incident(login_log, access_log). Assert that integrity_ok == True and incidents == {"mallory"}
+        — only once the log is confirmed untampered do we trust the correlation result.`,
+      starter:`import hashlib
+
+login_log = [
+    ("mallory", False), ("mallory", False), ("mallory", False), ("mallory", True),
+    ("alice", True),
+    ("bob", False), ("bob", False), ("bob", False), ("bob", True),
+]
+access_log = [
+    ("mallory", "grades_database"),
+    ("alice", "own_profile"),
+    ("carol", "admin_panel"),
+]
+SENSITIVE_RESOURCES = {"grades_database", "admin_panel"}
+
+def hash_text(text):
+    return hashlib.sha256(text.encode()).hexdigest()
+
+def find_brute_forced_then_succeeded(login_log, threshold=3):
+    counts = {}
+    flagged = set()
+    for username, success in login_log:
+        if success:
+            if counts.get(username, 0) >= threshold:
+                flagged.add(username)
+            counts[username] = 0
+        else:
+            counts[username] = counts.get(username, 0) + 1
+    return flagged
+
+def find_sensitive_access(access_log):
+    return set(username for username, resource in access_log if resource in SENSITIVE_RESOURCES)
+
+def correlate_incident(login_log, access_log):
+    return find_brute_forced_then_succeeded(login_log) & find_sensitive_access(access_log)
+
+log_text = str(login_log)
+stored_hash = hash_text(log_text)
+# Calculate integrity_ok and incidents below
+`,
+      tests:[
+        {type:'assert', expr:'integrity_ok == True', label:'integrity_ok correctly equals True'},
+        {type:'assert', expr:'incidents == {"mallory"}', label:'incidents correctly equals {"mallory"}'}
+      ]
+    },
+    {
+      key:'b', title:'Door 2 — Look up the mitigation for the compromised asset',
+      desc:`Using find_mitigation (Week 2) and resources_accessed (Week 4, both given), calculate
+        compromised_assets = resources_accessed("mallory", access_log) and mitigation =
+        find_mitigation(threat_model, compromised_assets[0]). Assert that compromised_assets ==
+        ["grades_database"] and mitigation == "Role-based access control + audit logging".`,
+      starter:`access_log = [
+    ("mallory", "grades_database"),
+    ("alice", "own_profile"),
+    ("carol", "admin_panel"),
+]
+threat_model = [
+    {"asset": "grades_database", "threat": "Unauthorized access after brute-force login", "mitigation": "Role-based access control + audit logging"},
+    {"asset": "admin_panel", "threat": "Privilege escalation", "mitigation": "Multi-factor authentication"},
+    {"asset": "own_profile", "threat": "Minimal — self-owned data", "mitigation": None},
+]
+
+def find_mitigation(model, asset_name):
+    for entry in model:
+        if entry["asset"] == asset_name:
+            return entry["mitigation"]
+    return None
+
+def resources_accessed(username, access_log):
+    return sorted(r for u, r in access_log if u == username)
+# Calculate compromised_assets and mitigation below
+`,
+      tests:[
+        {type:'assert', expr:'compromised_assets == ["grades_database"]', label:'compromised_assets correctly equals ["grades_database"]'},
+        {type:'assert', expr:'mitigation == "Role-based access control + audit logging"', label:'mitigation correctly equals the grades_database entry'}
+      ]
+    },
+    {
+      key:'c', title:'Door 3 — Write the final report, incident AND fix together',
+      desc:`Using build_incident_report, resources_accessed, and find_mitigation (all given), write
+        build_full_incident_report(username, login_log, access_log, threat_model) that takes
+        build_incident_report's text and appends one more line:
+        f"- Recommended mitigation: {mitigation}", where mitigation is looked up for the FIRST resource in
+        resources_accessed(username, access_log). Assert that build_full_incident_report("mallory", login_log,
+        access_log, threat_model) == "Incident Report: mallory\\n- Failed login attempts before success: 3\\n-
+        Sensitive resources accessed: ['grades_database']\\n- Recommended mitigation: Role-based access control +
+        audit logging".`,
+      starter:`login_log = [
+    ("mallory", False), ("mallory", False), ("mallory", False), ("mallory", True),
+    ("alice", True),
+    ("bob", False), ("bob", False), ("bob", False), ("bob", True),
+]
+access_log = [
+    ("mallory", "grades_database"),
+    ("alice", "own_profile"),
+    ("carol", "admin_panel"),
+]
+threat_model = [
+    {"asset": "grades_database", "threat": "Unauthorized access after brute-force login", "mitigation": "Role-based access control + audit logging"},
+    {"asset": "admin_panel", "threat": "Privilege escalation", "mitigation": "Multi-factor authentication"},
+    {"asset": "own_profile", "threat": "Minimal — self-owned data", "mitigation": None},
+]
+
+def count_fails_before_success(username, login_log):
+    count = 0
+    for u, s in login_log:
+        if u == username:
+            if s:
+                return count
+            count += 1
+    return count
+
+def resources_accessed(username, access_log):
+    return sorted(r for u, r in access_log if u == username)
+
+def build_incident_report(username, login_log, access_log):
+    fails = count_fails_before_success(username, login_log)
+    resources = resources_accessed(username, access_log)
+    lines = [
+        f"Incident Report: {username}",
+        f"- Failed login attempts before success: {fails}",
+        f"- Sensitive resources accessed: {resources}",
+    ]
+    return "\\n".join(lines)
+
+def find_mitigation(model, asset_name):
+    for entry in model:
+        if entry["asset"] == asset_name:
+            return entry["mitigation"]
+    return None
+# Write build_full_incident_report(username, login_log, access_log, threat_model) below
+`,
+      tests:[
+        {type:'assert', expr:'build_full_incident_report("mallory", login_log, access_log, threat_model) == "Incident Report: mallory\\n- Failed login attempts before success: 3\\n- Sensitive resources accessed: [\'grades_database\']\\n- Recommended mitigation: Role-based access control + audit logging"', label:'build_full_incident_report correctly combines the incident report and mitigation'}
+      ]
+    }
+  ]
+};
+
 window.SUBJECT_DATA = window.SUBJECT_DATA || {};
 window.SUBJECT_DATA.cy = {
   b: {weeks: CY_WEEKS, mp1: CY_MP1, mp2: CY_MP2},
