@@ -7746,9 +7746,155 @@ def find_mitigation(model, asset_name):
   ]
 };
 
+const CY_ADVANCED_MP2 = {
+  key:'mp2',
+  title:'Mini Project 2 — Secure the Whole Student Portal, End to End',
+  intro:`The full capstone, combining everything in this level: build a threat model AND audit the code together
+    (Weeks 2, 6, 8), harden a real login with layered defenses and a secure-by-default password check (Weeks 5,
+    7), then produce the final before/after hardening report (Week 9) that proves the work is genuinely done.`,
+  fixtureNote:`All three doors build on this same threat model and portal snippet:`,
+  fixtureCode:`threat_model = [
+    {"asset": "Login credentials", "threat": "Brute-force + credential theft", "mitigation": None},
+    {"asset": "Session tokens", "threat": "Token theft", "mitigation": "Secure random generation + expiry"},
+    {"asset": "Sensitive resources", "threat": "Unauthorized access", "mitigation": None},
+]
+portal_snippet = [
+    'API_KEY = "sk_live_99999"',
+    'def check_login(username, password_input, stored_password):',
+    '    return password_input == stored_password',
+    'def is_blocked(username):',
+    '    return False',
+    'def check_second_factor(code_input):',
+    '    return True',
+]`,
+  doors:[
+    {
+      key:'a', title:'Door 1 — Combine the threat model gaps with the code audit',
+      desc:`Using unmitigated_assets (Week 2) and audit_snippet (Week 8, both given), calculate gaps = {
+        "threat_model_gaps": unmitigated_assets(threat_model), "code_flaws": audit_snippet(portal_snippet) }.
+        Assert that gaps == {"threat_model_gaps": ["Login credentials", "Sensitive resources"], "code_flaws":
+        ["Hardcoded secret", "Plaintext password comparison", "Rate-limiting always returns False (not
+        implemented)", "Second factor check always passes (not implemented)"]}.`,
+      starter:`threat_model = [
+    {"asset": "Login credentials", "threat": "Brute-force + credential theft", "mitigation": None},
+    {"asset": "Session tokens", "threat": "Token theft", "mitigation": "Secure random generation + expiry"},
+    {"asset": "Sensitive resources", "threat": "Unauthorized access", "mitigation": None},
+]
+portal_snippet = [
+    'API_KEY = "sk_live_99999"',
+    'def check_login(username, password_input, stored_password):',
+    '    return password_input == stored_password',
+    'def is_blocked(username):',
+    '    return False',
+    'def check_second_factor(code_input):',
+    '    return True',
+]
+
+def unmitigated_assets(model):
+    return [entry["asset"] for entry in model if entry["mitigation"] is None]
+
+def flaw_hardcoded_secret(lines):
+    return any('API_KEY' in l and '=' in l and ('"' in l or "'" in l) and 'os.environ' not in l for l in lines)
+
+def flaw_plaintext_password_compare(lines):
+    return any('password_input == stored_password' in l for l in lines)
+
+def flaw_no_rate_limit(lines):
+    return any('def is_blocked' in l for l in lines) and any('return False' in l for l in lines)
+
+def flaw_fake_mfa(lines):
+    return any('def check_second_factor' in l for l in lines) and any(l.strip() == 'return True' for l in lines)
+
+def audit_snippet(lines):
+    flaws = []
+    if flaw_hardcoded_secret(lines):
+        flaws.append("Hardcoded secret")
+    if flaw_plaintext_password_compare(lines):
+        flaws.append("Plaintext password comparison")
+    if flaw_no_rate_limit(lines):
+        flaws.append("Rate-limiting always returns False (not implemented)")
+    if flaw_fake_mfa(lines):
+        flaws.append("Second factor check always passes (not implemented)")
+    return flaws
+# Calculate gaps below
+`,
+      tests:[
+        {type:'assert', expr:'gaps == {"threat_model_gaps": ["Login credentials", "Sensitive resources"], "code_flaws": ["Hardcoded secret", "Plaintext password comparison", "Rate-limiting always returns False (not implemented)", "Second factor check always passes (not implemented)"]}', label:'gaps correctly combines the threat model gaps and the code audit'}
+      ]
+    },
+    {
+      key:'b', title:'Door 2 — Harden the login with layered defenses',
+      desc:`Using make_stored_hash and layered_login (Week 5/7, both given), create stored_hash =
+        make_stored_hash("correct_password"), then calculate result_granted = layered_login("bob",
+        "correct_password", stored_hash, "123456", "123456", {}) and result_blocked = layered_login("ada",
+        "correct_password", stored_hash, "123456", "123456", {"ada": 3}). Assert that result_granted == "granted"
+        and result_blocked == "blocked" — a fresh, correct login succeeds, but an already rate-limited username is
+        blocked even with the right password.`,
+      starter:`import hashlib
+
+def hash_text(text):
+    return hashlib.sha256(text.encode()).hexdigest()
+
+def make_stored_hash(password):
+    return hash_text(password)
+
+def is_rate_limited(username, attempts, max_attempts=3):
+    return attempts.get(username, 0) >= max_attempts
+
+def check_password(password_input, stored_hash):
+    return hash_text(password_input) == stored_hash
+
+def check_mfa(mfa_code_input, stored_mfa_code):
+    return mfa_code_input == stored_mfa_code
+
+def layered_login(username, password_input, stored_hash, mfa_code_input, stored_mfa_code, attempts):
+    if is_rate_limited(username, attempts):
+        return "blocked"
+    if not check_password(password_input, stored_hash):
+        attempts[username] = attempts.get(username, 0) + 1
+        return "denied"
+    if not check_mfa(mfa_code_input, stored_mfa_code):
+        return "denied"
+    return "granted"
+# Create stored_hash, then calculate result_granted and result_blocked, below
+`,
+      tests:[
+        {type:'assert', expr:'result_granted == "granted"', label:'result_granted correctly equals "granted"'},
+        {type:'assert', expr:'result_blocked == "blocked"', label:'result_blocked correctly equals "blocked"'}
+      ]
+    },
+    {
+      key:'c', title:'Door 3 — Produce the final before/after hardening report',
+      desc:`Using harden_report and all_fixed (Week 9, both given), apply them to before = {"code_flaws":
+        ["Hardcoded secret", "Plaintext password comparison", "Rate-limiting always returns False (not
+        implemented)", "Second factor check always passes (not implemented)"], "confirmed_incidents": {"trudy"}}
+        and after = {"code_flaws": [], "confirmed_incidents": set()} (both given). Calculate summary =
+        harden_report(before, after) and fully_secure = all_fixed(after). Assert that summary == "Fixed 4 of 4
+        code flaws. Confirmed incidents went from ['trudy'] to []." and fully_secure == True — the portal is
+        genuinely, provably hardened.`,
+      starter:`before = {"code_flaws": ["Hardcoded secret", "Plaintext password comparison", "Rate-limiting always returns False (not implemented)", "Second factor check always passes (not implemented)"], "confirmed_incidents": {"trudy"}}
+after = {"code_flaws": [], "confirmed_incidents": set()}
+
+def harden_report(before, after):
+    fixed_count = len(before["code_flaws"]) - len(after["code_flaws"])
+    return f"Fixed {fixed_count} of {len(before['code_flaws'])} code flaws. Confirmed incidents went from " \\
+           f"{sorted(before['confirmed_incidents'])} to {sorted(after['confirmed_incidents'])}."
+
+def all_fixed(report):
+    return len(report["code_flaws"]) == 0 and len(report["confirmed_incidents"]) == 0
+# Calculate summary and fully_secure below
+`,
+      tests:[
+        {type:'assert', expr:'summary == "Fixed 4 of 4 code flaws. Confirmed incidents went from [\'trudy\'] to []."', label:'summary correctly reports the full hardening'},
+        {type:'assert', expr:'fully_secure == True', label:'fully_secure correctly equals True'}
+      ]
+    }
+  ]
+};
+
 window.SUBJECT_DATA = window.SUBJECT_DATA || {};
 window.SUBJECT_DATA.cy = {
   b: {weeks: CY_WEEKS, mp1: CY_MP1, mp2: CY_MP2},
   i: {weeks: CY_INTERMEDIATE_WEEKS, mp1: CY_INTERMEDIATE_MP1, mp2: CY_INTERMEDIATE_MP2},
-  a: {weeks: CY_WEEKS, mp1: CY_MP1, mp2: CY_MP2}
+  a: {weeks: CY_ADVANCED_WEEKS, mp1: CY_ADVANCED_MP1, mp2: CY_ADVANCED_MP2}
 };
