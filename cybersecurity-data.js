@@ -5472,6 +5472,477 @@ stretch_access_log = [("dave", "own_profile"), ("eve", "admin_panel")]
       {type:'assert', expr:'stretch_incidents == set()', label:'stretch_incidents correctly equals an empty set'}
     ]
   }
+},
+{
+  key:'week4', num:4, title:'Writing an Incident Report',
+  scenarioTag:'Finding an incident is only half the job — someone else has to act on what you found',
+  scenario:`Week 3 correlated two logs and confirmed exactly who was really compromised. But a raw Python set like
+    {"mallory"} means nothing to a head teacher or an IT manager who wasn't staring at your code. Real security
+    work always ends with a clearly WRITTEN report: what happened, to whom, and what the evidence was — in plain,
+    structured sentences a non-programmer can act on.`,
+  objectives:[
+    'Count how many failed attempts happened right before a successful login',
+    'List which sensitive resources a specific user actually accessed',
+    'Build one clearly formatted incident report for a single confirmed user',
+    'Combine reports for every confirmed incident into one full write-up'
+  ],
+  conceptHtml:`
+    <p>First, pull out the two facts a reader needs about ONE user — how many fails came right before their
+    success, and what they actually touched:</p>
+    <pre class="code-block">def count_fails_before_success(username, login_log):
+    count = 0
+    for u, s in login_log:
+        if u == username:
+            if s:
+                return count
+            count += 1
+    return count
+
+def resources_accessed(username, access_log):
+    return sorted(r for u, r in access_log if u == username)</pre>
+    <p>Now turn those facts into a short, readable report using an f-string per line, joined with newlines:</p>
+    <pre class="code-block">def build_incident_report(username, login_log, access_log):
+    fails = count_fails_before_success(username, login_log)
+    resources = resources_accessed(username, access_log)
+    lines = [
+        f"Incident Report: {username}",
+        f"- Failed login attempts before success: {fails}",
+        f"- Sensitive resources accessed: {resources}",
+    ]
+    return "\\n".join(lines)</pre>
+    <p>Finally, write up EVERY confirmed incident (from Week 3's correlate_incident), not just one user:</p>
+    <pre class="code-block">def build_full_report(login_log, access_log):
+    incidents = sorted(correlate_incident(login_log, access_log))
+    reports = [build_incident_report(u, login_log, access_log) for u in incidents]
+    return "\\n\\n".join(reports)
+
+print(build_full_report(login_log, access_log))
+# Incident Report: mallory
+# - Failed login attempts before success: 3
+# - Sensitive resources accessed: ['grades_database']</pre>`,
+  sandboxStarter:`login_log = [
+    ("mallory", False), ("mallory", False), ("mallory", False), ("mallory", True),
+    ("alice", True),
+    ("bob", False), ("bob", False), ("bob", False), ("bob", True),
+]
+
+def count_fails_before_success(username, login_log):
+    count = 0
+    for u, s in login_log:
+        if u == username:
+            if s:
+                return count
+            count += 1
+    return count
+
+print(count_fails_before_success("mallory", login_log))
+`,
+  sandboxStarter2:`access_log = [
+    ("mallory", "grades_database"),
+    ("alice", "own_profile"),
+    ("carol", "admin_panel"),
+]
+
+def resources_accessed(username, access_log):
+    return sorted(r for u, r in access_log if u == username)
+
+print(resources_accessed("mallory", access_log))
+`,
+  exercises:[
+    {
+      title:'Count failed attempts before the success',
+      desc:`Using login_log (given), write count_fails_before_success(username, login_log) exactly as in the
+        concept box. Assert that count_fails_before_success("mallory", login_log) == 3.`,
+      starter:`login_log = [
+    ("mallory", False), ("mallory", False), ("mallory", False), ("mallory", True),
+    ("alice", True),
+    ("bob", False), ("bob", False), ("bob", False), ("bob", True),
+]
+# Write count_fails_before_success(username, login_log) below
+`,
+      tests:[{type:'assert', expr:'count_fails_before_success("mallory", login_log) == 3', label:'count_fails_before_success correctly equals 3'}]
+    },
+    {
+      title:'List the resources a user actually accessed',
+      desc:`Using access_log (given), write resources_accessed(username, access_log). Assert that
+        resources_accessed("mallory", access_log) == ["grades_database"].`,
+      starter:`access_log = [
+    ("mallory", "grades_database"),
+    ("alice", "own_profile"),
+    ("carol", "admin_panel"),
+]
+# Write resources_accessed(username, access_log) below
+`,
+      tests:[{type:'assert', expr:'resources_accessed("mallory", access_log) == ["grades_database"]', label:'resources_accessed correctly equals ["grades_database"]'}]
+    },
+    {
+      title:'Build one incident report',
+      desc:`Using count_fails_before_success and resources_accessed (given), write build_incident_report(username,
+        login_log, access_log) exactly as in the concept box. Assert that build_incident_report("mallory",
+        login_log, access_log) == "Incident Report: mallory\\n- Failed login attempts before success: 3\\n-
+        Sensitive resources accessed: ['grades_database']".`,
+      starter:`login_log = [
+    ("mallory", False), ("mallory", False), ("mallory", False), ("mallory", True),
+    ("alice", True),
+    ("bob", False), ("bob", False), ("bob", False), ("bob", True),
+]
+access_log = [
+    ("mallory", "grades_database"),
+    ("alice", "own_profile"),
+    ("carol", "admin_panel"),
+]
+
+def count_fails_before_success(username, login_log):
+    count = 0
+    for u, s in login_log:
+        if u == username:
+            if s:
+                return count
+            count += 1
+    return count
+
+def resources_accessed(username, access_log):
+    return sorted(r for u, r in access_log if u == username)
+# Write build_incident_report(username, login_log, access_log) below
+`,
+      tests:[{type:'assert', expr:'build_incident_report("mallory", login_log, access_log) == "Incident Report: mallory\\n- Failed login attempts before success: 3\\n- Sensitive resources accessed: [\'grades_database\']"', label:'build_incident_report correctly formats the mallory report'}]
+    },
+    {
+      title:'Combine every confirmed incident into one report',
+      desc:`Using build_incident_report and correlate_incident (given), write build_full_report(login_log,
+        access_log) combining every user in correlate_incident(login_log, access_log), sorted, joined with a blank
+        line between reports. Assert that build_full_report(login_log, access_log) ==
+        build_incident_report("mallory", login_log, access_log) — since mallory is the ONLY confirmed incident in
+        this dataset, the full report is exactly her single report.`,
+      starter:`login_log = [
+    ("mallory", False), ("mallory", False), ("mallory", False), ("mallory", True),
+    ("alice", True),
+    ("bob", False), ("bob", False), ("bob", False), ("bob", True),
+]
+access_log = [
+    ("mallory", "grades_database"),
+    ("alice", "own_profile"),
+    ("carol", "admin_panel"),
+]
+SENSITIVE_RESOURCES = {"grades_database", "admin_panel"}
+
+def find_brute_forced_then_succeeded(login_log, threshold=3):
+    counts = {}
+    flagged = set()
+    for username, success in login_log:
+        if success:
+            if counts.get(username, 0) >= threshold:
+                flagged.add(username)
+            counts[username] = 0
+        else:
+            counts[username] = counts.get(username, 0) + 1
+    return flagged
+
+def find_sensitive_access(access_log):
+    return set(username for username, resource in access_log if resource in SENSITIVE_RESOURCES)
+
+def correlate_incident(login_log, access_log):
+    return find_brute_forced_then_succeeded(login_log) & find_sensitive_access(access_log)
+
+def count_fails_before_success(username, login_log):
+    count = 0
+    for u, s in login_log:
+        if u == username:
+            if s:
+                return count
+            count += 1
+    return count
+
+def resources_accessed(username, access_log):
+    return sorted(r for u, r in access_log if u == username)
+
+def build_incident_report(username, login_log, access_log):
+    fails = count_fails_before_success(username, login_log)
+    resources = resources_accessed(username, access_log)
+    lines = [
+        f"Incident Report: {username}",
+        f"- Failed login attempts before success: {fails}",
+        f"- Sensitive resources accessed: {resources}",
+    ]
+    return "\\n".join(lines)
+# Write build_full_report(login_log, access_log) below
+`,
+      tests:[{type:'assert', expr:'build_full_report(login_log, access_log) == build_incident_report("mallory", login_log, access_log)', label:'build_full_report correctly equals the single mallory report'}]
+    },
+    {
+      title:'Confirm "bob" never appears in the report',
+      desc:`Using build_full_report (given), assert that "bob" not in build_full_report(login_log, access_log) —
+        bob was never a confirmed incident (Week 3), so his name must never appear in the written report either.`,
+      starter:`login_log = [
+    ("mallory", False), ("mallory", False), ("mallory", False), ("mallory", True),
+    ("alice", True),
+    ("bob", False), ("bob", False), ("bob", False), ("bob", True),
+]
+access_log = [
+    ("mallory", "grades_database"),
+    ("alice", "own_profile"),
+    ("carol", "admin_panel"),
+]
+SENSITIVE_RESOURCES = {"grades_database", "admin_panel"}
+
+def find_brute_forced_then_succeeded(login_log, threshold=3):
+    counts = {}
+    flagged = set()
+    for username, success in login_log:
+        if success:
+            if counts.get(username, 0) >= threshold:
+                flagged.add(username)
+            counts[username] = 0
+        else:
+            counts[username] = counts.get(username, 0) + 1
+    return flagged
+
+def find_sensitive_access(access_log):
+    return set(username for username, resource in access_log if resource in SENSITIVE_RESOURCES)
+
+def correlate_incident(login_log, access_log):
+    return find_brute_forced_then_succeeded(login_log) & find_sensitive_access(access_log)
+
+def count_fails_before_success(username, login_log):
+    count = 0
+    for u, s in login_log:
+        if u == username:
+            if s:
+                return count
+            count += 1
+    return count
+
+def resources_accessed(username, access_log):
+    return sorted(r for u, r in access_log if u == username)
+
+def build_incident_report(username, login_log, access_log):
+    fails = count_fails_before_success(username, login_log)
+    resources = resources_accessed(username, access_log)
+    lines = [
+        f"Incident Report: {username}",
+        f"- Failed login attempts before success: {fails}",
+        f"- Sensitive resources accessed: {resources}",
+    ]
+    return "\\n".join(lines)
+
+def build_full_report(login_log, access_log):
+    incidents = sorted(correlate_incident(login_log, access_log))
+    reports = [build_incident_report(u, login_log, access_log) for u in incidents]
+    return "\\n\\n".join(reports)
+`,
+      tests:[{type:'assert', expr:'"bob" not in build_full_report(login_log, access_log)', label:'"bob" correctly never appears in the report'}]
+    },
+    {
+      title:'Confirm "carol" never appears in the report',
+      desc:`Using build_full_report (given), assert that "carol" not in build_full_report(login_log, access_log) —
+        carol was never a confirmed incident (Week 3) either, so her name must never appear in the written report.`,
+      starter:`login_log = [
+    ("mallory", False), ("mallory", False), ("mallory", False), ("mallory", True),
+    ("alice", True),
+    ("bob", False), ("bob", False), ("bob", False), ("bob", True),
+]
+access_log = [
+    ("mallory", "grades_database"),
+    ("alice", "own_profile"),
+    ("carol", "admin_panel"),
+]
+SENSITIVE_RESOURCES = {"grades_database", "admin_panel"}
+
+def find_brute_forced_then_succeeded(login_log, threshold=3):
+    counts = {}
+    flagged = set()
+    for username, success in login_log:
+        if success:
+            if counts.get(username, 0) >= threshold:
+                flagged.add(username)
+            counts[username] = 0
+        else:
+            counts[username] = counts.get(username, 0) + 1
+    return flagged
+
+def find_sensitive_access(access_log):
+    return set(username for username, resource in access_log if resource in SENSITIVE_RESOURCES)
+
+def correlate_incident(login_log, access_log):
+    return find_brute_forced_then_succeeded(login_log) & find_sensitive_access(access_log)
+
+def count_fails_before_success(username, login_log):
+    count = 0
+    for u, s in login_log:
+        if u == username:
+            if s:
+                return count
+            count += 1
+    return count
+
+def resources_accessed(username, access_log):
+    return sorted(r for u, r in access_log if u == username)
+
+def build_incident_report(username, login_log, access_log):
+    fails = count_fails_before_success(username, login_log)
+    resources = resources_accessed(username, access_log)
+    lines = [
+        f"Incident Report: {username}",
+        f"- Failed login attempts before success: {fails}",
+        f"- Sensitive resources accessed: {resources}",
+    ]
+    return "\\n".join(lines)
+
+def build_full_report(login_log, access_log):
+    incidents = sorted(correlate_incident(login_log, access_log))
+    reports = [build_incident_report(u, login_log, access_log) for u in incidents]
+    return "\\n\\n".join(reports)
+`,
+      tests:[{type:'assert', expr:'"carol" not in build_full_report(login_log, access_log)', label:'"carol" correctly never appears in the report'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why bother turning a Python set like {"mallory"} into a written report at all?',
+      options:['The set is already good enough, this step is pointless','A head teacher or IT manager reading the results usually isn\'t a programmer — a clearly worded report is what lets them actually ACT on the finding','Sets cannot be printed in Python','Reports are only needed if the incident set is empty'],
+      correct:1,
+      explain:'Finding the right answer in code is only useful if the person who needs to act on it can understand it — that\'s what a written report is for.'
+    },
+    {
+      q:'In build_full_report, why does the function loop over correlate_incident(...) rather than every username in login_log?',
+      options:['It shouldn\'t — this is a bug','The report should only cover CONFIRMED incidents (flagged by both signals), not every user who merely appears in a log — reporting on bob or carol would be misleading','login_log doesn\'t contain every username','Looping over correlate_incident is faster to run'],
+      correct:1,
+      explain:'A good report is precise — it should name exactly who was confirmed, not everyone who appeared somewhere in the raw logs.'
+    },
+    {
+      q:'Why does build_incident_report join its lines with "\\n" instead of just concatenating them with no separator?',
+      options:['"\\n" makes the code run faster','Without a newline between them, all the fields would run together on one unreadable line — the whole point of a written report is that a human can read it','Python requires "\\n" between f-strings','It has no effect on the output at all'],
+      correct:1,
+      explain:'Formatting for a human reader is a real, deliberate design choice — the same information laid out on one unbroken line would be far harder to read.'
+    },
+    {
+      q:'If a new confirmed incident is added to correlate_incident\'s result, what happens to build_full_report automatically?',
+      options:['Nothing — the function would need to be rewritten for each new incident','It\'s report is added automatically, since build_full_report loops over whatever correlate_incident currently returns','The function crashes because it only supports exactly one incident','The existing mallory report gets overwritten and lost'],
+      correct:1,
+      explain:'Because build_full_report is built as a loop over correlate_incident\'s live result rather than a hardcoded name, it naturally scales to however many incidents are actually confirmed.'
+    }
+  ],
+  sandboxStarter3:`login_log = [
+    ("mallory", False), ("mallory", False), ("mallory", False), ("mallory", True),
+    ("alice", True),
+    ("bob", False), ("bob", False), ("bob", False), ("bob", True),
+]
+access_log = [
+    ("mallory", "grades_database"),
+    ("alice", "own_profile"),
+    ("carol", "admin_panel"),
+]
+SENSITIVE_RESOURCES = {"grades_database", "admin_panel"}
+
+def find_brute_forced_then_succeeded(login_log, threshold=3):
+    counts = {}
+    flagged = set()
+    for username, success in login_log:
+        if success:
+            if counts.get(username, 0) >= threshold:
+                flagged.add(username)
+            counts[username] = 0
+        else:
+            counts[username] = counts.get(username, 0) + 1
+    return flagged
+
+def find_sensitive_access(access_log):
+    return set(username for username, resource in access_log if resource in SENSITIVE_RESOURCES)
+
+def correlate_incident(login_log, access_log):
+    return find_brute_forced_then_succeeded(login_log) & find_sensitive_access(access_log)
+
+def count_fails_before_success(username, login_log):
+    count = 0
+    for u, s in login_log:
+        if u == username:
+            if s:
+                return count
+            count += 1
+    return count
+
+def resources_accessed(username, access_log):
+    return sorted(r for u, r in access_log if u == username)
+
+def build_incident_report(username, login_log, access_log):
+    fails = count_fails_before_success(username, login_log)
+    resources = resources_accessed(username, access_log)
+    lines = [
+        f"Incident Report: {username}",
+        f"- Failed login attempts before success: {fails}",
+        f"- Sensitive resources accessed: {resources}",
+    ]
+    return "\\n".join(lines)
+
+def build_full_report(login_log, access_log):
+    incidents = sorted(correlate_incident(login_log, access_log))
+    reports = [build_incident_report(u, login_log, access_log) for u in incidents]
+    return "\\n\\n".join(reports)
+
+print(build_full_report(login_log, access_log))
+`,
+  stretchChallenge:{
+    title:'Confirm a clean pair of logs produces an empty report',
+    desc:`Using build_full_report (given), apply it to stretch_login_log = [("dave", False), ("dave", False),
+      ("dave", False), ("dave", True), ("eve", True)] and stretch_access_log = [("dave", "own_profile"), ("eve",
+      "admin_panel")]. Assert that build_full_report(stretch_login_log, stretch_access_log) == "" — since neither
+      dave nor eve is a confirmed incident (same reasoning as Week 3's stretch challenge), there is nothing to
+      report.`,
+    starter:`def find_brute_forced_then_succeeded(login_log, threshold=3):
+    counts = {}
+    flagged = set()
+    for username, success in login_log:
+        if success:
+            if counts.get(username, 0) >= threshold:
+                flagged.add(username)
+            counts[username] = 0
+        else:
+            counts[username] = counts.get(username, 0) + 1
+    return flagged
+
+SENSITIVE_RESOURCES = {"grades_database", "admin_panel"}
+
+def find_sensitive_access(access_log):
+    return set(username for username, resource in access_log if resource in SENSITIVE_RESOURCES)
+
+def correlate_incident(login_log, access_log):
+    return find_brute_forced_then_succeeded(login_log) & find_sensitive_access(access_log)
+
+def count_fails_before_success(username, login_log):
+    count = 0
+    for u, s in login_log:
+        if u == username:
+            if s:
+                return count
+            count += 1
+    return count
+
+def resources_accessed(username, access_log):
+    return sorted(r for u, r in access_log if u == username)
+
+def build_incident_report(username, login_log, access_log):
+    fails = count_fails_before_success(username, login_log)
+    resources = resources_accessed(username, access_log)
+    lines = [
+        f"Incident Report: {username}",
+        f"- Failed login attempts before success: {fails}",
+        f"- Sensitive resources accessed: {resources}",
+    ]
+    return "\\n".join(lines)
+
+def build_full_report(login_log, access_log):
+    incidents = sorted(correlate_incident(login_log, access_log))
+    reports = [build_incident_report(u, login_log, access_log) for u in incidents]
+    return "\\n\\n".join(reports)
+
+stretch_login_log = [("dave", False), ("dave", False), ("dave", False), ("dave", True), ("eve", True)]
+stretch_access_log = [("dave", "own_profile"), ("eve", "admin_panel")]
+# Assert build_full_report(stretch_login_log, stretch_access_log) == "" below
+`,
+    tests:[
+      {type:'assert', expr:'build_full_report(stretch_login_log, stretch_access_log) == ""', label:'build_full_report correctly produces an empty string for a clean pair of logs'}
+    ]
+  }
 }
 ];
 
