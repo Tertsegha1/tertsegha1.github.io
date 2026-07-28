@@ -6563,6 +6563,241 @@ def find_all_flaws(lines):
       {type:'assert', expr:'find_all_flaws(partial_snippet) == ["Plaintext password comparison", "Rate-limiting always returns False (not implemented)"]', label:'find_all_flaws correctly reports only the two remaining real flaws'}
     ]
   }
+},
+{
+  key:'week7', num:7, title:'Secure by Default: Designing a Safer Function',
+  scenarioTag:'Real world: the best fix isn\'t catching a mistake — it\'s making the mistake impossible to make',
+  scenario:`Week 6 found flaws by REVIEWING code after it was written. But there's a stronger approach: design a
+    function's SIGNATURE so the unsafe way of calling it is hard, or impossible, to do BY ACCIDENT — rather than
+    hoping every future caller remembers to be careful.`,
+  objectives:[
+    'Recognize why a loosely-named, positional-only signature invites accidental misuse',
+    'Write a function that FORCES its sensitive argument to be passed by keyword, not position',
+    'Write a dedicated "only correct way to create a hash" function with no unsafe shortcut',
+    'Confirm that misusing the safer design raises an error immediately, rather than silently doing the wrong thing'
+  ],
+  conceptHtml:`
+    <p>Compare two designs for the exact same check. This first one LOOKS fine, but its signature gives no clue
+    whether stored_password is a raw password or a hash — a future caller could easily pass either by mistake:</p>
+    <pre class="code-block">def unsafe_check_password(password_input, stored_password):
+    return password_input == stored_password   # is stored_password a hash? raw text? unclear!</pre>
+    <p>This version is "secure by default" — the parameter name says exactly what's expected, and marking it
+    keyword-only (after the <code>*</code>) means a caller CANNOT pass it positionally by accident:</p>
+    <pre class="code-block">import hashlib
+
+def hash_text(text):
+    return hashlib.sha256(text.encode()).hexdigest()
+
+def safe_check_password(password_input, *, stored_hash):
+    return hash_text(password_input) == stored_hash
+
+stored_hash = hash_text("correct_password")
+print(safe_check_password("correct_password", stored_hash=stored_hash))   # True — must use stored_hash=
+print(safe_check_password("correct_password", stored_hash))               # TypeError! caught immediately</pre>
+    <p>Pairing it with ONE dedicated way to create that hash — no shortcut, no way to accidentally skip hashing —
+    closes the loop:</p>
+    <pre class="code-block">def make_stored_hash(password):
+    return hash_text(password)
+
+# There is no make_stored_hash() with no arguments, and no way to store a raw password instead —
+# the ONLY function that produces a "stored_hash" value already hashes it.</pre>
+    <p>The lesson: a good design doesn't just work correctly when used correctly — it makes the WRONG usage
+    actively difficult, so a future mistake gets caught immediately (a crash) instead of silently (a security
+    hole).</p>`,
+  sandboxStarter:`import hashlib
+
+def hash_text(text):
+    return hashlib.sha256(text.encode()).hexdigest()
+
+def safe_check_password(password_input, *, stored_hash):
+    return hash_text(password_input) == stored_hash
+
+stored_hash = hash_text("correct_password")
+print(safe_check_password("correct_password", stored_hash=stored_hash))
+print(safe_check_password("wrong", stored_hash=stored_hash))
+`,
+  sandboxStarter2:`import hashlib
+
+def hash_text(text):
+    return hashlib.sha256(text.encode()).hexdigest()
+
+def safe_check_password(password_input, *, stored_hash):
+    return hash_text(password_input) == stored_hash
+
+stored_hash = hash_text("correct_password")
+try:
+    safe_check_password("correct_password", stored_hash)
+    print("no_error")
+except TypeError:
+    print("TypeError")
+`,
+  exercises:[
+    {
+      title:'Write the keyword-only safe check',
+      desc:`Using hash_text (given), write safe_check_password(password_input, *, stored_hash) exactly as in the
+        concept box. Assert that safe_check_password("correct_password", stored_hash=hash_text("correct_password"))
+        == True and safe_check_password("wrong", stored_hash=hash_text("correct_password")) == False.`,
+      starter:`import hashlib
+
+def hash_text(text):
+    return hashlib.sha256(text.encode()).hexdigest()
+# Write safe_check_password(password_input, *, stored_hash) below
+`,
+      tests:[
+        {type:'assert', expr:'safe_check_password("correct_password", stored_hash=hash_text("correct_password")) == True', label:'The correct password correctly returns True'},
+        {type:'assert', expr:'safe_check_password("wrong", stored_hash=hash_text("correct_password")) == False', label:'The wrong password correctly returns False'}
+      ]
+    },
+    {
+      title:'Confirm calling it positionally is actively prevented',
+      desc:`Using safe_check_password (given), attempt to call safe_check_password("correct_password",
+        hash_text("correct_password")) POSITIONALLY (no stored_hash= keyword) inside a try/except TypeError,
+        storing "TypeError" in result if it raises, else "no_error". Assert that result == "TypeError" — the
+        keyword-only design makes this specific mistake impossible to make silently.`,
+      starter:`import hashlib
+
+def hash_text(text):
+    return hashlib.sha256(text.encode()).hexdigest()
+
+def safe_check_password(password_input, *, stored_hash):
+    return hash_text(password_input) == stored_hash
+# Attempt the positional call inside try/except TypeError, storing "TypeError" or "no_error" in result, below
+`,
+      tests:[{type:'assert', expr:'result == "TypeError"', label:'Calling safe_check_password positionally correctly raises TypeError'}]
+    },
+    {
+      title:'Write the ONE dedicated way to create a stored hash',
+      desc:`Using hash_text (given), write make_stored_hash(password) exactly as in the concept box. Assert that
+        make_stored_hash("correct_password") == hash_text("correct_password").`,
+      starter:`import hashlib
+
+def hash_text(text):
+    return hashlib.sha256(text.encode()).hexdigest()
+# Write make_stored_hash(password) below
+`,
+      tests:[{type:'assert', expr:'make_stored_hash("correct_password") == hash_text("correct_password")', label:'make_stored_hash correctly matches hash_text\'s output'}]
+    },
+    {
+      title:'Combine both safer functions into one sign-up-then-login flow',
+      desc:`Using make_stored_hash and safe_check_password (both given), create stored_hash =
+        make_stored_hash("correct_password"), then calculate correct_result =
+        safe_check_password("correct_password", stored_hash=stored_hash) and wrong_result =
+        safe_check_password("wrong", stored_hash=stored_hash). Assert that correct_result == True and
+        wrong_result == False.`,
+      starter:`import hashlib
+
+def hash_text(text):
+    return hashlib.sha256(text.encode()).hexdigest()
+
+def make_stored_hash(password):
+    return hash_text(password)
+
+def safe_check_password(password_input, *, stored_hash):
+    return hash_text(password_input) == stored_hash
+# Create stored_hash, then correct_result and wrong_result, below
+`,
+      tests:[
+        {type:'assert', expr:'correct_result == True', label:'correct_result correctly equals True'},
+        {type:'assert', expr:'wrong_result == False', label:'wrong_result correctly equals False'}
+      ]
+    },
+    {
+      title:'Confirm make_stored_hash also has no unsafe shortcut',
+      desc:`Using make_stored_hash (given), attempt to call make_stored_hash() with NO arguments inside a
+        try/except TypeError, storing "TypeError" in result2 if it raises, else "no_error". Assert that result2
+        == "TypeError" — there is no way to accidentally create an "empty" or default stored hash either.`,
+      starter:`import hashlib
+
+def hash_text(text):
+    return hashlib.sha256(text.encode()).hexdigest()
+
+def make_stored_hash(password):
+    return hash_text(password)
+# Attempt calling make_stored_hash() with no arguments inside try/except TypeError, storing "TypeError" or "no_error" in result2, below
+`,
+      tests:[{type:'assert', expr:'result2 == "TypeError"', label:'Calling make_stored_hash() with no arguments correctly raises TypeError'}]
+    },
+    {
+      title:'Classify each design as secure-by-default or not',
+      desc:`Write classify_design(name) using a dict mapping {"safe_check_password": "secure by default",
+        "make_stored_hash": "secure by default", "unsafe_check_password": "not secure by default"}, returning
+        "unknown" for anything else. Assert that classify_design("safe_check_password") == "secure by default"
+        and classify_design("unsafe_check_password") == "not secure by default".`,
+      starter:`# Write classify_design(name) below
+`,
+      tests:[
+        {type:'assert', expr:'classify_design("safe_check_password") == "secure by default"', label:'"safe_check_password" is correctly classified as secure by default'},
+        {type:'assert', expr:'classify_design("unsafe_check_password") == "not secure by default"', label:'"unsafe_check_password" is correctly classified as not secure by default'}
+      ]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why is unsafe_check_password(password_input, stored_password) risky, even if it works correctly today?',
+      options:['It isn\'t risky at all, this is just a style preference','Its signature gives no clue whether stored_password should be a raw password or a hash — a future caller could easily pass the wrong one by mistake, and the function would still "run" without complaint','It runs slower than safe_check_password','Python doesn\'t allow two-parameter functions'],
+      correct:1,
+      explain:'A function can be internally correct today and still be a future bug waiting to happen, if its signature doesn\'t make the right usage obvious.'
+    },
+    {
+      q:'What does the * in def safe_check_password(password_input, *, stored_hash): actually do?',
+      options:['Nothing, it\'s just decoration','It forces every parameter listed AFTER it (stored_hash) to be passed by keyword only — calling it positionally raises a TypeError instead of silently accepting a misplaced argument','It multiplies password_input by stored_hash','It makes stored_hash optional'],
+      correct:1,
+      explain:'This is a real Python feature (keyword-only arguments) — using it deliberately for sensitive parameters turns a class of mistakes into an immediate, loud error instead of a silent one.'
+    },
+    {
+      q:'Why is an immediate TypeError actually a GOOD outcome here, compared to the function just running anyway?',
+      options:['Errors are always bad and should never happen','A loud crash during development gets caught and fixed immediately; a function that silently accepts the wrong argument type might not be noticed until it causes a real security problem in production','TypeErrors are faster than normal execution','It isn\'t good — the goal should be to never raise any errors ever'],
+      correct:1,
+      explain:'Failing fast and loudly, right where the mistake is made, is far safer than a function that quietly does the wrong thing and only reveals the problem much later.'
+    },
+    {
+      q:'Why does make_stored_hash(password) have no default value and no way to skip hashing?',
+      options:['This was an oversight that should be fixed by adding a default','It\'s deliberate — if there were a shortcut or default that skipped hashing, a rushed caller could accidentally store a raw password instead, defeating the entire point of the function','Python requires all functions to have no defaults','Default values are not supported in Python'],
+      correct:1,
+      explain:'A "secure by default" design removes the unsafe path entirely, rather than trusting every future caller to remember not to take it.'
+    }
+  ],
+  sandboxStarter3:`import hashlib
+
+def hash_text(text):
+    return hashlib.sha256(text.encode()).hexdigest()
+
+def make_stored_hash(password):
+    return hash_text(password)
+
+def safe_check_password(password_input, *, stored_hash):
+    return hash_text(password_input) == stored_hash
+
+def classify_design(name):
+    designs = {
+        "safe_check_password": "secure by default",
+        "make_stored_hash": "secure by default",
+        "unsafe_check_password": "not secure by default",
+    }
+    return designs.get(name, "unknown")
+
+stored_hash = make_stored_hash("correct_password")
+print(safe_check_password("correct_password", stored_hash=stored_hash))
+print(classify_design("safe_check_password"))
+print(classify_design("unsafe_check_password"))
+`,
+  stretchChallenge:{
+    title:'Confirm an unrecognized design name reports "unknown"',
+    desc:`Using classify_design (given), assert that classify_design("random_function") == "unknown" — a name
+      that isn't in the dict correctly falls back to "unknown", rather than crashing or guessing.`,
+    starter:`def classify_design(name):
+    designs = {
+        "safe_check_password": "secure by default",
+        "make_stored_hash": "secure by default",
+        "unsafe_check_password": "not secure by default",
+    }
+    return designs.get(name, "unknown")
+# Assert classify_design("random_function") == "unknown" below
+`,
+    tests:[
+      {type:'assert', expr:'classify_design("random_function") == "unknown"', label:'classify_design correctly reports "unknown" for an unrecognized name'}
+    ]
+  }
 }
 ];
 
