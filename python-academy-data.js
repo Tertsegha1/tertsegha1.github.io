@@ -375,7 +375,16 @@ print(f"{buses_needed} buses needed for {total_students} students")
       desc:`Write a function trip_cost(people, price_per_person) that returns the total cost of the trip —
         multiply the number of people by the price per person (people * price_per_person).`,
       starter:`def trip_cost(people, price_per_person):
-    # TODO: return people * price_per_person
+    # Your job: work out the TOTAL cost of the trip.
+    # Total cost = number of people x price for ONE person.
+    #
+    # Example: if 4 people are going, and it costs £15 each,
+    #          the total is 4 * 15 = £60
+    #
+    # In Python, * means "multiply".
+    #
+    # Still stuck? Delete the line below and copy this instead:
+    # return people * price_per_person
     pass`,
       tests:[
         {type:'assert', expr:`trip_cost(4, 15) == 60`, label:'trip_cost(4, 15) == 60'},
@@ -388,7 +397,17 @@ print(f"{buses_needed} buses needed for {total_students} students")
       desc:`Write a function change_due(paid, cost) that returns how much change is due, rounded to 2 decimal
         places using round(...). For example, someone paying £5 for something costing £3.50 is owed £1.50.`,
       starter:`def change_due(paid, cost):
-    # TODO: return round(paid - cost, 2)
+    # Your job: work out how much CHANGE is owed.
+    # Change = amount paid - the cost of the item.
+    #
+    # Example: paying £5 for something that costs £3.50
+    #          change = 5 - 3.5 = £1.50
+    #
+    # round(answer, 2) tidies the result to 2 decimal places
+    # (so you get £1.50 instead of something like £1.4999999).
+    #
+    # Still stuck? Delete the line below and copy this instead:
+    # return round(paid - cost, 2)
     pass`,
       tests:[
         {type:'assert', expr:`change_due(5, 3.5) == 1.5`, label:'change_due(5, 3.5) == 1.5'},
@@ -402,7 +421,19 @@ print(f"{buses_needed} buses needed for {total_students} students")
         (slices_each, leftover) using // and % — how many whole slices each friend gets, and how many
         slices are left over.`,
       starter:`def split_pizza(slices, friends):
-    # TODO: return (slices // friends, slices % friends)
+    # Your job: share the pizza slices FAIRLY between friends.
+    # // gives you how many WHOLE slices each friend gets.
+    # % gives you how many slices are LEFT OVER (can't be split evenly).
+    #
+    # Example: 10 slices between 3 friends
+    #          10 // 3 = 3 slices each
+    #          10 % 3  = 1 slice left over
+    #          so the answer is (3, 1)
+    #
+    # A tuple like (a, b) just means "two answers packaged together".
+    #
+    # Still stuck? Delete the line below and copy this instead:
+    # return (slices // friends, slices % friends)
     pass`,
       tests:[
         {type:'assert', expr:`split_pizza(10, 3) == (3, 1)`, label:'split_pizza(10, 3) == (3, 1)'},
@@ -416,7 +447,18 @@ print(f"{buses_needed} buses needed for {total_students} students")
         (full_packs, leftover) using // and % — how many full packs of pens you can make, and how many pens
         are left over.`,
       starter:`def pack_supplies(total_pens, pens_per_pack):
-    # TODO: return (total_pens // pens_per_pack, total_pens % pens_per_pack)
+    # Your job: work out how many FULL packs you can make, and
+    # how many pens are left over afterwards.
+    # // gives you the number of full packs.
+    # % gives you the leftover pens that don't fill a whole pack.
+    #
+    # Example: 23 pens, 5 pens per pack
+    #          23 // 5 = 4 full packs
+    #          23 % 5  = 3 pens left over
+    #          so the answer is (4, 3)
+    #
+    # Still stuck? Delete the line below and copy this instead:
+    # return (total_pens // pens_per_pack, total_pens % pens_per_pack)
     pass`,
       tests:[
         {type:'assert', expr:`pack_supplies(23, 5) == (4, 3)`, label:'pack_supplies(23, 5) == (4, 3)'},
@@ -430,7 +472,16 @@ print(f"{buses_needed} buses needed for {total_students} students")
         round(tickets * price_per_ticket - fee, 2) — the total refunded once a fixed cancellation fee is
         subtracted.`,
       starter:`def refund_amount(tickets, price_per_ticket, fee):
-    # TODO: return round(tickets * price_per_ticket - fee, 2)
+    # Your job: work out the total REFUND once a fee is taken off.
+    # Step 1: multiply tickets by price_per_ticket to get the full amount.
+    # Step 2: subtract the fixed cancellation fee.
+    # Step 3: round the result to 2 decimal places.
+    #
+    # Example: 3 tickets at £8 each, minus a £2 fee
+    #          = (3 * 8) - 2 = 24 - 2 = £22
+    #
+    # Still stuck? Delete the line below and copy this instead:
+    # return round(tickets * price_per_ticket - fee, 2)
     pass`,
       tests:[
         {type:'assert', expr:`refund_amount(3, 8, 2) == 22`, label:'refund_amount(3, 8, 2) == 22'},
@@ -444,7 +495,18 @@ print(f"{buses_needed} buses needed for {total_students} students")
         (full_buses, students_left_over) using // and % — how many completely full buses you can make, and
         how many students are left without a full bus of their own.`,
       starter:`def bus_seating(students, seats_per_bus):
-    # TODO: return (students // seats_per_bus, students % seats_per_bus)
+    # Your job: work out how many COMPLETELY FULL buses you can make,
+    # and how many students are left without a full bus.
+    # // gives you the number of full buses.
+    # % gives you the students left over.
+    #
+    # Example: 47 students, 12 seats per bus
+    #          47 // 12 = 3 full buses
+    #          47 % 12  = 11 students left over
+    #          so the answer is (3, 11)
+    #
+    # Still stuck? Delete the line below and copy this instead:
+    # return (students // seats_per_bus, students % seats_per_bus)
     pass`,
       tests:[
         {type:'assert', expr:`bus_seating(47, 12) == (3, 11)`, label:'bus_seating(47, 12) == (3, 11)'},
