@@ -5943,6 +5943,301 @@ stretch_access_log = [("dave", "own_profile"), ("eve", "admin_panel")]
       {type:'assert', expr:'build_full_report(stretch_login_log, stretch_access_log) == ""', label:'build_full_report correctly produces an empty string for a clean pair of logs'}
     ]
   }
+},
+{
+  key:'week5', num:5, title:'Defense in Depth',
+  scenarioTag:'Real world: no single defense is perfect — the trick is layering several together',
+  scenario:`Every prior week built ONE defense in isolation: rate-limiting (Intermediate Week 3), password hashing
+    (Beginner Week 1), MFA (Intermediate Week 7). Real systems never rely on just one. "Defense in depth" means
+    stacking several INDEPENDENT layers, so that even if one layer is bypassed, the others still stand between an
+    attacker and a successful login.`,
+  objectives:[
+    'Check whether a username is currently rate-limited',
+    'Verify a password against its stored hash',
+    'Verify a second factor (MFA) code',
+    'Combine all three layers into one login function where EVERY layer must pass'
+  ],
+  conceptHtml:`
+    <p>Layer 1 — rate-limiting (Intermediate Week 3) stops brute-force guessing before it even reaches the
+    password check:</p>
+    <pre class="code-block">def is_rate_limited(username, attempts, max_attempts=3):
+    return attempts.get(username, 0) >= max_attempts</pre>
+    <p>Layer 2 — the password itself is never stored, only compared by hash (Beginner Week 1 / Advanced Week 1):</p>
+    <pre class="code-block">import hashlib
+
+def hash_text(text):
+    return hashlib.sha256(text.encode()).hexdigest()
+
+def check_password(password_input, stored_hash):
+    return hash_text(password_input) == stored_hash</pre>
+    <p>Layer 3 — even a correct password isn't enough alone; a second factor must ALSO match (Intermediate
+    Week 7):</p>
+    <pre class="code-block">def check_mfa(mfa_code_input, stored_mfa_code):
+    return mfa_code_input == stored_mfa_code</pre>
+    <p>Defense in depth means combining all three — if ANY layer fails, access is refused, and each layer is
+    checked in an order that makes sense (stop the cheapest, most common attack first):</p>
+    <pre class="code-block">def layered_login(username, password_input, stored_hash, mfa_code_input, stored_mfa_code, attempts):
+    if is_rate_limited(username, attempts):
+        return "blocked"
+    if not check_password(password_input, stored_hash):
+        attempts[username] = attempts.get(username, 0) + 1
+        return "denied"
+    if not check_mfa(mfa_code_input, stored_mfa_code):
+        return "denied"
+    return "granted"</pre>
+    <p>Notice: a stolen password ALONE isn't enough (Layer 3 stops it); a guessed password ALONE isn't enough after
+    3 tries (Layer 1 stops it) — no single layer has to be perfect, because the OTHERS cover its gaps.</p>`,
+  sandboxStarter:`import hashlib
+
+def hash_text(text):
+    return hashlib.sha256(text.encode()).hexdigest()
+
+def is_rate_limited(username, attempts, max_attempts=3):
+    return attempts.get(username, 0) >= max_attempts
+
+attempts = {"ada": 2}
+print(is_rate_limited("ada", attempts))
+`,
+  sandboxStarter2:`import hashlib
+
+def hash_text(text):
+    return hashlib.sha256(text.encode()).hexdigest()
+
+def check_password(password_input, stored_hash):
+    return hash_text(password_input) == stored_hash
+
+stored_hash = hash_text("correct_password")
+print(check_password("correct_password", stored_hash))
+print(check_password("wrong", stored_hash))
+`,
+  exercises:[
+    {
+      title:'Check whether a username is rate-limited',
+      desc:`Write is_rate_limited(username, attempts, max_attempts=3) exactly as in the concept box. Assert that
+        is_rate_limited("ada", {"ada": 3}) == True and is_rate_limited("ada", {"ada": 2}) == False.`,
+      starter:`# Write is_rate_limited(username, attempts, max_attempts=3) below
+`,
+      tests:[
+        {type:'assert', expr:'is_rate_limited("ada", {"ada": 3}) == True', label:'A username at the limit is correctly rate-limited'},
+        {type:'assert', expr:'is_rate_limited("ada", {"ada": 2}) == False', label:'A username under the limit is correctly NOT rate-limited'}
+      ]
+    },
+    {
+      title:'Verify a password against its stored hash',
+      desc:`Using hash_text (given), write check_password(password_input, stored_hash). Assert that
+        check_password("correct_password", hash_text("correct_password")) == True and
+        check_password("wrong", hash_text("correct_password")) == False.`,
+      starter:`import hashlib
+
+def hash_text(text):
+    return hashlib.sha256(text.encode()).hexdigest()
+# Write check_password(password_input, stored_hash) below
+`,
+      tests:[
+        {type:'assert', expr:'check_password("correct_password", hash_text("correct_password")) == True', label:'The correct password correctly matches its hash'},
+        {type:'assert', expr:'check_password("wrong", hash_text("correct_password")) == False', label:'The wrong password correctly does NOT match'}
+      ]
+    },
+    {
+      title:'Verify a second factor code',
+      desc:`Write check_mfa(mfa_code_input, stored_mfa_code). Assert that check_mfa("123456", "123456") == True
+        and check_mfa("000000", "123456") == False.`,
+      starter:`# Write check_mfa(mfa_code_input, stored_mfa_code) below
+`,
+      tests:[
+        {type:'assert', expr:'check_mfa("123456", "123456") == True', label:'A matching MFA code is correctly accepted'},
+        {type:'assert', expr:'check_mfa("000000", "123456") == False', label:'A non-matching MFA code is correctly rejected'}
+      ]
+    },
+    {
+      title:'Combine all three layers — grant access only when EVERY layer passes',
+      desc:`Using is_rate_limited, check_password, and check_mfa (all given), write layered_login(username,
+        password_input, stored_hash, mfa_code_input, stored_mfa_code, attempts) exactly as in the concept box.
+        Assert that layered_login("bob", "correct_password", hash_text("correct_password"), "123456", "123456",
+        {}) == "granted".`,
+      starter:`import hashlib
+
+def hash_text(text):
+    return hashlib.sha256(text.encode()).hexdigest()
+
+def is_rate_limited(username, attempts, max_attempts=3):
+    return attempts.get(username, 0) >= max_attempts
+
+def check_password(password_input, stored_hash):
+    return hash_text(password_input) == stored_hash
+
+def check_mfa(mfa_code_input, stored_mfa_code):
+    return mfa_code_input == stored_mfa_code
+# Write layered_login(username, password_input, stored_hash, mfa_code_input, stored_mfa_code, attempts) below
+`,
+      tests:[{type:'assert', expr:'layered_login("bob", "correct_password", hash_text("correct_password"), "123456", "123456", {}) == "granted"', label:'A request passing all three layers is correctly granted'}]
+    },
+    {
+      title:'A wrong password is denied AND counted toward the rate limit',
+      desc:`Using layered_login (given), call it with a WRONG password: attempts = {}; result =
+        layered_login("ada", "wrong", hash_text("correct_password"), "123456", "123456", attempts). Assert that
+        result == "denied" and attempts["ada"] == 1 — Layer 2 catches the bad password, AND Layer 1's counter
+        increases for next time.`,
+      starter:`import hashlib
+
+def hash_text(text):
+    return hashlib.sha256(text.encode()).hexdigest()
+
+def is_rate_limited(username, attempts, max_attempts=3):
+    return attempts.get(username, 0) >= max_attempts
+
+def check_password(password_input, stored_hash):
+    return hash_text(password_input) == stored_hash
+
+def check_mfa(mfa_code_input, stored_mfa_code):
+    return mfa_code_input == stored_mfa_code
+
+def layered_login(username, password_input, stored_hash, mfa_code_input, stored_mfa_code, attempts):
+    if is_rate_limited(username, attempts):
+        return "blocked"
+    if not check_password(password_input, stored_hash):
+        attempts[username] = attempts.get(username, 0) + 1
+        return "denied"
+    if not check_mfa(mfa_code_input, stored_mfa_code):
+        return "denied"
+    return "granted"
+
+attempts = {}
+# Call layered_login with a wrong password, storing the result as 'result', below
+`,
+      tests:[
+        {type:'assert', expr:'result == "denied"', label:'A wrong password is correctly denied'},
+        {type:'assert', expr:'attempts["ada"] == 1', label:'The rate-limit counter correctly increases after the failed attempt'}
+      ]
+    },
+    {
+      title:'Even a CORRECT password is blocked once rate-limited',
+      desc:`Using layered_login (given), call it for a username who is ALREADY rate-limited: attempts =
+        {"ada": 3}; result = layered_login("ada", "correct_password", hash_text("correct_password"), "123456",
+        "123456", attempts). Assert that result == "blocked" — this is the whole point of defense in depth: Layer
+        1 stops the request before the (in this case, entirely correct) password is even checked.`,
+      starter:`import hashlib
+
+def hash_text(text):
+    return hashlib.sha256(text.encode()).hexdigest()
+
+def is_rate_limited(username, attempts, max_attempts=3):
+    return attempts.get(username, 0) >= max_attempts
+
+def check_password(password_input, stored_hash):
+    return hash_text(password_input) == stored_hash
+
+def check_mfa(mfa_code_input, stored_mfa_code):
+    return mfa_code_input == stored_mfa_code
+
+def layered_login(username, password_input, stored_hash, mfa_code_input, stored_mfa_code, attempts):
+    if is_rate_limited(username, attempts):
+        return "blocked"
+    if not check_password(password_input, stored_hash):
+        attempts[username] = attempts.get(username, 0) + 1
+        return "denied"
+    if not check_mfa(mfa_code_input, stored_mfa_code):
+        return "denied"
+    return "granted"
+
+attempts = {"ada": 3}
+# Call layered_login with the CORRECT password, storing the result as 'result', below
+`,
+      tests:[{type:'assert', expr:'result == "blocked"', label:'An already rate-limited username is correctly blocked, even with a correct password'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why does layered_login check is_rate_limited BEFORE check_password, rather than after?',
+      options:['The order makes no difference at all','Checking the cheapest, most common attack (repeated guessing) first avoids doing unnecessary hash comparisons for a request that should already be blocked','Python requires rate-limiting to be checked first','check_password would crash if called before is_rate_limited'],
+      correct:1,
+      explain:'A sensible defense-in-depth order stops the most common, cheapest attack as early as possible, rather than doing extra work for a request that will be refused anyway.'
+    },
+    {
+      q:'If an attacker somehow obtains a student\'s correct password, why doesn\'t that grant them access here?',
+      options:['It always does grant access — MFA is optional','Layer 3 (check_mfa) is a genuinely INDEPENDENT defense — knowing the password alone is not sufficient, since the attacker would also need the second factor','Passwords are never checked in this system','The rate limit blocks every login regardless of password'],
+      correct:1,
+      explain:'This is exactly what "defense in depth" buys you: even if one layer (the password) is fully compromised, a second, independent layer still stands in the way.'
+    },
+    {
+      q:'What happens to the rate-limit counter on a request that fails ONLY the MFA check (Layer 3), not the password check?',
+      options:['It increases, exactly like a wrong password','It does NOT increase in this design — only a failed check_password increments attempts, so repeatedly guessing MFA codes with a stolen correct password is not currently rate-limited','The whole system crashes','It resets to zero'],
+      correct:1,
+      explain:'This is a genuine, real limitation worth noticing — this particular layered_login only rate-limits password guessing, not MFA guessing. A more complete system might rate-limit BOTH.'
+    },
+    {
+      q:'Why is "defense in depth" a stronger strategy than trying to build one single perfect defense?',
+      options:['It isn\'t — one perfect layer is always better if you can build it','No single defense is ever perfect in practice; layering several independent ones means an attacker must defeat ALL of them, not just find one flaw','It requires less code to write','It only applies to physical security, not software'],
+      correct:1,
+      explain:'In practice, no single check is flawless — the strength comes from requiring an attacker to defeat multiple independent layers at once, not from any one layer being unbreakable.'
+    }
+  ],
+  sandboxStarter3:`import hashlib
+
+def hash_text(text):
+    return hashlib.sha256(text.encode()).hexdigest()
+
+def is_rate_limited(username, attempts, max_attempts=3):
+    return attempts.get(username, 0) >= max_attempts
+
+def check_password(password_input, stored_hash):
+    return hash_text(password_input) == stored_hash
+
+def check_mfa(mfa_code_input, stored_mfa_code):
+    return mfa_code_input == stored_mfa_code
+
+def layered_login(username, password_input, stored_hash, mfa_code_input, stored_mfa_code, attempts):
+    if is_rate_limited(username, attempts):
+        return "blocked"
+    if not check_password(password_input, stored_hash):
+        attempts[username] = attempts.get(username, 0) + 1
+        return "denied"
+    if not check_mfa(mfa_code_input, stored_mfa_code):
+        return "denied"
+    return "granted"
+
+stored_hash = hash_text("correct_password")
+attempts = {}
+print(layered_login("carol", "correct_password", stored_hash, "000000", "123456", attempts))
+print(layered_login("carol", "correct_password", stored_hash, "123456", "123456", attempts))
+`,
+  stretchChallenge:{
+    title:'A correct password with the WRONG second factor is still denied',
+    desc:`Using layered_login (given), call it for a fresh username with a CORRECT password but a WRONG MFA code:
+      attempts = {}; result = layered_login("carol", "correct_password", hash_text("correct_password"), "000000",
+      "123456", attempts). Assert that result == "denied" — Layer 2 (password) passes, but Layer 3 (MFA) still
+      independently stops the login.`,
+    starter:`import hashlib
+
+def hash_text(text):
+    return hashlib.sha256(text.encode()).hexdigest()
+
+def is_rate_limited(username, attempts, max_attempts=3):
+    return attempts.get(username, 0) >= max_attempts
+
+def check_password(password_input, stored_hash):
+    return hash_text(password_input) == stored_hash
+
+def check_mfa(mfa_code_input, stored_mfa_code):
+    return mfa_code_input == stored_mfa_code
+
+def layered_login(username, password_input, stored_hash, mfa_code_input, stored_mfa_code, attempts):
+    if is_rate_limited(username, attempts):
+        return "blocked"
+    if not check_password(password_input, stored_hash):
+        attempts[username] = attempts.get(username, 0) + 1
+        return "denied"
+    if not check_mfa(mfa_code_input, stored_mfa_code):
+        return "denied"
+    return "granted"
+
+attempts = {}
+# Call layered_login with a correct password but wrong MFA code, storing the result as 'result', below
+`,
+    tests:[
+      {type:'assert', expr:'result == "denied"', label:'A correct password with the wrong MFA code is still correctly denied'}
+    ]
+  }
 }
 ];
 
