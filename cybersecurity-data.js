@@ -4885,6 +4885,245 @@ stretch_text = "DEFEND THE PORTAL"
       {type:'assert', expr:'stretch_all_reversible == True', label:'stretch_all_reversible correctly equals True'}
     ]
   }
+},
+{
+  key:'week2', num:2, title:'Threat Modeling Basics',
+  scenarioTag:'Real world: before defending anything, you have to know exactly WHAT you\'re defending and FROM what',
+  scenario:`Every technique built across this whole course — hashing, rate-limiting, secure tokens, expiry,
+    validation — was a MITIGATION for some specific threat. This week steps back and builds the bigger picture
+    directly: a threat model, a structured list connecting each ASSET worth protecting to the THREAT against it
+    and the MITIGATION (if any) already in place. This is exactly how real security reviews are organized.`,
+  objectives:[
+    'Represent a threat model as a list of asset/threat/mitigation records',
+    'Look up the mitigation for a specific asset',
+    'Find every asset that has NO mitigation yet — a real gap',
+    'Summarize how much of the system is actually covered'
+  ],
+  conceptHtml:`
+    <p>A threat model is just a list of dicts, one per asset — the SAME data-shape pattern used throughout this
+    course, applied to security planning itself:</p>
+    <pre class="code-block">threat_model = [
+    {"asset": "Student passwords", "threat": "Brute-force guessing", "mitigation": "Rate-limiting + hashing"},
+    {"asset": "Session tokens", "threat": "Token theft", "mitigation": "Secure random generation + expiry"},
+    {"asset": "Sign-up data", "threat": "Malformed input", "mitigation": "Allow-lists + regex validation"},
+    {"asset": "Admin dashboard", "threat": "Unauthorized access", "mitigation": None},
+]</pre>
+    <p>Looking up one asset's mitigation:</p>
+    <pre class="code-block">def find_mitigation(model, asset_name):
+    for entry in model:
+        if entry["asset"] == asset_name:
+            return entry["mitigation"]
+    return None
+
+print(find_mitigation(threat_model, "Session tokens"))
+# "Secure random generation + expiry"</pre>
+    <p>The MOST important question a threat model answers: which assets have <code>None</code> for a mitigation —
+    a REAL, unaddressed gap:</p>
+    <pre class="code-block">def unmitigated_assets(model):
+    return [entry["asset"] for entry in model if entry["mitigation"] is None]
+
+print(unmitigated_assets(threat_model))   # ['Admin dashboard'] — this needs work</pre>`,
+  sandboxStarter:`threat_model = [
+    {"asset": "Student passwords", "threat": "Brute-force guessing", "mitigation": "Rate-limiting + hashing"},
+    {"asset": "Session tokens", "threat": "Token theft", "mitigation": "Secure random generation + expiry"},
+    {"asset": "Sign-up data", "threat": "Malformed input", "mitigation": "Allow-lists + regex validation"},
+    {"asset": "Admin dashboard", "threat": "Unauthorized access", "mitigation": None},
+]
+
+def find_mitigation(model, asset_name):
+    for entry in model:
+        if entry["asset"] == asset_name:
+            return entry["mitigation"]
+    return None
+
+print(find_mitigation(threat_model, "Sign-up data"))
+`,
+  sandboxStarter2:`threat_model = [
+    {"asset": "Student passwords", "threat": "Brute-force guessing", "mitigation": "Rate-limiting + hashing"},
+    {"asset": "Session tokens", "threat": "Token theft", "mitigation": "Secure random generation + expiry"},
+    {"asset": "Sign-up data", "threat": "Malformed input", "mitigation": "Allow-lists + regex validation"},
+    {"asset": "Admin dashboard", "threat": "Unauthorized access", "mitigation": None},
+]
+
+def unmitigated_assets(model):
+    return [entry["asset"] for entry in model if entry["mitigation"] is None]
+
+print(unmitigated_assets(threat_model))
+`,
+  exercises:[
+    {
+      title:'Look up a mitigation by asset name',
+      desc:`Using threat_model (given), write find_mitigation(model, asset_name) returning the mitigation for
+        the matching asset, or None if not found. Assert that
+        find_mitigation(threat_model, "Session tokens") == "Secure random generation + expiry".`,
+      starter:`threat_model = [
+    {"asset": "Student passwords", "threat": "Brute-force guessing", "mitigation": "Rate-limiting + hashing"},
+    {"asset": "Session tokens", "threat": "Token theft", "mitigation": "Secure random generation + expiry"},
+    {"asset": "Sign-up data", "threat": "Malformed input", "mitigation": "Allow-lists + regex validation"},
+    {"asset": "Admin dashboard", "threat": "Unauthorized access", "mitigation": None},
+]
+# Write find_mitigation(model, asset_name) below
+`,
+      tests:[{type:'assert', expr:'find_mitigation(threat_model, "Session tokens") == "Secure random generation + expiry"', label:'find_mitigation correctly finds the session token mitigation'}]
+    },
+    {
+      title:'Find every unmitigated asset',
+      desc:`Using threat_model (given), write unmitigated_assets(model) returning a list of asset names whose
+        mitigation is None. Assert that unmitigated_assets(threat_model) == ["Admin dashboard"].`,
+      starter:`threat_model = [
+    {"asset": "Student passwords", "threat": "Brute-force guessing", "mitigation": "Rate-limiting + hashing"},
+    {"asset": "Session tokens", "threat": "Token theft", "mitigation": "Secure random generation + expiry"},
+    {"asset": "Sign-up data", "threat": "Malformed input", "mitigation": "Allow-lists + regex validation"},
+    {"asset": "Admin dashboard", "threat": "Unauthorized access", "mitigation": None},
+]
+# Write unmitigated_assets(model) below
+`,
+      tests:[{type:'assert', expr:'unmitigated_assets(threat_model) == ["Admin dashboard"]', label:'unmitigated_assets correctly equals ["Admin dashboard"]'}]
+    },
+    {
+      title:'Add a new entry to the model',
+      desc:`Using threat_model (given), write add_threat(model, asset, threat, mitigation) that appends
+        {"asset": asset, "threat": threat, "mitigation": mitigation} to model and returns model. Using
+        new_model = add_threat(threat_model, "API keys", "Hardcoding in source", "Environment variables"),
+        assert that len(new_model) == 5 and new_model[-1]["mitigation"] == "Environment variables".`,
+      starter:`threat_model = [
+    {"asset": "Student passwords", "threat": "Brute-force guessing", "mitigation": "Rate-limiting + hashing"},
+    {"asset": "Session tokens", "threat": "Token theft", "mitigation": "Secure random generation + expiry"},
+    {"asset": "Sign-up data", "threat": "Malformed input", "mitigation": "Allow-lists + regex validation"},
+    {"asset": "Admin dashboard", "threat": "Unauthorized access", "mitigation": None},
+]
+# Write add_threat(model, asset, threat, mitigation) below, then call it as:
+# new_model = add_threat(threat_model, "API keys", "Hardcoding in source", "Environment variables")
+`,
+      tests:[
+        {type:'assert', expr:'len(new_model) == 5', label:'new_model correctly has 5 entries'},
+        {type:'assert', expr:'new_model[-1]["mitigation"] == "Environment variables"', label:'The newly added entry has the correct mitigation'}
+      ]
+    },
+    {
+      title:'Count mitigations mentioning a specific technique',
+      desc:`Using threat_model (given), write count_by_keyword(model, keyword) returning the number of entries
+        whose mitigation is not None AND contains keyword. Assert that
+        count_by_keyword(threat_model, "hashing") == 1.`,
+      starter:`threat_model = [
+    {"asset": "Student passwords", "threat": "Brute-force guessing", "mitigation": "Rate-limiting + hashing"},
+    {"asset": "Session tokens", "threat": "Token theft", "mitigation": "Secure random generation + expiry"},
+    {"asset": "Sign-up data", "threat": "Malformed input", "mitigation": "Allow-lists + regex validation"},
+    {"asset": "Admin dashboard", "threat": "Unauthorized access", "mitigation": None},
+]
+# Write count_by_keyword(model, keyword) below
+`,
+      tests:[{type:'assert', expr:'count_by_keyword(threat_model, "hashing") == 1', label:'count_by_keyword correctly equals 1'}]
+    },
+    {
+      title:'Calculate overall coverage',
+      desc:`Using threat_model (given), write coverage_percentage(model) returning
+        round((number of entries with a real mitigation) / len(model) * 100, 1). Assert that
+        coverage_percentage(threat_model) == 75.0.`,
+      starter:`threat_model = [
+    {"asset": "Student passwords", "threat": "Brute-force guessing", "mitigation": "Rate-limiting + hashing"},
+    {"asset": "Session tokens", "threat": "Token theft", "mitigation": "Secure random generation + expiry"},
+    {"asset": "Sign-up data", "threat": "Malformed input", "mitigation": "Allow-lists + regex validation"},
+    {"asset": "Admin dashboard", "threat": "Unauthorized access", "mitigation": None},
+]
+# Write coverage_percentage(model) below
+`,
+      tests:[{type:'assert', expr:'coverage_percentage(threat_model) == 75.0', label:'coverage_percentage correctly equals 75.0'}]
+    },
+    {
+      title:'Report the highest-priority gap',
+      desc:`Using threat_model (given), write highest_priority_gap(model) returning
+        f"{asset}: needs a mitigation for {threat}" for the FIRST entry (in list order) whose mitigation is None,
+        or None if every entry is covered. Assert that highest_priority_gap(threat_model) ==
+        "Admin dashboard: needs a mitigation for Unauthorized access".`,
+      starter:`threat_model = [
+    {"asset": "Student passwords", "threat": "Brute-force guessing", "mitigation": "Rate-limiting + hashing"},
+    {"asset": "Session tokens", "threat": "Token theft", "mitigation": "Secure random generation + expiry"},
+    {"asset": "Sign-up data", "threat": "Malformed input", "mitigation": "Allow-lists + regex validation"},
+    {"asset": "Admin dashboard", "threat": "Unauthorized access", "mitigation": None},
+]
+# Write highest_priority_gap(model) below
+`,
+      tests:[{type:'assert', expr:'highest_priority_gap(threat_model) == "Admin dashboard: needs a mitigation for Unauthorized access"', label:'highest_priority_gap correctly identifies the gap'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What are the THREE pieces of information a threat model entry connects together?',
+      options:['Username, password, and email','An ASSET worth protecting, the THREAT against it, and the MITIGATION already in place (or lack of one)','Date, time, and location','Only threats, nothing else'],
+      correct:1,
+      explain:'A threat model\'s whole value comes from connecting these three things — knowing a threat exists means nothing without knowing what asset it endangers and whether anything protects it.'
+    },
+    {
+      q:'Why is unmitigated_assets (finding entries with mitigation == None) the MOST important function in this week?',
+      options:['It isn\'t important, it\'s just a filter','It directly answers "where are we actually exposed right now?" — the single most actionable output of a threat model','It counts how many assets exist','It only works on empty lists'],
+      correct:1,
+      explain:'A list of threats you\'ve already handled is reassuring, but a list of gaps is what tells you what to fix NEXT.'
+    },
+    {
+      q:'In this week\'s threat_model, why does "Admin dashboard" have mitigation: None?',
+      options:['It\'s a mistake in the data','It deliberately represents a REAL, currently-unaddressed gap — the whole point of building this exercise around a list with at least one gap is to practice FINDING one, not just confirming everything is fine','None means "very secure"','Admin dashboards never need protection'],
+      correct:1,
+      explain:'A threat model that shows 100% coverage on the very first pass would be unrealistic and wouldn\'t teach the actual skill — finding and reporting a real gap.'
+    },
+    {
+      q:'Why compute coverage_percentage as a single number, in addition to listing the specific gaps?',
+      options:['It replaces the need to list gaps at all','A single summary number is useful for a quick overall health check ("75% covered"), while the specific list (unmitigated_assets) is what you\'d actually act on — different audiences need different levels of detail','Percentages are always more accurate than lists','It only works for exactly 4 entries'],
+      correct:1,
+      explain:'A manager might want the headline number; the person doing the fixing needs the specific list — a good report gives both.'
+    }
+  ],
+  sandboxStarter3:`threat_model = [
+    {"asset": "Student passwords", "threat": "Brute-force guessing", "mitigation": "Rate-limiting + hashing"},
+    {"asset": "Session tokens", "threat": "Token theft", "mitigation": "Secure random generation + expiry"},
+    {"asset": "Sign-up data", "threat": "Malformed input", "mitigation": "Allow-lists + regex validation"},
+    {"asset": "Admin dashboard", "threat": "Unauthorized access", "mitigation": None},
+]
+
+def unmitigated_assets(model):
+    return [entry["asset"] for entry in model if entry["mitigation"] is None]
+
+def coverage_percentage(model):
+    covered = sum(1 for entry in model if entry["mitigation"] is not None)
+    return round(covered / len(model) * 100, 1)
+
+def highest_priority_gap(model):
+    for entry in model:
+        if entry["mitigation"] is None:
+            return f"{entry['asset']}: needs a mitigation for {entry['threat']}"
+    return None
+
+print("Coverage:", coverage_percentage(threat_model), "%")
+print("Gaps:", unmitigated_assets(threat_model))
+print("Top priority:", highest_priority_gap(threat_model))
+`,
+  stretchChallenge:{
+    title:'Model a second, more thoroughly-covered system',
+    desc:`Using coverage_percentage and unmitigated_assets (given), apply them to
+      stretch_model = [{"asset": "Grades database", "threat": "SQL injection", "mitigation": "Parameterized
+      queries"}, {"asset": "Backup files", "threat": "Unauthorized download", "mitigation": "Access controls"},
+      {"asset": "Email notifications", "threat": "Spoofing", "mitigation": "SPF/DKIM records"}] — calculate
+      stretch_coverage and stretch_gaps. Assert that stretch_coverage == 100.0 and stretch_gaps == [] — a fully
+      mitigated system reports zero gaps and full coverage.`,
+    starter:`stretch_model = [
+    {"asset": "Grades database", "threat": "SQL injection", "mitigation": "Parameterized queries"},
+    {"asset": "Backup files", "threat": "Unauthorized download", "mitigation": "Access controls"},
+    {"asset": "Email notifications", "threat": "Spoofing", "mitigation": "SPF/DKIM records"},
+]
+
+def unmitigated_assets(model):
+    return [entry["asset"] for entry in model if entry["mitigation"] is None]
+
+def coverage_percentage(model):
+    covered = sum(1 for entry in model if entry["mitigation"] is not None)
+    return round(covered / len(model) * 100, 1)
+# Calculate stretch_coverage and stretch_gaps below
+`,
+    tests:[
+      {type:'assert', expr:'stretch_coverage == 100.0', label:'stretch_coverage correctly equals 100.0'},
+      {type:'assert', expr:'stretch_gaps == []', label:'stretch_gaps correctly equals an empty list'}
+    ]
+  }
 }
 ];
 
