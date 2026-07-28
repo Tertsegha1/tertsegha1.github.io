@@ -6238,6 +6238,331 @@ attempts = {}
       {type:'assert', expr:'result == "denied"', label:'A correct password with the wrong MFA code is still correctly denied'}
     ]
   }
+},
+{
+  key:'week6', num:6, title:'Reviewing Someone Else\'s Code',
+  scenarioTag:'Real world: real code review snippets rarely have just ONE flaw',
+  scenario:`Beginner Week 3 spotted ONE flaw in a short snippet. Intermediate Week 9 ran a checklist against a
+    snippet. Real code review is often messier: a single, longer piece of code can have SEVERAL independent
+    flaws at once, and a good reviewer needs to find ALL of them, not stop celebrating after the first one.`,
+  objectives:[
+    'Detect a hardcoded secret flaw independently of other issues',
+    'Detect a plaintext password comparison flaw independently of other issues',
+    'Detect a fake/non-functional rate-limit check independently of other issues',
+    'Combine all three checks into one reviewer that finds every flaw present, and confirm a fixed snippet has none'
+  ],
+  conceptHtml:`
+    <p>Here is a small login snippet, represented as a list of lines (the same way Beginner Week 3 and Intermediate
+    Week 9 represented code for inspection) — it looks plausible at a glance, but has THREE separate flaws:</p>
+    <pre class="code-block">snippet = [
+    'API_KEY = "sk_live_12345"',
+    'password = "hunter2"',
+    'def check_login(username, password_input):',
+    '    return password_input == password',
+    'attempts = {}',
+    'def is_blocked(username):',
+    '    return False',
+]</pre>
+    <p>Each flaw gets its OWN independent checker function — this keeps each check simple, and means adding a
+    NEW flaw type later never breaks the existing ones:</p>
+    <pre class="code-block">def flaw_hardcoded_secret(lines):
+    return any('API_KEY' in l and '=' in l and ('"' in l or "'" in l) and 'os.environ' not in l for l in lines)
+
+def flaw_plaintext_password_compare(lines):
+    return any('password_input == password' in l for l in lines)
+
+def flaw_no_rate_limit(lines):
+    return any('def is_blocked' in l for l in lines) and any('return False' in l for l in lines)</pre>
+    <p>Combining them finds EVERY flaw present, not just the first one spotted:</p>
+    <pre class="code-block">def find_all_flaws(lines):
+    flaws = []
+    if flaw_hardcoded_secret(lines):
+        flaws.append("Hardcoded secret")
+    if flaw_plaintext_password_compare(lines):
+        flaws.append("Plaintext password comparison")
+    if flaw_no_rate_limit(lines):
+        flaws.append("Rate-limiting always returns False (not implemented)")
+    return flaws
+
+print(find_all_flaws(snippet))
+# ['Hardcoded secret', 'Plaintext password comparison', 'Rate-limiting always returns False (not implemented)']</pre>`,
+  sandboxStarter:`snippet = [
+    'API_KEY = "sk_live_12345"',
+    'password = "hunter2"',
+    'def check_login(username, password_input):',
+    '    return password_input == password',
+    'attempts = {}',
+    'def is_blocked(username):',
+    '    return False',
+]
+
+def flaw_hardcoded_secret(lines):
+    return any('API_KEY' in l and '=' in l and ('"' in l or "'" in l) and 'os.environ' not in l for l in lines)
+
+print(flaw_hardcoded_secret(snippet))
+`,
+  sandboxStarter2:`snippet = [
+    'API_KEY = "sk_live_12345"',
+    'password = "hunter2"',
+    'def check_login(username, password_input):',
+    '    return password_input == password',
+    'attempts = {}',
+    'def is_blocked(username):',
+    '    return False',
+]
+
+def flaw_plaintext_password_compare(lines):
+    return any('password_input == password' in l for l in lines)
+
+print(flaw_plaintext_password_compare(snippet))
+`,
+  exercises:[
+    {
+      title:'Detect a hardcoded secret',
+      desc:`Using snippet (given), write flaw_hardcoded_secret(lines) exactly as in the concept box. Assert that
+        flaw_hardcoded_secret(snippet) == True.`,
+      starter:`snippet = [
+    'API_KEY = "sk_live_12345"',
+    'password = "hunter2"',
+    'def check_login(username, password_input):',
+    '    return password_input == password',
+    'attempts = {}',
+    'def is_blocked(username):',
+    '    return False',
+]
+# Write flaw_hardcoded_secret(lines) below
+`,
+      tests:[{type:'assert', expr:'flaw_hardcoded_secret(snippet) == True', label:'flaw_hardcoded_secret correctly detects the hardcoded API key'}]
+    },
+    {
+      title:'Detect a plaintext password comparison',
+      desc:`Using snippet (given), write flaw_plaintext_password_compare(lines). Assert that
+        flaw_plaintext_password_compare(snippet) == True.`,
+      starter:`snippet = [
+    'API_KEY = "sk_live_12345"',
+    'password = "hunter2"',
+    'def check_login(username, password_input):',
+    '    return password_input == password',
+    'attempts = {}',
+    'def is_blocked(username):',
+    '    return False',
+]
+# Write flaw_plaintext_password_compare(lines) below
+`,
+      tests:[{type:'assert', expr:'flaw_plaintext_password_compare(snippet) == True', label:'flaw_plaintext_password_compare correctly detects the plaintext comparison'}]
+    },
+    {
+      title:'Detect a fake rate-limit check',
+      desc:`Using snippet (given), write flaw_no_rate_limit(lines) — True only if is_blocked is DEFINED but
+        always returns False (never actually blocking anyone). Assert that flaw_no_rate_limit(snippet) == True.`,
+      starter:`snippet = [
+    'API_KEY = "sk_live_12345"',
+    'password = "hunter2"',
+    'def check_login(username, password_input):',
+    '    return password_input == password',
+    'attempts = {}',
+    'def is_blocked(username):',
+    '    return False',
+]
+# Write flaw_no_rate_limit(lines) below
+`,
+      tests:[{type:'assert', expr:'flaw_no_rate_limit(snippet) == True', label:'flaw_no_rate_limit correctly detects the non-functional check'}]
+    },
+    {
+      title:'Combine all three checks — find every flaw present',
+      desc:`Using flaw_hardcoded_secret, flaw_plaintext_password_compare, and flaw_no_rate_limit (all given),
+        write find_all_flaws(lines) exactly as in the concept box. Assert that find_all_flaws(snippet) ==
+        ["Hardcoded secret", "Plaintext password comparison", "Rate-limiting always returns False (not
+        implemented)"] — all THREE flaws found, none missed.`,
+      starter:`snippet = [
+    'API_KEY = "sk_live_12345"',
+    'password = "hunter2"',
+    'def check_login(username, password_input):',
+    '    return password_input == password',
+    'attempts = {}',
+    'def is_blocked(username):',
+    '    return False',
+]
+
+def flaw_hardcoded_secret(lines):
+    return any('API_KEY' in l and '=' in l and ('"' in l or "'" in l) and 'os.environ' not in l for l in lines)
+
+def flaw_plaintext_password_compare(lines):
+    return any('password_input == password' in l for l in lines)
+
+def flaw_no_rate_limit(lines):
+    return any('def is_blocked' in l for l in lines) and any('return False' in l for l in lines)
+# Write find_all_flaws(lines) below
+`,
+      tests:[{type:'assert', expr:'find_all_flaws(snippet) == ["Hardcoded secret", "Plaintext password comparison", "Rate-limiting always returns False (not implemented)"]', label:'find_all_flaws correctly finds all three flaws, in order'}]
+    },
+    {
+      title:'Confirm the count of flaws found matches expectations',
+      desc:`Using find_all_flaws (given), assert that len(find_all_flaws(snippet)) == 3 — a reviewer who stops
+        after finding just one flaw would badly under-report this snippet's real risk.`,
+      starter:`snippet = [
+    'API_KEY = "sk_live_12345"',
+    'password = "hunter2"',
+    'def check_login(username, password_input):',
+    '    return password_input == password',
+    'attempts = {}',
+    'def is_blocked(username):',
+    '    return False',
+]
+
+def flaw_hardcoded_secret(lines):
+    return any('API_KEY' in l and '=' in l and ('"' in l or "'" in l) and 'os.environ' not in l for l in lines)
+
+def flaw_plaintext_password_compare(lines):
+    return any('password_input == password' in l for l in lines)
+
+def flaw_no_rate_limit(lines):
+    return any('def is_blocked' in l for l in lines) and any('return False' in l for l in lines)
+
+def find_all_flaws(lines):
+    flaws = []
+    if flaw_hardcoded_secret(lines):
+        flaws.append("Hardcoded secret")
+    if flaw_plaintext_password_compare(lines):
+        flaws.append("Plaintext password comparison")
+    if flaw_no_rate_limit(lines):
+        flaws.append("Rate-limiting always returns False (not implemented)")
+    return flaws
+`,
+      tests:[{type:'assert', expr:'len(find_all_flaws(snippet)) == 3', label:'len(find_all_flaws(snippet)) correctly equals 3'}]
+    },
+    {
+      title:'Confirm a FIXED snippet has zero flaws',
+      desc:`Using find_all_flaws (given), apply it to fixed_snippet = ['API_KEY = os.environ.get("API_KEY")',
+        'def check_login(username, password_input, stored_hash):', '    return hash_text(password_input) ==
+        stored_hash', 'def is_blocked(username, attempts, max_attempts=3):', '    return attempts.get(username,
+        0) >= max_attempts']. Assert that find_all_flaws(fixed_snippet) == [] — a genuinely fixed version
+        correctly reports NO flaws.`,
+      starter:`fixed_snippet = [
+    'API_KEY = os.environ.get("API_KEY")',
+    'def check_login(username, password_input, stored_hash):',
+    '    return hash_text(password_input) == stored_hash',
+    'def is_blocked(username, attempts, max_attempts=3):',
+    '    return attempts.get(username, 0) >= max_attempts',
+]
+
+def flaw_hardcoded_secret(lines):
+    return any('API_KEY' in l and '=' in l and ('"' in l or "'" in l) and 'os.environ' not in l for l in lines)
+
+def flaw_plaintext_password_compare(lines):
+    return any('password_input == password' in l for l in lines)
+
+def flaw_no_rate_limit(lines):
+    return any('def is_blocked' in l for l in lines) and any('return False' in l for l in lines)
+
+def find_all_flaws(lines):
+    flaws = []
+    if flaw_hardcoded_secret(lines):
+        flaws.append("Hardcoded secret")
+    if flaw_plaintext_password_compare(lines):
+        flaws.append("Plaintext password comparison")
+    if flaw_no_rate_limit(lines):
+        flaws.append("Rate-limiting always returns False (not implemented)")
+    return flaws
+`,
+      tests:[{type:'assert', expr:'find_all_flaws(fixed_snippet) == []', label:'find_all_flaws correctly reports zero flaws for the fixed snippet'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why does this week give each flaw its OWN separate checker function, instead of one big function that checks everything at once?',
+      options:['It doesn\'t matter, both approaches are identical','Separate functions keep each check simple and independently testable — and adding a brand-new flaw type later means adding one new function, not editing a large tangled one','Python requires one function per flaw','Separate functions run faster'],
+      correct:1,
+      explain:'This is a real software design principle, not just a coding-exercise convention — small, independent checks are easier to test, debug, and extend one at a time.'
+    },
+    {
+      q:'What specifically makes flaw_no_rate_limit different from just checking "is is_blocked defined"?',
+      options:['Nothing, they check the exact same thing','It also confirms is_blocked ALWAYS returns False — a rate-limit function that EXISTS but never actually blocks anyone is arguably worse than having none, since it gives false confidence','It checks whether is_blocked is spelled correctly','It only works if attempts is empty'],
+      correct:1,
+      explain:'A function that exists but does nothing useful can be more dangerous than an obviously-missing one, because it looks like protection is in place when it isn\'t.'
+    },
+    {
+      q:'Why is it important that find_all_flaws(snippet) returns ALL three flaws, not just the first one found?',
+      options:['It isn\'t important, finding one flaw is always enough','A reviewer who stops at the first flaw found would miss two other REAL, independent risks in the same snippet — real code review must be exhaustive, not just "first match wins"','Returning all three makes the function run slower','Python cannot return more than one flaw at a time'],
+      correct:1,
+      explain:'Real code often has multiple independent problems — fixing only the first one found while ignoring the rest leaves real risk in place.'
+    },
+    {
+      q:'Why does find_all_flaws(fixed_snippet) correctly return an empty list?',
+      options:['Because the function is broken and never finds anything','Because fixed_snippet genuinely resolves all three original issues: the secret is read from the environment, the password is hash-compared, and is_blocked genuinely enforces a limit — each checker correctly reports no problem when the underlying flaw is truly gone','Because empty lists are the default return value in Python','Because fixed_snippet has no functions defined in it'],
+      correct:1,
+      explain:'A checker that correctly reports "no flaw" on genuinely fixed code is just as important as one that correctly reports a flaw on broken code — both directions matter.'
+    }
+  ],
+  sandboxStarter3:`snippet = [
+    'API_KEY = "sk_live_12345"',
+    'password = "hunter2"',
+    'def check_login(username, password_input):',
+    '    return password_input == password',
+    'attempts = {}',
+    'def is_blocked(username):',
+    '    return False',
+]
+
+def flaw_hardcoded_secret(lines):
+    return any('API_KEY' in l and '=' in l and ('"' in l or "'" in l) and 'os.environ' not in l for l in lines)
+
+def flaw_plaintext_password_compare(lines):
+    return any('password_input == password' in l for l in lines)
+
+def flaw_no_rate_limit(lines):
+    return any('def is_blocked' in l for l in lines) and any('return False' in l for l in lines)
+
+def find_all_flaws(lines):
+    flaws = []
+    if flaw_hardcoded_secret(lines):
+        flaws.append("Hardcoded secret")
+    if flaw_plaintext_password_compare(lines):
+        flaws.append("Plaintext password comparison")
+    if flaw_no_rate_limit(lines):
+        flaws.append("Rate-limiting always returns False (not implemented)")
+    return flaws
+
+print(find_all_flaws(snippet))
+`,
+  stretchChallenge:{
+    title:'Review a snippet with only TWO of the three flaws',
+    desc:`Using find_all_flaws (given), apply it to partial_snippet = ['API_KEY = os.environ.get("API_KEY")',
+      'def check_login(username, password_input):', '    return password_input == password', 'def
+      is_blocked(username):', '    return False'] — this snippet fixed the secret, but left the OTHER two flaws
+      in place. Assert that find_all_flaws(partial_snippet) == ["Plaintext password comparison", "Rate-limiting
+      always returns False (not implemented)"] — exactly the two remaining, real issues.`,
+    starter:`partial_snippet = [
+    'API_KEY = os.environ.get("API_KEY")',
+    'def check_login(username, password_input):',
+    '    return password_input == password',
+    'def is_blocked(username):',
+    '    return False',
+]
+
+def flaw_hardcoded_secret(lines):
+    return any('API_KEY' in l and '=' in l and ('"' in l or "'" in l) and 'os.environ' not in l for l in lines)
+
+def flaw_plaintext_password_compare(lines):
+    return any('password_input == password' in l for l in lines)
+
+def flaw_no_rate_limit(lines):
+    return any('def is_blocked' in l for l in lines) and any('return False' in l for l in lines)
+
+def find_all_flaws(lines):
+    flaws = []
+    if flaw_hardcoded_secret(lines):
+        flaws.append("Hardcoded secret")
+    if flaw_plaintext_password_compare(lines):
+        flaws.append("Plaintext password comparison")
+    if flaw_no_rate_limit(lines):
+        flaws.append("Rate-limiting always returns False (not implemented)")
+    return flaws
+`,
+    tests:[
+      {type:'assert', expr:'find_all_flaws(partial_snippet) == ["Plaintext password comparison", "Rate-limiting always returns False (not implemented)"]', label:'find_all_flaws correctly reports only the two remaining real flaws'}
+    ]
+  }
 }
 ];
 
