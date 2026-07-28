@@ -1810,6 +1810,200 @@ print(sum(houses == "Red"))
       {type:'assert', expr:'size_check == TRUE', label:'size_check equals TRUE'}
     ]
   }
+},
+{
+  key:'week4', num:4, title:'Reading Real Data: read.csv',
+  scenarioTag:'Real world: a class roster arrives as a CSV file, not typed into c()',
+  scenario:`Every data.frame so far has been typed by hand with data.frame(). Real class data usually arrives as
+    a CSV (comma-separated values) file — read.csv() turns that raw text straight into a data.frame, ready to use.`,
+  objectives:[
+    'Use read.csv(text = ...) to turn CSV text into a data.frame',
+    'Check the resulting data.frame\'s column names and row count',
+    'Use head() to preview just the first few rows',
+    'Filter and summarise a data.frame loaded from CSV, exactly like one built by hand'
+  ],
+  conceptHtml:`
+    <p><code>read.csv()</code> normally reads a CSV FILE — but it can also read CSV text directly from a string
+    using <code>text = ...</code>, which is exactly what a real file's contents would look like once loaded:</p>
+    <pre class="code-block">csv_text &lt;- "name,score,age
+Ada,85,11
+Ben,62,12
+Cy,90,10
+Dee,74,11"
+students &lt;- read.csv(text = csv_text)
+print(students)</pre>
+    <p>Once loaded, it's an ORDINARY data.frame — every trick from Week 6 (Beginner) still applies:
+    <code>students$score</code>, <code>nrow(students)</code>, filtering with <code>[ ]</code>.</p>
+    <p><code>head(df, n)</code> previews just the first <code>n</code> rows — useful for a quick look without
+    printing an entire (possibly huge) table:</p>
+    <pre class="code-block">print(head(students, 2))   # just Ada and Ben's rows</pre>
+    <h3>Let's break down the starter code, line by line</h3>
+    <pre class="code-block">csv_text &lt;- "name,score\\nAda,85\\nBen,62"
+students &lt;- read.csv(text = csv_text)
+print(students$name)</pre>
+    <ul>
+      <li><code>csv_text</code> — an ordinary piece of text, with <code>\\n</code> marking where each new LINE (new
+        row) would begin, exactly like a real CSV file's raw contents.</li>
+      <li><code>read.csv(text = csv_text)</code> — parses that text as CSV: the FIRST line becomes the column
+        names, every line after that becomes one row.</li>
+      <li><code>students$name</code> — once parsed, it behaves exactly like any other data.frame from Beginner
+        Week 6, so <code>$</code> column access works immediately.</li>
+    </ul>
+    <p>The second example follows the same shape but calls <code>head()</code> afterward — a habit worth building
+    for ANY newly-loaded data, real or CSV, before working with the whole thing.</p>`,
+  sandboxStarter:`csv_text <- "name,score
+Ada,85
+Ben,62"
+students <- read.csv(text = csv_text)
+print(students$name)
+print(students$score)
+`,
+  sandboxStarter2:`csv_text <- "name,score,age
+Ada,85,11
+Ben,62,12
+Cy,90,10
+Dee,74,11"
+students <- read.csv(text = csv_text)
+print(head(students, 2))
+`,
+  exercises:[
+    {
+      title:'Read CSV text and check its column names',
+      desc:`Create csv_text as "name,score,age\\nAda,85,11\\nBen,62,12\\nCy,90,10\\nDee,74,11" (the \\n marks each
+        new row). Calculate df as read.csv(text = csv_text). Use stopifnot() to confirm that all(names(df) ==
+        c("name", "score", "age")).`,
+      starter:`# Create csv_text, then calculate df below
+csv_text <- "name,score,age
+Ada,85,11
+Ben,62,12
+Cy,90,10
+Dee,74,11"
+`,
+      tests:[{type:'assert', expr:'all(names(df) == c("name", "score", "age"))', label:'names(df) exactly equals c("name", "score", "age")'}]
+    },
+    {
+      title:'Check how many rows were loaded',
+      desc:`Using the same csv_text and df as before, use stopifnot() to confirm that nrow(df) == 4 — four
+        students were loaded from the CSV text.`,
+      starter:`csv_text <- "name,score,age
+Ada,85,11
+Ben,62,12
+Cy,90,10
+Dee,74,11"
+df <- read.csv(text = csv_text)
+# Check nrow(df) below
+`,
+      tests:[{type:'assert', expr:'nrow(df) == 4', label:'nrow(df) equals 4'}]
+    },
+    {
+      title:'Access a value after loading',
+      desc:`Using the same df as before, use stopifnot() to confirm that df$score[3] == 90 — the 3rd student
+        (Cy)'s score.`,
+      starter:`csv_text <- "name,score,age
+Ada,85,11
+Ben,62,12
+Cy,90,10
+Dee,74,11"
+df <- read.csv(text = csv_text)
+# Check df$score[3] below
+`,
+      tests:[{type:'assert', expr:'df$score[3] == 90', label:'df$score[3] equals 90'}]
+    },
+    {
+      title:'Preview just the first two rows',
+      desc:`Using the same df as before, calculate first_two as head(df, 2). Use stopifnot() to confirm that
+        nrow(first_two) == 2 && first_two$name[1] == "Ada".`,
+      starter:`csv_text <- "name,score,age
+Ada,85,11
+Ben,62,12
+Cy,90,10
+Dee,74,11"
+df <- read.csv(text = csv_text)
+# Calculate first_two below
+`,
+      tests:[{type:'assert', expr:'nrow(first_two) == 2 && first_two$name[1] == "Ada"', label:'first_two correctly has 2 rows, starting with Ada'}]
+    },
+    {
+      title:'Summarise a loaded column',
+      desc:`Using the same df as before, calculate avg_score as mean(df$score). Use stopifnot() to confirm that
+        round(avg_score) == 78.`,
+      starter:`csv_text <- "name,score,age
+Ada,85,11
+Ben,62,12
+Cy,90,10
+Dee,74,11"
+df <- read.csv(text = csv_text)
+# Calculate avg_score below
+`,
+      tests:[{type:'assert', expr:'round(avg_score) == 78', label:'round(avg_score) equals 78'}]
+    },
+    {
+      title:'Filter a loaded data.frame',
+      desc:`Using the same df as before, calculate over_80 as df[df$score >= 80, ] — students scoring 80 or
+        above. Use stopifnot() to confirm that nrow(over_80) == 2 (Ada and Cy).`,
+      starter:`csv_text <- "name,score,age
+Ada,85,11
+Ben,62,12
+Cy,90,10
+Dee,74,11"
+df <- read.csv(text = csv_text)
+# Calculate over_80 below
+`,
+      tests:[{type:'assert', expr:'nrow(over_80) == 2', label:'nrow(over_80) equals 2'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does read.csv(text = csv_text) do?',
+      options:['Reads a file called csv_text from disk','Parses CSV-formatted TEXT directly (no actual file needed) into a data.frame, using the first line as column names','Converts a data.frame into CSV text','Deletes any commas found in the text'],
+      correct:1,
+      explain:'text = lets you parse CSV content that\'s already a string in R, rather than requiring an actual file on disk — useful for practising with sample data.'
+    },
+    {
+      q:'Once read.csv() has created a data.frame, how does it behave compared to one built with data.frame() by hand?',
+      options:['It is a completely different, incompatible type','It behaves exactly like any other data.frame — $, nrow(), filtering with [ ], and every other trick still works','It can only be read, never filtered or modified','It automatically deletes any row with a missing value'],
+      correct:1,
+      explain:'Once loaded, a CSV-derived data.frame is indistinguishable from one built by hand — the SOURCE of the data doesn\'t change how you work with it.'
+    },
+    {
+      q:'What does head(df, 2) return?',
+      options:['The last 2 rows of df','A data.frame containing only the FIRST 2 rows of df','The 2nd column of df','The 2 largest values in df'],
+      correct:1,
+      explain:'head() previews the first n rows of a data.frame (or vector) — a quick way to check what was loaded without printing everything.'
+    },
+    {
+      q:'Why is it useful that a CSV-loaded data.frame supports the same filtering syntax (df[df$score >= 80, ]) as one built by hand?',
+      options:['It isn\'t useful, CSV data needs its own special syntax','It means everything learned about data.frames (Beginner Week 6-7) transfers directly to REAL data files, without learning a new system just because the data came from a file','Filtering only works on data.frames built by hand','CSV files cannot contain numeric columns'],
+      correct:1,
+      explain:'This is exactly why data.frame is such a useful foundation — once data is loaded into one, it doesn\'t matter whether it came from c(), a CSV file, or anywhere else.'
+    }
+  ],
+  sandboxStarter3:`csv_text <- "name,score,age
+Ada,85,11
+Ben,62,12
+Cy,90,10
+Dee,74,11"
+df <- read.csv(text = csv_text)
+print(nrow(df))
+print(mean(df$score))
+print(df[df$score >= 80, ])
+`,
+  stretchChallenge:{
+    title:'Load a CSV with a text column and check a filtered count',
+    desc:`Create csv_text as "name,house,score\\nAda,Red,85\\nBen,Blue,62\\nCy,Red,90\\nDee,Blue,74". Calculate df
+      as read.csv(text = csv_text), then red_house as df[df$house == "Red", ]. Use stopifnot() to confirm that
+      nrow(red_house) == 2.`,
+    starter:`csv_text <- "name,house,score
+Ada,Red,85
+Ben,Blue,62
+Cy,Red,90
+Dee,Blue,74"
+# Calculate df, then red_house below
+`,
+    tests:[
+      {type:'assert', expr:'nrow(red_house) == 2', label:'nrow(red_house) equals 2'}
+    ]
+  }
 }
 ];
 
