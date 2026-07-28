@@ -7362,6 +7362,218 @@ def audit_report(lines, login_log, access_log):
       {type:'assert', expr:'audit_report(fixed_portal_snippet, clean_login_log, clean_access_log) == {"code_flaws": [], "confirmed_incidents": set()}', label:'audit_report correctly produces an empty audit for the fixed portal'}
     ]
   }
+},
+{
+  key:'week9', num:9, title:'Capstone — Harden and Report',
+  scenarioTag:'Capstone Part 2: fix everything Week 8 found, then prove and report the improvement',
+  scenario:`Week 8 produced an audit_report showing 4 code flaws and 1 confirmed incident. Finding problems is
+    only half the job — now you fix them, and prove the fix worked by comparing a BEFORE report to an AFTER
+    report. This is exactly how real security work closes the loop: audit, fix, re-audit, report the difference.`,
+  objectives:[
+    'Compare a before-and-after audit_report and describe the improvement in one summary string',
+    'Determine whether a report shows a system that is COMPLETELY hardened',
+    'Recognize that a PARTIAL fix still leaves real, countable risk',
+    'List exactly which usernames are still confirmed incidents after a fix'
+  ],
+  conceptHtml:`
+    <p>Given a "before" audit_report (Week 8's, showing 4 flaws and one confirmed incident) and an "after" one
+    (Week 8's stretch challenge, fully fixed), a hardening report summarizes the improvement in plain language:</p>
+    <pre class="code-block">def harden_report(before, after):
+    fixed_count = len(before["code_flaws"]) - len(after["code_flaws"])
+    return f"Fixed {fixed_count} of {len(before['code_flaws'])} code flaws. Confirmed incidents went from " \\
+           f"{sorted(before['confirmed_incidents'])} to {sorted(after['confirmed_incidents'])}."
+
+print(harden_report(before, after))
+# "Fixed 4 of 4 code flaws. Confirmed incidents went from ['trudy'] to []."</pre>
+    <p>A quick, reusable check for whether a report shows a COMPLETELY clean system:</p>
+    <pre class="code-block">def all_fixed(report):
+    return len(report["code_flaws"]) == 0 and len(report["confirmed_incidents"]) == 0</pre>
+    <p>But a REAL fix is rarely all-or-nothing on the first try. If only 2 of the 4 flaws get fixed, the SAME
+    login/access logs still confirm the SAME incident — the report should reflect that honestly, not claim
+    success it hasn't earned:</p>
+    <pre class="code-block">partial_fixed_snippet = [
+    'API_KEY = os.environ.get("API_KEY")',       # fixed
+    'def check_login(username, password_input, stored_hash):',
+    '    return hash_text(password_input) == stored_hash',   # fixed
+    'def is_blocked(username):',                  # still broken
+    '    return False',
+    'def check_second_factor(code_input):',       # still broken
+    '    return True',
+]
+# harden_report(before, partial) == "Fixed 2 of 4 code flaws. Confirmed incidents went from ['trudy'] to ['trudy']."
+# all_fixed(partial) == False — the incident is STILL confirmed, since the login/access logs are unchanged</pre>`,
+  sandboxStarter:`before = {"code_flaws": ["Hardcoded secret", "Plaintext password comparison", "Rate-limiting always returns False (not implemented)", "Second factor check always passes (not implemented)"], "confirmed_incidents": {"trudy"}}
+after = {"code_flaws": [], "confirmed_incidents": set()}
+
+def harden_report(before, after):
+    fixed_count = len(before["code_flaws"]) - len(after["code_flaws"])
+    return f"Fixed {fixed_count} of {len(before['code_flaws'])} code flaws. Confirmed incidents went from " \\
+           f"{sorted(before['confirmed_incidents'])} to {sorted(after['confirmed_incidents'])}."
+
+print(harden_report(before, after))
+`,
+  sandboxStarter2:`after = {"code_flaws": [], "confirmed_incidents": set()}
+before = {"code_flaws": ["Hardcoded secret", "Plaintext password comparison", "Rate-limiting always returns False (not implemented)", "Second factor check always passes (not implemented)"], "confirmed_incidents": {"trudy"}}
+
+def all_fixed(report):
+    return len(report["code_flaws"]) == 0 and len(report["confirmed_incidents"]) == 0
+
+print(all_fixed(after))
+print(all_fixed(before))
+`,
+  exercises:[
+    {
+      title:'Write the hardening summary comparing before and after',
+      desc:`Using before and after (given), write harden_report(before, after) exactly as in the concept box.
+        Assert that harden_report(before, after) == "Fixed 4 of 4 code flaws. Confirmed incidents went from
+        ['trudy'] to []."`,
+      starter:`before = {"code_flaws": ["Hardcoded secret", "Plaintext password comparison", "Rate-limiting always returns False (not implemented)", "Second factor check always passes (not implemented)"], "confirmed_incidents": {"trudy"}}
+after = {"code_flaws": [], "confirmed_incidents": set()}
+# Write harden_report(before, after) below
+`,
+      tests:[{type:'assert', expr:'harden_report(before, after) == "Fixed 4 of 4 code flaws. Confirmed incidents went from [\'trudy\'] to []."', label:'harden_report correctly summarizes the full fix'}]
+    },
+    {
+      title:'Confirm the fixed report shows a COMPLETELY hardened system',
+      desc:`Using after (given), write all_fixed(report). Assert that all_fixed(after) == True,
+        all_fixed(before) == False, and all_fixed(mixed) == False where mixed = {"code_flaws": [],
+        "confirmed_incidents": {"trudy"}} — code flaws fixed but the incident still confirmed must NOT count as
+        fully fixed, so all_fixed must require BOTH conditions together, not just one.`,
+      starter:`before = {"code_flaws": ["Hardcoded secret", "Plaintext password comparison", "Rate-limiting always returns False (not implemented)", "Second factor check always passes (not implemented)"], "confirmed_incidents": {"trudy"}}
+after = {"code_flaws": [], "confirmed_incidents": set()}
+mixed = {"code_flaws": [], "confirmed_incidents": {"trudy"}}
+# Write all_fixed(report) below
+`,
+      tests:[
+        {type:'assert', expr:'all_fixed(after) == True', label:'all_fixed correctly reports True for the fully fixed report'},
+        {type:'assert', expr:'all_fixed(before) == False', label:'all_fixed correctly reports False for the original report'},
+        {type:'assert', expr:'all_fixed(mixed) == False', label:'all_fixed correctly reports False when only ONE condition is clear'}
+      ]
+    },
+    {
+      title:'Report a PARTIAL fix honestly',
+      desc:`Using harden_report (given) and partial = {"code_flaws": ["Rate-limiting always returns False (not
+        implemented)", "Second factor check always passes (not implemented)"], "confirmed_incidents": {"trudy"}}
+        (only 2 of 4 flaws fixed, SAME logs), assert that harden_report(before, partial) == "Fixed 2 of 4 code
+        flaws. Confirmed incidents went from ['trudy'] to ['trudy']." — the incident is still confirmed, since
+        fixing the code alone doesn't erase what already happened in the logs.`,
+      starter:`before = {"code_flaws": ["Hardcoded secret", "Plaintext password comparison", "Rate-limiting always returns False (not implemented)", "Second factor check always passes (not implemented)"], "confirmed_incidents": {"trudy"}}
+partial = {"code_flaws": ["Rate-limiting always returns False (not implemented)", "Second factor check always passes (not implemented)"], "confirmed_incidents": {"trudy"}}
+
+def harden_report(before, after):
+    fixed_count = len(before["code_flaws"]) - len(after["code_flaws"])
+    return f"Fixed {fixed_count} of {len(before['code_flaws'])} code flaws. Confirmed incidents went from " \\
+           f"{sorted(before['confirmed_incidents'])} to {sorted(after['confirmed_incidents'])}."
+# Assert harden_report(before, partial) == "Fixed 2 of 4 code flaws. Confirmed incidents went from ['trudy'] to ['trudy']." below
+`,
+      tests:[{type:'assert', expr:'harden_report(before, partial) == "Fixed 2 of 4 code flaws. Confirmed incidents went from [\'trudy\'] to [\'trudy\']."', label:'harden_report correctly and honestly reports the partial fix'}]
+    },
+    {
+      title:'Confirm a partial fix is NOT reported as complete',
+      desc:`Using all_fixed (given) and partial (given), assert that all_fixed(partial) == False — 2 remaining
+        code flaws AND a still-confirmed incident mean this system is NOT yet secure.`,
+      starter:`partial = {"code_flaws": ["Rate-limiting always returns False (not implemented)", "Second factor check always passes (not implemented)"], "confirmed_incidents": {"trudy"}}
+
+def all_fixed(report):
+    return len(report["code_flaws"]) == 0 and len(report["confirmed_incidents"]) == 0
+# Assert all_fixed(partial) == False below
+`,
+      tests:[{type:'assert', expr:'all_fixed(partial) == False', label:'all_fixed correctly reports False for the partial fix'}]
+    },
+    {
+      title:'Count the total remaining risk in one number',
+      desc:`Write count_remaining_risk(report) returning len(report["code_flaws"]) + len(report
+        ["confirmed_incidents"]). Assert that count_remaining_risk(partial) == 3 (2 flaws + 1 incident) and
+        count_remaining_risk(after) == 0.`,
+      starter:`partial = {"code_flaws": ["Rate-limiting always returns False (not implemented)", "Second factor check always passes (not implemented)"], "confirmed_incidents": {"trudy"}}
+after = {"code_flaws": [], "confirmed_incidents": set()}
+# Write count_remaining_risk(report) below
+`,
+      tests:[
+        {type:'assert', expr:'count_remaining_risk(partial) == 3', label:'count_remaining_risk correctly equals 3 for the partial fix'},
+        {type:'assert', expr:'count_remaining_risk(after) == 0', label:'count_remaining_risk correctly equals 0 for the fully fixed report'}
+      ]
+    },
+    {
+      title:'List exactly who is still at risk',
+      desc:`Write at_risk_usernames(report) returning sorted(report["confirmed_incidents"]). Assert that
+        at_risk_usernames(before) == ["trudy"] and at_risk_usernames(after) == [].`,
+      starter:`before = {"code_flaws": ["Hardcoded secret", "Plaintext password comparison", "Rate-limiting always returns False (not implemented)", "Second factor check always passes (not implemented)"], "confirmed_incidents": {"trudy"}}
+after = {"code_flaws": [], "confirmed_incidents": set()}
+# Write at_risk_usernames(report) below
+`,
+      tests:[
+        {type:'assert', expr:'at_risk_usernames(before) == ["trudy"]', label:'at_risk_usernames correctly equals ["trudy"] for the original report'},
+        {type:'assert', expr:'at_risk_usernames(after) == []', label:'at_risk_usernames correctly equals [] for the fully fixed report'}
+      ]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why does harden_report(before, partial) still report the SAME confirmed incident (\'trudy\'), even after 2 of the 4 code flaws are fixed?',
+      options:['This is a bug — fixing any code should clear all incidents','Fixing the CODE going forward doesn\'t erase what ALREADY happened in the login/access logs — the incident already occurred and was correctly confirmed before the fix, so it correctly still shows up when re-auditing the same historical logs','Incidents are permanent and can never be cleared','The report only tracks code flaws, never incidents'],
+      correct:1,
+      explain:'Historical evidence of what already happened doesn\'t change just because the code was later fixed — a hardening report should honestly reflect that distinction, not conflate "fixed going forward" with "erased history."'
+    },
+    {
+      q:'Why is it important that all_fixed(partial) correctly returns False, rather than being lenient about "close enough"?',
+      options:['It isn\'t important, "close enough" is fine for security','A security report that overstates progress (calling a partial fix "done") could lead someone to stop working on real, remaining risk — accuracy matters more than sounding finished','False is always the more impressive-sounding answer','Python requires strict equality checks'],
+      correct:1,
+      explain:'A report that\'s too generous about progress is actively harmful — it can cause real remaining risk to go unaddressed because everyone believes the job is finished.'
+    },
+    {
+      q:'What is the value of count_remaining_risk combining code_flaws AND confirmed_incidents into ONE number?',
+      options:['It has no value, they should stay completely separate always','It gives a single, simple "how much work is left" figure — useful for quickly comparing progress across different audits, even though the two counts measure different kinds of risk','It hides important detail that should never be summarized','The two numbers can never be meaningfully added together'],
+      correct:1,
+      explain:'A single combined number is a genuinely useful, if simplified, summary metric — exactly the kind of "how are we doing overall" figure real teams track, while the detailed breakdown (code_flaws, confirmed_incidents) remains available for anyone who needs it.'
+    },
+    {
+      q:'Looking back across this whole two-week capstone (Weeks 8-9), what is the full cycle it demonstrates?',
+      options:['Write code once and never look at it again','Audit (find flaws + correlate incidents) → fix the code → re-audit → honestly report the before/after difference — the complete, realistic cycle of real security work','Only ever write hardening reports, never actual code','Ignore historical incidents once code is patched'],
+      correct:1,
+      explain:'This audit → fix → re-audit → report cycle is exactly what real security work looks like in practice — no single step alone is the whole job.'
+    }
+  ],
+  sandboxStarter3:`before = {"code_flaws": ["Hardcoded secret", "Plaintext password comparison", "Rate-limiting always returns False (not implemented)", "Second factor check always passes (not implemented)"], "confirmed_incidents": {"trudy"}}
+partial = {"code_flaws": ["Rate-limiting always returns False (not implemented)", "Second factor check always passes (not implemented)"], "confirmed_incidents": {"trudy"}}
+after = {"code_flaws": [], "confirmed_incidents": set()}
+
+def harden_report(before, after):
+    fixed_count = len(before["code_flaws"]) - len(after["code_flaws"])
+    return f"Fixed {fixed_count} of {len(before['code_flaws'])} code flaws. Confirmed incidents went from " \\
+           f"{sorted(before['confirmed_incidents'])} to {sorted(after['confirmed_incidents'])}."
+
+def all_fixed(report):
+    return len(report["code_flaws"]) == 0 and len(report["confirmed_incidents"]) == 0
+
+def count_remaining_risk(report):
+    return len(report["code_flaws"]) + len(report["confirmed_incidents"])
+
+def at_risk_usernames(report):
+    return sorted(report["confirmed_incidents"])
+
+print(harden_report(before, partial))
+print(all_fixed(partial))
+print(count_remaining_risk(partial))
+print(at_risk_usernames(before))
+`,
+  stretchChallenge:{
+    title:'Confirm the fully-fixed report earns a clean bill of health',
+    desc:`Using all_fixed and count_remaining_risk (given), assert that all_fixed(after) == True AND
+      count_remaining_risk(after) == 0 — a genuinely hardened system passes BOTH checks at once, not just one.`,
+    starter:`after = {"code_flaws": [], "confirmed_incidents": set()}
+
+def all_fixed(report):
+    return len(report["code_flaws"]) == 0 and len(report["confirmed_incidents"]) == 0
+
+def count_remaining_risk(report):
+    return len(report["code_flaws"]) + len(report["confirmed_incidents"])
+`,
+    tests:[
+      {type:'assert', expr:'all_fixed(after) == True', label:'all_fixed correctly confirms the fully fixed report'},
+      {type:'assert', expr:'count_remaining_risk(after) == 0', label:'count_remaining_risk correctly confirms zero remaining risk'}
+    ]
+  }
 }
 ];
 
