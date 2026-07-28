@@ -2172,6 +2172,161 @@ print(sapply(scores, function(s) is_pass(s, 70)))
       {type:'assert', expr:'trip_cost(4, 12, 5) == 43', label:'trip_cost(4, 12, 5) equals 43 with both defaults overridden'}
     ]
   }
+},
+{
+  key:'week6', num:6, title:'More Data Frame Moves: order() and New Columns',
+  scenarioTag:'Real world: a leaderboard needs sorting, and a report needs an extra column',
+  scenario:`A class table is only half useful sitting in its original order — a real report usually needs it
+    SORTED (best score first), and often needs a brand-new column computed FROM the existing ones (like a
+    pass/fail flag or a grade).`,
+  objectives:[
+    'Sort a data.frame\'s rows using order()',
+    'Sort in DESCENDING order',
+    'Add a new column to a data.frame, computed from an existing column',
+    'Combine sorting and new columns in one report'
+  ],
+  conceptHtml:`
+    <p><code>order(vector)</code> doesn't sort the vector itself — it returns the POSITIONS that would put it in
+    order. Using that inside <code>[ ]</code> reorders the WHOLE data.frame's rows to match:</p>
+    <pre class="code-block">students &lt;- data.frame(name = c("Ada", "Ben", "Cy"), score = c(85, 62, 90))
+sorted &lt;- students[order(students$score), ]
+print(sorted$name)   # "Ben" "Ada" "Cy" - lowest score first</pre>
+    <p>Add <code>decreasing = TRUE</code> to sort the OTHER way (highest first):</p>
+    <pre class="code-block">sorted_desc &lt;- students[order(students$score, decreasing = TRUE), ]
+print(sorted_desc$name)   # "Cy" "Ada" "Ben" - highest score first</pre>
+    <p>Adding a brand-new column is just like creating a variable — but with <code>$</code> in front of a NEW
+    name, using an EXISTING column on the right:</p>
+    <pre class="code-block">students$pass &lt;- students$score >= 70
+print(students$pass)   # TRUE FALSE TRUE</pre>
+    <h3>Let's break down the starter code, line by line</h3>
+    <pre class="code-block">students &lt;- data.frame(name = c("Ada", "Ben", "Cy"), score = c(85, 62, 90))
+sorted &lt;- students[order(students$score), ]
+print(sorted$name)</pre>
+    <ul>
+      <li><code>order(students$score)</code> — for scores 85, 62, 90 (in that original ROW order), this returns
+        <code>2, 1, 3</code> — "the 2nd row has the smallest score, then the 1st, then the 3rd."</li>
+      <li><code>students[order(students$score), ]</code> — using those positions to pick ROWS (remember, the
+        comma inside <code>[ ]</code> separates rows from columns, from Beginner Week 7) reorders every column
+        together, keeping each student's name matched to their own score.</li>
+      <li><code>sorted$name</code> — now reads out in score order, since the WHOLE row moved together, not just
+        one column.</li>
+    </ul>
+    <p>The second example follows the same shape for adding a column: <code>students$pass &lt;- ...</code> creates
+    a column called <code>pass</code> that didn't exist before, filled in using the EXISTING <code>score</code>
+    column.</p>`,
+  sandboxStarter:`students <- data.frame(name = c("Ada", "Ben", "Cy"), score = c(85, 62, 90))
+sorted <- students[order(students$score), ]
+print(sorted$name)
+`,
+  sandboxStarter2:`students <- data.frame(name = c("Ada", "Ben", "Cy"), score = c(85, 62, 90))
+students$pass <- students$score >= 70
+print(students$pass)
+`,
+  exercises:[
+    {
+      title:'Sort ascending by score',
+      desc:`Create students as data.frame(name = c("Ada", "Ben", "Cy"), score = c(85, 62, 90)). Calculate sorted
+        as students[order(students$score), ]. Use stopifnot() to confirm that all(sorted$name == c("Ben", "Ada",
+        "Cy")) — lowest score first.`,
+      starter:`# Create students, then calculate sorted below
+students <- data.frame(name = c("Ada", "Ben", "Cy"), score = c(85, 62, 90))
+`,
+      tests:[{type:'assert', expr:'all(sorted$name == c("Ben", "Ada", "Cy"))', label:'sorted$name exactly equals c("Ben", "Ada", "Cy")'}]
+    },
+    {
+      title:'Sort descending by score',
+      desc:`Using the same students data.frame, calculate sorted_desc as students[order(students$score,
+        decreasing = TRUE), ]. Use stopifnot() to confirm that all(sorted_desc$name == c("Cy", "Ada", "Ben")) —
+        highest score first.`,
+      starter:`students <- data.frame(name = c("Ada", "Ben", "Cy"), score = c(85, 62, 90))
+# Calculate sorted_desc below
+`,
+      tests:[{type:'assert', expr:'all(sorted_desc$name == c("Cy", "Ada", "Ben"))', label:'sorted_desc$name exactly equals c("Cy", "Ada", "Ben")'}]
+    },
+    {
+      title:'Add a pass/fail column',
+      desc:`Using the same students data.frame, add a new column: students$pass <- students$score >= 70. Use
+        stopifnot() to confirm that sum(students$pass) == 2 — two students (Ada and Cy) pass.`,
+      starter:`students <- data.frame(name = c("Ada", "Ben", "Cy"), score = c(85, 62, 90))
+# Add the pass column below
+`,
+      tests:[{type:'assert', expr:'sum(students$pass) == 2', label:'sum(students$pass) equals 2'}]
+    },
+    {
+      title:'Add a computed numeric column',
+      desc:`Using the same students data.frame, add a new column: students$bonus <- round(students$score * 0.1,
+        1). Use stopifnot() to confirm that students$bonus[3] == 9 — Cy's bonus (90 * 0.1 = 9).`,
+      starter:`students <- data.frame(name = c("Ada", "Ben", "Cy"), score = c(85, 62, 90))
+# Add the bonus column below
+`,
+      tests:[{type:'assert', expr:'students$bonus[3] == 9', label:'students$bonus[3] equals 9'}]
+    },
+    {
+      title:'Combine a new column with sorting',
+      desc:`Using the same students data.frame, add students$pass <- students$score >= 70, then calculate sorted
+        as students[order(students$score), ]. Use stopifnot() to confirm that sorted$pass[1] == FALSE — the
+        lowest-scoring student (Ben) did not pass.`,
+      starter:`students <- data.frame(name = c("Ada", "Ben", "Cy"), score = c(85, 62, 90))
+# Add the pass column, then calculate sorted below
+`,
+      tests:[{type:'assert', expr:'sorted$pass[1] == FALSE', label:'sorted$pass[1] equals FALSE'}]
+    },
+    {
+      title:'Add a three-way grade column',
+      desc:`Using the same students data.frame, add students$grade <- ifelse(students$score >= 90, "A",
+        ifelse(students$score >= 70, "B", "C")). Use stopifnot() to confirm that sum(students$grade == "B") == 1
+        — only Ada (85) falls in the "B" band.`,
+      starter:`students <- data.frame(name = c("Ada", "Ben", "Cy"), score = c(85, 62, 90))
+# Add the grade column below
+`,
+      tests:[{type:'assert', expr:'sum(students$grade == "B") == 1', label:'sum(students$grade == "B") equals 1'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does order(students$score) actually return?',
+      options:['The scores themselves, sorted','The ROW POSITIONS that would put the scores in ascending order — e.g. 2, 1, 3, not the scores 62, 85, 90 themselves','A TRUE/FALSE vector','The names of the students, sorted'],
+      correct:1,
+      explain:'order() returns positions (indices), not the sorted values themselves — that\'s exactly what lets you reorder an ENTIRE data.frame\'s rows by using those positions inside [ ].'
+    },
+    {
+      q:'Why does students[order(students$score), ] reorder the WHOLE data.frame, not just the score column?',
+      options:['It only reorders the score column, this is a common misconception','Because the comma inside [ ] selects ROWS, and reordering rows moves every column together, keeping each student\'s name matched to their own score','It reorders columns, not rows','It creates a brand new data.frame with random values'],
+      correct:1,
+      explain:'Row-selection with [rows, ] (Beginner Week 7) applies to the ENTIRE row, so every column moves together — no student ends up mismatched with someone else\'s score.'
+    },
+    {
+      q:'What does students$pass <- students$score >= 70 do?',
+      options:['It deletes the score column','It creates a brand NEW column called pass, filled in using the EXISTING score column — the data.frame now has one more column than before','It only works if pass already exists as a column','It changes every value in score to TRUE or FALSE'],
+      correct:1,
+      explain:'Assigning to a NEW $column name (one that didn\'t exist before) adds it to the data.frame, computed from whatever is on the right-hand side.'
+    },
+    {
+      q:'Why does sorted$pass[1] == FALSE after sorting ascending by score?',
+      options:['It\'s a coincidence with no real explanation','Because sorted was built by reordering ALL of students\' columns together, so the FIRST row after sorting is genuinely the lowest-scoring student (Ben), whose pass value is correctly FALSE','pass is always FALSE for the first row of any data.frame','Sorting resets every column to its default value'],
+      correct:1,
+      explain:'Because row-reordering keeps every column together, whatever ends up in row 1 after sorting is a real, complete row — including whichever pass/fail value that student actually earned.'
+    }
+  ],
+  sandboxStarter3:`students <- data.frame(name = c("Ada", "Ben", "Cy"), score = c(85, 62, 90))
+students$pass <- students$score >= 70
+students$grade <- ifelse(students$score >= 90, "A", ifelse(students$score >= 70, "B", "C"))
+sorted_desc <- students[order(students$score, decreasing = TRUE), ]
+print(sorted_desc)
+`,
+  stretchChallenge:{
+    title:'Check the full sorted order after adding a grade column',
+    desc:`Using the same students data.frame, add students$grade <- ifelse(students$score >= 90, "A",
+      ifelse(students$score >= 70, "B", "C")), then calculate sorted as students[order(students$score,
+      decreasing = TRUE), ]. Use stopifnot() to confirm that all(sorted$grade == c("A", "B", "C")) — Cy (A), Ada
+      (B), Ben (C), in that highest-to-lowest order.`,
+    starter:`students <- data.frame(name = c("Ada", "Ben", "Cy"), score = c(85, 62, 90))
+# Add the grade column, then calculate sorted below
+`,
+    tests:[
+      {type:'assert', expr:'all(sorted$grade == c("A", "B", "C"))', label:'sorted$grade exactly equals c("A", "B", "C")'}
+    ]
+  }
 }
 ];
 
