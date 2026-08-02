@@ -3558,6 +3558,228 @@ print(result2$range_val)
       {type:'assert', expr:'summary$pass_count == 3 && summary$fail_count == 2', label:'summary$pass_count and summary$fail_count are both correct'}
     ]
   }
+},
+{
+  key:'week5', num:5, title:'When Things Go Wrong: tryCatch()',
+  scenarioTag:'Real world: handling bad input gracefully instead of letting the whole script crash',
+  scenario:`So far, a bad input (like calculating a mean of an empty vector, or dividing by zero) would stop a
+    script cold. tryCatch() lets a function catch a problem the moment it happens and hand back a sensible
+    fallback value instead — critical for a function that needs to process many different inputs, some of
+    which might be messy.`,
+  objectives:[
+    'Use stop() to deliberately signal an error under a specific condition',
+    'Wrap risky code in tryCatch(expr, error = function(e) {...}) to catch that error',
+    'Return a fallback value (like NA) from the error handler instead of crashing',
+    'Combine tryCatch() with sapply() to safely process a whole list of inputs, some good and some bad'
+  ],
+  conceptHtml:`
+    <p><code>stop("message")</code> deliberately raises an error — normally that would halt everything. Wrapping
+    the risky code in <code>tryCatch()</code> catches it instead:</p>
+    <pre class="code-block">safe_average &lt;- function(x) {
+  tryCatch({
+    if (length(x) == 0) stop("Empty vector")
+    mean(x)
+  }, error = function(e) {
+    NA
+  })
+}
+print(safe_average(c(10, 20, 30)))   # 20
+print(safe_average(c()))             # NA - caught, no crash</pre>
+    <p>The first argument to <code>tryCatch()</code> is the code to attempt. <code>error = function(e) {...}</code>
+    only runs if something inside that code calls <code>stop()</code> (or hits a real R error) — otherwise it's
+    skipped entirely and the normal result is returned.</p>
+    <h3>Let's break down the starter code, line by line</h3>
+    <pre class="code-block">safe_average &lt;- function(x) {
+  tryCatch({
+    if (length(x) == 0) stop("Empty vector")
+    mean(x)
+  }, error = function(e) {
+    NA
+  })
+}</pre>
+    <ul>
+      <li><code>if (length(x) == 0) stop("Empty vector")</code> — deliberately signals a problem BEFORE
+        <code>mean()</code> would fail confusingly on its own.</li>
+      <li><code>error = function(e) { NA }</code> — the fallback: whatever this function returns becomes
+        <code>tryCatch()</code>'s result when an error was caught.</li>
+    </ul>
+    <p>This pattern is especially powerful combined with <code>sapply()</code> — processing a whole list of
+    inputs where some might be bad, without one bad input stopping everything else.</p>`,
+  sandboxStarter:`safe_average <- function(x) {
+  tryCatch({
+    if (length(x) == 0) stop("Empty vector")
+    mean(x)
+  }, error = function(e) {
+    NA
+  })
+}
+print(safe_average(c(10, 20, 30)))
+print(safe_average(c()))
+`,
+  sandboxStarter2:`safe_average <- function(x) {
+  tryCatch({
+    if (length(x) == 0) stop("Empty vector")
+    mean(x)
+  }, error = function(e) {
+    NA
+  })
+}
+inputs <- list(c(1, 2, 3), c(), c(4, 5))
+results <- sapply(inputs, safe_average)
+print(results)
+`,
+  exercises:[
+    {
+      title:'Call a tryCatch-protected function on valid data',
+      desc:`Write safe_average as function(x) { tryCatch({ if (length(x) == 0) stop("Empty vector"); mean(x) },
+        error = function(e) { NA }) }. Calculate result as safe_average(c(10, 20, 30)). Use stopifnot() to
+        confirm that result == 20.`,
+      starter:`# Write safe_average, then calculate result below
+`,
+      tests:[{type:'assert', expr:'result == 20', label:'result equals 20'}]
+    },
+    {
+      title:'Call it on data that triggers the error',
+      desc:`Using the same safe_average, calculate result as safe_average(c()). Use stopifnot() to confirm that
+        is.na(result) — an empty vector triggers stop(), caught by tryCatch(), returning NA instead of crashing.`,
+      starter:`safe_average <- function(x) {
+  tryCatch({
+    if (length(x) == 0) stop("Empty vector")
+    mean(x)
+  }, error = function(e) {
+    NA
+  })
+}
+# Calculate result below
+`,
+      tests:[{type:'assert', expr:'is.na(result)', label:'result is NA'}]
+    },
+    {
+      title:'Write your own tryCatch-protected function',
+      desc:`Write safe_divide as function(a, b) { tryCatch({ if (b == 0) stop("Cannot divide by zero"); a / b },
+        error = function(e) { NA }) }. Calculate result as safe_divide(10, 2). Use stopifnot() to confirm that
+        result == 5.`,
+      starter:`# Write safe_divide, then calculate result below
+`,
+      tests:[{type:'assert', expr:'result == 5', label:'result equals 5'}]
+    },
+    {
+      title:'Trigger the error in your own function',
+      desc:`Using the same safe_divide, calculate result as safe_divide(10, 0). Use stopifnot() to confirm that
+        is.na(result).`,
+      starter:`safe_divide <- function(a, b) {
+  tryCatch({
+    if (b == 0) stop("Cannot divide by zero")
+    a / b
+  }, error = function(e) {
+    NA
+  })
+}
+# Calculate result below
+`,
+      tests:[{type:'assert', expr:'is.na(result)', label:'result is NA'}]
+    },
+    {
+      title:'Safely process a whole list of inputs',
+      desc:`Using safe_average (as before), calculate results as sapply(list(c(1, 2, 3), c(), c(4, 5)),
+        safe_average), then na_count as sum(is.na(results)). Use stopifnot() to confirm that na_count == 1 —
+        only the empty vector fails.`,
+      starter:`safe_average <- function(x) {
+  tryCatch({
+    if (length(x) == 0) stop("Empty vector")
+    mean(x)
+  }, error = function(e) {
+    NA
+  })
+}
+# Calculate results, then na_count below
+`,
+      tests:[{type:'assert', expr:'na_count == 1', label:'na_count equals 1'}]
+    },
+    {
+      title:'Combine two safe functions into one report',
+      desc:`Using safe_average and safe_divide (both as before), write process as function(x, a, b) { list(avg =
+        safe_average(x), div = safe_divide(a, b)) }. Calculate result as process(c(1, 2, 3), 10, 0). Use
+        stopifnot() to confirm that result$avg == 2 && is.na(result$div).`,
+      starter:`safe_average <- function(x) {
+  tryCatch({
+    if (length(x) == 0) stop("Empty vector")
+    mean(x)
+  }, error = function(e) {
+    NA
+  })
+}
+safe_divide <- function(a, b) {
+  tryCatch({
+    if (b == 0) stop("Cannot divide by zero")
+    a / b
+  }, error = function(e) {
+    NA
+  })
+}
+# Write process, then calculate result below
+`,
+      tests:[{type:'assert', expr:'result$avg == 2 && is.na(result$div)', label:'result$avg and result$div are both correct'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does stop("Empty vector") do inside a function?',
+      options:['Prints a warning but continues running','Deliberately raises an error with that message, which would normally halt execution','Returns the string "Empty vector" as the function\'s result','Skips the rest of the function silently'],
+      correct:1,
+      explain:'stop() is how you deliberately signal that something has gone wrong — normally that error propagates and stops the program.'
+    },
+    {
+      q:'What does tryCatch(expr, error = function(e) { NA }) do?',
+      options:['It has no effect on errors','It attempts expr; if an error occurs anywhere inside it, the error handler runs instead and its result (NA here) becomes the overall result','It prevents expr from ever running','It only works with numeric expressions'],
+      correct:1,
+      explain:'tryCatch() intercepts an error before it can crash the program, running your fallback code instead and using ITS return value.'
+    },
+    {
+      q:'What would happen to safe_average(c()) WITHOUT the tryCatch() wrapper?',
+      options:['Nothing different — the result would still be NA','stop("Empty vector") would halt execution with an error, since nothing would catch it','It would silently return 0','R would automatically skip empty vectors'],
+      correct:1,
+      explain:'Without tryCatch(), stop() has nothing catching it — the error propagates up and stops the calling code entirely.'
+    },
+    {
+      q:'Why is tryCatch() especially useful when combined with sapply() over a list of many inputs?',
+      options:['It isn\'t useful in that situation','One bad input (that would trigger an error) can\'t stop the ENTIRE sapply() call — each input is handled safely, so good inputs still get processed', 'sapply() requires tryCatch() to run at all','tryCatch() makes sapply() run faster'],
+      correct:1,
+      explain:'Without tryCatch(), a single bad input partway through the list would crash the whole sapply() call — with it, each input is handled independently.'
+    }
+  ],
+  sandboxStarter3:`safe_average <- function(x) {
+  tryCatch({
+    if (length(x) == 0) stop("Empty vector")
+    mean(x)
+  }, error = function(e) {
+    NA
+  })
+}
+safe_divide <- function(a, b) {
+  tryCatch({
+    if (b == 0) stop("Cannot divide by zero")
+    a / b
+  }, error = function(e) {
+    NA
+  })
+}
+process <- function(x, a, b) {
+  list(avg = safe_average(x), div = safe_divide(a, b))
+}
+print(process(c(1, 2, 3), 10, 0))
+`,
+  stretchChallenge:{
+    title:'Catch a different kind of bad input',
+    desc:`Write safe_sqrt as function(x) { tryCatch({ if (x < 0) stop("Negative number"); sqrt(x) }, error =
+      function(e) { NA }) }. Calculate result1 as safe_sqrt(16) and result2 as safe_sqrt(-4). Use stopifnot() to
+      confirm that result1 == 4 && is.na(result2).`,
+    starter:`# Write safe_sqrt, then calculate result1 and result2 below
+`,
+    tests:[
+      {type:'assert', expr:'result1 == 4 && is.na(result2)', label:'result1 and result2 are both correct'}
+    ]
+  }
 }
 ];
 
