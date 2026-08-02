@@ -3932,6 +3932,153 @@ print(lines)
       {type:'assert', expr:'report == "18/20 students passed (90.0%)"', label:'report exactly matches the expected text'}
     ]
   }
+},
+{
+  key:'week7', num:7, title:'Applying a Function Across Columns',
+  scenarioTag:'Real world: getting a summary of EVERY subject at once, not just one at a time',
+  scenario:`Intermediate Week 1 used sapply() on a plain vector. But a data.frame is really just a LIST of
+    column vectors — so sapply(df, FUN) applies FUN to every COLUMN at once, giving you one result per subject
+    in a single line, instead of writing mean(df$math), mean(df$science), mean(df$english) separately.`,
+  objectives:[
+    'Use sapply(df, FUN) to apply a function to every column of a data.frame at once',
+    'Access one column\'s result using [[ ]] with the column name',
+    'Confirm that the result is named after each column',
+    'Apply a CUSTOM function (not just mean/max) across every column'
+  ],
+  conceptHtml:`
+    <p>A data.frame is really a named list of column vectors — so <code>sapply()</code> works on it exactly the
+    same way it works on a list, applying the function once PER COLUMN:</p>
+    <pre class="code-block">df &lt;- data.frame(math = c(80, 70, 90, 60), science = c(75, 85, 95, 55))
+col_means &lt;- sapply(df, mean)
+print(col_means)
+#    math science
+#    75.0    77.5</pre>
+    <p>Instead of writing <code>mean(df$math)</code>, <code>mean(df$science)</code>, ... separately for every
+    subject, one <code>sapply()</code> call handles all of them, and the result is NAMED after each column —
+    so <code>col_means[["math"]]</code> pulls out just that subject's average.</p>
+    <h3>Let's break down the starter code, line by line</h3>
+    <pre class="code-block">df &lt;- data.frame(math = c(80, 70, 90, 60), science = c(75, 85, 95, 55), english = c(70, 60, 40, 90))
+col_means &lt;- sapply(df, mean)
+math_mean &lt;- col_means[["math"]]</pre>
+    <ul>
+      <li><code>sapply(df, mean)</code> — runs <code>mean()</code> once per column, returning a named numeric
+        vector, one value per subject.</li>
+      <li><code>col_means[["math"]]</code> — the same named-access pattern used since Intermediate Week 9's
+        lists, here pulling out just the math column's result.</li>
+    </ul>
+    <p>This isn't limited to built-in functions like <code>mean()</code> or <code>max()</code> — any function,
+    including one you write yourself, can be applied across every column the same way.</p>`,
+  sandboxStarter:`df <- data.frame(math = c(80, 70, 90, 60), science = c(75, 85, 95, 55), english = c(70, 60, 40, 90))
+col_means <- sapply(df, mean)
+print(col_means)
+`,
+  sandboxStarter2:`df <- data.frame(math = c(80, 70, 90, 60), science = c(75, 85, 95, 55), english = c(70, 60, 40, 90))
+col_maxes <- sapply(df, max)
+print(col_maxes)
+`,
+  exercises:[
+    {
+      title:'Apply mean() across every column',
+      desc:`Create df as data.frame(math = c(80, 70, 90, 60), science = c(75, 85, 95, 55), english = c(70, 60,
+        40, 90)). Calculate col_means as sapply(df, mean), then math_mean as col_means[["math"]]. Use
+        stopifnot() to confirm that math_mean == 75.`,
+      starter:`# Create df, then calculate col_means and math_mean below
+df <- data.frame(math = c(80, 70, 90, 60), science = c(75, 85, 95, 55), english = c(70, 60, 40, 90))
+`,
+      tests:[{type:'assert', expr:'math_mean == 75', label:'math_mean equals 75'}]
+    },
+    {
+      title:'Access a different column\'s result',
+      desc:`Using the same col_means, calculate science_mean as col_means[["science"]]. Use stopifnot() to
+        confirm that science_mean == 77.5.`,
+      starter:`df <- data.frame(math = c(80, 70, 90, 60), science = c(75, 85, 95, 55), english = c(70, 60, 40, 90))
+col_means <- sapply(df, mean)
+# Calculate science_mean below
+`,
+      tests:[{type:'assert', expr:'science_mean == 77.5', label:'science_mean equals 77.5'}]
+    },
+    {
+      title:'Apply a different function across columns',
+      desc:`Using df (as before), calculate col_maxes as sapply(df, max), then english_max as
+        col_maxes[["english"]]. Use stopifnot() to confirm that english_max == 90.`,
+      starter:`df <- data.frame(math = c(80, 70, 90, 60), science = c(75, 85, 95, 55), english = c(70, 60, 40, 90))
+# Calculate col_maxes, then english_max below
+`,
+      tests:[{type:'assert', expr:'english_max == 90', label:'english_max equals 90'}]
+    },
+    {
+      title:'Check the result is named after each column',
+      desc:`Using col_means (as before), calculate col_names as names(col_means). Use stopifnot() to confirm
+        that all(col_names == c("math", "science", "english")).`,
+      starter:`df <- data.frame(math = c(80, 70, 90, 60), science = c(75, 85, 95, 55), english = c(70, 60, 40, 90))
+col_means <- sapply(df, mean)
+# Calculate col_names below
+`,
+      tests:[{type:'assert', expr:'all(col_names == c("math", "science", "english"))', label:'col_names exactly equals c("math", "science", "english")'}]
+    },
+    {
+      title:'Apply a custom function across columns',
+      desc:`Using df (as before), calculate col_ranges as sapply(df, function(x) max(x) - min(x)), then
+        science_range as col_ranges[["science"]]. Use stopifnot() to confirm that science_range == 40.`,
+      starter:`df <- data.frame(math = c(80, 70, 90, 60), science = c(75, 85, 95, 55), english = c(70, 60, 40, 90))
+# Calculate col_ranges, then science_range below
+`,
+      tests:[{type:'assert', expr:'science_range == 40', label:'science_range equals 40'}]
+    },
+    {
+      title:'Count values above a threshold per column',
+      desc:`Using df (as before), calculate col_counts as sapply(df, function(x) sum(x >= 70)), then
+        english_count as col_counts[["english"]]. Use stopifnot() to confirm that english_count == 2 — only 2
+        of the 4 english scores are 70 or above.`,
+      starter:`df <- data.frame(math = c(80, 70, 90, 60), science = c(75, 85, 95, 55), english = c(70, 60, 40, 90))
+# Calculate col_counts, then english_count below
+`,
+      tests:[{type:'assert', expr:'english_count == 2', label:'english_count equals 2'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does sapply(df, mean) do when df is a data.frame?',
+      options:['It computes ONE overall mean across all values in the whole data.frame','It applies mean() to each COLUMN separately, returning one result per column — since a data.frame is really a list of column vectors','It computes the mean of each ROW instead of each column','It causes an error, since sapply() only works on plain vectors'],
+      correct:1,
+      explain:'A data.frame is internally a list of columns, so sapply() treats each column exactly like one element of a list — running the function once per column.'
+    },
+    {
+      q:'Why is col_means[["math"]] able to pull out just the math column\'s result?',
+      options:['It can\'t — sapply() results aren\'t accessible this way','sapply(df, mean) returns a result NAMED after each column, so [["math"]] works the same named-access pattern used for lists since Intermediate Week 9','It always returns the first column\'s result','[["math"]] searches the whole data.frame for the word "math"'],
+      correct:1,
+      explain:'sapply() preserves the column names from df in its output, so named [[ ]] access works exactly like it does on any other named list or vector.'
+    },
+    {
+      q:'What does sapply(df, function(x) max(x) - min(x)) compute for each column?',
+      options:['The average of each column','The RANGE — the difference between the highest and lowest value in that column','The number of rows in df','Nothing, this is invalid syntax'],
+      correct:1,
+      explain:'The custom function receives one column\'s full vector as x, so max(x) - min(x) computes that column\'s range — applied automatically to every column.'
+    },
+    {
+      q:'Why is sapply(df, function(x) sum(x >= 70)) more useful than checking each column\'s threshold count by hand?',
+      options:['It isn\'t more useful','One call handles ALL columns at once with the same logic, instead of repeating sum(df$math >= 70), sum(df$science >= 70), sum(df$english >= 70) separately','sum() cannot be used inside sapply()','It only works for exactly 2 columns'],
+      correct:1,
+      explain:'Writing the check once inside a function and letting sapply() apply it to every column avoids repeating the same logic for each subject by hand.'
+    }
+  ],
+  sandboxStarter3:`df <- data.frame(math = c(80, 70, 90, 60), science = c(75, 85, 95, 55), english = c(70, 60, 40, 90))
+col_ranges <- sapply(df, function(x) max(x) - min(x))
+col_counts <- sapply(df, function(x) sum(x >= 70))
+print(col_ranges)
+print(col_counts)
+`,
+  stretchChallenge:{
+    title:'Combine sapply() with sprintf() formatting',
+    desc:`Using df (given), calculate col_summary as sapply(df, function(x) sprintf("%.1f", mean(x))), then
+      math_summary as col_summary[["math"]]. Use stopifnot() to confirm that math_summary == "75.0".`,
+    starter:`df <- data.frame(math = c(80, 70, 90, 60), science = c(75, 85, 95, 55), english = c(70, 60, 40, 90))
+# Calculate col_summary, then math_summary below
+`,
+    tests:[
+      {type:'assert', expr:'math_summary == "75.0"', label:'math_summary exactly equals "75.0"'}
+    ]
+  }
 }
 ];
 
