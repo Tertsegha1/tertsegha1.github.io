@@ -3223,6 +3223,169 @@ print(abs(cor(absences, score)) > abs(cor(hours, score)))
       {type:'assert', expr:'self_cor == 1', label:'self_cor equals 1'}
     ]
   }
+},
+{
+  key:'week3', num:3, title:'A Simple Model: lm()',
+  scenarioTag:'Real world: fitting the actual best-fit line, not just measuring how related two things are',
+  scenario:`Week 2's cor() said HOW STRONGLY hours studied and exam score move together. lm() goes one step
+    further — it fits the actual best-fit straight line through the data, giving you a real formula you can use
+    to predict a score for hours you haven't seen yet.`,
+  objectives:[
+    'Use lm(y ~ x, data = df) to fit a straight line to two numeric columns',
+    'Use coef() to read the fitted intercept and slope out of a model',
+    'Use predict() to estimate y for a brand new x value',
+    'Use fitted() to see the model\'s predictions for the ORIGINAL data, and calculate a residual'
+  ],
+  conceptHtml:`
+    <p><code>lm(y ~ x, data = df)</code> fits the straight line that best predicts <code>y</code> from
+    <code>x</code> — the same <code>~</code> formula syntax from Intermediate Week 7's aggregate(), read as
+    "score explained by hours":</p>
+    <pre class="code-block">df &lt;- data.frame(hours = c(1, 2, 3, 4, 5), score = c(50, 60, 65, 75, 90))
+model &lt;- lm(score ~ hours, data = df)
+print(coef(model))
+# (Intercept)       hours
+#        39.5         9.5</pre>
+    <p><code>coef(model)</code> returns the fitted line's formula as a named vector:
+    <code>score = 39.5 + 9.5 * hours</code>. Once you have that formula, <code>predict()</code> estimates
+    <code>score</code> for a NEW <code>hours</code> value the model has never seen:</p>
+    <pre class="code-block">predicted_6 &lt;- predict(model, newdata = data.frame(hours = 6))
+print(predicted_6)   # 96.5</pre>
+    <h3>Let's break down the starter code, line by line</h3>
+    <pre class="code-block">df &lt;- data.frame(hours = c(1, 2, 3, 4, 5), score = c(50, 60, 65, 75, 90))
+model &lt;- lm(score ~ hours, data = df)
+coefs &lt;- coef(model)
+slope &lt;- coefs[["hours"]]</pre>
+    <ul>
+      <li><code>lm(score ~ hours, data = df)</code> — fits the line, storing everything about it inside
+        <code>model</code>.</li>
+      <li><code>coefs[["hours"]]</code> — the same named-access pattern from Intermediate Week 9's lists, here
+        pulling out just the SLOPE (how much score changes per extra hour).</li>
+    </ul>
+    <p><code>fitted(model)</code> gives the model's predictions for the ORIGINAL data — comparing a fitted value
+    to the real value gives a <strong>residual</strong>, how far off that one prediction was.</p>`,
+  sandboxStarter:`df <- data.frame(hours = c(1, 2, 3, 4, 5), score = c(50, 60, 65, 75, 90))
+model <- lm(score ~ hours, data = df)
+print(coef(model))
+`,
+  sandboxStarter2:`df <- data.frame(hours = c(1, 2, 3, 4, 5), score = c(50, 60, 65, 75, 90))
+model <- lm(score ~ hours, data = df)
+predicted_6 <- predict(model, newdata = data.frame(hours = 6))
+print(predicted_6)
+`,
+  exercises:[
+    {
+      title:'Fit a model and read its slope',
+      desc:`Create df as data.frame(hours = c(1, 2, 3, 4, 5), score = c(50, 60, 65, 75, 90)). Calculate model as
+        lm(score ~ hours, data = df), coefs as coef(model), then slope as coefs[["hours"]]. Use stopifnot() to
+        confirm that round(slope, 2) == 9.5.`,
+      starter:`# Create df, then calculate model, coefs, and slope below
+df <- data.frame(hours = c(1, 2, 3, 4, 5), score = c(50, 60, 65, 75, 90))
+`,
+      tests:[{type:'assert', expr:'round(slope, 2) == 9.5', label:'slope equals 9.5'}]
+    },
+    {
+      title:'Read the intercept',
+      desc:`Using the same df and model, calculate intercept as coefs[["(Intercept)"]]. Use stopifnot() to
+        confirm that round(intercept, 2) == 39.5.`,
+      starter:`df <- data.frame(hours = c(1, 2, 3, 4, 5), score = c(50, 60, 65, 75, 90))
+model <- lm(score ~ hours, data = df)
+coefs <- coef(model)
+# Calculate intercept below
+`,
+      tests:[{type:'assert', expr:'round(intercept, 2) == 39.5', label:'intercept equals 39.5'}]
+    },
+    {
+      title:'Predict by hand using the coefficients',
+      desc:`Using intercept and slope (both calculated from df/model as before), calculate predicted_6 as
+        intercept + slope * 6. Use stopifnot() to confirm that predicted_6 == 96.5.`,
+      starter:`df <- data.frame(hours = c(1, 2, 3, 4, 5), score = c(50, 60, 65, 75, 90))
+model <- lm(score ~ hours, data = df)
+coefs <- coef(model)
+intercept <- coefs[["(Intercept)"]]
+slope <- coefs[["hours"]]
+# Calculate predicted_6 below
+`,
+      tests:[{type:'assert', expr:'predicted_6 == 96.5', label:'predicted_6 equals 96.5'}]
+    },
+    {
+      title:'Predict using predict()',
+      desc:`Using df and model (as before), calculate predicted_via_predict as predict(model, newdata =
+        data.frame(hours = 6)). Use stopifnot() to confirm that round(predicted_via_predict, 1) == 96.5 — the
+        same answer as fitting it by hand.`,
+      starter:`df <- data.frame(hours = c(1, 2, 3, 4, 5), score = c(50, 60, 65, 75, 90))
+model <- lm(score ~ hours, data = df)
+# Calculate predicted_via_predict below
+`,
+      tests:[{type:'assert', expr:'round(predicted_via_predict, 1) == 96.5', label:'predicted_via_predict equals 96.5'}]
+    },
+    {
+      title:'Calculate a residual',
+      desc:`Using intercept and slope (both calculated from df/model as before), calculate predicted_1 as
+        intercept + slope * 1, then residual_1 as round(df$score[1] - predicted_1, 1). Use stopifnot() to
+        confirm that residual_1 == 1 — the model predicted 49 for the first student, who actually scored 50.`,
+      starter:`df <- data.frame(hours = c(1, 2, 3, 4, 5), score = c(50, 60, 65, 75, 90))
+model <- lm(score ~ hours, data = df)
+coefs <- coef(model)
+intercept <- coefs[["(Intercept)"]]
+slope <- coefs[["hours"]]
+# Calculate predicted_1, then residual_1 below
+`,
+      tests:[{type:'assert', expr:'residual_1 == 1', label:'residual_1 equals 1'}]
+    },
+    {
+      title:'Check the model\'s fitted values',
+      desc:`Using df and model (as before), calculate fitted_values as fitted(model), then first_fitted as
+        round(fitted_values[[1]], 1). Use stopifnot() to confirm that first_fitted == 49.`,
+      starter:`df <- data.frame(hours = c(1, 2, 3, 4, 5), score = c(50, 60, 65, 75, 90))
+model <- lm(score ~ hours, data = df)
+# Calculate fitted_values, then first_fitted below
+`,
+      tests:[{type:'assert', expr:'first_fitted == 49', label:'first_fitted equals 49'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does lm(score ~ hours, data = df) do?',
+      options:['Counts how many rows are in df','Fits the straight line that best predicts score FROM hours, based on the data in df','Sorts df by score','Checks whether score and hours are the same length'],
+      correct:1,
+      explain:'lm() finds the intercept and slope that make the fitted line\'s predictions as close as possible to the real score values.'
+    },
+    {
+      q:'What does coef(model) return?',
+      options:['The original data.frame, unchanged','A named vector with the fitted line\'s (Intercept) and slope — the formula the model learned','The correlation between score and hours','A single "yes/no" telling you if the model is good'],
+      correct:1,
+      explain:'coef() exposes the two numbers that define the fitted line: where it starts ((Intercept)) and how steeply it rises (the slope, named after the predictor).'
+    },
+    {
+      q:'How do you use a fitted model to predict score for an hours value that ISN\'T in the original data?',
+      options:['You can\'t — models only work on data they were trained on','predict(model, newdata = data.frame(hours = ...)) — passing a NEW data.frame with just the x value you want a prediction for','By re-running lm() with the new value added','By calling coef(model) again'],
+      correct:1,
+      explain:'predict() is built exactly for this — feed it a newdata data.frame shaped like the original predictor column, and it returns the model\'s estimate.'
+    },
+    {
+      q:'What is a "residual"?',
+      options:['Another name for the slope','The difference between a REAL value and the model\'s FITTED (predicted) value for that same point','The total number of data points used to fit the model','The correlation between two variables'],
+      correct:1,
+      explain:'A residual measures how far off one specific prediction was — real value minus fitted value — which is exactly what lm() tries to make as small as possible overall.'
+    }
+  ],
+  sandboxStarter3:`df <- data.frame(hours = c(1, 2, 3, 4, 5), score = c(50, 60, 65, 75, 90))
+model <- lm(score ~ hours, data = df)
+fitted_values <- fitted(model)
+print(fitted_values)
+print(df$score - fitted_values)
+`,
+  stretchChallenge:{
+    title:'Fit a model on different data and check its slope',
+    desc:`Create df2 as data.frame(x = c(1, 2, 3, 4), y = c(10, 20, 30, 40)). Calculate model2 as lm(y ~ x, data
+      = df2), then slope2 as coef(model2)[["x"]]. Use stopifnot() to confirm that slope2 == 10 — y increases by
+      exactly 10 for every 1 increase in x.`,
+    starter:`# Create df2, then calculate model2 and slope2 below
+`,
+    tests:[
+      {type:'assert', expr:'slope2 == 10', label:'slope2 equals 10'}
+    ]
+  }
 }
 ];
 
