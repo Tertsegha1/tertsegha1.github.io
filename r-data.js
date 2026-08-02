@@ -3780,6 +3780,158 @@ print(process(c(1, 2, 3), 10, 0))
       {type:'assert', expr:'result1 == 4 && is.na(result2)', label:'result1 and result2 are both correct'}
     ]
   }
+},
+{
+  key:'week6', num:6, title:'Formatting Output: sprintf()',
+  scenarioTag:'Real world: turning raw numbers into clean, consistent report lines',
+  scenario:`paste() (since Beginner Week 8) joins pieces together, but it doesn't control HOW numbers look —
+    84.566666 would print exactly as-is, decimal places and all. sprintf() gives full control: pick exactly how
+    many decimal places, pad numbers, and build clean formatted lines every time.`,
+  objectives:[
+    'Use %s and %d placeholders in sprintf() for text and whole numbers',
+    'Use %.1f / %.2f to control exactly how many decimal places a number shows',
+    'Use %% to include a literal percent sign in a formatted string',
+    'Use sprintf() on whole VECTORS at once to format many lines in one call'
+  ],
+  conceptHtml:`
+    <p><code>sprintf("format", values...)</code> builds a formatted string, with placeholders standing in for
+    each value:</p>
+    <pre class="code-block">name &lt;- "Ada"
+score &lt;- 84.567
+line &lt;- sprintf("%s scored %.1f", name, score)
+print(line)   # "Ada scored 84.6"</pre>
+    <p><code>%s</code> stands in for text, <code>%d</code> for a whole number, and <code>%.1f</code> for a
+    decimal number rounded to exactly 1 decimal place (<code>%.2f</code> for 2 places, and so on). Since
+    <code>%</code> is used for placeholders, a LITERAL percent sign needs <code>%%</code>:</p>
+    <pre class="code-block">print(sprintf("%.1f%%", score))   # "84.6%" - %.1f formats the number, %% prints a real percent sign</pre>
+    <h3>Let's break down the starter code, line by line</h3>
+    <pre class="code-block">name &lt;- "Ada"
+score &lt;- 84.567
+line &lt;- sprintf("%s scored %.1f", name, score)
+print(line)</pre>
+    <ul>
+      <li><code>"%s scored %.1f"</code> — the FORMAT string, with one placeholder per value that follows.</li>
+      <li><code>sprintf(format, name, score)</code> — fills in <code>%s</code> with <code>name</code> and
+        <code>%.1f</code> with <code>score</code>, rounded to 1 decimal, IN ORDER.</li>
+    </ul>
+    <p>Like most R functions, <code>sprintf()</code> is vectorized — passing a whole vector of names and a whole
+    vector of scores formats every row at once, returning a character vector of formatted lines.</p>`,
+  sandboxStarter:`name <- "Ada"
+score <- 84.567
+line <- sprintf("%s scored %.1f", name, score)
+print(line)
+`,
+  sandboxStarter2:`names <- c("Ada", "Ben", "Cy")
+scores <- c(84.567, 72.333, 90.125)
+lines <- sprintf("%s: %.1f", names, scores)
+print(lines)
+`,
+  exercises:[
+    {
+      title:'Format a name and a decimal score',
+      desc:`Create names as c("Ada", "Ben", "Cy") and scores as c(84.567, 72.333, 90.125). Calculate line as
+        sprintf("%s scored %.1f", names[1], scores[1]). Use stopifnot() to confirm that line == "Ada scored
+        84.6".`,
+      starter:`# Create names and scores, then calculate line below
+names <- c("Ada", "Ben", "Cy")
+scores <- c(84.567, 72.333, 90.125)
+`,
+      tests:[{type:'assert', expr:'line == "Ada scored 84.6"', label:'line exactly equals "Ada scored 84.6"'}]
+    },
+    {
+      title:'Format with 2 decimal places instead of 1',
+      desc:`Using the same names and scores, calculate line2 as sprintf("%s scored %.2f", names[2], scores[2]).
+        Use stopifnot() to confirm that line2 == "Ben scored 72.33".`,
+      starter:`names <- c("Ada", "Ben", "Cy")
+scores <- c(84.567, 72.333, 90.125)
+# Calculate line2 below
+`,
+      tests:[{type:'assert', expr:'line2 == "Ben scored 72.33"', label:'line2 exactly equals "Ben scored 72.33"'}]
+    },
+    {
+      title:'Format as a whole-number percentage',
+      desc:`Using the same names and scores, calculate percent_line as sprintf("%.0f%%", scores[3]). Use
+        stopifnot() to confirm that percent_line == "90%" — %.0f rounds to a whole number, and %% adds a real
+        percent sign.`,
+      starter:`names <- c("Ada", "Ben", "Cy")
+scores <- c(84.567, 72.333, 90.125)
+# Calculate percent_line below
+`,
+      tests:[{type:'assert', expr:'percent_line == "90%"', label:'percent_line exactly equals "90%"'}]
+    },
+    {
+      title:'Combine multiple placeholders in one line',
+      desc:`Using the same names and scores, calculate full_line as sprintf("%s: %.1f%% (%s)", names[1],
+        scores[1], "Pass"). Use stopifnot() to confirm that full_line == "Ada: 84.6% (Pass)".`,
+      starter:`names <- c("Ada", "Ben", "Cy")
+scores <- c(84.567, 72.333, 90.125)
+# Calculate full_line below
+`,
+      tests:[{type:'assert', expr:'full_line == "Ada: 84.6% (Pass)"', label:'full_line exactly equals "Ada: 84.6% (Pass)"'}]
+    },
+    {
+      title:'Format a whole number with %d',
+      desc:`Using the same names, calculate count_line as sprintf("%d students", length(names)). Use
+        stopifnot() to confirm that count_line == "3 students".`,
+      starter:`names <- c("Ada", "Ben", "Cy")
+# Calculate count_line below
+`,
+      tests:[{type:'assert', expr:'count_line == "3 students"', label:'count_line exactly equals "3 students"'}]
+    },
+    {
+      title:'Format a whole vector at once',
+      desc:`Using the same names and scores, calculate lines as sprintf("%s: %.1f", names, scores), then
+        first_line as lines[1]. Use stopifnot() to confirm that first_line == "Ada: 84.6" — sprintf() formatted
+        all 3 rows in one call.`,
+      starter:`names <- c("Ada", "Ben", "Cy")
+scores <- c(84.567, 72.333, 90.125)
+# Calculate lines, then first_line below
+`,
+      tests:[{type:'assert', expr:'first_line == "Ada: 84.6"', label:'first_line exactly equals "Ada: 84.6"'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does %.1f do inside a sprintf() format string?',
+      options:['Formats the value as text','Formats a NUMBER rounded to exactly 1 decimal place','Repeats the value once','Formats the value as a whole percentage'],
+      correct:1,
+      explain:'The number after the dot controls exactly how many decimal places are shown — %.1f always shows exactly one, %.2f exactly two, and so on.'
+    },
+    {
+      q:'Why does sprintf("%.0f%%", 90.125) produce "90%" and not "90.125%"?',
+      options:['It doesn\'t — this is invalid syntax','%.0f rounds the number to 0 decimal places (a whole number), and %% separately inserts a literal percent sign','%% strips out any decimal places automatically','sprintf() always rounds down'],
+      correct:1,
+      explain:'%.0f controls the number\'s precision (zero decimals here); %% is a completely separate placeholder that just outputs a literal % character.'
+    },
+    {
+      q:'Why is %% needed instead of just writing % directly in a sprintf() format string?',
+      options:['% has no special meaning in sprintf(), %% is just a style choice','% marks the START of a placeholder (like %s or %.1f) — writing a literal % would be misread as the start of one, so %% escapes it into a real percent sign','%% is faster to type', '%% only works at the end of a string'],
+      correct:1,
+      explain:'Since % always signals "a placeholder starts here," a literal percent sign needs to be escaped as %% so sprintf() doesn\'t try to interpret it as one.'
+    },
+    {
+      q:'What does sprintf("%s: %.1f", names, scores) return, if names and scores are both vectors of length 3?',
+      options:['A single formatted string combining all 3 rows into one line','A character VECTOR of length 3 — one formatted line per row, since sprintf() is vectorized just like most R functions','An error, since sprintf() only accepts single values','Exactly the same result as sprintf() on just the first element'],
+      correct:1,
+      explain:'sprintf() applies the format to each position across all the input vectors simultaneously, returning one formatted string per row.'
+    }
+  ],
+  sandboxStarter3:`names <- c("Ada", "Ben", "Cy")
+scores <- c(84.567, 72.333, 90.125)
+lines <- sprintf("%s: %.1f%% (%d chars)", names, scores, nchar(names))
+print(lines)
+`,
+  stretchChallenge:{
+    title:'Build a report line combining count and percentage',
+    desc:`Create pass_count as 18 and total_count as 20. Calculate report as sprintf("%d/%d students passed
+      (%.1f%%)", pass_count, total_count, 100 * pass_count / total_count). Use stopifnot() to confirm that
+      report == "18/20 students passed (90.0%)".`,
+    starter:`# Create pass_count and total_count, then calculate report below
+`,
+    tests:[
+      {type:'assert', expr:'report == "18/20 students passed (90.0%)"', label:'report exactly matches the expected text'}
+    ]
+  }
 }
 ];
 
