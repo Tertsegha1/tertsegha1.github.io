@@ -3072,6 +3072,157 @@ print(names(house_table))
       {type:'assert', expr:'more_red == TRUE', label:'more_red equals TRUE'}
     ]
   }
+},
+{
+  key:'week2', num:2, title:'Are They Related? cor()',
+  scenarioTag:'Real world: does more study time actually go with a higher score?',
+  scenario:`Beginner Week 9 summarised ONE numeric column at a time with mean(), median(), and sd(). cor()
+    compares TWO numeric columns at once, giving a single number that says how strongly they move together —
+    the foundation for the model-fitting Week 3 builds next.`,
+  objectives:[
+    'Use cor() to measure the relationship between two numeric vectors',
+    'Interpret a correlation close to 1, close to -1, and close to 0',
+    'Use comparison operators to check whether a correlation is positive or negative',
+    'Use abs() to compare the STRENGTH of two correlations, regardless of sign'
+  ],
+  conceptHtml:`
+    <p><code>cor(x, y)</code> returns a single number between -1 and 1 describing how strongly two numeric
+    vectors move together:</p>
+    <pre class="code-block">hours &lt;- c(1, 2, 3, 4, 5)
+score &lt;- c(50, 60, 65, 75, 90)
+print(round(cor(hours, score), 2))   # 0.99 - strongly POSITIVE: more hours goes with a higher score</pre>
+    <p>A value near <strong>1</strong> means "as one goes up, so does the other." A value near
+    <strong>-1</strong> means "as one goes up, the other goes DOWN." A value near <strong>0</strong> means
+    there's little to no straight-line relationship at all.</p>
+    <h3>Let's break down the starter code, line by line</h3>
+    <pre class="code-block">hours &lt;- c(1, 2, 3, 4, 5)
+score &lt;- c(50, 60, 65, 75, 90)
+hours_score_cor &lt;- round(cor(hours, score), 2)
+print(hours_score_cor)</pre>
+    <ul>
+      <li><code>cor(hours, score)</code> — compares the two vectors position-by-position (student 1's hours with
+        student 1's score, and so on) and returns one summary number.</li>
+      <li><code>round(..., 2)</code> — the same rounding function used since Beginner Week 9, applied here to
+        keep the correlation readable.</li>
+    </ul>
+    <p>To compare the STRENGTH of two correlations regardless of direction, wrap each in <code>abs()</code> first
+    — a correlation of -0.99 is just as strong a relationship as +0.99, only pointing the opposite way.</p>`,
+  sandboxStarter:`hours <- c(1, 2, 3, 4, 5)
+score <- c(50, 60, 65, 75, 90)
+hours_score_cor <- round(cor(hours, score), 2)
+print(hours_score_cor)
+`,
+  sandboxStarter2:`hours <- c(1, 2, 3, 4, 5)
+score <- c(50, 60, 65, 75, 90)
+absences <- c(5, 4, 3, 2, 0)
+print(round(cor(absences, score), 2))
+`,
+  exercises:[
+    {
+      title:'Measure a positive relationship',
+      desc:`Create hours as c(1, 2, 3, 4, 5) and score as c(50, 60, 65, 75, 90). Calculate hours_score_cor as
+        round(cor(hours, score), 2). Use stopifnot() to confirm that hours_score_cor == 0.99.`,
+      starter:`# Create hours and score, then calculate hours_score_cor below
+hours <- c(1, 2, 3, 4, 5)
+score <- c(50, 60, 65, 75, 90)
+`,
+      tests:[{type:'assert', expr:'hours_score_cor == 0.99', label:'hours_score_cor equals 0.99'}]
+    },
+    {
+      title:'Measure a negative relationship',
+      desc:`Using score (given) and absences as c(5, 4, 3, 2, 0), calculate absences_score_cor as
+        round(cor(absences, score), 2). Use stopifnot() to confirm that absences_score_cor == -1 — more
+        absences strongly goes with a LOWER score.`,
+      starter:`score <- c(50, 60, 65, 75, 90)
+# Create absences, then calculate absences_score_cor below
+`,
+      tests:[{type:'assert', expr:'absences_score_cor == -1', label:'absences_score_cor equals -1'}]
+    },
+    {
+      title:'Check whether a correlation is positive',
+      desc:`Using hours and score (both given), calculate hours_positive as cor(hours, score) > 0. Use
+        stopifnot() to confirm that hours_positive == TRUE.`,
+      starter:`hours <- c(1, 2, 3, 4, 5)
+score <- c(50, 60, 65, 75, 90)
+# Calculate hours_positive below
+`,
+      tests:[{type:'assert', expr:'hours_positive == TRUE', label:'hours_positive equals TRUE'}]
+    },
+    {
+      title:'Check whether a correlation is negative',
+      desc:`Using score (given) and absences as c(5, 4, 3, 2, 0), calculate absences_negative as
+        cor(absences, score) < 0. Use stopifnot() to confirm that absences_negative == TRUE.`,
+      starter:`score <- c(50, 60, 65, 75, 90)
+# Create absences, then calculate absences_negative below
+`,
+      tests:[{type:'assert', expr:'absences_negative == TRUE', label:'absences_negative equals TRUE'}]
+    },
+    {
+      title:'Round to a different precision',
+      desc:`Using hours and score (both given), calculate rounded_to_1dp as round(cor(hours, score), 1). Use
+        stopifnot() to confirm that rounded_to_1dp == 1 — 0.9851 rounds UP to 1.0 at one decimal place.`,
+      starter:`hours <- c(1, 2, 3, 4, 5)
+score <- c(50, 60, 65, 75, 90)
+# Calculate rounded_to_1dp below
+`,
+      tests:[{type:'assert', expr:'rounded_to_1dp == 1', label:'rounded_to_1dp equals 1'}]
+    },
+    {
+      title:'Compare the STRENGTH of two relationships',
+      desc:`Using hours, score (both given) and absences as c(5, 4, 3, 2, 0), calculate stronger as
+        abs(cor(absences, score)) > abs(cor(hours, score)). Use stopifnot() to confirm that stronger == TRUE —
+        the absences relationship (-0.997) is slightly STRONGER than the hours relationship (0.985), once you
+        ignore direction.`,
+      starter:`hours <- c(1, 2, 3, 4, 5)
+score <- c(50, 60, 65, 75, 90)
+# Create absences, then calculate stronger below
+`,
+      tests:[{type:'assert', expr:'stronger == TRUE', label:'stronger equals TRUE'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What range of values can cor(x, y) return?',
+      options:['0 to 100','-1 to 1','Any number, with no fixed range','Only 0 or 1'],
+      correct:1,
+      explain:'Correlation is always between -1 (perfectly opposite) and 1 (perfectly together), with 0 meaning no straight-line relationship.'
+    },
+    {
+      q:'What does a correlation close to -1 mean, like the one between absences and score?',
+      options:['The two vectors are unrelated','As ONE value goes up, the OTHER tends to go DOWN — a strong relationship, just pointing in opposite directions','There was an error in the calculation','It means the values are identical'],
+      correct:1,
+      explain:'Negative correlation is still a STRONG relationship — it just means the two things move in opposite directions, not that there\'s no connection.'
+    },
+    {
+      q:'What would a correlation close to 0 suggest?',
+      options:['A very strong positive relationship','A very strong negative relationship','Little to no straight-line relationship between the two vectors','That one vector is much larger than the other'],
+      correct:2,
+      explain:'A correlation near 0 means knowing one value tells you almost nothing about the other — there\'s no clear straight-line pattern between them.'
+    },
+    {
+      q:'Why use abs() when comparing whether the absences-score relationship is STRONGER than the hours-score relationship?',
+      options:['abs() is required by cor() to run at all','Without abs(), a negative correlation (like -0.997) would always look "smaller" than a positive one (like 0.985), even though -0.997 actually represents the STRONGER relationship once direction is ignored','abs() converts the correlation into a percentage','abs() has no real effect here'],
+      correct:1,
+      explain:'Comparing raw correlation values mixes up STRENGTH with DIRECTION — abs() strips away the sign so you\'re comparing strength alone, which is usually the fair comparison.'
+    }
+  ],
+  sandboxStarter3:`hours <- c(1, 2, 3, 4, 5)
+score <- c(50, 60, 65, 75, 90)
+absences <- c(5, 4, 3, 2, 0)
+print(round(cor(hours, score), 2))
+print(abs(cor(absences, score)) > abs(cor(hours, score)))
+`,
+  stretchChallenge:{
+    title:'Check a vector\'s correlation with itself',
+    desc:`Using hours (given), calculate self_cor as round(cor(hours, hours), 2). Use stopifnot() to confirm
+      that self_cor == 1 — any vector is PERFECTLY correlated with itself.`,
+    starter:`hours <- c(1, 2, 3, 4, 5)
+# Calculate self_cor below
+`,
+    tests:[
+      {type:'assert', expr:'self_cor == 1', label:'self_cor equals 1'}
+    ]
+  }
 }
 ];
 
