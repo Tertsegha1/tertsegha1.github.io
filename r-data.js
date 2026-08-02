@@ -4311,6 +4311,275 @@ print(format_summary_line("Empty", col_summary(c())))
       {type:'assert', expr:'result$mean == 75 && result$range == 30', label:'result$mean and result$range are both correct'}
     ]
   }
+},
+{
+  key:'week9', num:9, title:'Capstone — Apply and Present',
+  scenarioTag:'Real world: pointing your finished tools at a whole roster and producing one clean report',
+  scenario:`Last week built col_summary() and format_summary_line() and tested them one column at a time. This
+    week applies them to an ENTIRE data.frame at once with sapply() (Week 7), then joins every line into one
+    final report block — the same pattern a real reporting script would use.`,
+  objectives:[
+    'Use sapply() over column NAMES to apply the report functions to every column, with each column\'s own name available',
+    'Access one column\'s report line from the result by name',
+    'Combine every line into one final report string with paste(..., collapse = "\\n")',
+    'Use grepl() and strsplit() to confirm the final report contains what it should'
+  ],
+  conceptHtml:`
+    <p>Week 7's <code>sapply(df, FUN)</code> passed each column's VALUES to FUN. To also know each column's
+    NAME (needed for the report's label), iterate over <code>names(df)</code> instead, looking up each column
+    with <code>df[[n]]</code>:</p>
+    <pre class="code-block">df &lt;- data.frame(math = c(80, 70, 90, 60), science = c(75, 85, 95, 55), english = c(70, 60, 40, 90))
+report_lines &lt;- sapply(names(df), function(n) format_summary_line(n, col_summary(df[[n]])))
+print(report_lines[["math"]])   # "math - mean: 75.0, max: 90, min: 60"</pre>
+    <p>Once every column has its own formatted line, <code>paste(report_lines, collapse = "\\n")</code> joins
+    them all into ONE block of text, with a real newline between each line — a complete, ready-to-print
+    report:</p>
+    <pre class="code-block">full_report &lt;- paste(report_lines, collapse = "\\n")
+cat(full_report)
+# math - mean: 75.0, max: 90, min: 60
+# science - mean: 77.5, max: 95, min: 55
+# english - mean: 65.0, max: 90, min: 40</pre>
+    <h3>Let's break down the starter code, line by line</h3>
+    <pre class="code-block">report_lines &lt;- sapply(names(df), function(n) format_summary_line(n, col_summary(df[[n]])))
+math_line &lt;- report_lines[["math"]]</pre>
+    <ul>
+      <li><code>sapply(names(df), function(n) ...)</code> — runs once per COLUMN NAME, with <code>n</code> being
+        the actual name string each time.</li>
+      <li><code>df[[n]]</code> — looks up that column's data using the name, feeding it into
+        <code>col_summary()</code> exactly like last week.</li>
+    </ul>
+    <p>Since <code>report_lines</code> is named after each column (just like Week 7's results),
+    <code>report_lines[["math"]]</code> pulls out exactly one line.</p>`,
+  sandboxStarter:`df <- data.frame(math = c(80, 70, 90, 60), science = c(75, 85, 95, 55), english = c(70, 60, 40, 90))
+col_summary <- function(x) {
+  tryCatch({
+    if (length(x) == 0) stop("Empty column")
+    list(mean = round(mean(x), 1), max = max(x), min = min(x))
+  }, error = function(e) {
+    list(mean = NA, max = NA, min = NA)
+  })
+}
+format_summary_line <- function(label, summary) {
+  sprintf("%s - mean: %.1f, max: %d, min: %d", label, summary$mean, summary$max, summary$min)
+}
+report_lines <- sapply(names(df), function(n) format_summary_line(n, col_summary(df[[n]])))
+print(report_lines)
+`,
+  sandboxStarter2:`df <- data.frame(math = c(80, 70, 90, 60), science = c(75, 85, 95, 55), english = c(70, 60, 40, 90))
+col_summary <- function(x) {
+  tryCatch({
+    if (length(x) == 0) stop("Empty column")
+    list(mean = round(mean(x), 1), max = max(x), min = min(x))
+  }, error = function(e) {
+    list(mean = NA, max = NA, min = NA)
+  })
+}
+format_summary_line <- function(label, summary) {
+  sprintf("%s - mean: %.1f, max: %d, min: %d", label, summary$mean, summary$max, summary$min)
+}
+report_lines <- sapply(names(df), function(n) format_summary_line(n, col_summary(df[[n]])))
+full_report <- paste(report_lines, collapse = "\\n")
+cat(full_report)
+`,
+  exercises:[
+    {
+      title:'Apply the report functions across every column',
+      desc:`Create df as data.frame(math = c(80, 70, 90, 60), science = c(75, 85, 95, 55), english = c(70, 60,
+        40, 90)). Using col_summary and format_summary_line (both given), calculate report_lines as
+        sapply(names(df), function(n) format_summary_line(n, col_summary(df[[n]]))), then math_line as
+        report_lines[["math"]]. Use stopifnot() to confirm that math_line == "math - mean: 75.0, max: 90, min:
+        60".`,
+      starter:`df <- data.frame(math = c(80, 70, 90, 60), science = c(75, 85, 95, 55), english = c(70, 60, 40, 90))
+col_summary <- function(x) {
+  tryCatch({
+    if (length(x) == 0) stop("Empty column")
+    list(mean = round(mean(x), 1), max = max(x), min = min(x))
+  }, error = function(e) {
+    list(mean = NA, max = NA, min = NA)
+  })
+}
+format_summary_line <- function(label, summary) {
+  sprintf("%s - mean: %.1f, max: %d, min: %d", label, summary$mean, summary$max, summary$min)
+}
+# Calculate report_lines, then math_line below
+`,
+      tests:[{type:'assert', expr:'math_line == "math - mean: 75.0, max: 90, min: 60"', label:'math_line exactly matches the expected text'}]
+    },
+    {
+      title:'Access a different column\'s line',
+      desc:`Using the same report_lines, calculate science_line as report_lines[["science"]]. Use stopifnot()
+        to confirm that science_line == "science - mean: 77.5, max: 95, min: 55".`,
+      starter:`df <- data.frame(math = c(80, 70, 90, 60), science = c(75, 85, 95, 55), english = c(70, 60, 40, 90))
+col_summary <- function(x) {
+  tryCatch({
+    if (length(x) == 0) stop("Empty column")
+    list(mean = round(mean(x), 1), max = max(x), min = min(x))
+  }, error = function(e) {
+    list(mean = NA, max = NA, min = NA)
+  })
+}
+format_summary_line <- function(label, summary) {
+  sprintf("%s - mean: %.1f, max: %d, min: %d", label, summary$mean, summary$max, summary$min)
+}
+report_lines <- sapply(names(df), function(n) format_summary_line(n, col_summary(df[[n]])))
+# Calculate science_line below
+`,
+      tests:[{type:'assert', expr:'science_line == "science - mean: 77.5, max: 95, min: 55"', label:'science_line exactly matches the expected text'}]
+    },
+    {
+      title:'Confirm one line was produced per column',
+      desc:`Using report_lines (as before), calculate line_count as length(report_lines). Use stopifnot() to
+        confirm that line_count == 3.`,
+      starter:`df <- data.frame(math = c(80, 70, 90, 60), science = c(75, 85, 95, 55), english = c(70, 60, 40, 90))
+col_summary <- function(x) {
+  tryCatch({
+    if (length(x) == 0) stop("Empty column")
+    list(mean = round(mean(x), 1), max = max(x), min = min(x))
+  }, error = function(e) {
+    list(mean = NA, max = NA, min = NA)
+  })
+}
+format_summary_line <- function(label, summary) {
+  sprintf("%s - mean: %.1f, max: %d, min: %d", label, summary$mean, summary$max, summary$min)
+}
+report_lines <- sapply(names(df), function(n) format_summary_line(n, col_summary(df[[n]])))
+# Calculate line_count below
+`,
+      tests:[{type:'assert', expr:'line_count == 3', label:'line_count equals 3'}]
+    },
+    {
+      title:'Confirm the lines are named after each column',
+      desc:`Using report_lines (as before), calculate line_names as names(report_lines). Use stopifnot() to
+        confirm that all(line_names == c("math", "science", "english")).`,
+      starter:`df <- data.frame(math = c(80, 70, 90, 60), science = c(75, 85, 95, 55), english = c(70, 60, 40, 90))
+col_summary <- function(x) {
+  tryCatch({
+    if (length(x) == 0) stop("Empty column")
+    list(mean = round(mean(x), 1), max = max(x), min = min(x))
+  }, error = function(e) {
+    list(mean = NA, max = NA, min = NA)
+  })
+}
+format_summary_line <- function(label, summary) {
+  sprintf("%s - mean: %.1f, max: %d, min: %d", label, summary$mean, summary$max, summary$min)
+}
+report_lines <- sapply(names(df), function(n) format_summary_line(n, col_summary(df[[n]])))
+# Calculate line_names below
+`,
+      tests:[{type:'assert', expr:'all(line_names == c("math", "science", "english"))', label:'line_names exactly equals c("math", "science", "english")'}]
+    },
+    {
+      title:'Join every line into one final report',
+      desc:`Using report_lines (as before), calculate full_report as paste(report_lines, collapse = "\\n"). Use
+        stopifnot() to confirm that grepl("english", full_report) && grepl("min: 40", full_report) — the full
+        report contains the english line, including its min value.`,
+      starter:`df <- data.frame(math = c(80, 70, 90, 60), science = c(75, 85, 95, 55), english = c(70, 60, 40, 90))
+col_summary <- function(x) {
+  tryCatch({
+    if (length(x) == 0) stop("Empty column")
+    list(mean = round(mean(x), 1), max = max(x), min = min(x))
+  }, error = function(e) {
+    list(mean = NA, max = NA, min = NA)
+  })
+}
+format_summary_line <- function(label, summary) {
+  sprintf("%s - mean: %.1f, max: %d, min: %d", label, summary$mean, summary$max, summary$min)
+}
+report_lines <- sapply(names(df), function(n) format_summary_line(n, col_summary(df[[n]])))
+# Calculate full_report below
+`,
+      tests:[{type:'assert', expr:'grepl("english", full_report) && grepl("min: 40", full_report)', label:'full_report contains both "english" and "min: 40"'}]
+    },
+    {
+      title:'Confirm the report has exactly one line per column',
+      desc:`Using full_report (as before), calculate total_lines as length(strsplit(full_report, "\\n")[[1]]).
+        Use stopifnot() to confirm that total_lines == 3 — splitting the report back apart on newlines recovers
+        exactly 3 lines.`,
+      starter:`df <- data.frame(math = c(80, 70, 90, 60), science = c(75, 85, 95, 55), english = c(70, 60, 40, 90))
+col_summary <- function(x) {
+  tryCatch({
+    if (length(x) == 0) stop("Empty column")
+    list(mean = round(mean(x), 1), max = max(x), min = min(x))
+  }, error = function(e) {
+    list(mean = NA, max = NA, min = NA)
+  })
+}
+format_summary_line <- function(label, summary) {
+  sprintf("%s - mean: %.1f, max: %d, min: %d", label, summary$mean, summary$max, summary$min)
+}
+report_lines <- sapply(names(df), function(n) format_summary_line(n, col_summary(df[[n]])))
+full_report <- paste(report_lines, collapse = "\\n")
+# Calculate total_lines below
+`,
+      tests:[{type:'assert', expr:'total_lines == 3', label:'total_lines equals 3'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why does this week iterate over names(df) instead of using sapply(df, FUN) directly like Week 7 did?',
+      options:['There\'s no real difference between the two approaches','format_summary_line() needs BOTH the column\'s name (for the label) and its values — iterating over names(df) and looking up df[[n]] gives access to both inside the function, while sapply(df, FUN) only gives the values','names(df) is required by sprintf()','sapply(df, FUN) does not work on numeric columns'],
+      correct:1,
+      explain:'sapply(df, FUN) only hands FUN each column\'s values — but the report needs the column\'s NAME too, which is why iterating over names(df) and looking up df[[n]] inside the function is the right pattern here.'
+    },
+    {
+      q:'What does paste(report_lines, collapse = "\\n") do?',
+      options:['Deletes all the line breaks from report_lines','Joins every element of report_lines into ONE single string, with a real newline character between each one','Only keeps the first element of report_lines','Counts how many lines are in report_lines'],
+      correct:1,
+      explain:'collapse tells paste() to join every element of the vector together into one string, using the given separator (here, a newline) between each piece.'
+    },
+    {
+      q:'Why use grepl() rather than == to check that full_report contains the english line?',
+      options:['grepl() and == always do exactly the same thing','grepl() checks whether a piece of text appears ANYWHERE inside a larger string, which is what\'s needed when checking one line inside a much longer multi-line report — == would require matching the ENTIRE report exactly', 'grepl() is required whenever text is involved','== cannot be used with strings at all'],
+      correct:1,
+      explain:'== demands an exact full match, but full_report is a whole multi-line block — grepl() correctly checks for a substring appearing anywhere within it.'
+    },
+    {
+      q:'Why does length(strsplit(full_report, "\\n")[[1]]) correctly recover the original number of lines?',
+      options:['It doesn\'t — strsplit() cannot undo paste()','strsplit() splits the joined string back apart everywhere a newline occurs, and [[1]] pulls out that resulting vector — its length matches however many pieces paste() originally joined together','strsplit() always returns exactly 3, regardless of input','length() ignores the result of strsplit()'],
+      correct:1,
+      explain:'strsplit() is essentially the reverse of paste(..., collapse=...) — splitting on the same separator that was used to join recovers the original set of pieces.'
+    }
+  ],
+  sandboxStarter3:`df <- data.frame(math = c(80, 70, 90, 60), science = c(75, 85, 95, 55), english = c(70, 60, 40, 90))
+col_summary <- function(x) {
+  tryCatch({
+    if (length(x) == 0) stop("Empty column")
+    list(mean = round(mean(x), 1), max = max(x), min = min(x))
+  }, error = function(e) {
+    list(mean = NA, max = NA, min = NA)
+  })
+}
+format_summary_line <- function(label, summary) {
+  sprintf("%s - mean: %.1f, max: %d, min: %d", label, summary$mean, summary$max, summary$min)
+}
+report_lines <- sapply(names(df), function(n) format_summary_line(n, col_summary(df[[n]])))
+full_report <- paste(report_lines, collapse = "\\n")
+cat(full_report)
+print(length(strsplit(full_report, "\\n")[[1]]))
+`,
+  stretchChallenge:{
+    title:'Apply the whole library to a brand new dataset',
+    desc:`Create df2 as data.frame(reading = c(88, 72, 95, 61), writing = c(80, 90, 70, 60)). Using col_summary
+      and format_summary_line (both given), calculate report_lines2 as sapply(names(df2), function(n)
+      format_summary_line(n, col_summary(df2[[n]]))), then reading_line as report_lines2[["reading"]]. Use
+      stopifnot() to confirm that reading_line == "reading - mean: 79.0, max: 95, min: 61".`,
+    starter:`col_summary <- function(x) {
+  tryCatch({
+    if (length(x) == 0) stop("Empty column")
+    list(mean = round(mean(x), 1), max = max(x), min = min(x))
+  }, error = function(e) {
+    list(mean = NA, max = NA, min = NA)
+  })
+}
+format_summary_line <- function(label, summary) {
+  sprintf("%s - mean: %.1f, max: %d, min: %d", label, summary$mean, summary$max, summary$min)
+}
+# Create df2, then calculate report_lines2 and reading_line below
+`,
+    tests:[
+      {type:'assert', expr:'reading_line == "reading - mean: 79.0, max: 95, min: 61"', label:'reading_line exactly matches the expected text'}
+    ]
+  }
 }
 ];
 
