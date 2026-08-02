@@ -2840,6 +2840,86 @@ df <- read.csv(text = csv_text)
   ]
 };
 
+const R_INTERMEDIATE_MP2 = {
+  key:'mp2',
+  title:'Build the Class Roster Report Tool',
+  intro:`Three doors, combining all nine Intermediate weeks: load and label a roster with a default-argument
+    function (Weeks 4, 5, 1, 2), sort and summarise it (Weeks 6, 7), then flag names with a text pattern and pull
+    it all together into one list-based report (Weeks 8, 9).`,
+  fixtureNote:`All three doors build on this same roster:`,
+  fixtureCode:`csv_text <- "name,house,score
+Ada,Red,85
+Ben,Blue,62
+Cy,Red,45
+Dee,Blue,90
+Eve,Red,55
+Fay,Blue,38"`,
+  doors:[
+    {
+      key:'a', title:'Door 1 — Load the roster and label pass/fail',
+      desc:`Using read.csv (Week 4), calculate df as read.csv(text = csv_text). Write is_pass as
+        function(score, threshold = 50) score >= threshold (Week 5). Calculate results as sapply(df$score,
+        is_pass) (Week 1), then labels as ifelse(results, "Pass", "Fail") (Week 2). Calculate pass_count as
+        sum(results). Use stopifnot() to confirm that pass_count == 4 && labels[3] == "Fail" — Cy (row 3) scored
+        45, below the default threshold of 50.`,
+      starter:`csv_text <- "name,house,score
+Ada,Red,85
+Ben,Blue,62
+Cy,Red,45
+Dee,Blue,90
+Eve,Red,55
+Fay,Blue,38"
+# Calculate df, is_pass, results, labels, and pass_count below
+`,
+      tests:[
+        {type:'assert', expr:'pass_count == 4 && labels[3] == "Fail"', label:'pass_count and labels[3] are both correct'}
+      ]
+    },
+    {
+      key:'b', title:'Door 2 — Sort by score and summarise per house',
+      desc:`Using order and aggregate (Weeks 6 and 7), calculate sorted_df as df[order(-df$score), ] and
+        top_scorer as sorted_df$name[1]. Calculate house_avg as aggregate(score ~ house, data = df, FUN = mean).
+        Use stopifnot() to confirm that top_scorer == "Dee" && round(house_avg$score[house_avg$house == "Red"])
+        == 62 — Dee's score of 90 is the highest, and Red house's average (85, 45, 55) rounds to 62.`,
+      starter:`csv_text <- "name,house,score
+Ada,Red,85
+Ben,Blue,62
+Cy,Red,45
+Dee,Blue,90
+Eve,Red,55
+Fay,Blue,38"
+df <- read.csv(text = csv_text)
+# Calculate sorted_df, top_scorer, and house_avg below
+`,
+      tests:[
+        {type:'assert', expr:'top_scorer == "Dee" && round(house_avg$score[house_avg$house == "Red"]) == 62', label:'top_scorer and house_avg are both correct'}
+      ]
+    },
+    {
+      key:'c', title:'Door 3 — Flag a text pattern and build the final report',
+      desc:`Using grepl and list (Weeks 8 and 9), calculate early_names_count as sum(grepl("^[A-C]", df$name)) —
+        names starting with A, B, or C. Build report as list(red_avg = round(mean(df$score[df$house == "Red"])),
+        blue_avg = round(mean(df$score[df$house == "Blue"])), early_count = early_names_count). Calculate
+        final_line as paste("Red avg:", report$red_avg, "| Blue avg:", report$blue_avg, "| Early names:",
+        report$early_count). Use stopifnot() to confirm that final_line == "Red avg: 62 | Blue avg: 63 | Early
+        names: 3".`,
+      starter:`csv_text <- "name,house,score
+Ada,Red,85
+Ben,Blue,62
+Cy,Red,45
+Dee,Blue,90
+Eve,Red,55
+Fay,Blue,38"
+df <- read.csv(text = csv_text)
+# Calculate early_names_count, report, and final_line below
+`,
+      tests:[
+        {type:'assert', expr:'final_line == "Red avg: 62 | Blue avg: 63 | Early names: 3"', label:'final_line exactly matches the expected report text'}
+      ]
+    }
+  ]
+};
+
 const R_MP1 = {
   key:'mp1',
   title:'Class Attendance Report',
@@ -2933,6 +3013,6 @@ const R_MP2 = {
 window.SUBJECT_DATA = window.SUBJECT_DATA || {};
 window.SUBJECT_DATA.r = {
   b: {weeks: R_WEEKS, mp1: R_MP1, mp2: R_MP2},
-  i: {weeks: R_WEEKS, mp1: R_MP1, mp2: R_MP2},
+  i: {weeks: R_INTERMEDIATE_WEEKS, mp1: R_INTERMEDIATE_MP1, mp2: R_INTERMEDIATE_MP2},
   a: {weeks: R_WEEKS, mp1: R_MP1, mp2: R_MP2}
 };
