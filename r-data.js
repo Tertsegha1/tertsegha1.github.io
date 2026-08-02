@@ -4079,6 +4079,238 @@ print(col_counts)
       {type:'assert', expr:'math_summary == "75.0"', label:'math_summary exactly equals "75.0"'}
     ]
   }
+},
+{
+  key:'week8', num:8, title:'Capstone — Design the Report Library',
+  scenarioTag:'Real world: building reusable tools you can trust, before pointing them at real data',
+  scenario:`This capstone spans two weeks. This week, DESIGN two small, reusable, well-behaved functions —
+    combining Week 4's multi-result lists, Week 5's tryCatch() safety, and Week 6's sprintf() formatting — that
+    next week's "Apply and Present" will run across a whole class roster.`,
+  objectives:[
+    'Write a function that summarises one column and handles an empty column gracefully',
+    'Write a function that formats a summary into one clean report line',
+    'Combine both functions together to produce a single formatted line',
+    'Confirm the pair of functions handles a missing/empty case without crashing'
+  ],
+  conceptHtml:`
+    <p>Two small, focused functions, each doing ONE job well, combine into a reliable reporting tool:</p>
+    <pre class="code-block">col_summary &lt;- function(x) {
+  tryCatch({
+    if (length(x) == 0) stop("Empty column")
+    list(mean = round(mean(x), 1), max = max(x), min = min(x))
+  }, error = function(e) {
+    list(mean = NA, max = NA, min = NA)
+  })
+}
+format_summary_line &lt;- function(label, summary) {
+  sprintf("%s - mean: %.1f, max: %d, min: %d", label, summary$mean, summary$max, summary$min)
+}
+line &lt;- format_summary_line("Math", col_summary(c(80, 70, 90, 60)))
+print(line)   # "Math - mean: 75.0, max: 90, min: 60"</pre>
+    <p><code>col_summary()</code> always returns a list with the SAME shape (<code>mean</code>,
+    <code>max</code>, <code>min</code>), whether the input is good data or empty — that consistency is what
+    lets <code>format_summary_line()</code> trust its input without checking for special cases itself.</p>
+    <h3>Let's break down the starter code, line by line</h3>
+    <pre class="code-block">col_summary &lt;- function(x) {
+  tryCatch({
+    if (length(x) == 0) stop("Empty column")
+    list(mean = round(mean(x), 1), max = max(x), min = min(x))
+  }, error = function(e) {
+    list(mean = NA, max = NA, min = NA)
+  })
+}</pre>
+    <ul>
+      <li><code>if (length(x) == 0) stop(...)</code> — deliberately flags the one case that would otherwise
+        produce confusing results.</li>
+      <li><code>error = function(e) { list(mean = NA, ...) }</code> — the fallback keeps the SAME list shape
+        (three named pieces), so code calling <code>col_summary()</code> never needs to guess which fields
+        exist.</li>
+    </ul>
+    <p>R's <code>sprintf()</code> prints <code>NA</code> cleanly when given an NA value, so
+    <code>format_summary_line()</code> works unmodified even on the empty-column fallback.</p>`,
+  sandboxStarter:`col_summary <- function(x) {
+  tryCatch({
+    if (length(x) == 0) stop("Empty column")
+    list(mean = round(mean(x), 1), max = max(x), min = min(x))
+  }, error = function(e) {
+    list(mean = NA, max = NA, min = NA)
+  })
+}
+result <- col_summary(c(80, 70, 90, 60))
+print(result)
+`,
+  sandboxStarter2:`col_summary <- function(x) {
+  tryCatch({
+    if (length(x) == 0) stop("Empty column")
+    list(mean = round(mean(x), 1), max = max(x), min = min(x))
+  }, error = function(e) {
+    list(mean = NA, max = NA, min = NA)
+  })
+}
+format_summary_line <- function(label, summary) {
+  sprintf("%s - mean: %.1f, max: %d, min: %d", label, summary$mean, summary$max, summary$min)
+}
+line <- format_summary_line("Math", col_summary(c(80, 70, 90, 60)))
+print(line)
+`,
+  exercises:[
+    {
+      title:'Write the column-summarizing function',
+      desc:`Write col_summary as function(x) { tryCatch({ if (length(x) == 0) stop("Empty column"); list(mean =
+        round(mean(x), 1), max = max(x), min = min(x)) }, error = function(e) { list(mean = NA, max = NA, min =
+        NA) }) }. Calculate result as col_summary(c(80, 70, 90, 60)). Use stopifnot() to confirm that
+        result$mean == 75 && result$max == 90 && result$min == 60.`,
+      starter:`# Write col_summary, then calculate result below
+`,
+      tests:[{type:'assert', expr:'result$mean == 75 && result$max == 90 && result$min == 60', label:'result$mean, result$max, and result$min are all correct'}]
+    },
+    {
+      title:'Confirm it handles an empty column gracefully',
+      desc:`Using the same col_summary, calculate result2 as col_summary(c()). Use stopifnot() to confirm that
+        is.na(result2$mean) && is.na(result2$max) && is.na(result2$min) — the empty case never crashes.`,
+      starter:`col_summary <- function(x) {
+  tryCatch({
+    if (length(x) == 0) stop("Empty column")
+    list(mean = round(mean(x), 1), max = max(x), min = min(x))
+  }, error = function(e) {
+    list(mean = NA, max = NA, min = NA)
+  })
+}
+# Calculate result2 below
+`,
+      tests:[{type:'assert', expr:'is.na(result2$mean) && is.na(result2$max) && is.na(result2$min)', label:'result2$mean, result2$max, and result2$min are all NA'}]
+    },
+    {
+      title:'Write the line-formatting function',
+      desc:`Write format_summary_line as function(label, summary) { sprintf("%s - mean: %.1f, max: %d, min:
+        %d", label, summary$mean, summary$max, summary$min) }. Calculate line as format_summary_line("Math",
+        col_summary(c(80, 70, 90, 60))). Use stopifnot() to confirm that line == "Math - mean: 75.0, max: 90,
+        min: 60".`,
+      starter:`col_summary <- function(x) {
+  tryCatch({
+    if (length(x) == 0) stop("Empty column")
+    list(mean = round(mean(x), 1), max = max(x), min = min(x))
+  }, error = function(e) {
+    list(mean = NA, max = NA, min = NA)
+  })
+}
+# Write format_summary_line, then calculate line below
+`,
+      tests:[{type:'assert', expr:'line == "Math - mean: 75.0, max: 90, min: 60"', label:'line exactly matches the expected text'}]
+    },
+    {
+      title:'Apply both functions to a different column',
+      desc:`Using col_summary and format_summary_line (both as before), calculate line2 as
+        format_summary_line("Science", col_summary(c(75, 85, 95, 55))). Use stopifnot() to confirm that line2 ==
+        "Science - mean: 77.5, max: 95, min: 55".`,
+      starter:`col_summary <- function(x) {
+  tryCatch({
+    if (length(x) == 0) stop("Empty column")
+    list(mean = round(mean(x), 1), max = max(x), min = min(x))
+  }, error = function(e) {
+    list(mean = NA, max = NA, min = NA)
+  })
+}
+format_summary_line <- function(label, summary) {
+  sprintf("%s - mean: %.1f, max: %d, min: %d", label, summary$mean, summary$max, summary$min)
+}
+# Calculate line2 below
+`,
+      tests:[{type:'assert', expr:'line2 == "Science - mean: 77.5, max: 95, min: 55"', label:'line2 exactly matches the expected text'}]
+    },
+    {
+      title:'Apply both functions to a third column',
+      desc:`Using col_summary and format_summary_line (both as before), calculate line3 as
+        format_summary_line("English", col_summary(c(70, 60, 40, 90))). Use stopifnot() to confirm that line3 ==
+        "English - mean: 65.0, max: 90, min: 40".`,
+      starter:`col_summary <- function(x) {
+  tryCatch({
+    if (length(x) == 0) stop("Empty column")
+    list(mean = round(mean(x), 1), max = max(x), min = min(x))
+  }, error = function(e) {
+    list(mean = NA, max = NA, min = NA)
+  })
+}
+format_summary_line <- function(label, summary) {
+  sprintf("%s - mean: %.1f, max: %d, min: %d", label, summary$mean, summary$max, summary$min)
+}
+# Calculate line3 below
+`,
+      tests:[{type:'assert', expr:'line3 == "English - mean: 65.0, max: 90, min: 40"', label:'line3 exactly matches the expected text'}]
+    },
+    {
+      title:'Confirm the full pipeline stays graceful end-to-end',
+      desc:`Using col_summary and format_summary_line (both as before), calculate empty_line as
+        format_summary_line("Empty", col_summary(c())). Use stopifnot() to confirm that empty_line == "Empty -
+        mean: NA, max: NA, min: NA" — even the formatted OUTPUT stays clean when the input was empty.`,
+      starter:`col_summary <- function(x) {
+  tryCatch({
+    if (length(x) == 0) stop("Empty column")
+    list(mean = round(mean(x), 1), max = max(x), min = min(x))
+  }, error = function(e) {
+    list(mean = NA, max = NA, min = NA)
+  })
+}
+format_summary_line <- function(label, summary) {
+  sprintf("%s - mean: %.1f, max: %d, min: %d", label, summary$mean, summary$max, summary$min)
+}
+# Calculate empty_line below
+`,
+      tests:[{type:'assert', expr:'empty_line == "Empty - mean: NA, max: NA, min: NA"', label:'empty_line exactly matches the expected text'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'Why does col_summary() always return a list with the SAME three names (mean, max, min), even when the input is empty?',
+      options:['R requires every function to return the exact same list shape','So that ANY code calling col_summary() — like format_summary_line() — can rely on those fields always existing, without needing to check for a special "empty" shape','It\'s a coincidence, not a design choice','Because tryCatch() forces this shape automatically'],
+      correct:1,
+      explain:'Keeping a consistent return shape (even in the fallback) is what lets other functions use the result without extra special-casing — a key idea in designing reusable tools.'
+    },
+    {
+      q:'Why does format_summary_line() work correctly even when summary$mean, summary$max, and summary$min are all NA?',
+      options:['It doesn\'t — it would crash on NA values','sprintf() has built-in handling for NA, printing it as the text "NA" — so no special NA-checking code is needed inside format_summary_line() itself', 'format_summary_line() secretly calls tryCatch() internally', 'NA values are automatically converted to 0 before formatting'],
+      correct:1,
+      explain:'sprintf() handles NA gracefully on its own, which is exactly why col_summary()\'s NA fallback and format_summary_line() combine without any extra code.'
+    },
+    {
+      q:'What is the benefit of splitting this capstone into TWO small functions (col_summary and format_summary_line) instead of one big function that does everything?',
+      options:['There is no benefit, one big function would be identical','Each function has ONE clear job — summarizing vs. formatting — making each easier to test, reuse, and reason about independently', 'Two functions always run faster than one', 'R requires functions to be under a certain length'],
+      correct:1,
+      explain:'Small, focused functions are easier to verify individually (as this week\'s exercises did) and can be reused or swapped independently — a core idea behind building a reusable "library" of tools.'
+    },
+    {
+      q:'Next week\'s "Apply and Present" will call these SAME two functions many times, once per class subject. Why does this week\'s careful handling of the empty-column case matter for that?',
+      options:['It doesn\'t matter, next week\'s data will definitely be complete','If ANY one subject happened to have no data, the whole report-building process would fail without this graceful handling — testing it now means next week can trust the tools completely', 'Empty columns are impossible in a data.frame','This week\'s testing has no connection to next week\'s work'],
+      correct:1,
+      explain:'Building and testing the safety net now — before applying it repeatedly next week — is exactly the point of a "design first" capstone step.'
+    }
+  ],
+  sandboxStarter3:`col_summary <- function(x) {
+  tryCatch({
+    if (length(x) == 0) stop("Empty column")
+    list(mean = round(mean(x), 1), max = max(x), min = min(x))
+  }, error = function(e) {
+    list(mean = NA, max = NA, min = NA)
+  })
+}
+format_summary_line <- function(label, summary) {
+  sprintf("%s - mean: %.1f, max: %d, min: %d", label, summary$mean, summary$max, summary$min)
+}
+print(format_summary_line("English", col_summary(c(70, 60, 40, 90))))
+print(format_summary_line("Empty", col_summary(c())))
+`,
+  stretchChallenge:{
+    title:'Add a range field to the summary',
+    desc:`Write col_summary2 as function(x) { tryCatch({ if (length(x) == 0) stop("Empty column"); list(mean =
+      round(mean(x), 1), range = max(x) - min(x)) }, error = function(e) { list(mean = NA, range = NA) }) }.
+      Calculate result as col_summary2(c(80, 70, 90, 60)). Use stopifnot() to confirm that result$mean == 75 &&
+      result$range == 30.`,
+    starter:`# Write col_summary2, then calculate result below
+`,
+    tests:[
+      {type:'assert', expr:'result$mean == 75 && result$range == 30', label:'result$mean and result$range are both correct'}
+    ]
+  }
 }
 ];
 
