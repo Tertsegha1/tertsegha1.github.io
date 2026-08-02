@@ -4638,6 +4638,69 @@ score <- c(42, 58, 55, 75, 70, 95)
   ]
 };
 
+const R_ADVANCED_MP2 = {
+  key:'mp2',
+  title:'The Class Report Generator Library',
+  intro:`Three doors, combining all nine Advanced weeks: cross-tabulate and correlate a new roster (Weeks 1-2),
+    fit a model and bundle its results (Weeks 3-4), then apply the full tryCatch-protected, sprintf-formatted
+    report library built in Weeks 5-9 across the whole thing.`,
+  fixtureNote:`All three doors build on this same roster:`,
+  fixtureCode:`house <- c("Red", "Blue", "Red", "Blue", "Red", "Blue")
+pass <- c("Pass", "Fail", "Pass", "Pass", "Fail", "Pass")
+hours <- c(2, 4, 1, 5, 3, 6)
+score <- c(55, 72, 48, 85, 60, 90)`,
+  doors:[
+    {
+      key:'a', title:'Door 1 — Cross-tabulate and correlate',
+      desc:`Using table and cor (Weeks 1-2), calculate cross_table as table(house, pass), then red_pass as
+        cross_table["Red", "Pass"]. Calculate hours_score_cor as round(cor(hours, score), 2). Use stopifnot() to
+        confirm that red_pass == 2 && hours_score_cor == 0.99.`,
+      starter:`house <- c("Red", "Blue", "Red", "Blue", "Red", "Blue")
+pass <- c("Pass", "Fail", "Pass", "Pass", "Fail", "Pass")
+hours <- c(2, 4, 1, 5, 3, 6)
+score <- c(55, 72, 48, 85, 60, 90)
+# Calculate cross_table, red_pass, and hours_score_cor below
+`,
+      tests:[
+        {type:'assert', expr:'red_pass == 2 && hours_score_cor == 0.99', label:'red_pass and hours_score_cor are both correct'}
+      ]
+    },
+    {
+      key:'b', title:'Door 2 — Fit a model and bundle its results',
+      desc:`Using lm/coef and a function that returns a list (Weeks 3-4): calculate df as data.frame(hours =
+        hours, score = score), model as lm(score ~ hours, data = df). Write summarize_model as function(m) {
+        list(slope = round(coef(m)[["hours"]], 2), intercept = round(coef(m)[["(Intercept)"]], 2)) }. Calculate
+        model_summary as summarize_model(model). Use stopifnot() to confirm that model_summary$slope == 8.91 &&
+        model_summary$intercept == 37.13.`,
+      starter:`hours <- c(2, 4, 1, 5, 3, 6)
+score <- c(55, 72, 48, 85, 60, 90)
+# Calculate df and model, write summarize_model, then calculate model_summary below
+`,
+      tests:[
+        {type:'assert', expr:'model_summary$slope == 8.91 && model_summary$intercept == 37.13', label:'model_summary$slope and model_summary$intercept are both correct'}
+      ]
+    },
+    {
+      key:'c', title:'Door 3 — Apply the full report library',
+      desc:`Using col_summary, format_summary_line, and sapply(names(df), ...) (Weeks 5-9): write col_summary as
+        function(x) { tryCatch({ if (length(x) == 0) stop("Empty column"); list(mean = round(mean(x), 1), max =
+        max(x), min = min(x)) }, error = function(e) { list(mean = NA, max = NA, min = NA) }) }. Write
+        format_summary_line as function(label, summary) { sprintf("%s - mean: %.1f, max: %d, min: %d", label,
+        summary$mean, summary$max, summary$min) }. Calculate df as data.frame(hours = hours, score = score),
+        report_lines as sapply(names(df), function(n) format_summary_line(n, col_summary(df[[n]]))), then
+        full_report as paste(report_lines, collapse = "\\n"). Use stopifnot() to confirm that grepl("hours -
+        mean: 3.5", full_report) && grepl("score - mean: 68.3", full_report).`,
+      starter:`hours <- c(2, 4, 1, 5, 3, 6)
+score <- c(55, 72, 48, 85, 60, 90)
+# Write col_summary and format_summary_line, then calculate df, report_lines, and full_report below
+`,
+      tests:[
+        {type:'assert', expr:'grepl("hours - mean: 3.5", full_report) && grepl("score - mean: 68.3", full_report)', label:'full_report contains both expected summary lines'}
+      ]
+    }
+  ]
+};
+
 const R_MP1 = {
   key:'mp1',
   title:'Class Attendance Report',
