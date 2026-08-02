@@ -3386,6 +3386,178 @@ print(df$score - fitted_values)
       {type:'assert', expr:'slope2 == 10', label:'slope2 equals 10'}
     ]
   }
+},
+{
+  key:'week4', num:4, title:'Functions That Return Many Things',
+  scenarioTag:'Real world: one function call that hands back a whole bundle of related results at once',
+  scenario:`Intermediate Week 5 wrote functions that return ONE value. But often you want several RELATED
+    results from the same calculation — a mean, a max, and a min from the same scores, say. Since Intermediate
+    Week 9 you know list() can bundle different values together — a function's LAST expression can be a list(),
+    handing back everything at once from a single call.`,
+  objectives:[
+    'Write a function whose last expression is a list(), returning multiple named results',
+    'Call the function once and access several of its results with $',
+    'Call the same function on different data and compare results across calls',
+    'Recognise why bundling related results in ONE list is cleaner than several separate function calls'
+  ],
+  conceptHtml:`
+    <p>A function's return value is just its LAST expression — so if that expression is a <code>list()</code>,
+    the caller gets every named piece back from ONE call:</p>
+    <pre class="code-block">analyze &lt;- function(x) {
+  list(mean_val = mean(x), max_val = max(x), min_val = min(x), range_val = max(x) - min(x))
+}
+result &lt;- analyze(c(70, 85, 60, 90, 75))
+print(result$mean_val)   # 76
+print(result$max_val)    # 90</pre>
+    <p>Without this, you'd need three or four separate function calls (or re-compute <code>mean(x)</code> and
+    <code>max(x)</code> more than once) just to get related answers about the SAME data.</p>
+    <h3>Let's break down the starter code, line by line</h3>
+    <pre class="code-block">analyze &lt;- function(x) {
+  list(mean_val = mean(x), max_val = max(x), min_val = min(x), range_val = max(x) - min(x))
+}
+result &lt;- analyze(c(70, 85, 60, 90, 75))
+print(result$mean_val)</pre>
+    <ul>
+      <li><code>function(x) { list(...) }</code> — same function-writing syntax from Intermediate Week 5, just
+        with a <code>list()</code> as the body's last (and only) expression.</li>
+      <li><code>result$mean_val</code> — the same <code>$</code> access from Intermediate Week 9, now reaching
+        into a list that a FUNCTION produced, not one you typed by hand.</li>
+    </ul>
+    <p>Calling <code>analyze()</code> again on different data produces a completely independent list — nothing
+    from the first call carries over.</p>`,
+  sandboxStarter:`analyze <- function(x) {
+  list(mean_val = mean(x), max_val = max(x), min_val = min(x), range_val = max(x) - min(x))
+}
+result <- analyze(c(70, 85, 60, 90, 75))
+print(result$mean_val)
+print(result$max_val)
+`,
+  sandboxStarter2:`analyze <- function(x) {
+  list(mean_val = mean(x), max_val = max(x), min_val = min(x), range_val = max(x) - min(x))
+}
+result2 <- analyze(c(40, 50, 60))
+print(result2)
+`,
+  exercises:[
+    {
+      title:'Write a function that returns a list, then access one piece',
+      desc:`Write analyze as function(x) { list(mean_val = mean(x), max_val = max(x), min_val = min(x),
+        range_val = max(x) - min(x)) }. Call it on scores <- c(70, 85, 60, 90, 75), storing the result in
+        result. Calculate rounded_mean as round(result$mean_val, 1). Use stopifnot() to confirm that
+        rounded_mean == 76.`,
+      starter:`# Write analyze, create scores, then calculate result and rounded_mean below
+scores <- c(70, 85, 60, 90, 75)
+`,
+      tests:[{type:'assert', expr:'rounded_mean == 76', label:'rounded_mean equals 76'}]
+    },
+    {
+      title:'Access a second piece from the same result',
+      desc:`Using the same analyze and result (from calling analyze(scores)), calculate max_val as
+        result$max_val. Use stopifnot() to confirm that max_val == 90.`,
+      starter:`analyze <- function(x) {
+  list(mean_val = mean(x), max_val = max(x), min_val = min(x), range_val = max(x) - min(x))
+}
+scores <- c(70, 85, 60, 90, 75)
+result <- analyze(scores)
+# Calculate max_val below
+`,
+      tests:[{type:'assert', expr:'max_val == 90', label:'max_val equals 90'}]
+    },
+    {
+      title:'Access a third piece',
+      desc:`Using the same result, calculate min_val as result$min_val. Use stopifnot() to confirm that
+        min_val == 60.`,
+      starter:`analyze <- function(x) {
+  list(mean_val = mean(x), max_val = max(x), min_val = min(x), range_val = max(x) - min(x))
+}
+scores <- c(70, 85, 60, 90, 75)
+result <- analyze(scores)
+# Calculate min_val below
+`,
+      tests:[{type:'assert', expr:'min_val == 60', label:'min_val equals 60'}]
+    },
+    {
+      title:'Access a calculated piece',
+      desc:`Using the same result, calculate range_val as result$range_val. Use stopifnot() to confirm that
+        range_val == 30.`,
+      starter:`analyze <- function(x) {
+  list(mean_val = mean(x), max_val = max(x), min_val = min(x), range_val = max(x) - min(x))
+}
+scores <- c(70, 85, 60, 90, 75)
+result <- analyze(scores)
+# Calculate range_val below
+`,
+      tests:[{type:'assert', expr:'range_val == 30', label:'range_val equals 30'}]
+    },
+    {
+      title:'Call the function on different data',
+      desc:`Using analyze (defined as before), call it on c(40, 50, 60), storing the result in result2.
+        Calculate avg2 as round(result2$mean_val, 1). Use stopifnot() to confirm that avg2 == 50.`,
+      starter:`analyze <- function(x) {
+  list(mean_val = mean(x), max_val = max(x), min_val = min(x), range_val = max(x) - min(x))
+}
+# Call analyze on c(40, 50, 60), then calculate avg2 below
+`,
+      tests:[{type:'assert', expr:'avg2 == 50', label:'avg2 equals 50'}]
+    },
+    {
+      title:'Compare results across two calls',
+      desc:`Using analyze (defined as before), calculate result as analyze(c(70, 85, 60, 90, 75)) and result2 as
+        analyze(c(40, 50, 60)). Calculate wider_range as result$range_val > result2$range_val. Use stopifnot()
+        to confirm that wider_range == TRUE — the first dataset's range (30) is bigger than the second's (20).`,
+      starter:`analyze <- function(x) {
+  list(mean_val = mean(x), max_val = max(x), min_val = min(x), range_val = max(x) - min(x))
+}
+# Calculate result, result2, then wider_range below
+`,
+      tests:[{type:'assert', expr:'wider_range == TRUE', label:'wider_range equals TRUE'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does a function return, if its LAST expression is a list(...)?',
+      options:['Only the first item in the list','The WHOLE list — every named piece is handed back to the caller from that one call','Nothing, lists cannot be returned from functions','Only the last item in the list'],
+      correct:1,
+      explain:'A function\'s return value is just its last-evaluated expression — when that\'s a list(), the entire bundle of named results comes back at once.'
+    },
+    {
+      q:'Why is analyze(x) returning a list better than writing 4 separate functions (get_mean, get_max, get_min, get_range)?',
+      options:['It isn\'t better — separate functions are always preferred','One call computes and bundles every RELATED result together, avoiding repeated calls and keeping results that belong together, together','R doesn\'t allow more than one function definition','list() is required by R for any function with more than one line'],
+      correct:1,
+      explain:'When several results all come from the same underlying data, bundling them in one call is both less repetitive and keeps them logically grouped.'
+    },
+    {
+      q:'After running result <- analyze(scores) and then result2 <- analyze(other_scores), what is true about result and result2?',
+      options:['They are the same object — the second call overwrites data inside the first','They are two COMPLETELY INDEPENDENT lists — calling analyze() again never changes a previously-stored result','result2 is always empty','Calling analyze() twice causes an error'],
+      correct:1,
+      explain:'Each function call creates a brand new list — storing it in a different variable name means both results exist independently, side by side.'
+    },
+    {
+      q:'What does result$range_val access?',
+      options:['The word "range_val", as text','The specific named piece of the list called range_val — the same $ access pattern used since Intermediate Week 9','The 4th character of result','It causes an error, since $ only works on data.frames'],
+      correct:1,
+      explain:'$ reaches into any named list (whether typed by hand or returned by a function) and pulls out the piece with that exact name.'
+    }
+  ],
+  sandboxStarter3:`analyze <- function(x) {
+  list(mean_val = mean(x), max_val = max(x), min_val = min(x), range_val = max(x) - min(x))
+}
+result <- analyze(c(70, 85, 60, 90, 75))
+result2 <- analyze(c(40, 50, 60))
+print(result$range_val)
+print(result2$range_val)
+`,
+  stretchChallenge:{
+    title:'Write your own two-result function',
+    desc:`Write summarize_pass as function(scores, threshold) { list(pass_count = sum(scores >= threshold),
+      fail_count = sum(scores < threshold)) }. Call it as summary <- summarize_pass(c(45, 60, 70, 30, 90), 50).
+      Use stopifnot() to confirm that summary$pass_count == 3 && summary$fail_count == 2.`,
+    starter:`# Write summarize_pass, then call it and store the result in summary below
+`,
+    tests:[
+      {type:'assert', expr:'summary$pass_count == 3 && summary$fail_count == 2', label:'summary$pass_count and summary$fail_count are both correct'}
+    ]
+  }
 }
 ];
 
