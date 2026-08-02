@@ -2920,6 +2920,161 @@ df <- read.csv(text = csv_text)
   ]
 };
 
+const R_ADVANCED_WEEKS = [
+{
+  key:'week1', num:1, title:'Cross-Tabulation: table()',
+  scenarioTag:'Real world: counting how often each category shows up, and how two categories overlap',
+  scenario:`Intermediate Week 3 turned a text column into a factor with fixed categories. table() takes that
+    one step further — it counts how many times each category appears, and can even cross-tabulate TWO
+    categories together to show how they overlap, all in one line.`,
+  objectives:[
+    'Use table() to count occurrences of each value in a vector',
+    'Use table() with TWO vectors to build a cross-tabulation',
+    'Access a specific count from a table using [] and [ , ]',
+    'Use sum() and names() to inspect a table\'s totals and categories'
+  ],
+  conceptHtml:`
+    <p><code>table(x)</code> counts how many times each unique value in <code>x</code> appears:</p>
+    <pre class="code-block">house &lt;- c("Red", "Blue", "Red", "Blue", "Red", "Blue")
+print(table(house))   # Blue: 3   Red: 3</pre>
+    <p>Give <code>table()</code> TWO vectors and it builds a cross-tabulation — a small grid counting every
+    combination of the two:</p>
+    <pre class="code-block">pass &lt;- c("Pass", "Pass", "Fail", "Pass", "Pass", "Fail")
+cross_table &lt;- table(house, pass)
+print(cross_table)
+#       pass
+# house  Fail Pass
+#  Blue     1    2
+#  Red      1    2</pre>
+    <h3>Let's break down the starter code, line by line</h3>
+    <pre class="code-block">house &lt;- c("Red", "Blue", "Red", "Blue", "Red", "Blue")
+house_table &lt;- table(house)
+print(house_table[["Red"]])</pre>
+    <ul>
+      <li><code>table(house)</code> — builds a named count for every distinct value in <code>house</code>, the
+        same way <code>aggregate()</code> built one row per group in Intermediate Week 7.</li>
+      <li><code>house_table[["Red"]]</code> — pulls out just the Red count, using the same <code>[[ ]]</code>
+        named-access pattern from Intermediate Week 9's lists.</li>
+    </ul>
+    <p>For the two-way version, <code>cross_table["Red", "Pass"]</code> reaches into the grid using
+    <code>[row, column]</code> — the same <code>[ , ]</code> pattern used for data.frames since Beginner Week 7,
+    just applied to a table instead.</p>`,
+  sandboxStarter:`house <- c("Red", "Blue", "Red", "Blue", "Red", "Blue")
+house_table <- table(house)
+print(house_table[["Red"]])
+`,
+  sandboxStarter2:`house <- c("Red", "Blue", "Red", "Blue", "Red", "Blue")
+pass <- c("Pass", "Pass", "Fail", "Pass", "Pass", "Fail")
+cross_table <- table(house, pass)
+print(cross_table["Red", "Pass"])
+`,
+  exercises:[
+    {
+      title:'Count one category',
+      desc:`Create house as c("Red", "Blue", "Red", "Blue", "Red", "Blue"). Calculate house_table as
+        table(house), then count_red as house_table[["Red"]]. Use stopifnot() to confirm that count_red == 3.`,
+      starter:`# Create house, then calculate house_table and count_red below
+house <- c("Red", "Blue", "Red", "Blue", "Red", "Blue")
+`,
+      tests:[{type:'assert', expr:'count_red == 3', label:'count_red equals 3'}]
+    },
+    {
+      title:'Count a different category',
+      desc:`Create pass as c("Pass", "Pass", "Fail", "Pass", "Pass", "Fail"). Calculate pass_table as
+        table(pass), then count_fail as pass_table[["Fail"]]. Use stopifnot() to confirm that count_fail == 2.`,
+      starter:`# Create pass, then calculate pass_table and count_fail below
+pass <- c("Pass", "Pass", "Fail", "Pass", "Pass", "Fail")
+`,
+      tests:[{type:'assert', expr:'count_fail == 2', label:'count_fail equals 2'}]
+    },
+    {
+      title:'Build a cross-tabulation and read one cell',
+      desc:`Using house and pass (both given), calculate cross_table as table(house, pass), then red_pass as
+        cross_table["Red", "Pass"]. Use stopifnot() to confirm that red_pass == 2.`,
+      starter:`house <- c("Red", "Blue", "Red", "Blue", "Red", "Blue")
+pass <- c("Pass", "Pass", "Fail", "Pass", "Pass", "Fail")
+# Calculate cross_table, then red_pass below
+`,
+      tests:[{type:'assert', expr:'red_pass == 2', label:'red_pass equals 2'}]
+    },
+    {
+      title:'Read a different cell',
+      desc:`Using the same cross_table, calculate blue_fail as cross_table["Blue", "Fail"]. Use stopifnot() to
+        confirm that blue_fail == 1.`,
+      starter:`house <- c("Red", "Blue", "Red", "Blue", "Red", "Blue")
+pass <- c("Pass", "Pass", "Fail", "Pass", "Pass", "Fail")
+cross_table <- table(house, pass)
+# Calculate blue_fail below
+`,
+      tests:[{type:'assert', expr:'blue_fail == 1', label:'blue_fail equals 1'}]
+    },
+    {
+      title:'Check the total using sum()',
+      desc:`Using house (given), calculate total as sum(table(house)). Use stopifnot() to confirm that total ==
+        6 — the total count always matches the length of the original vector.`,
+      starter:`house <- c("Red", "Blue", "Red", "Blue", "Red", "Blue")
+# Calculate total below
+`,
+      tests:[{type:'assert', expr:'total == 6', label:'total equals 6'}]
+    },
+    {
+      title:'Check the category names',
+      desc:`Using house (given), calculate house_names as names(table(house)). Use stopifnot() to confirm that
+        all(house_names == c("Blue", "Red")) — table() lists category names in ALPHABETICAL order, not the
+        order they first appeared in the vector.`,
+      starter:`house <- c("Red", "Blue", "Red", "Blue", "Red", "Blue")
+# Calculate house_names below
+`,
+      tests:[{type:'assert', expr:'all(house_names == c("Blue", "Red"))', label:'house_names exactly equals c("Blue", "Red")'}]
+    }
+  ],
+  quiz:[
+    {
+      q:'What does table(house) return, if house is a character vector?',
+      options:['The original vector, unchanged','A named count of how many times each DISTINCT value appears in house','Just the single most common value','An error, since table() only works on numbers'],
+      correct:1,
+      explain:'table() tallies every unique value in the vector — the result is a named set of counts, one per distinct category.'
+    },
+    {
+      q:'What does table(house, pass) build, compared to table(house) alone?',
+      options:['Exactly the same result as table(house)','A two-way CROSS-TABULATION — a grid counting every combination of a house value AND a pass value together, not just each column separately','It multiplies house by pass','It only works if house and pass are both numeric'],
+      correct:1,
+      explain:'Giving table() two vectors builds a grid of combined counts — how many Red-and-Pass, how many Blue-and-Fail, and so on, all at once.'
+    },
+    {
+      q:'Why does cross_table["Red", "Pass"] correctly pull out ONE specific count from the cross-tabulation?',
+      options:['It doesn\'t work, cross-tabulations can\'t be indexed this way','It uses the [row, column] pattern already familiar from data.frame indexing — "Red" picks the row, "Pass" picks the column, and their intersection is one count','It searches the whole table for the word "Red"','It always returns the first cell, regardless of what\'s inside the brackets'],
+      correct:1,
+      explain:'A two-way table is really just a small grid, so the same [row, column] indexing used for data.frames since Beginner Week 7 works here too.'
+    },
+    {
+      q:'Why does names(table(house)) return c("Blue", "Red") instead of c("Red", "Blue"), even though "Red" appeared FIRST in the original vector?',
+      options:['This is a bug in R','table() always lists category names in ALPHABETICAL order by default, not the order values first appeared in the data','names() always returns results in reverse order','It depends on which value has the higher count'],
+      correct:1,
+      explain:'table() sorts its output alphabetically by category name — this is worth knowing, since it means the ORDER of a table\'s names doesn\'t reflect the original data\'s order.'
+    }
+  ],
+  sandboxStarter3:`house <- c("Red", "Blue", "Red", "Blue", "Red", "Blue")
+pass <- c("Pass", "Pass", "Fail", "Pass", "Pass", "Fail")
+house_table <- table(house)
+cross_table <- table(house, pass)
+print(sum(house_table))
+print(names(house_table))
+`,
+  stretchChallenge:{
+    title:'Compare two counts from the same table',
+    desc:`Create house2 as c("Red", "Red", "Blue"). Calculate house2_table as table(house2), then more_red as
+      house2_table[["Red"]] > house2_table[["Blue"]]. Use stopifnot() to confirm that more_red == TRUE — Red
+      appears twice, Blue only once.`,
+    starter:`# Create house2, then calculate house2_table and more_red below
+`,
+    tests:[
+      {type:'assert', expr:'more_red == TRUE', label:'more_red equals TRUE'}
+    ]
+  }
+}
+];
+
 const R_MP1 = {
   key:'mp1',
   title:'Class Attendance Report',
