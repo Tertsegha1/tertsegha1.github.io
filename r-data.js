@@ -3561,6 +3561,61 @@ print(result2$range_val)
 }
 ];
 
+const R_ADVANCED_MP1 = {
+  key:'mp1',
+  title:'Build a Class Trends Report',
+  intro:`Three doors, combining all four weeks: cross-tabulate house and pass/fail with table() (Week 1),
+    measure how strongly hours studied relates to score with cor() (Week 2), then fit a real model with lm()
+    and bundle its results into a list using a function (Weeks 3 and 4).`,
+  fixtureNote:`All three doors build on this same class roster:`,
+  fixtureCode:`house <- c("Red", "Blue", "Red", "Blue", "Red", "Blue")
+pass <- c("Pass", "Pass", "Fail", "Pass", "Pass", "Fail")
+hours <- c(1, 2, 3, 4, 5, 6)
+score <- c(42, 58, 55, 75, 70, 95)`,
+  doors:[
+    {
+      key:'a', title:'Door 1 — Cross-tabulate house and pass/fail',
+      desc:`Using table (Week 1), calculate cross_table as table(house, pass), then red_pass as
+        cross_table["Red", "Pass"]. Calculate total_students as sum(table(house)). Use stopifnot() to confirm
+        that red_pass == 2 && total_students == 6.`,
+      starter:`house <- c("Red", "Blue", "Red", "Blue", "Red", "Blue")
+pass <- c("Pass", "Pass", "Fail", "Pass", "Pass", "Fail")
+# Calculate cross_table, red_pass, and total_students below
+`,
+      tests:[
+        {type:'assert', expr:'red_pass == 2 && total_students == 6', label:'red_pass and total_students are both correct'}
+      ]
+    },
+    {
+      key:'b', title:'Door 2 — Measure the hours/score relationship',
+      desc:`Using cor (Week 2), calculate hours_score_cor as round(cor(hours, score), 2), then cor_positive as
+        cor(hours, score) > 0. Use stopifnot() to confirm that hours_score_cor == 0.93 && cor_positive == TRUE.`,
+      starter:`hours <- c(1, 2, 3, 4, 5, 6)
+score <- c(42, 58, 55, 75, 70, 95)
+# Calculate hours_score_cor and cor_positive below
+`,
+      tests:[
+        {type:'assert', expr:'hours_score_cor == 0.93 && cor_positive == TRUE', label:'hours_score_cor and cor_positive are both correct'}
+      ]
+    },
+    {
+      key:'c', title:'Door 3 — Fit a model and bundle its results',
+      desc:`Using lm/coef (Week 3) and a function that returns a list (Week 4): calculate df as
+        data.frame(hours = hours, score = score), model as lm(score ~ hours, data = df). Write summarize_model
+        as function(m) { list(slope = round(coef(m)[["hours"]], 2), intercept = round(coef(m)[["(Intercept)"]],
+        2)) }. Calculate model_summary as summarize_model(model). Use stopifnot() to confirm that
+        model_summary$slope == 9.17 && model_summary$intercept == 33.73.`,
+      starter:`hours <- c(1, 2, 3, 4, 5, 6)
+score <- c(42, 58, 55, 75, 70, 95)
+# Calculate df and model, write summarize_model, then calculate model_summary below
+`,
+      tests:[
+        {type:'assert', expr:'model_summary$slope == 9.17 && model_summary$intercept == 33.73', label:'model_summary$slope and model_summary$intercept are both correct'}
+      ]
+    }
+  ]
+};
+
 const R_MP1 = {
   key:'mp1',
   title:'Class Attendance Report',
