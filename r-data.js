@@ -4795,5 +4795,5 @@ window.SUBJECT_DATA = window.SUBJECT_DATA || {};
 window.SUBJECT_DATA.r = {
   b: {weeks: R_WEEKS, mp1: R_MP1, mp2: R_MP2},
   i: {weeks: R_INTERMEDIATE_WEEKS, mp1: R_INTERMEDIATE_MP1, mp2: R_INTERMEDIATE_MP2},
-  a: {weeks: R_WEEKS, mp1: R_MP1, mp2: R_MP2}
+  a: {weeks: R_ADVANCED_WEEKS, mp1: R_ADVANCED_MP1, mp2: R_ADVANCED_MP2}
 };
