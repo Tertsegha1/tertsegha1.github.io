@@ -68,21 +68,11 @@ const DATA = {
       }
     ],
     "about": [
-      "I am a PhD-trained engineer and computing lecturer based in Birmingham, UK. I hold a PhD in",
-      "Engineering (Communication Systems) from the University of Warwick, an MSc from Swansea University,",
-      "and a B.Tech. from the Federal University of Technology, Yola, Nigeria.",
-      "My work sits at the intersection of <strong>machine learning research</strong>,",
-      "<strong>cyber and cyber-physical systems security</strong>, and",
-      "<strong>AI-powered educational technology</strong>. I specialise in ensemble and meta-learning",
-      "frameworks, AutoML pipeline design, GAN-based synthetic data generation, and trustworthy ML",
-      "for high-stakes applications.",
-      "As Deputy Programme Leader at QAHE&nbsp;/&nbsp;Ulster University, I oversee curriculum quality",
-      "assurance for MSc Computing programmes, lead three core modules, and have driven Digital Transformation student",
-      "pass rates to <strong>98%+</strong> through the Digital Transformation Studio initiative and the",
-      "AI-powered Automated Marking &amp; Grading System I designed and built.",
+      "I am a PhD-trained engineer and computing lecturer based in Birmingham, UK. I hold a PhD in Engineering (Communication Systems) from the University of Warwick, an MSc from Swansea University, and a B.Tech. from the Federal University of Technology, Yola, Nigeria.",
+      "My work sits at the intersection of <strong>machine learning research</strong>, <strong>cyber and cyber-physical systems security</strong>, and <strong>AI-powered educational technology</strong>. I specialise in ensemble and meta-learning frameworks, AutoML pipeline design, GAN-based synthetic data generation, and trustworthy ML for high-stakes applications.",
+      "As Deputy Programme Leader at QAHE&nbsp;/&nbsp;Ulster University, I oversee curriculum quality assurance for MSc Computing programmes, lead three core modules, and have driven Digital Transformation student pass rates to <strong>98%+</strong> through the Digital Transformation Studio initiative and the AI-powered Automated Marking &amp; Grading System I designed and built.",
       "I also bring hands-on expertise in <strong>enterprise database engineering</strong> — including PostgreSQL administration, advanced SQL optimisation, ETL/ELT pipeline design, performance tuning, and data governance — developed through academic teaching (University of Warwick), module leadership in Advanced Database Systems, and applied industry training delivery.",
-      "I am an active open-source contributor with production-grade projects on GitHub, a Fellow",
-      "of the Higher Education Academy (FHEA), and a Member of the BCS, IET, and IEEE."
+      "I am an active open-source contributor with production-grade projects on GitHub, a Fellow of the Higher Education Academy (FHEA), and a Member of the BCS, IET, and IEEE."
     ]
   },
   "skills": [
