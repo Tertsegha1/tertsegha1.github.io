@@ -89,6 +89,7 @@ const DATA = {
     {
       "icon": "🤖",
       "title": "ML / AI",
+      "level": 95,
       "tags": [
         "PyTorch",
         "TensorFlow",
@@ -108,6 +109,7 @@ const DATA = {
     {
       "icon": "💻",
       "title": "Languages",
+      "level": 88,
       "tags": [
         "Python",
         "JavaScript",
@@ -122,6 +124,7 @@ const DATA = {
     {
       "icon": "📊",
       "title": "Data Engineering",
+      "level": 87,
       "tags": [
         "pandas",
         "NumPy",
@@ -136,6 +139,7 @@ const DATA = {
     {
       "icon": "⚙️",
       "title": "Software Engineering",
+      "level": 82,
       "tags": [
         "Git / GitHub",
         "FastAPI",
@@ -149,6 +153,7 @@ const DATA = {
     {
       "icon": "🔒",
       "title": "Cyber Security",
+      "level": 80,
       "tags": [
         "Network Intrusion Detection",
         "DDoS Analysis",
@@ -162,6 +167,7 @@ const DATA = {
     {
       "icon": "🗄️",
       "title": "Database Engineering",
+      "level": 92,
       "tags": [
         "PostgreSQL",
         "SQL Engineering",
@@ -180,6 +186,7 @@ const DATA = {
     {
       "icon": "🏫",
       "title": "AI in EdTech",
+      "level": 88,
       "tags": [
         "Cloudflare Workers AI",
         "Llama 3.3 70B",
@@ -260,6 +267,7 @@ const DATA = {
     {
       "icon": "🗄️",
       "badge": "Jun–Jul 2026",
+      "color": "#336791",
       "title": "PostgreSQL Executive Training Programme",
       "desc": "Designed and delivered as Lead Instructor for A UK Trade and Infrastructure Enterprise Limited (AUKTIE) — a two-week intensive executive training programme hosted at Coventry Conferences, The Techno Centre, Coventry University Technology Park (23 June – 3 July 2026). Theme: <em>Strengthening Enterprise Data Management, Digital Government Systems and Social Protection Delivery through PostgreSQL and International Best Practice</em>.<br><br>Programme spans 6 technical teaching days + an Innovation Hub, Birmingham study visit (technology &amp; enterprise innovation) + a Mid-Training Assessment day + a closing ceremony with group blueprint presentations and certificates. Daily timetable: 10:00–17:00. Full instructor guide, participant workbook, lesson plan, and registration &amp; attendance system authored end-to-end by Dr. Anande.<br><br><strong>Technical curriculum:</strong> PostgreSQL 18 architecture (WAL, MVCC, process/memory/storage); normalisation &amp; NSR schema design; DML/DDL, JOINs, window functions &amp; analytics; RBAC, Row-Level Security, backup &amp; disaster recovery; EXPLAIN ANALYSE, indexing strategies, partitioning, monitoring &amp; capacity planning; ETL/ELT pipeline design, data validation, deduplication; NDP Act 2023 data governance, master data management &amp; interoperability frameworks.",
       "tech": [
@@ -282,6 +290,7 @@ const DATA = {
     {
       "icon": "⚡",
       "badge": "EdTech · Secondary Schools · 8 Tracks",
+      "color": "#7c3aed",
       "title": "Codify — Code, Data & Security Skills for Schools",
       "desc": "A self-paced, browser-based learning platform for school students (Years 5–10, ages 10–16), built from scratch as an independent project and now hosted as its own standalone product — eight subject tracks: Python, Web Design, R, AutoML, Machine Learning, Cybersecurity, Data Science, and SQL. Students create their own password-protected account (securely hashed, never stored or viewable in plaintext) that restores their exact progress on any device, with three certificate-gated levels — Beginner, Intermediate, Advanced — per track, each with its own genuinely distinct curriculum and each unlocked only after finishing the one before it. Every track ends in real code executed live in the browser (not simulated) — Python/AutoML/Machine Learning/Cybersecurity/Data Science via Pyodide, R via WebR, SQL via an in-browser SQLite engine, Web Design by grading real rendered HTML/CSS in a sandboxed preview — with auto-graded exercises, a quiz, and two puzzle-style mini-projects per level. Finishing both mini-projects plus a short feedback survey unlocks a downloadable, QR-verifiable certificate and the next level. New registrations require a passcode the instructor generates per track and can revoke at any time, enforced server-side in the database rules, not just in the UI. Students can message the instructor directly, including a no-login-needed path for forgotten passwords. A live instructor dashboard — with a subject selector across all eight tracks, plus per-student session-time tracking — shows whole-class progress, previews any week's content unlocked exactly as students see it, manages accounts, passcodes and password resets, triages incoming messages, and surfaces feedback analytics, all in real time via Firebase.",
       "tech": [
@@ -301,6 +310,7 @@ const DATA = {
     {
       "icon": "🤖",
       "badge": "2025–Present",
+      "color": "#059669",
       "title": "MoSELA AutoML — General-Purpose Tabular AutoML Framework",
       "desc": "Modular, production-grade AutoML framework implementing the MoSELA staged pipeline: Profile → Preprocess → Coarse Search (Optuna) → Refinement → Champion Selection → Bundle → REST Serve (FastAPI). Features structural, semantic, and correlation-based leakage auditing; family-aware preprocessing; cost-aware multi-objective champion selection; MLflow integration; Docker support.",
       "tech": [
@@ -323,6 +333,7 @@ const DATA = {
     {
       "icon": "🎓",
       "badge": "Private · EdTech",
+      "color": "#d97706",
       "title": "Digital Transformation Studio",
       "desc": "Full-lifecycle studio management system for the Digital Transformation module — deployed across London, Birmingham, and Manchester campuses. Manages cohort setup, guild formation, weekly quest publishing, artefact submission, peer review, and AI-powered formative feedback. Student portal, lecturer view, and module-leader admin are role-gated. All data syncs live via Firebase Realtime Database; zero server cost. Integrates Claude API for per-submission feedback including an AI-writing estimate to guide students before Turnitin submission.",
       "tech": [
@@ -339,6 +350,7 @@ const DATA = {
     {
       "icon": "📋",
       "badge": "Private · EdTech",
+      "color": "#1d4ed8",
       "title": "Marking Tracker",
       "desc": "Live marking-coordination tool across all campuses. Markers sign in by name; the module leader uses a PIN-protected admin view. KPI dashboard tracks allocation, completion, and non-submissions in real time. Supports per-cohort CSV import, role-based access (module leader / marker), inline status and notes editing, and one-click CSV export for board reporting. Firebase-backed with offline localStorage fallback — changes sync the moment connectivity resumes.",
       "tech": [
@@ -354,6 +366,7 @@ const DATA = {
     {
       "icon": "🏫",
       "badge": "Private · EdTech",
+      "color": "#b91c1c",
       "title": "Automated Marking & Grading System",
       "desc": "Browser-based AI-powered automated marking tool for Digital Transformation (MSc). Supports CW1 (Video Presentation), CW2 (Written Report), and DT Studio Guild Quest verification. Integrates Cloudflare Workers AI (Llama 3.3 70B) for rubric-driven grading and Whisper for video transcription. Role-based access, AI-generation detection, in-browser file extraction — zero server cost. Directly contributed to <strong>98%+ pass rate</strong> (2025–26 cohort).",
       "tech": [
@@ -371,6 +384,7 @@ const DATA = {
     {
       "icon": "🏥",
       "badge": "2025–Present",
+      "color": "#be185d",
       "title": "THA-AutoML — Trustworthy AutoML for Health Tabular Data",
       "desc": "Research-grade AutoML framework for health-oriented tabular classification with leakage auditing, fold-safe preprocessing, repeated cross-validation benchmarking, Optuna-based hyperparameter optimisation, and cost-aware model selection. Produces reproducible benchmark artefacts, publication-ready reports, and deployment-ready model outputs.",
       "tech": [
@@ -391,6 +405,7 @@ const DATA = {
     {
       "icon": "📈",
       "badge": "PhD Core",
+      "color": "#5b21b6",
       "title": "Ensemble Meta-Learning for Cyber-Attack Classification",
       "desc": "Engineered a stacked ensemble + Optuna-tuned meta-learner achieving up to <strong>100% multi-class classification accuracy</strong> on imbalanced network-traffic data with near-zero misclassification; 80%+ training throughput uplift via custom stacking architecture. Published in <em>SN Computer Science</em> (2025).",
       "tech": [
@@ -410,6 +425,7 @@ const DATA = {
     {
       "icon": "🔁",
       "badge": "PhD",
+      "color": "#0e7490",
       "title": "GAN-based Synthetic Network Traffic Generation",
       "desc": "Built deep generative pipelines (GANs) producing synthetic network traffic with >85% indistinguishability from real samples. Downstream attack-detection accuracy >99% across multiple cyber-attack classes. Focused on APT sample classification using GANs and XGBoost.",
       "tech": [
@@ -429,6 +445,7 @@ const DATA = {
     {
       "icon": "⚡",
       "badge": "Research Fellow",
+      "color": "#15803d",
       "title": "ML-driven Cyber-Physical Security for EV Charging Systems",
       "desc": "Investigated DDoS and protocol-level attacks on EV charging infrastructure; built explainable ensemble models for anomaly detection on OCPP/ISO-15118 traffic. OCPP v1.6, v1.6 Advanced, and v2.0+ certified. Applied ML explainability (SHAP) for cyber-physical security in the smart grid ecosystem.",
       "tech": [

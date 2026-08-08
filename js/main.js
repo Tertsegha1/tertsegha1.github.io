@@ -51,8 +51,13 @@ function renderAbout () {
 function renderSkills () {
   const grid = el('skills-grid');
   DATA.skills.forEach(sk => {
-    const card = h('div','sk-card');
+    const card = h('div','sk-card fade-in');
     card.innerHTML = `<div class="sk-icon">${sk.icon}</div><h3>${sk.title}</h3>`;
+    if (sk.level !== undefined) {
+      const bar = h('div','sk-bar-wrap');
+      bar.innerHTML = `<div class="sk-bar-track"><div class="sk-bar-fill" style="--skill-level:${sk.level}%"></div></div>`;
+      card.appendChild(bar);
+    }
     const tags = h('div','stags');
     sk.tags.forEach(t => { const s = h('span','stag'); s.textContent = t; tags.appendChild(s); });
     card.appendChild(tags);
@@ -80,10 +85,13 @@ function renderExperience () {
 function renderProjects () {
   const grid = el('proj-grid');
   DATA.projects.forEach(proj => {
-    const card = h('div','proj-card');
+    const card = h('div','proj-card fade-in');
+    if (proj.color) card.style.setProperty('--proj-color', proj.color);
 
     const hd = h('div','proj-hd');
-    hd.innerHTML = `<div><div class="proj-icon">${proj.icon}</div><h3>${proj.title}</h3></div><span class="proj-badge">${proj.badge}</span>`;
+    hd.innerHTML = `<div class="proj-icon-bg" aria-hidden="true">${proj.icon}</div>
+      <div class="proj-icon">${proj.icon}</div>
+      <div class="proj-hd-row"><h3>${proj.title}</h3><span class="proj-badge">${proj.badge}</span></div>`;
     card.appendChild(hd);
 
     const body = h('div','proj-body');
@@ -156,13 +164,14 @@ function renderTeaching () {
 function renderCertifications () {
   const grid = el('cert-grid');
   DATA.certifications.forEach(c => {
-    const cls = 'cert-card' + (c.highlight ? ' cert-highlight' : '');
+    const cls = 'cert-card fade-in' + (c.highlight ? ' cert-highlight' : '');
     const card = h('div', cls);
     card.innerHTML = `<div class="cert-icon">${c.icon}</div>
       <div class="cert-text">
         <h3>${c.title}${c.highlight ? ' <span class="cert-new-badge">NEW</span>' : ''}</h3>
         <p>${c.desc}</p>
       </div>`;
+    if (c.highlight) { const seal = h('span','cert-seal'); seal.textContent = '★'; card.appendChild(seal); }
     grid.appendChild(card);
   });
 }
@@ -418,13 +427,29 @@ function initNav () {
   navAs.forEach(a => a.addEventListener('click', () => el('navLinks').classList.remove('open')));
 }
 
-/* ── Scroll fade-in ────────────────────────────────────── */
+/* ── Scroll fade-in with stagger ──────────────────────── */
 function initFadeIn () {
+  // Assign cascade delays to sibling .fade-in elements within the same parent
+  const parents = new Set();
+  document.querySelectorAll('.fade-in').forEach(e => parents.add(e.parentElement));
+  parents.forEach(parent => {
+    const kids = [...parent.querySelectorAll(':scope > .fade-in')];
+    kids.forEach((e, i) => e.style.setProperty('--fade-delay', (i * 75) + 'ms'));
+  });
+
   const obs = new IntersectionObserver(
     entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }),
     { threshold: 0.07 }
   );
-  document.querySelectorAll('.fade-in').forEach(el => obs.observe(el));
+  document.querySelectorAll('.fade-in').forEach(e => obs.observe(e));
+}
+
+/* ── Skill bar animation ───────────────────────────────── */
+function initSkillBars () {
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('animated'); obs.unobserve(e.target); } });
+  }, { threshold: 0.4 });
+  document.querySelectorAll('.sk-bar-fill').forEach(b => obs.observe(b));
 }
 
 /* ── Overview Dashboard ────────────────────────────────── */
@@ -455,7 +480,7 @@ function renderDashboard () {
       <div class="dash-stats-row">
         ${p.stats.map(s => `
           <div class="dash-hero-stat">
-            <div class="dash-hero-num">${s.num}</div>
+            <div class="dash-hero-num"><span class="counter" data-target="${s.num.replace(/\D/g,'')}" data-suffix="${s.num.replace(/[\d]/g,'')}">${s.num}</span></div>
             <div class="dash-hero-lbl">${s.label}</div>
           </div>`).join('')}
       </div>
@@ -550,7 +575,7 @@ function renderDashboard () {
 
   cards.forEach(sec => {
     const card = document.createElement('div');
-    card.className = 'dash-card';
+    card.className = 'dash-card fade-in';
     card.style.setProperty('--card-accent', sec.accent);
     card.innerHTML = `
       <div class="dash-card-top">
@@ -651,6 +676,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initSectionTabs();
   initNav();
   initFadeIn();
+  initSkillBars();
   initScrollProgress();
   initBackToTop();
   initDarkMode();
