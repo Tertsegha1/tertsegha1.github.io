@@ -28,8 +28,6 @@
   .divider span{font-size:11px;color:#bbb;white-space:nowrap}
   .contact-block{text-align:center}
   .contact-block p{font-size:12.5px;color:#888;margin-bottom:10px;line-height:1.55}
-  .contact-btn{display:inline-block;padding:9px 22px;border:1.5px solid #ccc;border-radius:8px;font-size:13px;font-weight:600;color:#555;text-decoration:none;transition:all 0.2s}
-  .contact-btn:hover{border-color:#0f2044;color:#0f2044}
   .email-row{display:flex;align-items:center;gap:8px;background:#f5f7fa;border:1.5px solid #e0e6ef;border-radius:8px;padding:10px 14px;margin-top:4px}
   .email-addr{font-size:13px;color:#0f2044;font-weight:600;flex:1;word-break:break-all}
   .copy-btn{padding:6px 14px;background:#0f2044;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit;transition:background 0.2s}
@@ -38,9 +36,12 @@
   .success{display:none;text-align:center}
   .success .tick{font-size:52px;margin-bottom:16px}
   .success h3{font-size:17px;font-weight:700;color:#1A5C35;margin-bottom:8px}
-  .success p{font-size:13px;color:#666;margin-bottom:24px;line-height:1.65}
-  .launch-btn{display:inline-block;padding:13px 32px;background:#0f2044;color:#fff;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none;transition:background 0.2s;letter-spacing:0.3px}
+  .success p{font-size:13px;color:#666;margin-bottom:20px;line-height:1.65}
+  .link-list{display:flex;flex-direction:column;gap:10px;margin-bottom:8px}
+  .launch-btn{display:block;padding:12px 24px;background:#0f2044;color:#fff;border-radius:8px;font-size:13.5px;font-weight:700;text-decoration:none;transition:background 0.2s;letter-spacing:0.3px}
   .launch-btn:hover{background:#1a3260}
+  .launch-btn.secondary{background:#f0f4fa;color:#0f2044;border:1.5px solid #c8d5e8}
+  .launch-btn.secondary:hover{background:#dce8f5}
   .back-link{display:block;margin-top:14px;font-size:12px;color:#aaa;text-decoration:none;cursor:pointer}
   .back-link:hover{color:#555}
 </style>
@@ -75,13 +76,16 @@
   <div class="success" id="successView">
     <div class="tick">✅</div>
     <h3>Access Granted</h3>
-    <p>You are now authorised to use the system.</p>
-    <a class="launch-btn" href="https://cmp701-studio.tertseghaanande.workers.dev" target="_blank">🚀 Launch System</a>
+    <p>You are now authorised. Choose where to go:</p>
+    <div class="link-list">
+      <a class="launch-btn" href="subject-select.html" target="_blank">⚡ Launch Platform</a>
+      <a class="launch-btn secondary" href="python-academy-instructor.html" target="_blank">📊 Instructor Dashboard</a>
+    </div>
     <a class="back-link" onclick="reset()">← Back</a>
   </div>
 </div>
 <script>
-const PASS = 'Studio@2026';
+const PASS = 'Codify@2026';
 const MAX  = 5;
 let attempts = 0;
 let locked   = false;
