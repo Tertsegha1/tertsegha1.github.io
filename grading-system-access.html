@@ -44,6 +44,11 @@
   .copy-btn:hover{background:#1a3260}
   .copy-btn.copied{background:#1A5C35}
 
+  .pass-wrap{position:relative}
+  .pass-wrap input{padding-right:46px}
+  .eye-btn{position:absolute;right:11px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:17px;color:#bbb;padding:2px;line-height:1;transition:color 0.15s}
+  .eye-btn:hover{color:#0f2044}
+
   /* ── SUCCESS ── */
   .success{display:none;text-align:center}
   .success .tick{font-size:52px;margin-bottom:16px}
@@ -69,7 +74,10 @@
 
     <div class="field">
       <label for="passInput">Access Code</label>
-      <input type="password" id="passInput" placeholder="Enter your access code" autocomplete="new-password" spellcheck="false"/>
+      <div class="pass-wrap">
+        <input type="password" id="passInput" placeholder="Enter your access code" autocomplete="new-password" spellcheck="false" autocorrect="off" autocapitalize="none"/>
+        <button type="button" class="eye-btn" id="eyeBtn" onclick="togglePass()" aria-label="Show or hide password">👁</button>
+      </div>
     </div>
     <button class="btn" id="submitBtn" onclick="checkPass()">Continue</button>
     <p class="err" id="errMsg">Incorrect access code. Please try again.</p>
@@ -109,6 +117,12 @@ let locked   = false;
 document.getElementById('passInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') checkPass();
 });
+function togglePass() {
+  const inp = document.getElementById('passInput');
+  const btn = document.getElementById('eyeBtn');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  btn.textContent = inp.type === 'password' ? '👁' : '🙈';
+}
 
 function checkPass() {
   if (locked) return;
