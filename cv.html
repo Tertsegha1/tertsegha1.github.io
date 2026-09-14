@@ -169,10 +169,19 @@
   </div>
 </div>
 
-<script src="js/data.js?v=20260914a"></script>
+<!-- data.js is loaded dynamically with a timestamp so cv.html always picks up
+     the latest portfolio data without any manual version string changes. -->
 <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 <script>
+/* ── Dynamic data loader — always fetches latest data.js ── */
+(function(){
+  const s = document.createElement('script');
+  s.src = 'js/data.js?_=' + Date.now();
+  s.onload = function(){ buildTabs(); renderCV('database'); };
+  s.onerror = function(){ document.getElementById('cvRoot').innerHTML = '<p style="color:red;padding:1rem;">Failed to load portfolio data. Please refresh the page.</p>'; };
+  document.head.appendChild(s);
+})();
 /* ═══════════════════════════════════════════════════════
    PROFILE DEFINITIONS
 ═══════════════════════════════════════════════════════ */
@@ -753,9 +762,7 @@ async function downloadDocx(){
   }
 }
 
-/* ── Init ── */
-buildTabs();
-renderCV('database');
+/* ── Init is called by the dynamic data loader above ── */
 </script>
 </body>
 </html>
