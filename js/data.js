@@ -593,7 +593,7 @@ const DATA = {
     "executiveTraining": [
       {
         "label": "PostgreSQL Database Fundamentals with Performance & Tuning ★",
-        "sublabel": "AUKTIE Executive Programme, Coventry — Jun–Jul 2026 | Lead Trainer",
+        "sublabel": "AUKTIE Executive Programme, Coventry · Jun–Jul 2026 · Two-week intensive professional training delivered as Lead Trainer",
         "link": "postgresql-workshop.html",
         "leader": true
       }
@@ -682,7 +682,7 @@ const DATA = {
         "label": "Problem Solving — C Programming (Y1)"
       },
       {
-        "label": "Problem Solving (Python) (Y1)"
+        "label": "Problem Solving — Python (Y1)"
       }
     ]
   },
