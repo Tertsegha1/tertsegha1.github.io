@@ -169,7 +169,7 @@
   </div>
 </div>
 
-<script src="js/data.js?v=20260621d"></script>
+<script src="js/data.js?v=20260914a"></script>
 <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 <script>
@@ -326,6 +326,22 @@ function makeExperienceContent(profile){
 
 /* ── Teaching ── */
 function makeTeachingContent(){
+  const wrap = el('div');
+
+  // Executive / Professional Training section
+  const execItems = DATA.teaching.executiveTraining || [];
+  if(execItems.length){
+    const execDiv = el('div'); execDiv.style.cssText = 'margin-bottom:7px;padding:6px 10px;border-left:3px solid #336791;background:#f5f8fc;border-radius:0 4px 4px 0;';
+    execDiv.appendChild(el('p','cv-sm','<strong style="color:#336791">Professional / Executive Training Delivered</strong>'));
+    execItems.forEach(m => {
+      const labelHtml = m.link ? `<a href="${m.link}" style="color:#0f2044;text-decoration:underline;">${m.label}</a>` : m.label;
+      execDiv.appendChild(el('p','cv-sm','<strong style="color:#0f2044">' + labelHtml + '</strong>'));
+      if(m.sublabel) execDiv.appendChild(el('p','cv-sm','<em style="color:#5a6a7e">' + m.sublabel + '</em>'));
+    });
+    wrap.appendChild(execDiv);
+  }
+
+  // Two-column university module lists
   const two = el('div','cv-2col');
   const pgDiv = el('div');
   pgDiv.appendChild(el('p','cv-sm','<strong style="color:#0f2044">Postgraduate (MSc / PGD)</strong>'));
@@ -343,7 +359,8 @@ function makeTeachingContent(){
                : (isDb ? '<strong style="color:#0f2044">' + m.label + '</strong>' : m.label)));
   });
   two.appendChild(ugDiv);
-  return two;
+  wrap.appendChild(two);
+  return wrap;
 }
 
 /* ── Projects ── */
@@ -592,7 +609,17 @@ async function downloadDocx(){
       new Paragraph({...sp(0,50),children:[run(e.institution,{size:18,color:MGRAY,italics:true})]})
     ]);
 
-    // Build teaching table
+    // Build executive training paragraphs
+    const execItems = DATA.teaching.executiveTraining || [];
+    const execParas = execItems.length ? [
+      new Paragraph({...sp(0,30),children:[bold('Professional / Executive Training Delivered',{size:18,color:'336791'})]}),
+      ...execItems.flatMap(m=>[
+        new Paragraph({...sp(0,10),children:[bold(m.label,{size:18,color:NAVY})]}),
+        ...(m.sublabel ? [new Paragraph({...sp(0,50),children:[run(m.sublabel,{size:17,color:MGRAY,italics:true})]})] : [])
+      ]),
+    ] : [];
+
+    // Build teaching table (university modules)
     const teachTable = new Table({
       width:{size:CW,type:WidthType.DXA},
       columnWidths:[Math.floor(CW/2),Math.ceil(CW/2)],
@@ -673,20 +700,20 @@ async function downloadDocx(){
       allChildren.push(...riParas);
       allChildren.push(dsh('Education'),...eduParas,new Paragraph({...sp(120,0),children:[]}));
       allChildren.push(dsh('Academic Experience'),...expParas,new Paragraph({...sp(120,0),children:[]}));
-      allChildren.push(dsh('Teaching Portfolio  (★ = Module Leader)'),teachTable,new Paragraph({...sp(120,0),children:[]}));
+      allChildren.push(dsh('Teaching Portfolio  (★ = Module Leader)'),...execParas,teachTable,new Paragraph({...sp(120,0),children:[]}));
       allChildren.push(dsh(profile.allPubs?'Publications':`Selected Publications  (${DATA.publications.journal.length+2}+ peer-reviewed)`),...pubParas,new Paragraph({...sp(120,0),children:[]}));
       allChildren.push(dsh(profile.skillsLabel),...skillParas,new Paragraph({...sp(120,0),children:[]}));
     } else {
       allChildren.push(dsh(profile.skillsLabel),...skillParas,new Paragraph({...sp(120,0),children:[]}));
       if(profile.teachingFirst){
-        allChildren.push(dsh('Teaching Portfolio  (★ = Module Leader)'),teachTable,new Paragraph({...sp(120,0),children:[]}));
+        allChildren.push(dsh('Teaching Portfolio  (★ = Module Leader)'),...execParas,teachTable,new Paragraph({...sp(120,0),children:[]}));
         allChildren.push(dsh('Professional Experience'),...expParas,new Paragraph({...sp(120,0),children:[]}));
       } else {
         allChildren.push(dsh('Professional Experience'),...expParas,new Paragraph({...sp(120,0),children:[]}));
         allChildren.push(dsh('Education'),...eduParas,new Paragraph({...sp(120,0),children:[]}));
       }
       if(projParas.length) allChildren.push(...projParas,new Paragraph({...sp(120,0),children:[]}));
-      if(!profile.teachingFirst){ allChildren.push(dsh('Teaching Portfolio  (★ = Module Leader)'),teachTable,new Paragraph({...sp(120,0),children:[]})); }
+      if(!profile.teachingFirst){ allChildren.push(dsh('Teaching Portfolio  (★ = Module Leader)'),...execParas,teachTable,new Paragraph({...sp(120,0),children:[]})); }
       allChildren.push(dsh(`Selected Publications`),...pubParas,new Paragraph({...sp(120,0),children:[]}));
     }
 
