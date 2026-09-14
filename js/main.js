@@ -147,17 +147,19 @@ function renderResearch () {
 
 /* ── Teaching ──────────────────────────────────────────── */
 function renderTeaching () {
-  function fillList (listId, items) {
+  function fillList (listId, items, leaderLabel) {
     const ul = el(listId);
     items.forEach(m => {
       const d = h('div','mod-item');
       const labelHtml = m.link ? `<a href="${m.link}" style="color:inherit;text-decoration:underline;text-underline-offset:2px;">${m.label}</a>` : m.label;
-      d.innerHTML = m.leader ? `${labelHtml} — <strong>Module Leader</strong>` : labelHtml;
+      const sublabelHtml = m.sublabel ? `<span class="mod-sublabel">${m.sublabel}</span>` : '';
+      d.innerHTML = (m.leader ? `${labelHtml} — <strong>${leaderLabel}</strong>` : labelHtml) + sublabelHtml;
       ul.appendChild(d);
     });
   }
-  fillList('teach-pg', DATA.teaching.postgraduate);
-  fillList('teach-ug', DATA.teaching.undergraduate);
+  fillList('teach-exec', DATA.teaching.executiveTraining || [], 'Lead Trainer');
+  fillList('teach-pg', DATA.teaching.postgraduate, 'Module Leader');
+  fillList('teach-ug', DATA.teaching.undergraduate, 'Module Leader');
 }
 
 /* ── Certifications ────────────────────────────────────── */
@@ -461,9 +463,10 @@ function renderDashboard () {
   const p    = DATA.personal;
   const pubs = DATA.publications;
   const publishedCount = pubs.journal.length + pubs.conference.length + pubs.book.length;
+  const execTraining = DATA.teaching.executiveTraining || [];
   const pgCount  = DATA.teaching.postgraduate.length;
   const ugCount  = DATA.teaching.undergraduate.length;
-  const leaderCount = [...DATA.teaching.postgraduate, ...DATA.teaching.undergraduate]
+  const leaderCount = [...execTraining, ...DATA.teaching.postgraduate, ...DATA.teaching.undergraduate]
     .filter(m => m.leader).length;
   const currentJob = DATA.experience[0];
 

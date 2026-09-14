@@ -366,6 +366,12 @@ section { padding: 5rem 2rem; }
 .mod-item { font-size: 0.81rem; color: var(--text-light); padding-left: 1.05rem; position: relative; line-height: 1.5; }
 .mod-item::before { content: '▸'; position: absolute; left: 0; color: var(--accent); }
 
+.teach-grid--full { grid-template-columns: 1fr; }
+.teach-card--exec { border-left: 4px solid #336791; }
+.teach-card--exec h3 { color: #336791; border-bottom-color: #336791; }
+.mod-sublabel { display: block; font-size: 0.77rem; color: var(--text-light); opacity: 0.75; margin-top: 0.12rem; font-style: italic; }
+[data-theme="dark"] .mod-sublabel { opacity: 0.65; }
+
 /* ---------- Certifications ---------- */
 #certifications { background: var(--white); }
 .cert-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 1.2rem; }

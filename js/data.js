@@ -590,12 +590,15 @@ const DATA = {
     }
   ],
   "teaching": {
-    "postgraduate": [
+    "executiveTraining": [
       {
-        "label": "PostgreSQL Database Fundamentals with Performance & Tuning — AUKTIE Executive Programme, Coventry (Jun–Jul 2026)",
-        "leader": true,
-        "link": "postgresql-workshop.html"
-      },
+        "label": "PostgreSQL Database Fundamentals with Performance & Tuning ★",
+        "sublabel": "AUKTIE Executive Programme, Coventry — Jun–Jul 2026 | Lead Trainer",
+        "link": "postgresql-workshop.html",
+        "leader": true
+      }
+    ],
+    "postgraduate": [
       {
         "label": "Digital Transformation (MSc)",
         "leader": true
@@ -677,6 +680,9 @@ const DATA = {
       },
       {
         "label": "Problem Solving — C Programming (Y1)"
+      },
+      {
+        "label": "Problem Solving (Python) (Y1)"
       }
     ]
   },
