@@ -13,6 +13,7 @@
   <link rel="canonical"           href="https://drtertseghaanande.com">
   <link rel="icon" href="assets/img/profile.jpg" type="image/jpeg">
   <link rel="stylesheet" href="css/style.css?v=20260914a">
+  <link rel="stylesheet" href="css/trackers.css?v=20260915a">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -88,6 +89,7 @@
   <button class="sec-tab"        data-sec="certifications" role="tab">🏅 Credentials</button>
   <button class="sec-tab"        data-sec="series"         role="tab">📺 Series</button>
   <button class="sec-tab"        data-sec="contact"        data-also="booking" role="tab">📞 Contact</button>
+  <button class="sec-tab"        data-sec="trackers"       role="tab">🔐 My Trackers</button>
 </div>
 
 <!-- ── Overview Dashboard ─────────────────────────────── -->
@@ -380,6 +382,11 @@
   </div>
 </section>
 
+<!-- ── My Trackers (private, password-gated) ──────────── -->
+<section id="trackers" class="sec-panel">
+  <!-- TRK.init() populates this when the tab is clicked -->
+</section>
+
 <!-- ── Footer ─────────────────────────────────────────── -->
 <button id="back-to-top" aria-label="Back to top">&#8679;</button>
 <footer>
@@ -389,5 +396,7 @@
 <!-- Scripts — data must load before main -->
 <script src="js/data.js?v=20260914a"></script>
 <script src="js/main.js?v=20260914a"></script>
+<script src="js/trackers-db.js?v=20260915a"></script>
+<script src="js/trackers.js?v=20260915a"></script>
 </body>
 </html>

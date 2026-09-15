@@ -1,0 +1,777 @@
+/* ── Tracker & Diary System ─────────────────────────────────────────────────
+   All selectors scoped to #trackers so nothing leaks into the portfolio.
+   Inherits portfolio CSS variables: --navy, --accent, --bg, --card-bg,
+   --text, --text-light, --border, --shadow, --radius, --radius-sm.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* ── Auth gate ─────────────────────────────────────────────────────────── */
+#trk-gate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+  padding: 2rem 1rem;
+}
+
+.trk-gate-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2.5rem 2rem;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: var(--shadow);
+}
+
+.trk-gate-icon { font-size: 2.5rem; text-align: center; display: block; margin-bottom: 1rem; }
+
+.trk-gate-card h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--navy);
+  text-align: center;
+  margin-bottom: 0.35rem;
+}
+
+.trk-gate-card p {
+  font-size: 0.8rem;
+  color: var(--text-light);
+  text-align: center;
+  margin-bottom: 1.5rem;
+  line-height: 1.55;
+}
+
+.trk-gate-field { margin-bottom: 1rem; }
+
+.trk-gate-field label {
+  display: block;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-light);
+  margin-bottom: 0.4rem;
+}
+
+.trk-gate-field .pw-wrap { position: relative; }
+
+.trk-gate-field input {
+  width: 100%;
+  padding: 0.65rem 2.4rem 0.65rem 0.75rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.trk-gate-field input:focus { border-color: var(--navy); }
+
+.trk-eye {
+  position: absolute;
+  right: 0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  color: var(--text-light);
+  padding: 2px;
+  line-height: 1;
+}
+
+.trk-gate-btn {
+  width: 100%;
+  padding: 0.7rem;
+  background: var(--navy);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s;
+  margin-top: 0.25rem;
+}
+
+.trk-gate-btn:hover { background: var(--navy2, #1a3260); }
+.trk-gate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.trk-gate-err {
+  font-size: 0.75rem;
+  color: #CC2229;
+  text-align: center;
+  margin-top: 0.6rem;
+  min-height: 1em;
+}
+
+.trk-gate-hint {
+  font-size: 0.7rem;
+  color: var(--text-light);
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+/* ── App shell ─────────────────────────────────────────────────────────── */
+#trk-app {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  grid-template-rows: auto 1fr;
+  min-height: 80vh;
+  gap: 0;
+}
+
+.trk-topbar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--card-bg);
+  flex-wrap: wrap;
+}
+
+.trk-topbar-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--navy);
+  letter-spacing: .03em;
+  flex: 1;
+}
+
+.trk-topbar-title span { color: var(--accent); }
+
+.trk-topbar-actions { display: flex; gap: 0.5rem; align-items: center; }
+
+.trk-btn {
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+  border: none;
+}
+
+.trk-btn-primary { background: var(--navy); color: #fff; }
+.trk-btn-primary:hover { opacity: 0.85; }
+
+.trk-btn-ghost {
+  background: none;
+  border: 1.5px solid var(--border);
+  color: var(--text-light);
+}
+
+.trk-btn-ghost:hover { border-color: var(--navy); color: var(--navy); }
+
+.trk-btn-danger {
+  background: none;
+  border: 1.5px solid #e88;
+  color: #c03030;
+}
+
+.trk-btn-danger:hover { background: #fdeaea; }
+
+/* ── Sidebar (tracker list) ────────────────────────────────────────────── */
+.trk-sidebar {
+  border-right: 1px solid var(--border);
+  background: var(--card-bg);
+  overflow-y: auto;
+  padding: 0.75rem 0;
+}
+
+.trk-sidebar-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text-light);
+  padding: 0.4rem 1rem 0.5rem;
+}
+
+.trk-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  transition: background 0.12s;
+  border-left: 3px solid transparent;
+}
+
+.trk-sidebar-item:hover { background: var(--bg); }
+
+.trk-sidebar-item.active {
+  background: var(--bg);
+  border-left-color: var(--accent);
+}
+
+.trk-sidebar-icon { font-size: 1.1rem; flex-shrink: 0; }
+
+.trk-sidebar-info { flex: 1; min-width: 0; }
+
+.trk-sidebar-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.trk-sidebar-meta {
+  font-size: 0.66rem;
+  color: var(--text-light);
+  margin-top: 0.1rem;
+}
+
+.trk-sidebar-pct {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+/* ── Main tracker view ─────────────────────────────────────────────────── */
+.trk-main {
+  overflow-y: auto;
+  background: var(--bg);
+}
+
+.trk-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+  color: var(--text-light);
+  gap: 0.75rem;
+}
+
+.trk-empty-icon { font-size: 3rem; }
+.trk-empty h3 { font-size: 1rem; color: var(--text); }
+.trk-empty p { font-size: 0.8rem; max-width: 280px; line-height: 1.55; }
+
+/* Tracker header */
+.trk-header {
+  padding: 1.25rem 1.5rem 1rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--card-bg);
+}
+
+.trk-header-top {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.trk-header-icon { font-size: 1.4rem; flex-shrink: 0; }
+
+.trk-header-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--navy);
+  flex: 1;
+}
+
+.trk-header-target {
+  font-size: 0.72rem;
+  color: var(--text-light);
+}
+
+.trk-header-countdown {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.trk-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.trk-progress-bar {
+  flex: 1;
+  height: 5px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.trk-progress-fill {
+  height: 100%;
+  background: #1A8A5C;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.trk-progress-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-light);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Milestones strip */
+.trk-milestones {
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border);
+  padding: 0 1.5rem;
+  background: var(--card-bg);
+}
+
+.trk-milestone {
+  display: flex;
+  flex-direction: column;
+  gap: 0.08rem;
+  padding: 0.6rem 1.25rem 0.6rem 0;
+  min-width: 130px;
+  flex-shrink: 0;
+}
+
+.trk-milestone-label { font-size: 0.65rem; color: var(--text-light); }
+.trk-milestone-date { font-size: 0.82rem; font-weight: 700; color: var(--text); }
+.trk-milestone-note { font-size: 0.62rem; color: var(--text-light); }
+.trk-milestone.key  .trk-milestone-date { color: var(--accent); }
+.trk-milestone.warn .trk-milestone-date { color: #C97820; }
+.trk-milestone.target .trk-milestone-date { color: #1A8A5C; }
+
+/* Tabs inside tracker (Checklist / Diary) */
+.trk-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  padding: 0 1.5rem;
+  background: var(--card-bg);
+}
+
+.trk-tab {
+  padding: 0.6rem 1rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-light);
+  cursor: pointer;
+  border: none;
+  background: none;
+  border-bottom: 2px solid transparent;
+  font-family: inherit;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.trk-tab.active {
+  color: var(--navy);
+  border-bottom-color: var(--accent);
+}
+
+.trk-tab:hover { color: var(--navy); }
+
+/* Checklist panel */
+.trk-checklist { padding: 1rem 1.5rem 2rem; }
+
+.trk-phase {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+}
+
+.trk-phase[data-urgency="critical"] { border-left: 3px solid #c03030; }
+.trk-phase[data-urgency="urgent"]   { border-left: 3px solid #C97820; }
+.trk-phase[data-urgency="normal"]   { border-left: 3px solid var(--accent); }
+.trk-phase[data-urgency="waiting"]  { border-left: 3px solid var(--border); }
+
+.trk-phase-hd {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  cursor: pointer;
+  user-select: none;
+}
+
+.trk-phase-hd:hover { background: var(--bg); }
+
+.trk-phase-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--navy);
+  flex: 1;
+}
+
+.trk-phase-target {
+  font-size: 0.68rem;
+  color: var(--text-light);
+}
+
+.trk-phase-badge {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.45rem;
+  border-radius: 3px;
+}
+
+.badge-critical { background: #fdeaea; color: #c03030; }
+.badge-urgent   { background: #fdf3e0; color: #9A5500; }
+.badge-normal   { background: #e0effc; color: #1264A3; }
+.badge-waiting  { background: var(--border); color: var(--text-light); }
+
+.trk-phase-count {
+  font-size: 0.66rem;
+  color: var(--text-light);
+  font-variant-numeric: tabular-nums;
+}
+
+.trk-phase-caret {
+  font-size: 0.65rem;
+  color: var(--text-light);
+  transition: transform 0.2s;
+}
+
+.trk-phase.collapsed .trk-phase-caret { transform: rotate(-90deg); }
+
+.trk-phase-note {
+  font-size: 0.73rem;
+  color: var(--text-light);
+  padding: 0.4rem 1rem;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  line-height: 1.5;
+}
+
+.trk-phase-items { }
+
+.trk-phase.collapsed .trk-phase-note,
+.trk-phase.collapsed .trk-phase-items { display: none; }
+
+.trk-sec-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-light);
+  padding: 0.5rem 1rem 0.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.trk-sec-label:first-child { border-top: none; }
+
+.trk-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.45rem 1rem;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.trk-item:hover { background: var(--bg); }
+
+.trk-item input[type="checkbox"] {
+  margin-top: 0.18rem;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  accent-color: #1A8A5C;
+  cursor: pointer;
+}
+
+.trk-item-text {
+  font-size: 0.8rem;
+  color: var(--text);
+  flex: 1;
+  line-height: 1.5;
+  user-select: none;
+}
+
+.trk-item-text small {
+  display: block;
+  font-size: 0.71rem;
+  color: var(--text-light);
+  margin-top: 0.08rem;
+}
+
+.trk-item.done .trk-item-text {
+  text-decoration: line-through;
+  color: var(--text-light);
+}
+
+/* Diary panel */
+.trk-diary { padding: 1rem 1.5rem 2rem; }
+
+.trk-diary-add {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.trk-diary-add textarea {
+  flex: 1;
+  min-width: 180px;
+  min-height: 64px;
+  padding: 0.6rem 0.75rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.82rem;
+  font-family: inherit;
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.2s;
+  line-height: 1.5;
+}
+
+.trk-diary-add textarea:focus { border-color: var(--navy); }
+
+.trk-diary-add-right {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.trk-diary-date {
+  padding: 0.5rem 0.6rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.78rem;
+  font-family: inherit;
+  outline: none;
+}
+
+.trk-diary-date:focus { border-color: var(--navy); }
+
+.trk-diary-entries { display: flex; flex-direction: column; gap: 0.6rem; }
+
+.trk-diary-empty {
+  text-align: center;
+  color: var(--text-light);
+  font-size: 0.8rem;
+  padding: 2rem 0;
+}
+
+.trk-entry {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.trk-entry-date-col {
+  width: 70px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.trk-entry-date {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-light);
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.trk-entry-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+  margin-top: 0.3rem;
+}
+
+.trk-entry-body {
+  flex: 1;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 0.75rem;
+  position: relative;
+}
+
+.trk-entry-text {
+  font-size: 0.8rem;
+  color: var(--text);
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.trk-entry-del {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.4rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+  color: var(--text-light);
+  opacity: 0;
+  transition: opacity 0.15s;
+  font-family: inherit;
+  padding: 2px 4px;
+}
+
+.trk-entry-body:hover .trk-entry-del { opacity: 1; }
+.trk-entry-del:hover { color: #c03030; }
+
+/* ── New Tracker Modal ─────────────────────────────────────────────────── */
+.trk-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.trk-modal {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  width: 100%;
+  max-width: 520px;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+}
+
+.trk-modal h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 1.25rem;
+}
+
+.trk-modal-field { margin-bottom: 1rem; }
+
+.trk-modal-field label {
+  display: block;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-light);
+  margin-bottom: 0.35rem;
+}
+
+.trk-modal-field input,
+.trk-modal-field textarea {
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card-bg);
+  color: var(--text);
+  font-size: 0.82rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.trk-modal-field input:focus,
+.trk-modal-field textarea:focus { border-color: var(--navy); }
+
+.trk-modal-field textarea { min-height: 60px; resize: vertical; }
+
+.trk-modal-phases-list { margin-bottom: 0.75rem; }
+
+.trk-modal-phase-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.4rem;
+}
+
+.trk-modal-phase-row input { flex: 1; }
+
+.trk-modal-phase-row button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-light);
+  font-size: 1rem;
+  padding: 2px 4px;
+  line-height: 1;
+}
+
+.trk-modal-phase-row button:hover { color: #c03030; }
+
+.trk-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 1.25rem;
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────── */
+@media (max-width: 680px) {
+  #trk-app {
+    grid-template-columns: 1fr;
+  }
+
+  .trk-sidebar {
+    display: flex;
+    overflow-x: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 0.5rem;
+    gap: 0.5rem;
+  }
+
+  .trk-sidebar-label { display: none; }
+
+  .trk-sidebar-item {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 0.5rem 0.6rem;
+    border-left: none;
+    border-bottom: 2px solid transparent;
+    border-radius: var(--radius-sm);
+    min-width: 80px;
+    flex-shrink: 0;
+    gap: 0.2rem;
+  }
+
+  .trk-sidebar-item.active {
+    border-left-color: transparent;
+    border-bottom-color: var(--accent);
+    background: var(--card-bg);
+  }
+
+  .trk-sidebar-meta,
+  .trk-sidebar-pct { display: none; }
+
+  .trk-sidebar-name { font-size: 0.7rem; white-space: normal; }
+
+  .trk-checklist,
+  .trk-diary { padding: 0.75rem 1rem 2rem; }
+
+  .trk-topbar { padding: 0.6rem 1rem; }
+  .trk-header { padding: 1rem; }
+  .trk-tabs   { padding: 0 1rem; }
+  .trk-milestones { padding: 0 1rem; }
+}

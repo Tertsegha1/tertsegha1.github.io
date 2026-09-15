@@ -621,6 +621,9 @@ function initSectionTabs () {
     const primary = document.getElementById(secId);
     if (primary) primary.classList.add('active');
 
+    // Initialise tracker panel on first activation
+    if (secId === 'trackers' && typeof initTrackers === 'function') initTrackers();
+
     // Activate companion panel (e.g. booking alongside contact)
     const also = targetTab.dataset.also;
     if (also) {
