@@ -27,5 +27,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 var TRACKER_DB = {
-  databaseURL: 'REPLACE_WITH_YOUR_FIREBASE_RTDB_URL'
+  databaseURL: 'https://auktie2026-postgresql-workshop-default-rtdb.europe-west1.firebasedatabase.app'
 };
