@@ -358,7 +358,7 @@ const DATA = {
       "badge": "Private · EdTech",
       "color": "#b91c1c",
       "title": "Automated Marking & Grading System",
-      "desc": "Browser-based AI-powered automated marking tool for Digital Transformation (MSc). Supports CW1 (Video Presentation), CW2 (Written Report), and DT Studio Guild Quest verification. Integrates Cloudflare Workers AI (Llama 3.3 70B) for rubric-driven grading and Whisper for video transcription. Role-based access, AI-generation detection, in-browser file extraction — zero server cost. Directly contributed to <strong>98%+ pass rate</strong> (2025–26 cohort).",
+      "desc": "Browser-based Automated Marking &amp; Grading System for Digital Transformation (MSc). Supports CW1 (Video Presentation), CW2 (Written Report), and DT Studio Guild Quest verification. Integrates Cloudflare Workers AI (Llama 3.3 70B) for rubric-driven grading and Whisper for video transcription. Role-based access, AI-generation detection, in-browser file extraction — zero server cost. Directly contributed to <strong>98%+ pass rate</strong> (2025–26 cohort).",
       "tech": [
         "HTML/CSS/JS",
         "Cloudflare Workers AI",

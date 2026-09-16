@@ -141,7 +141,7 @@ const TRK = (() => {
           { label: 'Content to cover', items: [
             { id: 'p1-0', text: 'Opening: who you are and your exceptional promise in digital technology' },
             { id: 'p1-1', text: 'Research impact: h-index 5, 105 citations, 5 published + 1 Springer Nature under review' },
-            { id: 'p1-2', text: 'Deployed innovations: AI Marking (2 cohorts), Digital Transformation Studio, Codify, OfflinePay' },
+            { id: 'p1-2', text: 'Deployed innovations: Automated Marking System (2 cohorts), Digital Transformation Studio, Codify, OfflinePay' },
             { id: 'p1-3', text: 'Recognition: keynote ICRIEMS/ICE-ELINVO 2026, FHEA, MBCS, AUKTIE exec training' },
             { id: 'p1-4', text: 'UK contribution plans: what you will build for UK digital tech sector' },
           ]},
@@ -177,7 +177,7 @@ const TRK = (() => {
             { id: 'p3-3', text: 'MBCS membership certificate — BCS (Doc 4)' },
           ]},
           { label: 'Innovation & deployment', items: [
-            { id: 'p3-4', text: 'AI Marking System: letter confirming live use across 2 cohorts (Doc 5)' },
+            { id: 'p3-4', text: 'Automated Marking System: letter confirming live use across 2 cohorts (Doc 5)' },
             { id: 'p3-5', text: 'Codify: usage data or institutional acknowledgement (Doc 6)' },
             { id: 'p3-6', text: 'AUKTIE: letter confirming Lead Trainer appointment Jun–Jul 2026 (Doc 7)' },
           ]},
