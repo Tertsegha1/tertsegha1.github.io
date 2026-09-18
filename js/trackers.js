@@ -267,6 +267,177 @@ const TRK = (() => {
     ]
   };
 
+  /* ── GTV Research Route seed ───────────────────────────────────────────── */
+  const GTV_RESEARCH_SEED = {
+    id: 'gtv-research-2026',
+    name: 'GTV — Research Route',
+    icon: '🔬',
+    created: '2026-09-18',
+    color: '#1A6B3C',
+    target: '20 Oct 2026',
+    milestones: [
+      { label: 'References due',      date: '10 Oct 2026',  note: 'Chase referees by 3 Oct if no reply',           cls: 'key'    },
+      { label: 'Target submission',   date: '20 Oct 2026',  note: 'UKRI/Royal Society endorsement application',     cls: 'key'    },
+      { label: 'Endorsement decision',date: '~15 Dec 2026', note: '~8 weeks processing',                            cls: 'key'    },
+      { label: 'Visa grant',          date: '~12 Jan 2027', note: '3–4 weeks Home Office processing',               cls: 'key'    },
+      { label: 'SWV expiry',          date: 'June 2027',    note: 'Switch before this date',                        cls: 'warn'   },
+      { label: 'ILR earliest',        date: 'Jun/Oct 2029', note: '5 years continuous leave',                       cls: 'target' },
+    ],
+    phases: [
+      {
+        id: 'r0', title: 'Decide & Set Up', target: 'By 22 Sep 2026',
+        urgency: 'critical', badge: 'This Week',
+        note: 'Confirm you are applying via the Research route in parallel with the DSIT route. Clarify with your solicitor.',
+        items: [
+          { id: 'r0-0', text: 'Confirm with solicitor: apply Research route in parallel with DSIT route', sub: 'Dual endorsement applications are allowed — confirm strategy and costs' },
+          { id: 'r0-1', text: 'Identify endorsing body: UKRI, Royal Society, British Academy or RAEng', sub: 'Engineering/ML research → likely Royal Academy of Engineering or UKRI' },
+          { id: 'r0-2', text: 'Read the current endorsing body\'s Exceptional Promise criteria', sub: 'Download from gov.uk — criteria differ by body' },
+          { id: 'r0-3', text: 'Create or confirm GOV.UK One Login account', sub: 'Same account as DSIT application if already created' },
+          { id: 'r0-4', text: 'Take a dated Google Scholar screenshot', sub: 'h-index 5, i10 5, 105+ citations — save as PDF for evidence' },
+        ]
+      },
+      {
+        id: 'r1', title: 'Academic CV', target: 'By 25 Sep 2026',
+        urgency: 'urgent', badge: 'Week 1',
+        note: 'Research route CV has no hard page limit — lead with research outputs, then teaching and innovation.',
+        items: [
+          { id: 'r1-0', text: 'Section 1: Research profile — h-index, citations, field positioning' },
+          { id: 'r1-1', text: 'Section 2: Publications — all 5 papers + Springer Nature under review' },
+          { id: 'r1-2', text: 'Section 3: Grants, fellowships, funded projects (Warwick Research Fellowship)' },
+          { id: 'r1-3', text: 'Section 4: Conference keynotes and invited talks (ICRIEMS, ICE-ELINVO 2026)' },
+          { id: 'r1-4', text: 'Section 5: Academic service — peer review, PhD supervision, programme roles' },
+          { id: 'r1-5', text: 'Section 6: Innovations and deployed tools (Automated Marking System, MoSELA, AUKTIE)' },
+          { id: 'r1-6', text: 'Solicitor or senior academic colleague review of CV' },
+          { id: 'r1-7', text: 'Final version saved as PDF' },
+        ]
+      },
+      {
+        id: 'r2', title: 'Personal Statement — Research', target: 'By 30 Sep 2026',
+        urgency: 'urgent', badge: 'Draft First',
+        note: '800–1,000 words. Frame around research trajectory, not teaching. Show exceptional promise, not just achievement.',
+        sections: [
+          { label: 'Content to cover', items: [
+            { id: 'r2-0', text: 'Exceptional promise: research trajectory and what you will contribute to UK research' },
+            { id: 'r2-1', text: 'Research impact: h-index 5, 105+ citations — significance in field context at 5 years post-PhD' },
+            { id: 'r2-2', text: 'Current research: EV charging security (ML + OCPP), MoSELA AutoML framework' },
+            { id: 'r2-3', text: 'Pipeline: Springer Nature paper under review; EV security paper in preparation with Dr. Subhash' },
+            { id: 'r2-4', text: 'International recognition: keynote invitations ICRIEMS / ICE-ELINVO 2026' },
+            { id: 'r2-5', text: 'Orbis Vale Group Limited: incorporated Sep 2026 — commercialising research-backed EdTech/fintech' },
+            { id: 'r2-6', text: 'UK contribution plans: why the UK research ecosystem is the right environment for next phase' },
+          ]},
+          { label: 'Process', items: [
+            { id: 'r2-7', text: 'First draft completed' },
+            { id: 'r2-8', text: 'Reviewed by solicitor or senior academic' },
+            { id: 'r2-9', text: 'Final version saved as PDF' },
+          ]}
+        ]
+      },
+      {
+        id: 'r3', title: 'Evidence Portfolio', target: 'By 7 Oct 2026',
+        urgency: 'urgent', badge: 'Max 10 Docs',
+        note: 'Research route evidence should demonstrate research standing and recognition above all else.',
+        sections: [
+          { label: 'Research standing', items: [
+            { id: 'r3-0', text: 'Google Scholar screenshot — h-index 5, i10 5, 105+ citations (Doc 1)' },
+            { id: 'r3-1', text: '1–2 highest-cited publication PDFs with citation counts visible (Doc 2)' },
+            { id: 'r3-2', text: 'Springer Nature submission confirmation email (Doc 3)' },
+            { id: 'r3-3', text: 'Keynote invitation letter(s) — ICRIEMS / ICE-ELINVO 2026 (Doc 4)' },
+          ]},
+          { label: 'Credentials & fellowship', items: [
+            { id: 'r3-4', text: 'PhD degree certificate — University of Warwick (Doc 5)' },
+            { id: 'r3-5', text: 'Warwick Research Fellowship confirmation (Doc 6)' },
+            { id: 'r3-6', text: 'FHEA certificate (Doc 7)' },
+            { id: 'r3-7', text: 'MBCS / OCPP certification evidence (Doc 8)' },
+          ]},
+          { label: 'Innovation & enterprise', items: [
+            { id: 'r3-8', text: 'Orbis Vale Group Limited — Companies House registration confirmation (Doc 9)' },
+            { id: 'r3-9', text: 'AUKTIE NSR Lead Trainer appointment + participant feedback (4.7/5, NPS +60) (Doc 10)' },
+          ]}
+        ]
+      },
+      {
+        id: 'r4', title: 'Reference Letters — 3 Academic', target: 'Collect by 10 Oct 2026',
+        urgency: 'urgent', badge: 'Chase Often',
+        note: 'Research route requires letters from senior academics who can attest to your research standing and promise.',
+        sections: [
+          { label: 'Letters to collect', items: [
+            { id: 'r4-0', text: 'PhD supervisor — Prof. Mark Leeson, University of Warwick', sub: 'Best placed to speak to research quality and trajectory' },
+            { id: 'r4-1', text: 'Research Fellow supervisor — Dr. Subhash Lakshminarayana, Warwick', sub: 'EV security research, paper in preparation' },
+            { id: 'r4-2', text: 'Dean of Computing — Dr. Anwar Haq, QAHE / Ulster University', sub: 'Academic leadership and broader research contribution' },
+          ]},
+          { label: 'Chase timeline', items: [
+            { id: 'r4-3', text: 'Send referees brief and draft letter to all three by 22 Sep 2026' },
+            { id: 'r4-4', text: 'First chase email if no acknowledgement by 3 Oct 2026' },
+            { id: 'r4-5', text: 'Second chase / call if not received by 7 Oct 2026' },
+          ]},
+          { label: 'Quality check each letter', items: [
+            { id: 'r4-6', text: 'On headed institutional paper, signed and dated' },
+            { id: 'r4-7', text: 'Addressed to the endorsing body panel' },
+            { id: 'r4-8', text: 'Speaks specifically to research quality and potential, not just employment' },
+            { id: 'r4-9', text: '1–2 pages in length' },
+          ]}
+        ]
+      },
+      {
+        id: 'r5', title: 'Application Assembly & Submission', target: 'Target 20 Oct 2026',
+        urgency: 'normal', badge: 'Submit',
+        note: 'Final solicitor review before submitting. Cannot be edited after submission.',
+        items: [
+          { id: 'r5-0', text: 'Solicitor final review of complete research route package' },
+          { id: 'r5-1', text: 'Personal statement (research) — final version confirmed' },
+          { id: 'r5-2', text: 'Academic CV — final version confirmed' },
+          { id: 'r5-3', text: 'All evidence documents uploaded (up to 10)' },
+          { id: 'r5-4', text: 'All three reference letters collected and uploaded' },
+          { id: 'r5-5', text: 'Pay endorsement fee (confirm current amount on gov.uk)' },
+          { id: 'r5-6', text: 'Submit endorsement application via GOV.UK portal' },
+          { id: 'r5-7', text: 'Record case reference number' },
+          { id: 'r5-8', text: 'Set calendar reminder — 8 weeks from submission (~15 Dec 2026)' },
+        ]
+      },
+      {
+        id: 'r6', title: 'While Endorsing Body Processes', target: 'Oct – Dec 2026',
+        urgency: 'waiting', badge: 'Watch & Prepare',
+        note: 'Processing is typically 8 weeks. Prepare visa fees and monitor DSIT result in parallel.',
+        sections: [
+          { label: 'Monitor', items: [
+            { id: 'r6-0', text: 'Check email daily for queries from endorsing body — respond within 24 hours' },
+            { id: 'r6-1', text: 'Note any outcome on DSIT parallel application — inform solicitor immediately' },
+            { id: 'r6-2', text: 'If employer situation changes: contact solicitor same day' },
+          ]},
+          { label: 'Prepare visa fees', items: [
+            { id: 'r6-3', text: 'Confirm current Home Office Global Talent fee (~£822) on gov.uk' },
+            { id: 'r6-4', text: 'Calculate IHS — ~£1,035/year × 5 years = ~£5,175' },
+            { id: 'r6-5', text: 'Confirm funds available for both endorsement fee and visa application' },
+          ]},
+          { label: 'Continue building the record', items: [
+            { id: 'r6-6', text: 'Progress EV security paper toward submission' },
+            { id: 'r6-7', text: 'Chase Springer Nature paper if no decision after 12 weeks' },
+            { id: 'r6-8', text: 'Keep Google Scholar and portfolio updated' },
+          ]}
+        ]
+      },
+      {
+        id: 'r7', title: 'After Endorsement', target: '3-month window from endorsement',
+        urgency: 'waiting', badge: 'Do Not Delay',
+        note: '3-month visa application window from endorsement date. Apply immediately on receiving the letter.',
+        items: [
+          { id: 'r7-0',  text: 'Receive endorsement letter from endorsing body' },
+          { id: 'r7-1',  text: 'Note endorsement date — 3-month window starts now' },
+          { id: 'r7-2',  text: 'If DSIT also endorsed: discuss with solicitor which endorsement to use for visa' },
+          { id: 'r7-3',  text: 'Apply for Global Talent Visa via UKVI portal' },
+          { id: 'r7-4',  text: 'Pay Home Office visa fee (~£822)' },
+          { id: 'r7-5',  text: 'Pay Immigration Health Surcharge (~£5,175)' },
+          { id: 'r7-6',  text: 'Book biometrics appointment at UKVCAS service point' },
+          { id: 'r7-7',  text: 'Upload supporting documents to UKVI portal' },
+          { id: 'r7-8',  text: 'Attend biometrics appointment' },
+          { id: 'r7-9',  text: 'Await visa decision — ~3 weeks standard processing' },
+          { id: 'r7-10', text: 'Receive Biometric Residence Permit (BRP) by post' },
+          { id: 'r7-11', text: 'Consult solicitor on timing of notifying employer' },
+        ]
+      }
+    ]
+  };
+
   /* ── State ─────────────────────────────────────────────────────────────── */
   let state    = null;
   let activeId = null;
@@ -283,6 +454,13 @@ const TRK = (() => {
       state = { trackers: [JSON.parse(JSON.stringify(GTV_SEED))], _ts: Date.now() };
       state.trackers[0].checks = {};
       state.trackers[0].diary  = [];
+    }
+    // Inject research tracker if not already present
+    if (!state.trackers.find(t => t.id === 'gtv-research-2026')) {
+      const rt = JSON.parse(JSON.stringify(GTV_RESEARCH_SEED));
+      rt.checks = {};
+      rt.diary  = [];
+      state.trackers.push(rt);
     }
     state.trackers.forEach(t => {
       if (!t.checks) t.checks = {};
