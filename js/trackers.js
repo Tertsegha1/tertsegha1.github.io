@@ -447,16 +447,17 @@ const TRK = (() => {
     color: '#7D3C98',
     target: 'Ongoing',
     milestones: [
-      { label: 'Newcastle deadline',  date: '27 Sep 2026', note: 'Lecturer/SL AI & Cyber — submit this week', cls: 'key'    },
+      { label: 'Newcastle submitted',  date: '19 Sep 2026', note: 'Lecturer/SL AI & Cyber — awaiting shortlist', cls: 'key'    },
       { label: 'Leeds Graphics reply',date: 'TBC',         note: 'Awaiting reply from Gordon Love',           cls: 'warn'   },
+      { label: 'ULaw HoFY submitted',  date: '17 Sep 2026', note: 'Head of Foundation Year — awaiting shortlist', cls: 'target' },
       { label: 'Sheffield decision',  date: 'TBC',         note: 'Submitted 18 Sep 2026 — await shortlist',   cls: 'target' },
       { label: 'Leeds ML decision',   date: 'TBC',         note: 'Submitted — await shortlist',               cls: 'target' },
     ],
     phases: [
       {
-        id: 'j0', title: '⚡ Newcastle — AI & Cyber (Req 29571)', target: 'Deadline 27 Sep 2026',
-        urgency: 'critical', badge: 'Submit by 27 Sep',
-        note: 'Strongest genuine fit. PhD is applied ML-for-cybersecurity. Targeting Grade F; honest case for Grade G with flagged gaps.',
+        id: 'j0', title: 'Newcastle — AI & Cyber (Req 29571)', target: 'Submitted 19 Sep 2026',
+        urgency: 'waiting', badge: 'Submitted',
+        note: 'Strongest genuine fit. PhD is applied ML-for-cybersecurity. Submitted 19 Sep 2026.',
         sections: [
           { label: 'Status', items: [
             { id: 'j0-0', text: 'Application materials drafted' },
@@ -464,7 +465,7 @@ const TRK = (() => {
             { id: 'j0-2', text: 'CV tailored to AI & Cyber brief' },
             { id: 'j0-3', text: 'RRI certification included (Foundations in RRI — ORBIT, 26 Mar 2024)' },
             { id: 'j0-4', text: 'Supporting statement complete' },
-            { id: 'j0-5', text: 'Application submitted via Newcastle portal' },
+            { id: 'j0-5', text: 'Application submitted via Newcastle portal ✓ 19 Sep 2026' },
             { id: 'j0-6', text: 'Confirmation email received and saved' },
           ]},
           { label: 'If shortlisted', items: [
@@ -508,6 +509,20 @@ const TRK = (() => {
           { id: 'j3-1', text: 'If reply is encouraging: discuss with Claude whether to proceed' },
           { id: 'j3-2', text: 'If reply is discouraging or no reply: mark as withdrawn' },
           { id: 'j3-3', text: 'Note outcome in diary' },
+        ]
+      },
+      {
+        id: 'j4b', title: 'ULaw — Head of Foundation Year (Birmingham)', target: 'Submitted 17 Sep 2026',
+        urgency: 'waiting', badge: 'Submitted',
+        note: 'University of Law, Birmingham. Submitted Wed 17 Sep. Note: ULaw is not a licensed Skilled Worker sponsor — right to work must be verified before accepting any offer.',
+        items: [
+          { id: 'j4b-0', text: 'Application submitted 17 Sep 2026 ✓' },
+          { id: 'j4b-1', text: 'Confirmation email received and saved' },
+          { id: 'j4b-2', text: 'Awaiting shortlisting decision from ULaw' },
+          { id: 'j4b-3', text: '⚠ If shortlisted: confirm right-to-work position with solicitor BEFORE interview', sub: 'ULaw is not a licensed SWV sponsor — clarify whether they can/will sponsor or whether your current leave covers it' },
+          { id: 'j4b-4', text: 'If shortlisted: prepare for Foundation Year leadership questions (curriculum, pastoral, quality)' },
+          { id: 'j4b-5', text: 'If shortlisted: prepare evidence of student success metrics (98%+ pass rate, DT Studio)' },
+          { id: 'j4b-6', text: 'Note outcome in diary when received' },
         ]
       },
       {
@@ -591,6 +606,29 @@ const TRK = (() => {
       jt.checks = {};
       jt.diary  = [];
       state.trackers.push(jt);
+    }
+    // Patch existing jobs tracker: update Newcastle to submitted, add ULaw if missing
+    const jtrk = state.trackers.find(t => t.id === 'jobs-2026');
+    if (jtrk) {
+      const newc = jtrk.phases.find(p => p.id === 'j0');
+      if (newc && newc.urgency === 'critical') {
+        newc.urgency = 'waiting';
+        newc.badge   = 'Submitted';
+        newc.title   = 'Newcastle — AI & Cyber (Req 29571)';
+        newc.target  = 'Submitted 19 Sep 2026';
+        newc.note    = 'Strongest genuine fit. PhD is applied ML-for-cybersecurity. Submitted 19 Sep 2026.';
+      }
+      if (!jtrk.phases.find(p => p.id === 'j4b')) {
+        const ulaw = JSON.parse(JSON.stringify(JOBS_SEED.phases.find(p => p.id === 'j4b')));
+        const j4idx = jtrk.phases.findIndex(p => p.id === 'j4');
+        jtrk.phases.splice(j4idx, 0, ulaw);
+      }
+      if (!jtrk.milestones) jtrk.milestones = [];
+      if (!jtrk.milestones.find(m => m.label === 'ULaw HoFY submitted')) {
+        jtrk.milestones.unshift({ label: 'ULaw HoFY submitted', date: '17 Sep 2026', note: 'Head of Foundation Year — awaiting shortlist', cls: 'target' });
+      }
+      const newcMs = jtrk.milestones.find(m => m.label === 'Newcastle deadline');
+      if (newcMs) { newcMs.label = 'Newcastle submitted'; newcMs.date = '19 Sep 2026'; newcMs.note = 'Lecturer/SL AI & Cyber — awaiting shortlist'; }
     }
     state.trackers.forEach(t => {
       if (!t.checks) t.checks = {};
