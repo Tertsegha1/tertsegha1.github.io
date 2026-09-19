@@ -438,6 +438,129 @@ const TRK = (() => {
     ]
   };
 
+  /* ── Job Applications seed ─────────────────────────────────────────────── */
+  const JOBS_SEED = {
+    id: 'jobs-2026',
+    name: 'Job Applications',
+    icon: '💼',
+    created: '2026-09-19',
+    color: '#7D3C98',
+    target: 'Ongoing',
+    milestones: [
+      { label: 'Newcastle deadline',  date: '27 Sep 2026', note: 'Lecturer/SL AI & Cyber — submit this week', cls: 'key'    },
+      { label: 'Leeds Graphics reply',date: 'TBC',         note: 'Awaiting reply from Gordon Love',           cls: 'warn'   },
+      { label: 'Sheffield decision',  date: 'TBC',         note: 'Submitted 18 Sep 2026 — await shortlist',   cls: 'target' },
+      { label: 'Leeds ML decision',   date: 'TBC',         note: 'Submitted — await shortlist',               cls: 'target' },
+    ],
+    phases: [
+      {
+        id: 'j0', title: '⚡ Newcastle — AI & Cyber (Req 29571)', target: 'Deadline 27 Sep 2026',
+        urgency: 'critical', badge: 'Submit by 27 Sep',
+        note: 'Strongest genuine fit. PhD is applied ML-for-cybersecurity. Targeting Grade F; honest case for Grade G with flagged gaps.',
+        sections: [
+          { label: 'Status', items: [
+            { id: 'j0-0', text: 'Application materials drafted' },
+            { id: 'j0-1', text: 'Cover letter reviewed and finalised' },
+            { id: 'j0-2', text: 'CV tailored to AI & Cyber brief' },
+            { id: 'j0-3', text: 'RRI certification included (Foundations in RRI — ORBIT, 26 Mar 2024)' },
+            { id: 'j0-4', text: 'Supporting statement complete' },
+            { id: 'j0-5', text: 'Application submitted via Newcastle portal' },
+            { id: 'j0-6', text: 'Confirmation email received and saved' },
+          ]},
+          { label: 'If shortlisted', items: [
+            { id: 'j0-7',  text: 'Prepare 20-min research talk (ML for cyber/EV security focus)' },
+            { id: 'j0-8',  text: 'Prepare teaching demo (5–10 min — suggest: intrusion detection concepts)' },
+            { id: 'j0-9',  text: 'Research Newcastle\'s cyber security group and current grant portfolio' },
+            { id: 'j0-10', text: 'Prepare answers: external funding plans, PhD supervision approach, research agenda' },
+          ]}
+        ]
+      },
+      {
+        id: 'j1', title: 'Leeds — Research Fellow ML (ENVTR1226)', target: 'Submitted',
+        urgency: 'waiting', badge: 'Submitted',
+        note: 'Honest-gap framing used: no discrete choice modelling/Apollo experience. Transferable ML/interpretability case made.',
+        items: [
+          { id: 'j1-0', text: 'Application submitted ✓' },
+          { id: 'j1-1', text: 'Awaiting shortlisting decision from Leeds' },
+          { id: 'j1-2', text: 'If shortlisted: prepare discrete choice modelling self-study plan', sub: 'Show willingness to bridge the gap — not pretend it doesn\'t exist' },
+          { id: 'j1-3', text: 'If shortlisted: prepare research talk on ML interpretability / causal ML' },
+          { id: 'j1-4', text: 'Note outcome in diary when received' },
+        ]
+      },
+      {
+        id: 'j2', title: 'Sheffield — ML & NLP / GATE (Job 3092)', target: 'Submitted 18 Sep 2026',
+        urgency: 'waiting', badge: 'Submitted',
+        note: 'Strong genuine fit. LLM/chatbot/prompt-engineering and cyber-threat-detection both match essential criteria explicitly.',
+        items: [
+          { id: 'j2-0', text: 'Application submitted 18 Sep 2026 ✓' },
+          { id: 'j2-1', text: 'Awaiting shortlisting decision from Sheffield GATE team' },
+          { id: 'j2-2', text: 'If shortlisted: review GATE NLP stack and recent GATE publications' },
+          { id: 'j2-3', text: 'If shortlisted: prepare LLM/chatbot demo using Automated Marking System as case study' },
+          { id: 'j2-4', text: 'Note outcome in diary when received' },
+        ]
+      },
+      {
+        id: 'j3', title: 'Leeds — Computer Graphics (EPSCP1187)', target: 'Paused — awaiting reply',
+        urgency: 'waiting', badge: 'On Hold',
+        note: 'No graphics research background. Emailed Head of School Gordon Love (g.d.love@leeds.ac.uk) before committing. Awaiting reply.',
+        items: [
+          { id: 'j3-0', text: 'Email sent to Gordon Love — awaiting reply' },
+          { id: 'j3-1', text: 'If reply is encouraging: discuss with Claude whether to proceed' },
+          { id: 'j3-2', text: 'If reply is discouraging or no reply: mark as withdrawn' },
+          { id: 'j3-3', text: 'Note outcome in diary' },
+        ]
+      },
+      {
+        id: 'j4', title: 'Standard Application Process', target: 'Use for every new role',
+        urgency: 'normal', badge: 'Template',
+        note: 'Run through this checklist for each new application. Use the diary to log submission dates and reference numbers.',
+        sections: [
+          { label: 'Before applying', items: [
+            { id: 'j4-0', text: 'Read JD carefully — identify genuine fit vs. gaps' },
+            { id: 'j4-1', text: 'Check right-to-work: confirm role is with a licensed Skilled Worker sponsor or does not require sponsorship' },
+            { id: 'j4-2', text: 'Select correct base CV (Academic/Research, ML/AI, or tailored)' },
+          ]},
+          { label: 'Application materials', items: [
+            { id: 'j4-3', text: 'Tailor CV: lead section matches role emphasis' },
+            { id: 'j4-4', text: 'Include in every CV: RRI cert (ORBIT, 26 Mar 2024), FHEA, MBCS, OCPP, IEEE/IET/INSTICC' },
+            { id: 'j4-5', text: 'Include Google Scholar metrics: h-index 5, 105+ citations, 14+ publications' },
+            { id: 'j4-6', text: 'Cover letter: specific paragraph on the genuine fit; honest framing of any gaps' },
+            { id: 'j4-7', text: 'Supporting statement addresses each essential criterion explicitly' },
+          ]},
+          { label: 'Submission', items: [
+            { id: 'j4-8', text: 'Submit before deadline (aim 48 hrs early)' },
+            { id: 'j4-9', text: 'Save confirmation email and application reference' },
+            { id: 'j4-10', text: 'Log submission in diary: role, institution, deadline, reference number' },
+          ]}
+        ]
+      },
+      {
+        id: 'j5', title: 'Interview Preparation', target: 'When shortlisted',
+        urgency: 'normal', badge: 'On Shortlist',
+        note: 'Generic prep checklist — adapt to the specific role when shortlisted.',
+        sections: [
+          { label: 'Research', items: [
+            { id: 'j5-0', text: 'Read department\'s recent publications and grants (last 3 years)' },
+            { id: 'j5-1', text: 'Identify 2–3 potential collaborators in the department' },
+            { id: 'j5-2', text: 'Understand department\'s student profile and teaching load' },
+          ]},
+          { label: 'Presentation', items: [
+            { id: 'j5-3', text: 'Research talk: 20 min on PhD/post-doc work with clear "future agenda" slide' },
+            { id: 'j5-4', text: 'Teaching demo: 5–10 min — choose topic where ML/cybersecurity expertise is visible' },
+            { id: 'j5-5', text: 'Practice both with a timer' },
+          ]},
+          { label: 'Key questions to prepare', items: [
+            { id: 'j5-6', text: 'External funding: what grants will you apply for in years 1–3?' },
+            { id: 'j5-7', text: 'Research agenda: what are your 3-year and 5-year research plans?' },
+            { id: 'j5-8', text: 'PhD supervision: how would you approach your first PhD students?' },
+            { id: 'j5-9', text: 'Teaching: how do you design assessments for a research methods module?' },
+            { id: 'j5-10', text: 'Why this department / institution specifically?' },
+          ]}
+        ]
+      }
+    ]
+  };
+
   /* ── State ─────────────────────────────────────────────────────────────── */
   let state    = null;
   let activeId = null;
@@ -461,6 +584,13 @@ const TRK = (() => {
       rt.checks = {};
       rt.diary  = [];
       state.trackers.push(rt);
+    }
+    // Inject job applications tracker if not already present
+    if (!state.trackers.find(t => t.id === 'jobs-2026')) {
+      const jt = JSON.parse(JSON.stringify(JOBS_SEED));
+      jt.checks = {};
+      jt.diary  = [];
+      state.trackers.push(jt);
     }
     state.trackers.forEach(t => {
       if (!t.checks) t.checks = {};
