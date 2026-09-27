@@ -576,6 +576,182 @@ const TRK = (() => {
     ]
   };
 
+  /* ── Weekly Job Search seed ────────────────────────────────────────────── */
+  const JOBS_WEEKLY_SEED = {
+    id: 'jobs-weekly-2026',
+    name: 'Weekly Job Search',
+    icon: '📅',
+    created: '2026-09-27',
+    color: '#5B2C6F',
+    target: 'Until sponsored role secured',
+    milestones: [
+      { label: 'Target: 2/day',    date: 'Every weekday', note: '10 applications per week minimum',          cls: 'key'    },
+      { label: 'Newcastle outcome', date: 'TBC',          note: 'Submitted 19 Sep — awaiting shortlist',      cls: 'target' },
+      { label: 'Sheffield outcome', date: 'TBC',          note: 'Submitted 18 Sep — awaiting shortlist',      cls: 'target' },
+      { label: 'Leeds ML outcome',  date: 'TBC',          note: 'Submitted — awaiting shortlist',             cls: 'target' },
+      { label: 'ULaw HoFY outcome', date: 'TBC',          note: 'Submitted 17 Sep — awaiting shortlist',      cls: 'target' },
+    ],
+    phases: [
+      {
+        id: 'wk-pipeline', title: 'Applications Pipeline', target: 'Live tracking',
+        urgency: 'normal', badge: 'Active',
+        note: 'All applications in flight. Update status in diary when outcomes arrive.',
+        sections: [
+          { label: 'Awaiting outcome', items: [
+            { id: 'wk-pp-0', text: 'Newcastle — Lecturer/SL AI & Cyber (Req 29571)', sub: 'Submitted 19 Sep 2026' },
+            { id: 'wk-pp-1', text: 'Sheffield — Research Associate ML & NLP / GATE (Job 3092)', sub: 'Submitted 18 Sep 2026' },
+            { id: 'wk-pp-2', text: 'University of Law — Head of Foundation Year, Birmingham', sub: 'Submitted 17 Sep 2026 · ⚠ Not a licensed SWV sponsor — confirm RTW before accepting' },
+            { id: 'wk-pp-3', text: 'Leeds — Research Fellow ML Assisted Choice Modelling (ENVTR1226)', sub: 'Submitted — awaiting shortlist' },
+          ]},
+          { label: 'On hold', items: [
+            { id: 'wk-pp-4', text: 'Leeds — Lecturer/AP Computer Graphics (EPSCP1187)', sub: 'Awaiting reply from Prof. Gordon Love (g.d.love@leeds.ac.uk) — chase if no reply by 30 Sep' },
+          ]},
+          { label: 'When an outcome arrives', items: [
+            { id: 'wk-pp-5', text: 'Log result in diary: role, outcome, date, next step' },
+            { id: 'wk-pp-6', text: 'If shortlisted: open Interview Preparation phase in jobs-2026 tracker' },
+            { id: 'wk-pp-7', text: 'If rejected: note reason if given; don\'t re-apply to same role' },
+          ]}
+        ]
+      },
+      {
+        id: 'wk1', title: 'Week 1 — 29 Sep to 3 Oct', target: 'Target: 10 applications',
+        urgency: 'critical', badge: 'This Week',
+        note: '2 applications per working day. Log each one in the diary: role name, institution, brief reason for applying.',
+        items: [
+          { id: 'wk1-mon-a', text: 'Mon 29 Sep — Application 1',  sub: 'Log role + institution in diary' },
+          { id: 'wk1-mon-b', text: 'Mon 29 Sep — Application 2',  sub: 'Log role + institution in diary' },
+          { id: 'wk1-tue-a', text: 'Tue 30 Sep — Application 3',  sub: 'Log role + institution in diary' },
+          { id: 'wk1-tue-b', text: 'Tue 30 Sep — Application 4',  sub: 'Log role + institution in diary' },
+          { id: 'wk1-wed-a', text: 'Wed 1 Oct — Application 5',   sub: 'Log role + institution in diary' },
+          { id: 'wk1-wed-b', text: 'Wed 1 Oct — Application 6',   sub: 'Log role + institution in diary' },
+          { id: 'wk1-thu-a', text: 'Thu 2 Oct — Application 7',   sub: 'Log role + institution in diary' },
+          { id: 'wk1-thu-b', text: 'Thu 2 Oct — Application 8',   sub: 'Log role + institution in diary' },
+          { id: 'wk1-fri-a', text: 'Fri 3 Oct — Application 9',   sub: 'Log role + institution in diary' },
+          { id: 'wk1-fri-b', text: 'Fri 3 Oct — Application 10',  sub: 'Log role + institution in diary' },
+        ]
+      },
+      {
+        id: 'wk2', title: 'Week 2 — 6 to 10 Oct', target: 'Target: 10 applications',
+        urgency: 'urgent', badge: 'Next Week',
+        note: '2 applications per working day. Remember: GTV reference letters due 10 Oct — manage time accordingly.',
+        items: [
+          { id: 'wk2-mon-a', text: 'Mon 6 Oct — Application 1',   sub: 'Log role + institution in diary' },
+          { id: 'wk2-mon-b', text: 'Mon 6 Oct — Application 2',   sub: 'Log role + institution in diary' },
+          { id: 'wk2-tue-a', text: 'Tue 7 Oct — Application 3',   sub: 'Log role + institution in diary' },
+          { id: 'wk2-tue-b', text: 'Tue 7 Oct — Application 4',   sub: 'Log role + institution in diary' },
+          { id: 'wk2-wed-a', text: 'Wed 8 Oct — Application 5',   sub: 'Log role + institution in diary' },
+          { id: 'wk2-wed-b', text: 'Wed 8 Oct — Application 6',   sub: 'Log role + institution in diary' },
+          { id: 'wk2-thu-a', text: 'Thu 9 Oct — Application 7',   sub: 'Log role + institution in diary' },
+          { id: 'wk2-thu-b', text: 'Thu 9 Oct — Application 8',   sub: 'Log role + institution in diary' },
+          { id: 'wk2-fri-a', text: 'Fri 10 Oct — Application 9',  sub: 'Log role + institution in diary' },
+          { id: 'wk2-fri-b', text: 'Fri 10 Oct — Application 10', sub: 'Log role + institution in diary' },
+        ]
+      },
+      {
+        id: 'wk3', title: 'Week 3 — 13 to 17 Oct', target: 'Target: 10 applications',
+        urgency: 'normal', badge: 'Week 3',
+        note: 'GTV submission target 20 Oct — keep momentum on both job search and visa application.',
+        items: [
+          { id: 'wk3-mon-a', text: 'Mon 13 Oct — Application 1',  sub: 'Log role + institution in diary' },
+          { id: 'wk3-mon-b', text: 'Mon 13 Oct — Application 2',  sub: 'Log role + institution in diary' },
+          { id: 'wk3-tue-a', text: 'Tue 14 Oct — Application 3',  sub: 'Log role + institution in diary' },
+          { id: 'wk3-tue-b', text: 'Tue 14 Oct — Application 4',  sub: 'Log role + institution in diary' },
+          { id: 'wk3-wed-a', text: 'Wed 15 Oct — Application 5',  sub: 'Log role + institution in diary' },
+          { id: 'wk3-wed-b', text: 'Wed 15 Oct — Application 6',  sub: 'Log role + institution in diary' },
+          { id: 'wk3-thu-a', text: 'Thu 16 Oct — Application 7',  sub: 'Log role + institution in diary' },
+          { id: 'wk3-thu-b', text: 'Thu 16 Oct — Application 8',  sub: 'Log role + institution in diary' },
+          { id: 'wk3-fri-a', text: 'Fri 17 Oct — Application 9',  sub: 'Log role + institution in diary' },
+          { id: 'wk3-fri-b', text: 'Fri 17 Oct — Application 10', sub: 'Log role + institution in diary' },
+        ]
+      },
+      {
+        id: 'wk4', title: 'Week 4 — 20 to 24 Oct', target: 'Target: 10 applications',
+        urgency: 'normal', badge: 'Week 4',
+        note: 'Running total should be 30+ new applications by end of this week.',
+        items: [
+          { id: 'wk4-mon-a', text: 'Mon 20 Oct — Application 1',  sub: 'Log role + institution in diary' },
+          { id: 'wk4-mon-b', text: 'Mon 20 Oct — Application 2',  sub: 'Log role + institution in diary' },
+          { id: 'wk4-tue-a', text: 'Tue 21 Oct — Application 3',  sub: 'Log role + institution in diary' },
+          { id: 'wk4-tue-b', text: 'Tue 21 Oct — Application 4',  sub: 'Log role + institution in diary' },
+          { id: 'wk4-wed-a', text: 'Wed 22 Oct — Application 5',  sub: 'Log role + institution in diary' },
+          { id: 'wk4-wed-b', text: 'Wed 22 Oct — Application 6',  sub: 'Log role + institution in diary' },
+          { id: 'wk4-thu-a', text: 'Thu 23 Oct — Application 7',  sub: 'Log role + institution in diary' },
+          { id: 'wk4-thu-b', text: 'Thu 23 Oct — Application 8',  sub: 'Log role + institution in diary' },
+          { id: 'wk4-fri-a', text: 'Fri 24 Oct — Application 9',  sub: 'Log role + institution in diary' },
+          { id: 'wk4-fri-b', text: 'Fri 24 Oct — Application 10', sub: 'Log role + institution in diary' },
+        ]
+      },
+      {
+        id: 'wk5', title: 'Week 5 — 27 to 31 Oct', target: 'Target: 10 applications',
+        urgency: 'normal', badge: 'Week 5',
+        note: 'Reassess: which sectors and roles are generating responses? Refine targeting if needed.',
+        items: [
+          { id: 'wk5-mon-a', text: 'Mon 27 Oct — Application 1',  sub: 'Log role + institution in diary' },
+          { id: 'wk5-mon-b', text: 'Mon 27 Oct — Application 2',  sub: 'Log role + institution in diary' },
+          { id: 'wk5-tue-a', text: 'Tue 28 Oct — Application 3',  sub: 'Log role + institution in diary' },
+          { id: 'wk5-tue-b', text: 'Tue 28 Oct — Application 4',  sub: 'Log role + institution in diary' },
+          { id: 'wk5-wed-a', text: 'Wed 29 Oct — Application 5',  sub: 'Log role + institution in diary' },
+          { id: 'wk5-wed-b', text: 'Wed 29 Oct — Application 6',  sub: 'Log role + institution in diary' },
+          { id: 'wk5-thu-a', text: 'Thu 30 Oct — Application 7',  sub: 'Log role + institution in diary' },
+          { id: 'wk5-thu-b', text: 'Thu 30 Oct — Application 8',  sub: 'Log role + institution in diary' },
+          { id: 'wk5-fri-a', text: 'Fri 31 Oct — Application 9',  sub: 'Log role + institution in diary' },
+          { id: 'wk5-fri-b', text: 'Fri 31 Oct — Application 10', sub: 'Log role + institution in diary' },
+        ]
+      },
+      {
+        id: 'wk6', title: 'Week 6 — 3 to 7 Nov', target: 'Target: 10 applications',
+        urgency: 'normal', badge: 'Week 6',
+        note: '50+ applications by end of week. Review: are shortlists coming in from earlier submissions?',
+        items: [
+          { id: 'wk6-mon-a', text: 'Mon 3 Nov — Application 1',   sub: 'Log role + institution in diary' },
+          { id: 'wk6-mon-b', text: 'Mon 3 Nov — Application 2',   sub: 'Log role + institution in diary' },
+          { id: 'wk6-tue-a', text: 'Tue 4 Nov — Application 3',   sub: 'Log role + institution in diary' },
+          { id: 'wk6-tue-b', text: 'Tue 4 Nov — Application 4',   sub: 'Log role + institution in diary' },
+          { id: 'wk6-wed-a', text: 'Wed 5 Nov — Application 5',   sub: 'Log role + institution in diary' },
+          { id: 'wk6-wed-b', text: 'Wed 5 Nov — Application 6',   sub: 'Log role + institution in diary' },
+          { id: 'wk6-thu-a', text: 'Thu 6 Nov — Application 7',   sub: 'Log role + institution in diary' },
+          { id: 'wk6-thu-b', text: 'Thu 6 Nov — Application 8',   sub: 'Log role + institution in diary' },
+          { id: 'wk6-fri-a', text: 'Fri 7 Nov — Application 9',   sub: 'Log role + institution in diary' },
+          { id: 'wk6-fri-b', text: 'Fri 7 Nov — Application 10',  sub: 'Log role + institution in diary' },
+        ]
+      },
+      {
+        id: 'wk7', title: 'Week 7 — 10 to 14 Nov', target: 'Target: 10 applications',
+        urgency: 'normal', badge: 'Week 7',
+        note: 'Keep going. Most academic hiring cycles respond within 4–8 weeks of closing date.',
+        items: [
+          { id: 'wk7-mon-a', text: 'Mon 10 Nov — Application 1',  sub: 'Log role + institution in diary' },
+          { id: 'wk7-mon-b', text: 'Mon 10 Nov — Application 2',  sub: 'Log role + institution in diary' },
+          { id: 'wk7-tue-a', text: 'Tue 11 Nov — Application 3',  sub: 'Log role + institution in diary' },
+          { id: 'wk7-tue-b', text: 'Tue 11 Nov — Application 4',  sub: 'Log role + institution in diary' },
+          { id: 'wk7-wed-a', text: 'Wed 12 Nov — Application 5',  sub: 'Log role + institution in diary' },
+          { id: 'wk7-wed-b', text: 'Wed 12 Nov — Application 6',  sub: 'Log role + institution in diary' },
+          { id: 'wk7-thu-a', text: 'Thu 13 Nov — Application 7',  sub: 'Log role + institution in diary' },
+          { id: 'wk7-thu-b', text: 'Thu 13 Nov — Application 8',  sub: 'Log role + institution in diary' },
+          { id: 'wk7-fri-a', text: 'Fri 14 Nov — Application 9',  sub: 'Log role + institution in diary' },
+          { id: 'wk7-fri-b', text: 'Fri 14 Nov — Application 10', sub: 'Log role + institution in diary' },
+        ]
+      },
+      {
+        id: 'wk8', title: 'Week 8 — 17 to 21 Nov', target: 'Target: 10 applications',
+        urgency: 'normal', badge: 'Week 8',
+        note: 'SWV remains valid until June 2027. You have time — but consistent weekly volume is the strategy.',
+        items: [
+          { id: 'wk8-mon-a', text: 'Mon 17 Nov — Application 1',  sub: 'Log role + institution in diary' },
+          { id: 'wk8-mon-b', text: 'Mon 17 Nov — Application 2',  sub: 'Log role + institution in diary' },
+          { id: 'wk8-tue-a', text: 'Tue 18 Nov — Application 3',  sub: 'Log role + institution in diary' },
+          { id: 'wk8-tue-b', text: 'Tue 18 Nov — Application 4',  sub: 'Log role + institution in diary' },
+          { id: 'wk8-wed-a', text: 'Wed 19 Nov — Application 5',  sub: 'Log role + institution in diary' },
+          { id: 'wk8-wed-b', text: 'Wed 19 Nov — Application 6',  sub: 'Log role + institution in diary' },
+          { id: 'wk8-thu-a', text: 'Thu 20 Nov — Application 7',  sub: 'Log role + institution in diary' },
+          { id: 'wk8-thu-b', text: 'Thu 20 Nov — Application 8',  sub: 'Log role + institution in diary' },
+          { id: 'wk8-fri-a', text: 'Fri 21 Nov — Application 9',  sub: 'Log role + institution in diary' },
+          { id: 'wk8-fri-b', text: 'Fri 21 Nov — Application 10', sub: 'Log role + institution in diary' },
+        ]
+      },
+    ]
+  };
+
   /* ── State ─────────────────────────────────────────────────────────────── */
   let state    = null;
   let activeId = null;
@@ -606,6 +782,31 @@ const TRK = (() => {
       jt.checks = {};
       jt.diary  = [];
       state.trackers.push(jt);
+    }
+    // Inject weekly job search tracker if not already present
+    if (!state.trackers.find(t => t.id === 'jobs-weekly-2026')) {
+      const wt = JSON.parse(JSON.stringify(JOBS_WEEKLY_SEED));
+      wt.checks = {};
+      wt.diary  = [];
+      state.trackers.push(wt);
+    }
+    // Migrate GTV DSIT tracker → mark as secondary/on hold
+    const dsitTrk = state.trackers.find(t => t.id === 'gtv-2026');
+    if (dsitTrk && dsitTrk.name !== 'GTV — DSIT Route (On Hold)') {
+      dsitTrk.name  = 'GTV — DSIT Route (On Hold)';
+      dsitTrk.color = '#6B7280';
+      dsitTrk.phases.forEach(ph => { if (ph.urgency === 'critical' || ph.urgency === 'urgent') ph.urgency = 'normal'; });
+    }
+    // Migrate GTV Research tracker → update stale phase targets and mark as primary
+    const resTrk = state.trackers.find(t => t.id === 'gtv-research-2026');
+    if (resTrk) {
+      if (resTrk.name !== 'GTV — Research Route (Primary)') resTrk.name = 'GTV — Research Route (Primary)';
+      const r0 = resTrk.phases.find(p => p.id === 'r0');
+      if (r0 && r0.urgency === 'critical') { r0.urgency = 'normal'; r0.badge = 'Done'; r0.target = 'Completed by 22 Sep'; }
+      const r1 = resTrk.phases.find(p => p.id === 'r1');
+      if (r1 && r1.urgency === 'urgent') { r1.urgency = 'normal'; r1.badge = 'Done'; r1.target = 'Completed by 25 Sep'; }
+      const r2 = resTrk.phases.find(p => p.id === 'r2');
+      if (r2 && r2.urgency !== 'critical') { r2.urgency = 'critical'; r2.badge = 'Due 30 Sep'; }
     }
     // Patch existing jobs tracker: update Newcastle to submitted, add ULaw if missing
     const jtrk = state.trackers.find(t => t.id === 'jobs-2026');
