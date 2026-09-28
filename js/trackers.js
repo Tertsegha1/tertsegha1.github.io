@@ -521,6 +521,21 @@ const TRK = (() => {
         ]
       },
       {
+        id: 'j7', title: 'Aston University — KTP Associate AI Predictive Maintenance (1368-26)', target: 'Deadline 11 Oct 2026',
+        urgency: 'urgent', badge: 'Apply by 11 Oct',
+        note: 'KTP between Aston University and Genie UK. Employed by Aston — licensed SWV sponsor. Strong ML fit; honest gap on predictive maintenance / industrial domain.',
+        items: [
+          { id: 'j7-0', text: 'Read full JD at jobs.aston.ac.uk/Vacancy.aspx?ref=1368-26' },
+          { id: 'j7-1', text: 'Tailor CV: lead with MoSELA (MLOps), time-series ML, LLM/RAG (Automated Marking System)' },
+          { id: 'j7-2', text: 'Cover letter: frame cyber-ML → predictive-ML transfer; acknowledge industrial domain gap; cite Python/MLOps depth' },
+          { id: 'j7-3', text: 'Address AWS SageMaker gap: note equivalent cloud ML experience (Cloudflare Workers AI, MLflow)' },
+          { id: 'j7-4', text: 'Supporting statement addresses each essential criterion explicitly' },
+          { id: 'j7-5', text: 'Submit application before 23:59 on 11 Oct 2026' },
+          { id: 'j7-6', text: 'Save confirmation email and application reference' },
+          { id: 'j7-7', text: 'If shortlisted: read up on Genie UK and KTP programme structure', sub: 'Interview date: 26 Oct 2026' },
+        ]
+      },
+      {
         id: 'j6', title: 'Keele University — Lecturer in Cybersecurity', target: 'Submitted 28 Sep 2026',
         urgency: 'waiting', badge: 'Submitted',
         note: 'Strong genuine fit. PhD and research are directly in cybersecurity/ML. Submitted 28 Sep 2026.',
@@ -613,6 +628,7 @@ const TRK = (() => {
             { id: 'wk-pp-3', text: 'Leeds — Research Fellow ML Assisted Choice Modelling (ENVTR1226)', sub: 'Submitted — awaiting shortlist' },
           ]},
           { id: 'wk-pp-5b', text: 'Keele University — Lecturer in Cybersecurity', sub: 'Submitted 28 Sep 2026' },
+          { id: 'wk-pp-6b', text: 'Aston University — KTP Associate AI Predictive Maintenance (1368-26)', sub: 'To submit — deadline 11 Oct 2026' },
           ]},
           { label: 'On hold', items: [
             { id: 'wk-pp-4', text: 'Leeds — Lecturer/AP Computer Graphics (EPSCP1187)', sub: 'Awaiting reply from Prof. Gordon Love (g.d.love@leeds.ac.uk) — chase if no reply by 30 Sep' },
@@ -818,6 +834,24 @@ const TRK = (() => {
       if (r1 && r1.urgency === 'urgent') { r1.urgency = 'normal'; r1.badge = 'Done'; r1.target = 'Completed by 25 Sep'; }
       const r2 = resTrk.phases.find(p => p.id === 'r2');
       if (r2 && r2.urgency !== 'critical') { r2.urgency = 'critical'; r2.badge = 'Due 30 Sep'; }
+    }
+    // Patch: add Aston KTP to jobs-2026 if missing
+    const jtrk4 = state.trackers.find(t => t.id === 'jobs-2026');
+    if (jtrk4 && !jtrk4.phases.find(p => p.id === 'j7')) {
+      const aston = JSON.parse(JSON.stringify(JOBS_SEED.phases.find(p => p.id === 'j7')));
+      const j6idx = jtrk4.phases.findIndex(p => p.id === 'j6');
+      jtrk4.phases.splice(j6idx, 0, aston);
+    }
+    // Patch: add Aston to jobs-weekly-2026 pipeline if missing
+    const wtrk3 = state.trackers.find(t => t.id === 'jobs-weekly-2026');
+    if (wtrk3) {
+      const pipe3 = wtrk3.phases.find(p => p.id === 'wk-pipeline');
+      if (pipe3 && pipe3.sections) {
+        const aw3 = pipe3.sections.find(s => s.label === 'Awaiting outcome');
+        if (aw3 && !aw3.items.find(i => i.id === 'wk-pp-6b')) {
+          aw3.items.push({ id: 'wk-pp-6b', text: 'Aston University — KTP Associate AI Predictive Maintenance (1368-26)', sub: 'To submit — deadline 11 Oct 2026' });
+        }
+      }
     }
     // Patch: mark Sheffield and ULaw as declined
     const jtrk3 = state.trackers.find(t => t.id === 'jobs-2026');
