@@ -526,6 +526,20 @@ const TRK = (() => {
         ]
       },
       {
+        id: 'j6', title: 'Keele University — Lecturer in Cybersecurity', target: 'Submitted 28 Sep 2026',
+        urgency: 'waiting', badge: 'Submitted',
+        note: 'Strong genuine fit. PhD and research are directly in cybersecurity/ML. Submitted 28 Sep 2026.',
+        items: [
+          { id: 'j6-0', text: 'Application submitted 28 Sep 2026 ✓' },
+          { id: 'j6-1', text: 'Confirmation email received and saved' },
+          { id: 'j6-2', text: 'Awaiting shortlisting decision from Keele' },
+          { id: 'j6-3', text: 'If shortlisted: research Keele\'s cyber security group and current projects' },
+          { id: 'j6-4', text: 'If shortlisted: prepare 20-min research talk (ML for intrusion detection / EV security)' },
+          { id: 'j6-5', text: 'If shortlisted: confirm right-to-work / sponsorship position with solicitor' },
+          { id: 'j6-6', text: 'Note outcome in diary when received' },
+        ]
+      },
+      {
         id: 'j4', title: 'Standard Application Process', target: 'Use for every new role',
         urgency: 'normal', badge: 'Template',
         note: 'Run through this checklist for each new application. Use the diary to log submission dates and reference numbers.',
@@ -602,6 +616,8 @@ const TRK = (() => {
             { id: 'wk-pp-1', text: 'Sheffield — Research Associate ML & NLP / GATE (Job 3092)', sub: 'Submitted 18 Sep 2026' },
             { id: 'wk-pp-2', text: 'University of Law — Head of Foundation Year, Birmingham', sub: 'Submitted 17 Sep 2026 · ⚠ Not a licensed SWV sponsor — confirm RTW before accepting' },
             { id: 'wk-pp-3', text: 'Leeds — Research Fellow ML Assisted Choice Modelling (ENVTR1226)', sub: 'Submitted — awaiting shortlist' },
+          ]},
+          { id: 'wk-pp-5b', text: 'Keele University — Lecturer in Cybersecurity', sub: 'Submitted 28 Sep 2026' },
           ]},
           { label: 'On hold', items: [
             { id: 'wk-pp-4', text: 'Leeds — Lecturer/AP Computer Graphics (EPSCP1187)', sub: 'Awaiting reply from Prof. Gordon Love (g.d.love@leeds.ac.uk) — chase if no reply by 30 Sep' },
@@ -807,6 +823,28 @@ const TRK = (() => {
       if (r1 && r1.urgency === 'urgent') { r1.urgency = 'normal'; r1.badge = 'Done'; r1.target = 'Completed by 25 Sep'; }
       const r2 = resTrk.phases.find(p => p.id === 'r2');
       if (r2 && r2.urgency !== 'critical') { r2.urgency = 'critical'; r2.badge = 'Due 30 Sep'; }
+    }
+    // Patch: add Keele to jobs-2026 if missing
+    const jtrk2 = state.trackers.find(t => t.id === 'jobs-2026');
+    if (jtrk2 && !jtrk2.phases.find(p => p.id === 'j6')) {
+      const keele = JSON.parse(JSON.stringify(JOBS_SEED.phases.find(p => p.id === 'j6')));
+      const j4idx2 = jtrk2.phases.findIndex(p => p.id === 'j4');
+      jtrk2.phases.splice(j4idx2, 0, keele);
+    }
+    // Patch: add Keele to jobs-weekly-2026 pipeline if missing
+    const wtrk = state.trackers.find(t => t.id === 'jobs-weekly-2026');
+    if (wtrk) {
+      const pipe = wtrk.phases.find(p => p.id === 'wk-pipeline');
+      if (pipe) {
+        const aw = pipe.sections && pipe.sections.find(s => s.label === 'Awaiting outcome');
+        if (aw && !aw.items.find(i => i.id === 'wk-pp-5b')) {
+          aw.items.push({ id: 'wk-pp-5b', text: 'Keele University — Lecturer in Cybersecurity', sub: 'Submitted 28 Sep 2026' });
+        }
+      }
+      if (!wtrk.milestones) wtrk.milestones = [];
+      if (!wtrk.milestones.find(m => m.label === 'Keele outcome')) {
+        wtrk.milestones.push({ label: 'Keele outcome', date: 'TBC', note: 'Submitted 28 Sep — awaiting shortlist', cls: 'target' });
+      }
     }
     // Patch existing jobs tracker: update Newcastle to submitted, add ULaw if missing
     const jtrk = state.trackers.find(t => t.id === 'jobs-2026');
