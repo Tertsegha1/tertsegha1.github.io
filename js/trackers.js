@@ -489,15 +489,14 @@ const TRK = (() => {
         ]
       },
       {
-        id: 'j2', title: 'Sheffield — ML & NLP / GATE (Job 3092)', target: 'Submitted 18 Sep 2026',
-        urgency: 'waiting', badge: 'Submitted',
-        note: 'Strong genuine fit. LLM/chatbot/prompt-engineering and cyber-threat-detection both match essential criteria explicitly.',
+        id: 'j2', title: 'Sheffield — ML & NLP / GATE (Job 3092)', target: 'Declined 28 Sep 2026',
+        urgency: 'normal', badge: 'Declined',
+        note: 'Application declined at shortlisting stage. Submitted 18 Sep 2026.',
         items: [
           { id: 'j2-0', text: 'Application submitted 18 Sep 2026 ✓' },
-          { id: 'j2-1', text: 'Awaiting shortlisting decision from Sheffield GATE team' },
-          { id: 'j2-2', text: 'If shortlisted: review GATE NLP stack and recent GATE publications' },
-          { id: 'j2-3', text: 'If shortlisted: prepare LLM/chatbot demo using Automated Marking System as case study' },
-          { id: 'j2-4', text: 'Note outcome in diary when received' },
+          { id: 'j2-1', text: 'Application declined — not shortlisted ✓' },
+          { id: 'j2-2', text: 'Note any feedback received in diary' },
+          { id: 'j2-3', text: 'Watch for future openings in Sheffield GATE team' },
         ]
       },
       {
@@ -512,17 +511,13 @@ const TRK = (() => {
         ]
       },
       {
-        id: 'j4b', title: 'ULaw — Head of Foundation Year (Birmingham)', target: 'Submitted 17 Sep 2026',
-        urgency: 'waiting', badge: 'Submitted',
-        note: 'University of Law, Birmingham. Submitted Wed 17 Sep. Note: ULaw is not a licensed Skilled Worker sponsor — right to work must be verified before accepting any offer.',
+        id: 'j4b', title: 'ULaw — Head of Foundation Year (Birmingham)', target: 'Declined 28 Sep 2026',
+        urgency: 'normal', badge: 'Declined',
+        note: 'Application declined at shortlisting stage. Submitted 17 Sep 2026.',
         items: [
           { id: 'j4b-0', text: 'Application submitted 17 Sep 2026 ✓' },
-          { id: 'j4b-1', text: 'Confirmation email received and saved' },
-          { id: 'j4b-2', text: 'Awaiting shortlisting decision from ULaw' },
-          { id: 'j4b-3', text: '⚠ If shortlisted: confirm right-to-work position with solicitor BEFORE interview', sub: 'ULaw is not a licensed SWV sponsor — clarify whether they can/will sponsor or whether your current leave covers it' },
-          { id: 'j4b-4', text: 'If shortlisted: prepare for Foundation Year leadership questions (curriculum, pastoral, quality)' },
-          { id: 'j4b-5', text: 'If shortlisted: prepare evidence of student success metrics (98%+ pass rate, DT Studio)' },
-          { id: 'j4b-6', text: 'Note outcome in diary when received' },
+          { id: 'j4b-1', text: 'Application declined — not shortlisted ✓' },
+          { id: 'j4b-2', text: 'Note any feedback received in diary' },
         ]
       },
       {
@@ -613,8 +608,8 @@ const TRK = (() => {
         sections: [
           { label: 'Awaiting outcome', items: [
             { id: 'wk-pp-0', text: 'Newcastle — Lecturer/SL AI & Cyber (Req 29571)', sub: 'Submitted 19 Sep 2026' },
-            { id: 'wk-pp-1', text: 'Sheffield — Research Associate ML & NLP / GATE (Job 3092)', sub: 'Submitted 18 Sep 2026' },
-            { id: 'wk-pp-2', text: 'University of Law — Head of Foundation Year, Birmingham', sub: 'Submitted 17 Sep 2026 · ⚠ Not a licensed SWV sponsor — confirm RTW before accepting' },
+            { id: 'wk-pp-1', text: 'Sheffield — Research Associate ML & NLP / GATE (Job 3092)', sub: 'Submitted 18 Sep · Declined 28 Sep 2026' },
+            { id: 'wk-pp-2', text: 'University of Law — Head of Foundation Year, Birmingham', sub: 'Submitted 17 Sep · Declined 28 Sep 2026' },
             { id: 'wk-pp-3', text: 'Leeds — Research Fellow ML Assisted Choice Modelling (ENVTR1226)', sub: 'Submitted — awaiting shortlist' },
           ]},
           { id: 'wk-pp-5b', text: 'Keele University — Lecturer in Cybersecurity', sub: 'Submitted 28 Sep 2026' },
@@ -823,6 +818,27 @@ const TRK = (() => {
       if (r1 && r1.urgency === 'urgent') { r1.urgency = 'normal'; r1.badge = 'Done'; r1.target = 'Completed by 25 Sep'; }
       const r2 = resTrk.phases.find(p => p.id === 'r2');
       if (r2 && r2.urgency !== 'critical') { r2.urgency = 'critical'; r2.badge = 'Due 30 Sep'; }
+    }
+    // Patch: mark Sheffield and ULaw as declined
+    const jtrk3 = state.trackers.find(t => t.id === 'jobs-2026');
+    if (jtrk3) {
+      const shef = jtrk3.phases.find(p => p.id === 'j2');
+      if (shef && shef.badge !== 'Declined') { shef.badge = 'Declined'; shef.urgency = 'normal'; shef.target = 'Declined 28 Sep 2026'; }
+      const ulaw = jtrk3.phases.find(p => p.id === 'j4b');
+      if (ulaw && ulaw.badge !== 'Declined') { ulaw.badge = 'Declined'; ulaw.urgency = 'normal'; ulaw.target = 'Declined 28 Sep 2026'; }
+    }
+    const wtrk2 = state.trackers.find(t => t.id === 'jobs-weekly-2026');
+    if (wtrk2) {
+      const pipe2 = wtrk2.phases.find(p => p.id === 'wk-pipeline');
+      if (pipe2 && pipe2.sections) {
+        const aw2 = pipe2.sections.find(s => s.label === 'Awaiting outcome');
+        if (aw2) {
+          const sh = aw2.items.find(i => i.id === 'wk-pp-1');
+          if (sh && !sh.sub.includes('Declined')) sh.sub = 'Submitted 18 Sep · Declined 28 Sep 2026';
+          const ul = aw2.items.find(i => i.id === 'wk-pp-2');
+          if (ul && !ul.sub.includes('Declined')) ul.sub = 'Submitted 17 Sep · Declined 28 Sep 2026';
+        }
+      }
     }
     // Patch: add Keele to jobs-2026 if missing
     const jtrk2 = state.trackers.find(t => t.id === 'jobs-2026');
