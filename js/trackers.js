@@ -521,18 +521,29 @@ const TRK = (() => {
         ]
       },
       {
-        id: 'j7', title: 'Aston University — KTP Associate AI Predictive Maintenance (1368-26)', target: 'Deadline 11 Oct 2026',
-        urgency: 'urgent', badge: 'Apply by 11 Oct',
-        note: 'KTP between Aston University and Genie UK. Employed by Aston — licensed SWV sponsor. Strong ML fit; honest gap on predictive maintenance / industrial domain.',
+        id: 'j7', title: 'Aston University — KTP Associate AI Predictive Maintenance (1368-26)', target: 'Submit by 11 Oct 2026',
+        urgency: 'critical', badge: 'References Pending',
+        note: 'KTP between Aston University and Genie UK. Employed by Aston — licensed SWV sponsor. Application form completed 4 Oct 2026 — add references then submit.',
         items: [
-          { id: 'j7-0', text: 'Read full JD at jobs.aston.ac.uk/Vacancy.aspx?ref=1368-26' },
-          { id: 'j7-1', text: 'Tailor CV: lead with MoSELA (MLOps), time-series ML, LLM/RAG (Automated Marking System)' },
-          { id: 'j7-2', text: 'Cover letter: frame cyber-ML → predictive-ML transfer; acknowledge industrial domain gap; cite Python/MLOps depth' },
-          { id: 'j7-3', text: 'Address AWS SageMaker gap: note equivalent cloud ML experience (Cloudflare Workers AI, MLflow)' },
-          { id: 'j7-4', text: 'Supporting statement addresses each essential criterion explicitly' },
-          { id: 'j7-5', text: 'Submit application before 23:59 on 11 Oct 2026' },
-          { id: 'j7-6', text: 'Save confirmation email and application reference' },
+          { id: 'j7-0', text: 'Read full JD at jobs.aston.ac.uk/Vacancy.aspx?ref=1368-26 ✓' },
+          { id: 'j7-1', text: 'CV tailored and cover letter written ✓', sub: 'CV_Academic_Aston_Sep2026.docx + CoverLetter_TJAnande_Aston_KTP.docx' },
+          { id: 'j7-2', text: 'Application form completed ✓ — 4 Oct 2026' },
+          { id: 'j7-3', text: 'Add referee details to application form and submit before 23:59 on 11 Oct 2026' },
+          { id: 'j7-4', text: 'Save confirmation email and application reference' },
           { id: 'j7-7', text: 'If shortlisted: read up on Genie UK and KTP programme structure', sub: 'Interview date: 26 Oct 2026' },
+        ]
+      },
+      {
+        id: 'j8', title: 'Nottingham Trent University (NTU) — Submitted 4 Oct 2026', target: 'Submitted 4 Oct 2026',
+        urgency: 'waiting', badge: 'Submitted',
+        note: 'Application submitted to NTU on 4 Oct 2026. Awaiting shortlisting decision.',
+        items: [
+          { id: 'j8-0', text: 'Application submitted ✓ — 4 Oct 2026' },
+          { id: 'j8-1', text: 'Confirmation email received and saved' },
+          { id: 'j8-2', text: 'Awaiting shortlisting decision from NTU' },
+          { id: 'j8-3', text: 'If shortlisted: research NTU department, recent grants and current research agenda' },
+          { id: 'j8-4', text: 'If shortlisted: prepare 20-min research talk (ML for cyber/EV security focus)' },
+          { id: 'j8-5', text: 'Note outcome in diary when received' },
         ]
       },
       {
@@ -850,6 +861,35 @@ const TRK = (() => {
         const aw3 = pipe3.sections.find(s => s.label === 'Awaiting outcome');
         if (aw3 && !aw3.items.find(i => i.id === 'wk-pp-6b')) {
           aw3.items.push({ id: 'wk-pp-6b', text: 'Aston University — KTP Associate AI Predictive Maintenance (1368-26)', sub: 'To submit — deadline 11 Oct 2026' });
+        }
+      }
+    }
+    // Patch: update Aston KTP status — form completed, references pending
+    const jtrk5 = state.trackers.find(t => t.id === 'jobs-2026');
+    if (jtrk5) {
+      const aston = jtrk5.phases.find(p => p.id === 'j7');
+      if (aston && aston.badge === 'Apply by 11 Oct') {
+        aston.badge   = 'References Pending';
+        aston.urgency = 'critical';
+        aston.target  = 'Submit by 11 Oct 2026';
+        aston.note    = 'Application form completed 4 Oct 2026 — add references then submit.';
+      }
+    }
+    // Patch: add NTU to jobs-2026 if missing
+    const jtrk6 = state.trackers.find(t => t.id === 'jobs-2026');
+    if (jtrk6 && !jtrk6.phases.find(p => p.id === 'j8')) {
+      const ntu = JSON.parse(JSON.stringify(JOBS_SEED.phases.find(p => p.id === 'j8')));
+      const j7idx = jtrk6.phases.findIndex(p => p.id === 'j7');
+      jtrk6.phases.splice(j7idx + 1, 0, ntu);
+    }
+    // Patch: add NTU to jobs-weekly-2026 pipeline if missing
+    const wtrkNtu = state.trackers.find(t => t.id === 'jobs-weekly-2026');
+    if (wtrkNtu) {
+      const pipeNtu = wtrkNtu.phases.find(p => p.id === 'wk-pipeline');
+      if (pipeNtu && pipeNtu.sections) {
+        const awNtu = pipeNtu.sections.find(s => s.label === 'Awaiting outcome');
+        if (awNtu && !awNtu.items.find(i => i.id === 'wk-pp-7')) {
+          awNtu.items.push({ id: 'wk-pp-7', text: 'Nottingham Trent University (NTU)', sub: 'Submitted 4 Oct 2026' });
         }
       }
     }
