@@ -534,9 +534,9 @@ const TRK = (() => {
         ]
       },
       {
-        id: 'j8', title: 'Nottingham Trent University (NTU) — Submitted 4 Oct 2026', target: 'Submitted 4 Oct 2026',
+        id: 'j8', title: 'NTU — Lecturer / Senior Lecturer Computer Science (JobId 2585)', target: 'Submitted 4 Oct 2026',
         urgency: 'waiting', badge: 'Submitted',
-        note: 'Application submitted to NTU on 4 Oct 2026. Awaiting shortlisting decision.',
+        note: 'Nottingham Trent University. Application submitted 4 Oct 2026. Awaiting shortlisting decision.',
         items: [
           { id: 'j8-0', text: 'Application submitted ✓ — 4 Oct 2026' },
           { id: 'j8-1', text: 'Confirmation email received and saved' },
@@ -875,8 +875,15 @@ const TRK = (() => {
         aston.note    = 'Application form completed 4 Oct 2026 — add references then submit.';
       }
     }
-    // Patch: add NTU to jobs-2026 if missing
+    // Patch: add NTU to jobs-2026 if missing; fix title if already injected with generic name
     const jtrk6 = state.trackers.find(t => t.id === 'jobs-2026');
+    if (jtrk6) {
+      const ntuPhase = jtrk6.phases.find(p => p.id === 'j8');
+      if (ntuPhase && ntuPhase.title === 'Nottingham Trent University (NTU) — Submitted 4 Oct 2026') {
+        ntuPhase.title = 'NTU — Lecturer / Senior Lecturer Computer Science (JobId 2585)';
+        ntuPhase.note  = 'Nottingham Trent University. Application submitted 4 Oct 2026. Awaiting shortlisting decision.';
+      }
+    }
     if (jtrk6 && !jtrk6.phases.find(p => p.id === 'j8')) {
       const ntu = JSON.parse(JSON.stringify(JOBS_SEED.phases.find(p => p.id === 'j8')));
       const j7idx = jtrk6.phases.findIndex(p => p.id === 'j7');
@@ -889,7 +896,11 @@ const TRK = (() => {
       if (pipeNtu && pipeNtu.sections) {
         const awNtu = pipeNtu.sections.find(s => s.label === 'Awaiting outcome');
         if (awNtu && !awNtu.items.find(i => i.id === 'wk-pp-7')) {
-          awNtu.items.push({ id: 'wk-pp-7', text: 'Nottingham Trent University (NTU)', sub: 'Submitted 4 Oct 2026' });
+          awNtu.items.push({ id: 'wk-pp-7', text: 'NTU — Lecturer / Senior Lecturer Computer Science', sub: 'Submitted 4 Oct 2026' });
+        }
+        const ntuItem = awNtu && awNtu.items.find(i => i.id === 'wk-pp-7');
+        if (ntuItem && ntuItem.text === 'Nottingham Trent University (NTU)') {
+          ntuItem.text = 'NTU — Lecturer / Senior Lecturer Computer Science';
         }
       }
     }
