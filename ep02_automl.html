@@ -372,6 +372,12 @@ footer{
 .contrast-col.off .contrast-li::before{content:'✗';color:#E87070}
 .contrast-col.on .contrast-li::before{content:'✓';color:var(--teal)}
 </style>
+<style id="codesprig-mobile-fixes">
+/* Small-screen fixes (checked at 320px wide): long words wrap, episode cards fit. */
+@media (max-width: 600px) { body { overflow-wrap: break-word; } h1, h2, h3 { hyphens: auto; } }
+.ep-info { min-width: 0; }
+@media (max-width: 480px) { .ep-card { padding: 16px; gap: 12px; } }
+</style>
 </head>
 <body>
 

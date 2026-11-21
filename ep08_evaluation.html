@@ -223,6 +223,12 @@ footer{border-top:0.5px solid var(--border);padding:24px 32px;display:flex;justi
 .footer-left{font-size:11px;color:var(--dim)}
 .footer-right{font-size:10px;color:var(--purple-soft);letter-spacing:2px;text-transform:uppercase}
 </style>
+<style id="codesprig-mobile-fixes">
+/* Small-screen fixes (checked at 320px wide): long words wrap, episode cards fit. */
+@media (max-width: 600px) { body { overflow-wrap: break-word; } h1, h2, h3 { hyphens: auto; } }
+.ep-info { min-width: 0; }
+@media (max-width: 480px) { .ep-card { padding: 16px; gap: 12px; } }
+</style>
 </head>
 <body>
 
