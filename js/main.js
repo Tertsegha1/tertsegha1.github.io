@@ -470,19 +470,8 @@ function renderDashboard () {
     .filter(m => m.leader).length;
   const currentJob = DATA.experience[0];
 
-  /* ── Welcome banner (name and role only: the stats and profile links are in the hero above) ── */
-  const banner = document.createElement('div');
-  banner.className = 'dash-banner';
-  banner.innerHTML = `
-    <div class="dash-banner-inner">
-      <div class="dash-banner-text">
-        <h2 class="dash-welcome">${p.name}</h2>
-        <p class="dash-tagline">${p.title}</p>
-        <p class="dash-location">📍 ${p.location} &nbsp;·&nbsp; ${p.credentials}</p>
-      </div>
-    </div>`;
-  grid.appendChild(banner);
-  // The featured GradReady pitch (static in index.html) sits just below the personal banner, above the summary cards.
+  /* The hero above already shows the name, role, stats and profile links, so the overview has no banner of its own. */
+  // The featured GradReady pitch (static in index.html) opens the overview, above the summary cards.
   const grFeature = document.querySelector('.gr-feature');
   if (grFeature) grid.appendChild(grFeature);
 
