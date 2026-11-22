@@ -281,7 +281,7 @@ const DATA = {
       "icon": "⚡",
       "badge": "EdTech · Secondary Schools · 8 Tracks",
       "color": "#7c3aed",
-      "title": "Codify — Code, Data & Security Skills for Schools",
+      "title": "CodeSprig — Code, Data & Security Skills for Schools",
       "desc": "A self-paced, browser-based learning platform for school students (Years 5–10, ages 10–16), built from scratch as an independent project and now hosted as its own standalone product — eight subject tracks: Python, Web Design, R, AutoML, Machine Learning, Cybersecurity, Data Science, and SQL. Students create their own password-protected account (securely hashed, never stored or viewable in plaintext) that restores their exact progress on any device, with three certificate-gated levels — Beginner, Intermediate, Advanced — per track, each with its own genuinely distinct curriculum and each unlocked only after finishing the one before it. Every track ends in real code executed live in the browser (not simulated) — Python/AutoML/Machine Learning/Cybersecurity/Data Science via Pyodide, R via WebR, SQL via an in-browser SQLite engine, Web Design by grading real rendered HTML/CSS in a sandboxed preview — with auto-graded exercises, a quiz, and two puzzle-style mini-projects per level. Finishing both mini-projects plus a short feedback survey unlocks a downloadable, QR-verifiable certificate and the next level. New registrations require a passcode the instructor generates per track and can revoke at any time, enforced server-side in the database rules, not just in the UI. Students can message the instructor directly, including a no-login-needed path for forgotten passwords. A live instructor dashboard — with a subject selector across all eight tracks, plus per-student session-time tracking — shows whole-class progress, previews any week's content unlocked exactly as students see it, manages accounts, passcodes and password resets, triages incoming messages, and surfaces feedback analytics, all in real time via Firebase.",
       "tech": [
         "Python (Pyodide)",
@@ -294,7 +294,26 @@ const DATA = {
         "Firebase Hosting"
       ],
       "links": [
-        { "label": "⚡ Visit Codify", "url": "https://codify-academy.web.app/" }
+        { "label": "⚡ Visit CodeSprig", "url": "https://codify-academy.web.app/" }
+      ]
+    },
+    {
+      "icon": "🎓",
+      "badge": "EdTech · Graduates · Six Pathways",
+      "color": "#2f6b3a",
+      "title": "GradReady — Graduate Tech Skills & Careers Platform",
+      "desc": "A hands-on skills and careers platform for graduates from any degree, anywhere, built and run as part of CodeSprig. Practical courses across six pathways (Data & AI; Cloud, Security & IT; Software Engineering; Business, Product & Design; Build Business Systems; Healthcare Computing), each mapped to the graduate job roles it prepares learners for, with runnable Python, SQL and JavaScript, quizzes, verifiable certificates, a skills-gap assessment, CV builder, interview practice and a learning planner with email reminders. Module 1 of every course is open to all learners, with full access granted per course by request. Built with React and a PostgreSQL back end on Supabase: row-level security and database-enforced course access, two-step sign-in for staff, CAPTCHA-protected sign-up, UK GDPR self-service (data export and account deletion), and an automated test suite run against the real database migrations.",
+      "tech": [
+        "React",
+        "Vite",
+        "Tailwind CSS",
+        "Supabase (PostgreSQL, Auth)",
+        "Row-level security",
+        "Cloudflare Turnstile",
+        "Firebase Hosting"
+      ],
+      "links": [
+        { "label": "🎓 Visit GradReady", "url": "https://codify-academy.web.app/gradready/" }
       ]
     },
     {

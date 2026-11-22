@@ -495,6 +495,9 @@ function renderDashboard () {
       <a href="${p.linkedin}" target="_blank" rel="noopener" class="dash-hero-btn">in LinkedIn</a>
     </div>`;
   grid.appendChild(banner);
+  // The featured GradReady pitch (static in index.html) sits just below the personal banner, above the summary cards.
+  const grFeature = document.querySelector('.gr-feature');
+  if (grFeature) grid.appendChild(grFeature);
 
   /* ── Section cards ── */
   const cards = [
