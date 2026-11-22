@@ -637,7 +637,6 @@ const TRK = (() => {
             { id: 'wk-pp-1', text: 'Sheffield — Research Associate ML & NLP / GATE (Job 3092)', sub: 'Submitted 18 Sep · Declined 28 Sep 2026' },
             { id: 'wk-pp-2', text: 'University of Law — Head of Foundation Year, Birmingham', sub: 'Submitted 17 Sep · Declined 28 Sep 2026' },
             { id: 'wk-pp-3', text: 'Leeds — Research Fellow ML Assisted Choice Modelling (ENVTR1226)', sub: 'Submitted — awaiting shortlist' },
-          ]},
           { id: 'wk-pp-5b', text: 'Keele University — Lecturer in Cybersecurity', sub: 'Submitted 28 Sep 2026' },
           { id: 'wk-pp-6b', text: 'Aston University — KTP Associate AI Predictive Maintenance (1368-26)', sub: 'To submit — deadline 11 Oct 2026' },
           ]},
