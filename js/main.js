@@ -470,7 +470,7 @@ function renderDashboard () {
     .filter(m => m.leader).length;
   const currentJob = DATA.experience[0];
 
-  /* ── Welcome banner ── */
+  /* ── Welcome banner (name and role only: the stats and profile links are in the hero above) ── */
   const banner = document.createElement('div');
   banner.className = 'dash-banner';
   banner.innerHTML = `
@@ -480,19 +480,6 @@ function renderDashboard () {
         <p class="dash-tagline">${p.title}</p>
         <p class="dash-location">📍 ${p.location} &nbsp;·&nbsp; ${p.credentials}</p>
       </div>
-      <div class="dash-stats-row">
-        ${p.stats.map(s => `
-          <div class="dash-hero-stat">
-            <div class="dash-hero-num"><span class="counter" data-target="${s.num.replace(/\D/g,'')}" data-suffix="${s.num.replace(/[\d]/g,'')}">${s.num}</span></div>
-            <div class="dash-hero-lbl">${s.label}</div>
-          </div>`).join('')}
-      </div>
-    </div>
-    <div class="dash-banner-links">
-      <a href="cv.html" target="_blank" class="dash-hero-btn">📄 Download CV</a>
-      <a href="${p.scholar}" target="_blank" rel="noopener" class="dash-hero-btn">🎓 Google Scholar</a>
-      <a href="${p.github}" target="_blank" rel="noopener" class="dash-hero-btn">🐙 GitHub</a>
-      <a href="${p.linkedin}" target="_blank" rel="noopener" class="dash-hero-btn">in LinkedIn</a>
     </div>`;
   grid.appendChild(banner);
   // The featured GradReady pitch (static in index.html) sits just below the personal banner, above the summary cards.
@@ -560,7 +547,7 @@ function renderDashboard () {
       items: [
         'Weekly AutoML + personal growth series',
         'Blending research insights with real-world application',
-        'Published on LinkedIn, Facebook & this portfolio',
+        'Now a GradReady bonus course, also shared on LinkedIn & Facebook',
       ],
       cta: 'View Series',
     },
