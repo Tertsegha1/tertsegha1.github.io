@@ -8,7 +8,7 @@
 const DATA = {
   "personal": {
     "name": "Dr. Tertsegha Joseph Anande",
-    "credentials": "PhD · FHEA · MBCS",
+    "credentials": "PhD · FHEA · MBCS · MIEEE",
     "title": "Deputy Programme Leader · Lecturer in Computing · ML Researcher",
     "location": "Birmingham, UK",
     "email": "tertseghaanande@gmail.com",
@@ -34,7 +34,7 @@ const DATA = {
         "label": "Years Experience"
       },
       {
-        "num": "14+",
+        "num": "17+",
         "label": "Publications"
       },
       {
@@ -72,7 +72,7 @@ const DATA = {
       "My work sits at the intersection of <strong>machine learning research</strong>, <strong>cyber and cyber-physical systems security</strong>, and <strong>AI-powered educational technology</strong>. I specialise in ensemble and meta-learning frameworks, AutoML pipeline design, GAN-based synthetic data generation, and trustworthy ML for high-stakes applications.",
       "As Deputy Programme Leader at QAHE&nbsp;/&nbsp;Ulster University, I oversee curriculum quality assurance for MSc Computing programmes, lead three core modules, and have driven Digital Transformation student pass rates to <strong>98%+</strong> through the Digital Transformation Studio initiative and the AI-powered Automated Marking &amp; Grading System I designed and built.",
       "I also bring hands-on expertise in <strong>enterprise database engineering</strong> — including PostgreSQL administration, advanced SQL optimisation, ETL/ELT pipeline design, performance tuning, and data governance — developed through academic teaching (University of Warwick), module leadership in Advanced Database Systems, and applied industry training delivery.",
-      "I am an active open-source contributor with production-grade projects on GitHub, a Fellow of the Higher Education Academy (FHEA), and a Member of the BCS, IET, and IEEE."
+      "I am an active open-source contributor with production-grade projects on GitHub, a Fellow of the Higher Education Academy (FHEA), and a Member of the BCS (MBCS), IET, and IEEE (MIEEE)."
     ]
   },
   "skills": [
@@ -452,6 +452,25 @@ const DATA = {
       ]
     },
     {
+      "icon": "🌐",
+      "badge": "Open Source · NLP · 2026",
+      "color": "#0369a1",
+      "title": "SoleGlance v2 — Multilingual Sentiment Platform",
+      "desc": "Engineered the second major rebuild of SoleGlance — an open-source social analytics and sentiment platform originally designed for Pakistan and Nigeria. The v2 rebuild introduces a multilingual NLP pipeline covering English, Urdu, Roman Urdu, and Nigerian Pidgin, underpinning the <em>Digital Wellbeing in the Social Media Era</em> preprint (Younas &amp; Anande, medRxiv, Oct 2026). The platform applies user-grouped whole-holdout validation and a reproducible figure pipeline — moving beyond naïve random splits that inflate AUC by ~0.24 points. All code is open-source.",
+      "tech": [
+        "Python",
+        "NLP",
+        "Multilingual Sentiment",
+        "Urdu / Roman Urdu / Nigerian Pidgin",
+        "scikit-learn",
+        "GitHub"
+      ],
+      "links": [
+        { "label": "💻 GitHub", "url": "https://github.com/Tertsegha1/soleglance-automated" },
+        { "label": "📊 Analysis Code", "url": "https://github.com/Tertsegha1/digital-wellbeing-distress-signals" }
+      ]
+    },
+    {
       "icon": "⚡",
       "badge": "Research Fellow",
       "color": "#15803d",
@@ -556,6 +575,40 @@ const DATA = {
       }
     ],
     "inPrep": [
+      {
+        "year": "2026 — medRxiv Preprint",
+        "title": "Digital Wellbeing in the Social Media Era: A Dual Pathway Analysis of Emotional and Behavioural Distress Indicators and Their Public Health Utility",
+        "authors": "Younas, S. and Anande, T.J. (corresponding author) (2026)",
+        "venue": "<a href=\"https://www.medrxiv.org/content/10.64898/2026.10.09.26365101v1\" target=\"_blank\">medRxiv doi:10.64898/2026.10.09.26365101</a> &nbsp;·&nbsp; <a href=\"https://github.com/Tertsegha1/digital-wellbeing-distress-signals\" target=\"_blank\">💻 Code</a>",
+        "cls": "prep"
+      },
+      {
+        "year": "2026 — Research Square Preprint",
+        "title": "Hybrid Recommendation of Healthcare Interventions for Personalised Patient Engagement: A Leakage-Free Offline Evaluation on Synthetic Electronic Health Records",
+        "authors": "Ajayi, S. and Anande, T.J. (corresponding author) (2026). Supervision-led study.",
+        "venue": "Research Square preprint, posted 2 November 2026",
+        "cls": "prep"
+      },
+      {
+        "year": "2026 — Under Review",
+        "title": "A Trustworthy and Reproducible AutoML Framework for Health-Oriented Tabular Classification with Leakage Control and Cost-Aware Model Selection",
+        "authors": "Anande, T.J., Oyedele, G. and Younas, S. (2026)",
+        "venue": "Submitted to SN Computer Science (Springer Nature) — under review",
+        "cls": "prep"
+      },
+      {
+        "year": "2026 — In Final Preparation",
+        "title": "Leakage-Aware, Shift-Robust Cyber-Physical Intrusion Detection for Electric Vehicle Charging Infrastructure (TRACE-EV)",
+        "authors": "Anande, T.J. and Lakshminarayana, S. (2026)",
+        "venue": "Manuscript in final preparation — target: IEEE Transactions on Smart Grid",
+        "cls": "prep"
+      },
+      {
+        "year": "In Preparation",
+        "title": "Separating Completion from Timeliness in Collaborative Formative Learning: Design of the Digital Transformation Studio",
+        "authors": "Anande, T. and Tariq, Z. (2026)",
+        "cls": "prep"
+      },
       {
         "year": "In Preparation",
         "title": "Exploring Explainability and Detection of DDoS Attacks on Electric Vehicle Charging Systems using Ensemble Learning",
