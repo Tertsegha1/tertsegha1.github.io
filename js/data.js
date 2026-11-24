@@ -1,4 +1,4 @@
-/**
+﻿/**
  * data.js — all site content for Dr. Tertsegha Joseph Anande's portfolio.
  *
  * To update the site, edit the objects below and push to GitHub.
@@ -66,11 +66,11 @@ const DATA = {
       }
     ],
     "about": [
-      "I am a PhD-trained engineer and computing lecturer based in Birmingham, UK. I hold a PhD in Engineering (Communication Systems) from the University of Warwick, an MSc from Swansea University, and a B.Tech. from the Federal University of Technology, Yola, Nigeria.",
-      "My work sits at the intersection of <strong>machine learning research</strong>, <strong>cyber and cyber-physical systems security</strong>, and <strong>AI-powered educational technology</strong>. I specialise in ensemble and meta-learning frameworks, AutoML pipeline design, GAN-based synthetic data generation, and trustworthy ML for high-stakes applications.",
-      "As Deputy Programme Leader at QAHE&nbsp;/&nbsp;Ulster University, I oversee curriculum quality assurance for MSc Computing programmes, lead three core modules, and have driven Digital Transformation student pass rates to <strong>98%+</strong> through the Digital Transformation Studio initiative and the AI-powered Automated Marking &amp; Grading System I designed and built.",
-      "I also bring hands-on expertise in <strong>enterprise database engineering</strong> — including PostgreSQL administration, advanced SQL optimisation, ETL/ELT pipeline design, performance tuning, and data governance — developed through academic teaching (University of Warwick), module leadership in Advanced Database Systems, and applied industry training delivery.",
-      "I am an active open-source contributor with production-grade projects on GitHub, a Fellow of the Higher Education Academy (FHEA), and a Member of the BCS (MBCS) and IEEE (MIEEE)."
+      "I am a PhD-trained engineering researcher and computing lecturer based in Birmingham, UK. I hold a PhD in Engineering (Communication Systems) from the University of Warwick (awarded 2024), an MSc from Swansea University, and a B.Tech. from the Federal University of Technology, Yola, Nigeria.",
+      "My research spans <strong>applied machine learning</strong>, <strong>cyber and cyber-physical security</strong>, <strong>EV-charging infrastructure security</strong>, and <strong>trustworthy AutoML</strong>. I am a former Research Fellow on the CyberASAP-funded CLADDED project at Warwick and lead the ongoing <strong>TRACE-EV</strong> programme with Dr Subhash Lakshminarayana — a leakage-aware, shift-robust intrusion detection framework for EV charging that translates detection delay directly into charging-energy exposure estimates. My work also covers GAN-based synthetic network-traffic generation, ensemble meta-learning, health-oriented ML, and digital wellbeing. Google Scholar (October 2026): 110 citations &middot; h-index 5.",
+      "As Deputy Programme Leader at QAHE&nbsp;/&nbsp;Ulster University, I oversee quality assurance for MSc Computing programmes across Birmingham, London and Manchester, lead three core modules, and have supervised 15+ MSc students — five supervision-led studies are progressing towards publication, with two already posted as preprints. I conceived and deployed the <strong>Digital Transformation Studio</strong>, driving student pass rates to <strong>98%+</strong> (2025&ndash;26 cohort), and built the <strong>AI-powered Automated Marking &amp; Grading System</strong> (Llama 3.3 70B with Whisper transcription) used across two consecutive cohorts.",
+      "Beyond research and teaching, I build open educational platforms &mdash; <strong>CodeSprig</strong> (self-paced coding for ages 10&ndash;16) and <strong>GradReady</strong> (graduate skills and employability) &mdash; and deliver applied knowledge-exchange programmes, including a two-week PostgreSQL executive training for the AUKTIE Executive Programme (Coventry, June&ndash;July 2026, rated 4.7/5). My applied toolkit spans Python ML development, OCPP 1.6/2.0+ and ISO 15118, and PostgreSQL and enterprise data systems.",
+      "I am a Fellow of the Higher Education Academy (FHEA), a Member of the BCS (MBCS) and IEEE (MIEEE), an invited keynote speaker at the 11th ICRIEMS (Universitas Negeri Yogyakarta, June 2026), and a recipient of the QA Spirit Award 2026."
     ]
   },
   "skills": [
